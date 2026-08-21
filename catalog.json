@@ -485,5 +485,15 @@
     "hue": 210,
     "tag": "接",
     "dir": "g/snow-catch/"
+  },
+  {
+    "n": 56,
+    "id": "door-peek",
+    "title": "窥门",
+    "subtitle": "PEEK",
+    "blurb": "门闪一下，记住哪扇后面有钥。",
+    "hue": 280,
+    "tag": "记",
+    "dir": "g/door-peek/"
   }
 ]

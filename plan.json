@@ -612,7 +612,7 @@
     "blurb": "门闪一下，记住哪扇后面有钥。",
     "hue": 280,
     "tag": "记",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/door-peek/"
   },
   {
@@ -656,7 +656,7 @@
     "blurb": "转圆盘对上今夜月相。",
     "hue": 255,
     "tag": "月",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/moon-phase/"
   },
   {
