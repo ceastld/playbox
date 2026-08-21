@@ -7,7 +7,7 @@
     "blurb": "你和镜中人同时走，两边都要落在安全格。",
     "hue": 312,
     "tag": "巧",
-    "status": "shipped",
+    "status": "hardening",
     "dir": "g/mirror-step/"
   },
   {
@@ -18,7 +18,7 @@
     "blurb": "黑暗里只能靠一次声呐看清轮廓，看完就灭。",
     "hue": 188,
     "tag": "察",
-    "status": "shipped",
+    "status": "hardening",
     "dir": "g/echo-ping/"
   },
   {
@@ -557,7 +557,7 @@
     "blurb": "按节拍接水，满到线停，溢了就输。",
     "hue": 205,
     "tag": "接",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/drip-fill/"
   },
   {
@@ -568,7 +568,7 @@
     "blurb": "抽对的绳结，抽错会勒紧别的。",
     "hue": 28,
     "tag": "绳",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/knot-pull/"
   },
   {
@@ -579,7 +579,7 @@
     "blurb": "敲杯子凑出目标和弦。",
     "hue": 48,
     "tag": "音",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/glass-tune/"
   },
   {
