@@ -232,5 +232,23 @@
     "url": "./g/herd-dot/",
     "hue": 95,
     "tag": "牧"
+  },
+  {
+    "id": "tone-lock",
+    "title": "听锁",
+    "subtitle": "TONES",
+    "blurb": "听三音，按同样顺序回奏。",
+    "url": "./g/tone-lock/",
+    "hue": 250,
+    "tag": "听"
+  },
+  {
+    "id": "sail-gust",
+    "title": "抢风",
+    "subtitle": "SAIL",
+    "blurb": "借阵风转向，别撞礁。",
+    "url": "./g/sail-gust/",
+    "hue": 175,
+    "tag": "帆"
   }
 ]

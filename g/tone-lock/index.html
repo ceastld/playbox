@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#05030c" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>听锁 · TONES</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2305030c'/%3E%3Ccircle cx='16' cy='16' r='10' fill='none' stroke='%2300f0ff' stroke-width='1.6'/%3E%3Ccircle cx='16' cy='16' r='3' fill='%23ff3db8'/%3E%3Ccircle cx='16' cy='5' r='2' fill='%23ff3db8'/%3E%3Ccircle cx='26' cy='13' r='2' fill='%2300f0ff'/%3E%3Ccircle cx='6' cy='13' r='2' fill='%23ffe36b'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <canvas id="view" aria-label="听锁回奏"></canvas>
+  <div class="scan" aria-hidden="true"></div>
+
+  <div id="hud" class="hud hidden">
+    <header class="hud-top">
+      <div class="brand">
+        <strong>听锁</strong>
+        <span>TONES</span>
+      </div>
+      <div class="readouts">
+        <div class="read">
+          <em>门锁</em>
+          <b id="door">1/5</b>
+          <span class="pips" id="pips" aria-label="剩余生命"></span>
+        </div>
+        <div class="read">
+          <em>回奏</em>
+          <b id="prog">0/3</b>
+        </div>
+        <div class="read">
+          <em>时限</em>
+          <b id="time">72</b>
+        </div>
+      </div>
+      <div class="tools">
+        <button type="button" id="btn-listen" title="空格">再听 2</button>
+        <button type="button" id="btn-mute" title="M" aria-label="静音">音</button>
+        <button type="button" id="btn-retry" aria-label="重开" title="R">重开</button>
+      </div>
+    </header>
+
+    <div class="hud-bot">
+      <p id="hint" class="hint">听三音 · 按同样顺序回奏</p>
+      <div class="dock" id="dock" role="group" aria-label="晶片"></div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <div id="panel" class="panel" role="dialog" aria-labelledby="panel-title">
+    <div class="card" id="card">
+      <p class="kicker" id="panel-kicker">TONES</p>
+      <h1 id="panel-title">听锁</h1>
+      <p class="lead" id="panel-lead">锁会唱三音。<br />按同样顺序回奏，门才会开。</p>
+      <p class="meta" id="panel-meta">五道门锁，三条命。后关光更短，要靠听。</p>
+      <button type="button" id="btn-main">开锁</button>
+      <p class="foot" id="panel-foot">1–5 / ASDFG 奏晶 · 空格再听 · M 静音</p>
+    </div>
+  </div>
+
+  <script src="js/game.js"></script>
+</body>
+</html>

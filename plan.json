@@ -293,7 +293,7 @@
     "blurb": "听三音，按同样顺序回奏。",
     "hue": 250,
     "tag": "听",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/tone-lock/"
   },
   {
@@ -304,7 +304,7 @@
     "blurb": "借阵风转向，别撞礁。",
     "hue": 175,
     "tag": "帆",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/sail-gust/"
   },
   {
@@ -337,7 +337,7 @@
     "blurb": "六边形合成，边要对齐才能融。",
     "hue": 205,
     "tag": "合",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/hex-merge/"
   },
   {
@@ -348,7 +348,7 @@
     "blurb": "在轨道交点的瞬间点射。",
     "hue": 310,
     "tag": "轨",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/orbit-tap/"
   },
   {
