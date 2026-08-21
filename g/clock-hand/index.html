@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#05030c" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>对针 · CLOCK</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2305030c'/%3E%3Ccircle cx='16' cy='16' r='12' fill='none' stroke='%2300f0ff' stroke-width='1.7'/%3E%3Cpath d='M16 16 L16 8' stroke='%23ff3db8' stroke-width='2.2' stroke-linecap='round'/%3E%3Cpath d='M16 16 L24.2 16' stroke='%2300f0ff' stroke-width='1.6' stroke-linecap='round'/%3E%3Ccircle cx='16' cy='16' r='2' fill='%23ffe36b'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>对针</b>
+        <span>CLOCK</span>
+      </div>
+      <div class="status">
+        <span id="stage-label">—</span>
+        <div class="row">
+          <span id="hit-label">对 —</span>
+          <span class="pips" id="pips" aria-label="剩余性命"></span>
+        </div>
+      </div>
+      <div class="tools">
+        <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
+        <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <canvas id="c" aria-label="对针钟面"></canvas>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden"></div>
+      <div id="pad" class="pad">
+        <div class="grp hour">
+          <button type="button" id="btn-h-ccw" aria-label="时针逆时针">时 ◀</button>
+          <button type="button" id="btn-h-cw" aria-label="时针顺时针">时 ▶</button>
+        </div>
+        <div class="grp min">
+          <button type="button" id="btn-m-ccw" aria-label="分针逆时针">分 ◀</button>
+          <button type="button" id="btn-m-cw" aria-label="分针顺时针">分 ▶</button>
+        </div>
+      </div>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">CLOCK</p>
+          <h1 id="ov-title">对针</h1>
+          <p class="lead" id="ov-lead">粉时针、青分针。<br />时刻落到钟心时，两根针都要对上。</p>
+          <p class="ops" id="ov-ops">A/D 转时针 · J/L 转分针 · 拖内环/外环 · M 静音</p>
+          <button type="button" id="ov-btn">上弦</button>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">两针都要对上掉落的时刻 · 粉时 · 青分</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>

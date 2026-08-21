@@ -458,7 +458,7 @@
     "blurb": "两根针都要对上掉落的时刻。",
     "hue": 45,
     "tag": "时",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/clock-hand/"
   },
   {
@@ -469,7 +469,7 @@
     "blurb": "墨会扩散，用空白把它堵成字。",
     "hue": 240,
     "tag": "墨",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/ink-bleed/"
   },
   {
@@ -480,7 +480,7 @@
     "blurb": "极性切换，把铁块吸到槽里。",
     "hue": 200,
     "tag": "磁",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/magnet-row/"
   },
   {
@@ -491,7 +491,7 @@
     "blurb": "声纹会暴露你，走在地毯上。",
     "hue": 225,
     "tag": "隐",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/quiet-step/"
   },
   {
@@ -502,7 +502,7 @@
     "blurb": "篱笆每秒长一格，圈住目标再开门。",
     "hue": 100,
     "tag": "圈",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/grow-fence/"
   },
   {
@@ -513,7 +513,7 @@
     "blurb": "镜子折射，让三色各进各门。",
     "hue": 305,
     "tag": "光",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/split-beam/"
   },
   {
@@ -524,7 +524,7 @@
     "blurb": "水面下捡物，氧气条决定深度。",
     "hue": 198,
     "tag": "气",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/hold-breath/"
   },
   {
@@ -535,7 +535,7 @@
     "blurb": "两人被绳拴着，热座或单人切角色。",
     "hue": 315,
     "tag": "绳",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/tether-two/"
   },
   {

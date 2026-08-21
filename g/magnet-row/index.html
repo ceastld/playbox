@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#05030c" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>磁列 · MAGNET</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2305030c'/%3E%3Crect x='5' y='12' width='11' height='8' rx='1.5' fill='%2300f0ff'/%3E%3Crect x='16' y='12' width='11' height='8' rx='1.5' fill='%23ff3db8'/%3E%3Cpath d='M8 10v2M8 20v2M24 10v2M24 20v2' stroke='%23f6f3ff' stroke-width='1.4' stroke-linecap='round'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>磁列</b>
+        <span>MAGNET</span>
+      </div>
+      <div class="status">
+        <span id="stage-label">—</span>
+        <div class="row">
+          <span id="pol-label">极 —</span>
+          <span id="time-label">—</span>
+          <span class="pips" id="pips" aria-label="剩余性命"></span>
+        </div>
+      </div>
+      <div class="tools">
+        <button type="button" id="btn-flip" title="空格">翻极</button>
+        <button type="button" id="btn-mute" title="M">声</button>
+        <button type="button" id="btn-retry" title="R">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <canvas id="c" tabindex="0" aria-label="磁列腔室"></canvas>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden"></div>
+      <div id="pad" class="pad">
+        <button type="button" id="btn-left" aria-label="左移">左</button>
+        <button type="button" id="btn-flip-pad" aria-label="翻转极性">翻极</button>
+        <button type="button" id="btn-right" aria-label="右移">右</button>
+      </div>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">MAGNET</p>
+          <h1 id="ov-title">磁列</h1>
+          <p class="lead" id="ov-lead">青为北极，粉为南极。异极相吸，同极相斥。<br />滑动磁头，翻极性，把铁核送进同色的槽。</p>
+          <p class="ops" id="ov-ops">A / D 或 ← → 移动 · 空格翻极 · 拖屏幕 · 点按翻极 · M 静音</p>
+          <button type="button" id="ov-btn">通电</button>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">异极相吸 · 同极相斥 · 对色入槽</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>

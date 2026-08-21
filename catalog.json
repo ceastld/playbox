@@ -367,5 +367,41 @@
     "url": "./g/bubble-lift/",
     "hue": 190,
     "tag": "泡"
+  },
+  {
+    "id": "clock-hand",
+    "title": "对针",
+    "subtitle": "CLOCK",
+    "blurb": "两根针都要对上掉落的时刻。",
+    "url": "./g/clock-hand/",
+    "hue": 45,
+    "tag": "时"
+  },
+  {
+    "id": "ink-bleed",
+    "title": "洇墨",
+    "subtitle": "INK",
+    "blurb": "墨会扩散，用空白把它堵成字。",
+    "url": "./g/ink-bleed/",
+    "hue": 240,
+    "tag": "墨"
+  },
+  {
+    "id": "magnet-row",
+    "title": "磁列",
+    "subtitle": "MAGNET",
+    "blurb": "极性切换，把铁块吸到槽里。",
+    "url": "./g/magnet-row/",
+    "hue": 200,
+    "tag": "磁"
+  },
+  {
+    "id": "quiet-step",
+    "title": "轻足",
+    "subtitle": "STEALTH",
+    "blurb": "声纹会暴露你，走在地毯上。",
+    "url": "./g/quiet-step/",
+    "hue": 225,
+    "tag": "隐"
   }
 ]
