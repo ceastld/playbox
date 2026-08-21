@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#05030c" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>接雪 · SNOW</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2305030c'/%3E%3Ccircle cx='24' cy='7' r='3.2' fill='%2300f0ff' opacity='.55'/%3E%3Cpath d='M16 4 L16 10 M13.2 5.2 L18.8 8.8 M18.8 5.2 L13.2 8.8' stroke='%23ff3db8' stroke-width='1.3' stroke-linecap='round'/%3E%3Cpath d='M8 18c0-4 3.2-7.2 8-10 4.8 2.8 8 6 8 10a8 8 0 1 1-16 0z' fill='%23120820' stroke='%2300f0ff' stroke-width='1.4'/%3E%3Ccircle cx='16' cy='19' r='3.1' fill='%23ff3db8'/%3E%3Cpath d='M16 26v4' stroke='%2300f0ff' stroke-width='1.4' stroke-linecap='round'/%3E%3Cpath d='M7 12 L6 16' stroke='%2300f0ff' stroke-width='1.1' opacity='.7'/%3E%3Cpath d='M26 13 L27 17' stroke='%23ff3db8' stroke-width='1.1' opacity='.7'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>接雪</b>
+        <span>SNOW</span>
+      </div>
+      <div class="status">
+        <div class="fill" id="fill-wrap" title="接到的同色雪">
+          <i class="chip" id="color-chip" aria-hidden="true"></i>
+          <em id="color-name">粉</em>
+          <div class="fill-track" aria-hidden="true">
+            <i id="fill-bar"></i>
+          </div>
+          <b id="fill-num">0/5</b>
+        </div>
+        <div class="row">
+          <span id="stage-label">第 1 夜</span>
+          <span id="miss-label">可漏 3</span>
+          <span class="pips" id="pips" aria-label="剩余生命"></span>
+        </div>
+      </div>
+      <div class="tools">
+        <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
+        <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <canvas id="c" aria-label="接雪灯笼"></canvas>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden"></div>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">SNOW</p>
+          <h1 id="ov-title">接雪</h1>
+          <p class="lead" id="ov-lead">灯芯是什么色，就只接什么色。<br />别的雪要躲开，沾上就灭。</p>
+          <p class="ops" id="ov-ops">← → / A D 挪灯 · 拖动灯笼 · M 静音</p>
+          <button type="button" id="ov-btn">开接</button>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">灯芯同色才接 · 异色躲开</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>

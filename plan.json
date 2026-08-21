@@ -601,7 +601,7 @@
     "blurb": "只接一种颜色的雪，别的要躲开。",
     "hue": 210,
     "tag": "接",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/snow-catch/"
   },
   {
@@ -645,7 +645,7 @@
     "blurb": "三根引线，剪掉假的那根。",
     "hue": 12,
     "tag": "剪",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/fuse-cut/"
   },
   {

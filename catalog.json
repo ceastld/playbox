@@ -475,5 +475,15 @@
     "url": "./g/glass-tune/",
     "hue": 48,
     "tag": "音"
+  },
+  {
+    "n": 55,
+    "id": "snow-catch",
+    "title": "接雪",
+    "subtitle": "SNOW",
+    "blurb": "只接一种颜色的雪，别的要躲开。",
+    "hue": 210,
+    "tag": "接",
+    "dir": "g/snow-catch/"
   }
 ]
