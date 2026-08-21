@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#05030c" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>烫梯 · HEAT</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2305030c'/%3E%3Cpath d='M11 4v24M21 4v24' stroke='%23ff3db8' stroke-width='2' stroke-linecap='round'/%3E%3Cpath d='M11 9h10M11 15h10M11 21h10' stroke='%2300f0ff' stroke-width='1.6' stroke-linecap='round'/%3E%3Ccircle cx='16' cy='15' r='2.2' fill='%23ffe36b'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>烫梯</b>
+        <span>HEAT</span>
+      </div>
+      <div class="status">
+        <span id="zone-label">—</span>
+        <div class="heats" aria-hidden="true">
+          <div class="heat mag" id="heat-l">
+            <em>左</em>
+            <div class="track"><i id="fill-l"></i></div>
+          </div>
+          <div class="heat cyan" id="heat-r">
+            <em>右</em>
+            <div class="track"><i id="fill-r"></i></div>
+          </div>
+        </div>
+        <div class="row">
+          <span id="height-label">—</span>
+          <span class="pips" id="pips" aria-label="剩余性命"></span>
+        </div>
+      </div>
+      <div class="tools">
+        <button type="button" id="btn-mute" title="M">声</button>
+        <button type="button" id="btn-retry" title="R">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <canvas id="c" aria-label="烫梯攀爬"></canvas>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden"></div>
+      <div id="pad" class="pad">
+        <button type="button" id="btn-left" aria-label="抓住左侧">左</button>
+        <button type="button" id="btn-right" aria-label="抓住右侧">右</button>
+      </div>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">HEAT</p>
+          <h1 id="ov-title">烫梯</h1>
+          <p class="lead" id="ov-lead">按住一侧往上爬，抓的那根会发烫。<br />另一侧冷却。烫了就换手，松手会往下溜。</p>
+          <p class="ops" id="ov-ops">A D / ← → 按住换手 · 点屏幕左/右 · M 静音</p>
+          <button type="button" id="ov-btn">上梯</button>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">抓一侧往上爬 · 烫了就换手 · 松手会往下溜</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>

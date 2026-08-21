@@ -414,7 +414,7 @@
     "blurb": "梯子越爬越烫，要交替冷却。",
     "hue": 8,
     "tag": "爬",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/heat-climb/"
   },
   {
@@ -447,7 +447,7 @@
     "blurb": "吹泡把货物托过尖刺。",
     "hue": 190,
     "tag": "泡",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/bubble-lift/"
   },
   {

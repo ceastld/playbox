@@ -322,5 +322,14 @@
     "url": "./g/swarm-lead/",
     "hue": 130,
     "tag": "引"
+  },
+  {
+    "id": "heat-climb",
+    "title": "烫梯",
+    "subtitle": "HEAT",
+    "blurb": "梯子越爬越烫，要交替冷却。",
+    "url": "./g/heat-climb/",
+    "hue": 8,
+    "tag": "爬"
   }
 ]
