@@ -88,5 +88,14 @@
     "url": "./g/seed-cut/",
     "hue": 110,
     "tag": "养"
+  },
+  {
+    "id": "ice-slide",
+    "title": "冰面",
+    "subtitle": "SLIDE",
+    "blurb": "没有刹车，只能靠墙和反向轻点。",
+    "url": "./g/ice-slide/",
+    "hue": 210,
+    "tag": "滑"
   }
 ]

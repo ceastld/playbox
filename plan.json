@@ -117,7 +117,7 @@
     "blurb": "没有刹车，只能靠墙和反向轻点。",
     "hue": 210,
     "tag": "滑",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/ice-slide/"
   },
   {
@@ -161,7 +161,7 @@
     "blurb": "亮一次路径，灭灯后凭记忆走回去。",
     "hue": 255,
     "tag": "记",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/memory-walk/"
   },
   {
