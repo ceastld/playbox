@@ -439,5 +439,14 @@
     "url": "./g/hold-breath/",
     "hue": 198,
     "tag": "气"
+  },
+  {
+    "id": "last-light",
+    "title": "末光",
+    "subtitle": "EMBER",
+    "blurb": "火把越来越短，在熄灭前摸到门。",
+    "url": "./g/last-light/",
+    "hue": 22,
+    "tag": "光"
   }
 ]
