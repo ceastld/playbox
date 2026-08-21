@@ -97,5 +97,14 @@
     "url": "./g/ice-slide/",
     "hue": 210,
     "tag": "滑"
+  },
+  {
+    "id": "pole-balance",
+    "title": "长竿",
+    "subtitle": "POLE",
+    "blurb": "左右微调，别让竿倒下。",
+    "url": "./g/pole-balance/",
+    "hue": 25,
+    "tag": "衡"
   }
 ]

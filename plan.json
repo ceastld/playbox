@@ -150,7 +150,7 @@
     "blurb": "左右微调，别让竿倒下。",
     "hue": 25,
     "tag": "衡",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/pole-balance/"
   },
   {
@@ -172,7 +172,7 @@
     "blurb": "拉弓把光球打进移动的环。",
     "hue": 320,
     "tag": "射",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/sling-orb/"
   },
   {
