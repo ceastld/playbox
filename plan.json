@@ -513,7 +513,7 @@
     "blurb": "镜子折射，让三色各进各门。",
     "hue": 305,
     "tag": "光",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/split-beam/"
   },
   {
@@ -535,7 +535,7 @@
     "blurb": "两人被绳拴着，热座或单人切角色。",
     "hue": 315,
     "tag": "绳",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/tether-two/"
   },
   {
@@ -546,7 +546,7 @@
     "blurb": "火把越来越短，在熄灭前摸到门。",
     "hue": 22,
     "tag": "光",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/last-light/"
   }
 ]

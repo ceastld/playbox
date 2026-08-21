@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#05030c" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <title>分光 · PRISM</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2305030c'/%3E%3Cpath d='M8 16 L22 8 L22 24 Z' fill='none' stroke='%23ffe36b' stroke-width='1.8'/%3E%3Cpath d='M4 16 H8' stroke='%23ffffff' stroke-width='2'/%3E%3Cpath d='M22 8 L28 5' stroke='%2300f0ff' stroke-width='2'/%3E%3Cpath d='M22 16 H28' stroke='%23ffe36b' stroke-width='2'/%3E%3Cpath d='M22 24 L28 27' stroke='%23ff3db8' stroke-width='2'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>分光</b>
+        <span>PRISM</span>
+      </div>
+      <div class="status">
+        <span id="stage-label">—</span>
+        <div class="row">
+          <span id="time-label">—</span>
+          <div class="lamps" id="lamps" aria-label="三色入门">
+            <i class="lamp mag" id="lamp-mag"></i>
+            <i class="lamp gold" id="lamp-gold"></i>
+            <i class="lamp cyan" id="lamp-cyan"></i>
+          </div>
+          <span class="pips" id="pips" aria-label="剩余性命"></span>
+        </div>
+      </div>
+      <div class="tools">
+        <button type="button" id="btn-mute" title="M">声</button>
+        <button type="button" id="btn-retry" title="R">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <canvas id="c" aria-label="分光台"></canvas>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden"></div>
+      <div id="pad" class="pad">
+        <button type="button" id="btn-prev" aria-label="上一面镜子">上一面</button>
+        <button type="button" id="btn-flip" aria-label="翻转镜子">翻转</button>
+        <button type="button" id="btn-next" aria-label="下一面镜子">下一面</button>
+      </div>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">PRISM</p>
+          <h1 id="ov-title">分光</h1>
+          <p class="lead" id="ov-lead">白光进棱镜，裂成品红、金、青。转动镜子，让三色各进各门。<br />进错门会串色，光路当场熄一段。</p>
+          <p class="ops" id="ov-ops">点镜子翻转 · WASD 选镜 · 空格翻转 · M 静音</p>
+          <button type="button" id="ov-btn">开灯</button>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">白光分光 · 三色归门</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>

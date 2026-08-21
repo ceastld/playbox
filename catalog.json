@@ -403,5 +403,23 @@
     "url": "./g/quiet-step/",
     "hue": 225,
     "tag": "隐"
+  },
+  {
+    "id": "split-beam",
+    "title": "分光",
+    "subtitle": "PRISM",
+    "blurb": "镜子折射，让三色各进各门。",
+    "url": "./g/split-beam/",
+    "hue": 305,
+    "tag": "光"
+  },
+  {
+    "id": "tether-two",
+    "title": "双系",
+    "subtitle": "TETHER",
+    "blurb": "两人被绳拴着，热座或单人切角色。",
+    "url": "./g/tether-two/",
+    "hue": 315,
+    "tag": "绳"
   }
 ]
