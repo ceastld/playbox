@@ -238,7 +238,7 @@
     "blurb": "格子按节奏点亮，踩错就碎。",
     "hue": 290,
     "tag": "踏",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/tile-beat/"
   },
   {
@@ -249,7 +249,7 @@
     "blurb": "拖线接通，避开交叉短路。",
     "hue": 55,
     "tag": "电",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/wire-close/"
   },
   {
@@ -282,7 +282,7 @@
     "blurb": "用一圈光把散点赶进栏。",
     "hue": 95,
     "tag": "牧",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/herd-dot/"
   },
   {
@@ -293,7 +293,7 @@
     "blurb": "听三音，按同样顺序回奏。",
     "hue": 250,
     "tag": "听",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/tone-lock/"
   },
   {

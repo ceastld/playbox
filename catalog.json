@@ -187,5 +187,23 @@
     "url": "./g/mix-vial/",
     "hue": 340,
     "tag": "色"
+  },
+  {
+    "id": "tile-beat",
+    "title": "踏格",
+    "subtitle": "TILES",
+    "blurb": "格子按节奏点亮，踩错就碎。",
+    "url": "./g/tile-beat/",
+    "hue": 290,
+    "tag": "踏"
+  },
+  {
+    "id": "wire-close",
+    "title": "通电",
+    "subtitle": "WIRE",
+    "blurb": "拖线接通，避开交叉短路。",
+    "url": "./g/wire-close/",
+    "hue": 55,
+    "tag": "电"
   }
 ]

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#05030c" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>踏格 · TILES</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2305030c'/%3E%3Crect x='4' y='4' width='7' height='7' rx='1.4' fill='%2312081c' stroke='%2300f0ff' stroke-width='0.8'/%3E%3Crect x='12.5' y='4' width='7' height='7' rx='1.4' fill='%23ff3db8'/%3E%3Crect x='21' y='4' width='7' height='7' rx='1.4' fill='%2312081c' stroke='%2300f0ff' stroke-width='0.8'/%3E%3Crect x='4' y='12.5' width='7' height='7' rx='1.4' fill='%2312081c' stroke='%2300f0ff' stroke-width='0.8'/%3E%3Crect x='12.5' y='12.5' width='7' height='7' rx='1.4' fill='%2300f0ff'/%3E%3Crect x='21' y='12.5' width='7' height='7' rx='1.4' fill='%2312081c' stroke='%2300f0ff' stroke-width='0.8'/%3E%3Crect x='4' y='21' width='7' height='7' rx='1.4' fill='%2312081c' stroke='%2300f0ff' stroke-width='0.8'/%3E%3Crect x='12.5' y='21' width='7' height='7' rx='1.4' fill='%2312081c' stroke='%2300f0ff' stroke-width='0.8'/%3E%3Crect x='21' y='21' width='7' height='7' rx='1.4' fill='%2312081c' stroke='%2300f0ff' stroke-width='0.8'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="scan" aria-hidden="true"></div>
+  <canvas id="view" aria-label="踏格舞池"></canvas>
+
+  <div id="hud" class="hud hidden">
+    <header class="hud-top">
+      <div class="brand">
+        <strong>踏格</strong>
+        <span>TILES</span>
+      </div>
+      <div class="readouts">
+        <div class="read"><em>乐段</em><b id="phrase">起踏</b></div>
+        <div class="read"><em>连击</em><b id="combo">0</b></div>
+        <div class="read"><em>拍</em><b id="beat">0/48</b></div>
+      </div>
+      <div class="right">
+        <div class="lives" id="lives" title="余格" aria-label="剩余性命">
+          <i></i><i></i><i></i>
+        </div>
+        <div class="tools">
+          <button type="button" id="btn-mute" title="静音（M）">声开</button>
+          <button type="button" id="btn-retry" title="重开（R）">重开</button>
+        </div>
+      </div>
+    </header>
+    <p id="hint" class="hint">踩到粉格 · 拍点落地</p>
+  </div>
+
+  <div id="panel" class="panel" role="dialog" aria-labelledby="panel-title">
+    <div class="card" id="card">
+      <p class="kicker" id="panel-kicker">TILE BEAT</p>
+      <h1 id="panel-title">踏格</h1>
+      <p class="lead" id="panel-lead">粉格按拍点亮。<br />踩错，脚下就碎。</p>
+      <p class="meta" id="panel-meta">拍点必须站在亮格上。碎三次则坠。</p>
+      <div class="legend" id="legend" aria-hidden="true">
+        <span class="lg-hit">■ 亮格</span>
+        <span class="lg-rest">◇ 踏点</span>
+      </div>
+      <button type="button" id="btn-main">起踏</button>
+      <p class="foot" id="panel-foot">WASD 邻格 · 点格直踏 · 1–9 九键 · M 静音</p>
+    </div>
+  </div>
+
+  <script src="js/game.js"></script>
+</body>
+</html>
