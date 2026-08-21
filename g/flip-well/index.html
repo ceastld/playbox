@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#05030c" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <title>井翻 · FLIP</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2305030c'/%3E%3Cpath d='M8 4h16v24H8z' fill='none' stroke='%2300f0ff' stroke-width='2'/%3E%3Ccircle cx='16' cy='18' r='3' fill='%23ff3db8'/%3E%3Cpath d='M16 8v4M16 22v4' stroke='%23ffe36b' stroke-width='2'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>井翻</b>
+        <span>FLIP</span>
+      </div>
+      <div class="status">
+        <span id="stage-label">冷却翻转</span>
+        <div class="cool" title="翻转冷却">
+          <i id="cool-fill"></i>
+        </div>
+        <span id="grav-label" class="grav">重力 ↓</span>
+      </div>
+      <div class="tools">
+        <button type="button" id="btn-flip" title="空格">翻转</button>
+        <button type="button" id="btn-mute" title="M">声</button>
+        <button type="button" id="btn-retry">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <canvas id="c" aria-label="井翻关卡"></canvas>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden"></div>
+      <div id="pad" class="pad">
+        <button type="button" id="btn-left" aria-label="向左">左</button>
+        <button type="button" id="btn-flip-pad" aria-label="翻转">翻</button>
+        <button type="button" id="btn-right" aria-label="向右">右</button>
+      </div>
+      <div id="overlay" class="overlay">
+        <div class="panel">
+          <p class="kicker" id="ov-kicker">FLIP</p>
+          <h1 id="ov-title">井翻</h1>
+          <p class="lead" id="ov-lead">冷却转满才能翻转重力。落地要算好，刺面会吞人。</p>
+          <p class="ops" id="ov-ops">方向键 / A D 平移 · 空格或点按翻转 · 触屏用左翻右 · M 静音</p>
+          <button type="button" id="ov-btn">下井</button>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">空格翻转 · 冷却转满才能再翻 · 落到安全的那一面</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>

@@ -73,7 +73,7 @@
     "blurb": "冷却好了才能翻转重力，落地要算好。",
     "hue": 48,
     "tag": "转",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/flip-well/"
   },
   {
@@ -117,7 +117,7 @@
     "blurb": "没有刹车，只能靠墙和反向轻点。",
     "hue": 210,
     "tag": "滑",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/ice-slide/"
   },
   {
