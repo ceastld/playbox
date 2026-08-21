@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#05030c" />
+  <meta name="color-scheme" content="dark" />
+  <title>熔核 · CORE</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <canvas id="view" aria-label="熔核反应堆"></canvas>
+
+  <div id="hud" class="hud hidden">
+    <header class="hud-top">
+      <div class="brand">
+        <strong>熔核</strong>
+        <span>CORE</span>
+      </div>
+      <div class="readouts">
+        <div class="read"><em>剩余</em><b id="time">45.0</b></div>
+        <div class="read"><em>稳定</em><b id="stab">0%</b></div>
+      </div>
+      <div class="tools">
+        <button type="button" id="btn-mute" aria-label="静音">音</button>
+        <button type="button" id="btn-retry" aria-label="重开">重开</button>
+      </div>
+    </header>
+    <p id="hint" class="hint">轻点降温 · 按住升温</p>
+  </div>
+
+  <div id="panel" class="panel" role="dialog" aria-labelledby="panel-title">
+    <div class="card" id="card">
+      <p class="kicker" id="panel-kicker">MELT CORE</p>
+      <h1 id="panel-title">熔核</h1>
+      <p class="lead" id="panel-lead">轻点降温，按住升温。<br />把核温留在游走的安全带里。</p>
+      <p class="meta" id="panel-meta">撑过 45 秒，或把稳定槽加满。偏出则裂。</p>
+      <button type="button" id="btn-main">启动堆芯</button>
+      <p class="foot" id="panel-foot">空格 / 点击 · M 静音</p>
+    </div>
+  </div>
+
+  <script src="js/game.js"></script>
+</body>
+</html>

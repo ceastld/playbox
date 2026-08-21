@@ -7,7 +7,7 @@
     "blurb": "你和镜中人同时走，两边都要落在安全格。",
     "hue": 312,
     "tag": "巧",
-    "status": "queued",
+    "status": "shipped",
     "dir": "g/mirror-step/"
   },
   {
@@ -18,7 +18,7 @@
     "blurb": "黑暗里只能靠一次声呐看清轮廓，看完就灭。",
     "hue": 188,
     "tag": "察",
-    "status": "queued",
+    "status": "shipped",
     "dir": "g/echo-ping/"
   },
   {
@@ -29,7 +29,7 @@
     "blurb": "点一下降温，按住升温，把核心留在安全带。",
     "hue": 18,
     "tag": "稳",
-    "status": "queued",
+    "status": "shipped",
     "dir": "g/melt-core/"
   },
   {

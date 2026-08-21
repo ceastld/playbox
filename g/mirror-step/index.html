@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#05030c" />
+  <meta name="color-scheme" content="dark" />
+  <title>镜步 · MIRROR STEP</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="bg" aria-hidden="true"></div>
+  <div class="scan" aria-hidden="true"></div>
+
+  <div id="app">
+    <header class="top">
+      <div class="brand">
+        <h1>镜步</h1>
+        <p class="sub">MIRROR STEP</p>
+      </div>
+      <div class="meta" id="meta">
+        <span id="stage-label">关卡 1 / 12</span>
+        <span class="dot">·</span>
+        <span id="mode-label">横向对折</span>
+        <span class="dot">·</span>
+        <span id="step-label">0 步</span>
+      </div>
+      <div class="tools">
+        <button type="button" id="btn-undo" title="撤销（Z）">撤销</button>
+        <button type="button" id="btn-restart" title="重来（R）">重来</button>
+        <button type="button" id="btn-mute" title="静音（M）">声开</button>
+      </div>
+    </header>
+
+    <main class="play">
+      <div class="board-wrap">
+        <canvas id="board" width="540" height="540" tabindex="0" aria-label="棋盘"></canvas>
+      </div>
+      <aside class="side">
+        <p class="hint" id="hint">你走一步，镜中的你同步反步。两人都要踩在实心砖上。</p>
+        <div class="pad" id="pad">
+          <button type="button" data-dir="U" aria-label="上">▲</button>
+          <button type="button" data-dir="L" aria-label="左">◀</button>
+          <button type="button" data-dir="R" aria-label="右">▶</button>
+          <button type="button" data-dir="D" aria-label="下">▼</button>
+        </div>
+        <p class="legend">
+          <span class="you">你</span>
+          <span class="mir">镜</span>
+          <span class="goal">光点</span>
+        </p>
+      </aside>
+    </main>
+  </div>
+
+  <div id="overlay" class="overlay" role="dialog" aria-modal="true">
+    <p class="ov-kicker" id="ov-kicker">MIRROR STEP</p>
+    <h2 id="ov-title">镜步</h2>
+    <p id="ov-msg">你走一步，镜中的你同步反步。<br />两人都必须落在实心砖上，一起站上光点。</p>
+    <div class="ov-actions" id="ov-actions"></div>
+    <p class="ov-help" id="ov-help">方向键 · WASD · 滑动 · 点邻格 · 屏幕十字</p>
+  </div>
+
+  <script src="js/game.js"></script>
+</body>
+</html>

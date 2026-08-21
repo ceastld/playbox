@@ -1,1 +1,29 @@
-[]
+[
+  {
+    "id": "mirror-step",
+    "title": "镜步",
+    "subtitle": "MIRROR STEP",
+    "blurb": "你和镜中人同时走，两边都要落在安全格。",
+    "url": "./g/mirror-step/",
+    "hue": 312,
+    "tag": "巧"
+  },
+  {
+    "id": "echo-ping",
+    "title": "回声",
+    "subtitle": "PING",
+    "blurb": "黑暗里只能靠一次声呐看清轮廓，看完就灭。",
+    "url": "./g/echo-ping/",
+    "hue": 188,
+    "tag": "察"
+  },
+  {
+    "id": "melt-core",
+    "title": "熔核",
+    "subtitle": "CORE",
+    "blurb": "点一下降温，按住升温，把核心留在安全带。",
+    "url": "./g/melt-core/",
+    "hue": 18,
+    "tag": "稳"
+  }
+]
