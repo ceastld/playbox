@@ -160,5 +160,23 @@
     "url": "./g/pipe-turn/",
     "hue": 185,
     "tag": "管"
+  },
+  {
+    "id": "crate-nudge",
+    "title": "微箱",
+    "subtitle": "CRATE",
+    "blurb": "三步以内把箱子推上印记。",
+    "url": "./g/crate-nudge/",
+    "hue": 30,
+    "tag": "推"
+  },
+  {
+    "id": "park-bay",
+    "title": "入位",
+    "subtitle": "PARK",
+    "blurb": "没倒车雷达，靠镜像把船停进坞。",
+    "url": "./g/park-bay/",
+    "hue": 170,
+    "tag": "停"
   }
 ]

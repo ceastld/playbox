@@ -205,7 +205,7 @@
     "blurb": "三步以内把箱子推上印记。",
     "hue": 30,
     "tag": "推",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/crate-nudge/"
   },
   {
@@ -216,7 +216,7 @@
     "blurb": "没倒车雷达，靠镜像把船停进坞。",
     "hue": 170,
     "tag": "停",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/park-bay/"
   },
   {
@@ -249,7 +249,7 @@
     "blurb": "拖线接通，避开交叉短路。",
     "hue": 55,
     "tag": "电",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/wire-close/"
   },
   {
@@ -260,7 +260,7 @@
     "blurb": "时机停手，塔要直。",
     "hue": 15,
     "tag": "叠",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/stack-tower/"
   },
   {
