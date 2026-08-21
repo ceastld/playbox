@@ -502,7 +502,7 @@
     "blurb": "篱笆每秒长一格，圈住目标再开门。",
     "hue": 100,
     "tag": "圈",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/grow-fence/"
   },
   {
@@ -524,7 +524,7 @@
     "blurb": "水面下捡物，氧气条决定深度。",
     "hue": 198,
     "tag": "气",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/hold-breath/"
   },
   {

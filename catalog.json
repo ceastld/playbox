@@ -421,5 +421,23 @@
     "url": "./g/tether-two/",
     "hue": 315,
     "tag": "绳"
+  },
+  {
+    "id": "grow-fence",
+    "title": "长篱",
+    "subtitle": "FENCE",
+    "blurb": "篱笆每秒长一格，圈住目标再开门。",
+    "url": "./g/grow-fence/",
+    "hue": 100,
+    "tag": "圈"
+  },
+  {
+    "id": "hold-breath",
+    "title": "闭气",
+    "subtitle": "BREATH",
+    "blurb": "水面下捡物，氧气条决定深度。",
+    "url": "./g/hold-breath/",
+    "hue": 198,
+    "tag": "气"
   }
 ]
