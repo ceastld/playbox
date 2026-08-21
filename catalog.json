@@ -349,5 +349,23 @@
     "url": "./g/staff-notes/",
     "hue": 260,
     "tag": "谱"
+  },
+  {
+    "id": "fold-path",
+    "title": "折径",
+    "subtitle": "FOLD",
+    "blurb": "折叠纸面，让路径接到出口。",
+    "url": "./g/fold-path/",
+    "hue": 145,
+    "tag": "折"
+  },
+  {
+    "id": "bubble-lift",
+    "title": "气泡",
+    "subtitle": "BUBBLE",
+    "blurb": "吹泡把货物托过尖刺。",
+    "url": "./g/bubble-lift/",
+    "hue": 190,
+    "tag": "泡"
   }
 ]

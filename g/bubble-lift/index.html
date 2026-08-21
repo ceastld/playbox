@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#05030c" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>气泡 · BUBBLE</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2305030c'/%3E%3Cpath d='M8 26 L12 18 L16 26 L20 18 L24 26' fill='none' stroke='%23ff3db8' stroke-width='1.6' stroke-linejoin='round'/%3E%3Ccircle cx='16' cy='13' r='6.2' fill='none' stroke='%2300f0ff' stroke-width='1.7'/%3E%3Crect x='12.4' y='6.2' width='7.2' height='5.4' rx='0.8' fill='%23ff3db8'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>气泡</b>
+        <span>BUBBLE</span>
+      </div>
+      <div class="status">
+        <span id="stage-label">—</span>
+        <div class="size" id="size-wrap" title="泡">
+          <em>泡</em>
+          <div class="track" aria-hidden="true">
+            <i id="size-fill"></i>
+            <b id="size-mark"></b>
+          </div>
+        </div>
+        <div class="row">
+          <span id="dock-label">—</span>
+          <span class="pips" id="pips" aria-label="剩余性命"></span>
+        </div>
+      </div>
+      <div class="tools">
+        <button type="button" id="btn-mute" title="M">声</button>
+        <button type="button" id="btn-retry" title="R">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <canvas id="c" aria-label="气泡托货"></canvas>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden"></div>
+      <div id="pad" class="pad">
+        <button type="button" id="btn-left" aria-label="向左">左</button>
+        <button type="button" id="btn-blow" aria-label="吹泡">吹</button>
+        <button type="button" id="btn-right" aria-label="向右">右</button>
+      </div>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">BUBBLE</p>
+          <h1 id="ov-title">气泡</h1>
+          <p class="lead" id="ov-lead">按住吹泡，货箱会被托起来。<br />松手泄气变小，钻过尖刺，送上卸货台。</p>
+          <p class="ops" id="ov-ops">空格吹泡 · A D / ← → 平移 · 点住画面也可 · M 静音</p>
+          <button type="button" id="ov-btn">吹泡</button>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">按住吹泡升起 · 松手泄气钻刺 · 别让泡扎破</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>

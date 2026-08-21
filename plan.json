@@ -403,7 +403,7 @@
     "blurb": "折叠纸面，让路径接到出口。",
     "hue": 145,
     "tag": "折",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/fold-path/"
   },
   {
@@ -447,7 +447,7 @@
     "blurb": "吹泡把货物托过尖刺。",
     "hue": 190,
     "tag": "泡",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/bubble-lift/"
   },
   {
@@ -480,7 +480,7 @@
     "blurb": "极性切换，把铁块吸到槽里。",
     "hue": 200,
     "tag": "磁",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/magnet-row/"
   },
   {
@@ -491,7 +491,7 @@
     "blurb": "声纹会暴露你，走在地毯上。",
     "hue": 225,
     "tag": "隐",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/quiet-step/"
   },
   {
