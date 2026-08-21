@@ -10,17 +10,22 @@
 </head>
 <body>
   <div class="bg"></div>
-  <header class="top">
-    <a class="brand" href="./">百戏</a>
-    <p class="tag">一个仓库 · 一目录一游戏 · 加进 catalog 就上线</p>
-  </header>
   <main id="lobby">
+    <header class="top">
+      <a class="brand" href="./">百戏</a>
+      <p class="count" id="count">— 戏</p>
+      <label class="search">
+        <span class="sr-only">搜戏</span>
+        <input id="q" type="search" placeholder="搜戏名、标签、简介" autocomplete="off" spellcheck="false" />
+      </label>
+    </header>
     <section class="hero">
       <p class="kicker">fifty little rooms</p>
       <h1>百戏</h1>
-      <p class="lead">每个小游戏自己一个文件夹，互不重编。点卡片进去玩。</p>
+      <p class="lead">五十间小房间，点一张进去玩。</p>
     </section>
     <section id="grid" class="grid" aria-live="polite"></section>
+    <p id="empty" class="empty hidden">没有叫这个的戏</p>
   </main>
   <section id="play" class="play hidden">
     <div class="play-bar">
