@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#05030c" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>蚁列 · ANTS</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2305030c'/%3E%3Cellipse cx='7' cy='20' rx='5' ry='3.6' fill='%231a0818' stroke='%23ff3db8' stroke-width='1.4'/%3E%3Cellipse cx='7' cy='19.4' rx='2' ry='1.4' fill='%2305030c'/%3E%3Cpath d='M10 19C14 14 18 22 22 15S27 9 29 11' fill='none' stroke='%23ff3db8' stroke-width='1.7' stroke-linecap='round'/%3E%3Cpath d='M10 19C14 14 18 22 22 15S27 9 29 11' fill='none' stroke='%2300f0ff' stroke-width='.7' stroke-linecap='round'/%3E%3Ccircle cx='13.2' cy='17.2' r='1.15' fill='%23ff3db8'/%3E%3Ccircle cx='17.4' cy='18.6' r='1.15' fill='%23ff3db8'/%3E%3Ccircle cx='21.2' cy='16.2' r='1.15' fill='%23ff3db8'/%3E%3Cpath d='M29 8.2L31.6 12 29 15.8 26.4 12Z' fill='%23ffe36b' stroke='%2300f0ff' stroke-width='.9'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>蚁列</b>
+        <span>ANTS</span>
+      </div>
+      <div class="status">
+        <span id="stage-label">—</span>
+        <div class="row">
+          <div class="fill" id="ink-wrap" title="余墨">
+            <em>墨</em>
+            <div class="fill-track" aria-hidden="true">
+              <i id="ink-bar"></i>
+            </div>
+          </div>
+          <span id="ants-label">—</span>
+          <span id="time-label">—</span>
+          <span class="pips" id="pips" aria-label="剩余蚁命"></span>
+        </div>
+      </div>
+      <div class="tools">
+        <button type="button" id="btn-send" title="Enter" aria-label="出发" disabled>出发</button>
+        <button type="button" id="btn-clear" title="C" aria-label="擦路" disabled>擦路</button>
+        <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
+        <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <canvas id="c" aria-label="蚁列小路"></canvas>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden"></div>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">ANTS</p>
+          <h1 id="ov-title">蚁列</h1>
+          <p class="lead" id="ov-lead">画一条小路，让蚁列走到糖。<br />路不能穿水和石，甲虫碰上就散。</p>
+          <p class="ops" id="ov-ops">拖动画路 · WASD 移笔空格画 · 回车出发 · C 擦 · M 静音</p>
+          <button type="button" id="ov-btn">开列</button>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">从蚁穴起笔 · 接到糖再出发</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>

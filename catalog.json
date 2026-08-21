@@ -505,5 +505,25 @@
     "hue": 330,
     "tag": "绕",
     "dir": "g/yarn-ball/"
+  },
+  {
+    "n": 54,
+    "id": "ant-line",
+    "title": "蚁列",
+    "subtitle": "ANTS",
+    "blurb": "画一条小路让蚁列走到糖。",
+    "hue": 35,
+    "tag": "径",
+    "dir": "g/ant-line/"
+  },
+  {
+    "n": 57,
+    "id": "ripple-step",
+    "title": "涟步",
+    "subtitle": "RIPPLE",
+    "blurb": "只踩在扩散的涟漪环上过河。",
+    "hue": 188,
+    "tag": "波",
+    "dir": "g/ripple-step/"
   }
 ]

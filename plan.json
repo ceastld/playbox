@@ -590,7 +590,7 @@
     "blurb": "画一条小路让蚁列走到糖。",
     "hue": 35,
     "tag": "径",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/ant-line/"
   },
   {
@@ -623,7 +623,7 @@
     "blurb": "只踩在扩散的涟漪环上过河。",
     "hue": 188,
     "tag": "波",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/ripple-step/"
   },
   {
@@ -678,7 +678,7 @@
     "blurb": "灯笼上浮，别让它们撞到一起。",
     "hue": 40,
     "tag": "灯",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/lantern-float/"
   },
   {
@@ -689,7 +689,7 @@
     "blurb": "印落下前把图案对齐纸。",
     "hue": 350,
     "tag": "印",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/stamp-align/"
   },
   {
