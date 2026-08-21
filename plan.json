@@ -128,7 +128,7 @@
     "blurb": "旋转物块去吻合远处的剪影。",
     "hue": 40,
     "tag": "形",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/shadow-fit/"
   },
   {
@@ -139,7 +139,7 @@
     "blurb": "两发子弹共享传送，用一门送另一门。",
     "hue": 300,
     "tag": "传",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/two-port/"
   },
   {
@@ -183,7 +183,7 @@
     "blurb": "激光扫过巷道，卡在缝里。",
     "hue": 0,
     "tag": "躲",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/laser-lane/"
   },
   {
@@ -194,7 +194,7 @@
     "blurb": "旋转管子让水流到出口。",
     "hue": 185,
     "tag": "管",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/pipe-turn/"
   },
   {

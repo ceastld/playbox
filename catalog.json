@@ -106,5 +106,23 @@
     "url": "./g/pole-balance/",
     "hue": 25,
     "tag": "衡"
+  },
+  {
+    "id": "shadow-fit",
+    "title": "剪影",
+    "subtitle": "SILHOUETTE",
+    "blurb": "旋转物块去吻合远处的剪影。",
+    "url": "./g/shadow-fit/",
+    "hue": 40,
+    "tag": "形"
+  },
+  {
+    "id": "two-port",
+    "title": "双门",
+    "subtitle": "PORTS",
+    "blurb": "两发子弹共享传送，用一门送另一门。",
+    "url": "./g/two-port/",
+    "hue": 300,
+    "tag": "传"
   }
 ]
