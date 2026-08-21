@@ -282,7 +282,7 @@
     "blurb": "用一圈光把散点赶进栏。",
     "hue": 95,
     "tag": "牧",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/herd-dot/"
   },
   {
@@ -326,7 +326,7 @@
     "blurb": "按住倒带三秒，用旧自己挡新障碍。",
     "hue": 270,
     "tag": "倒",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/mini-rewind/"
   },
   {

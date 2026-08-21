@@ -223,5 +223,14 @@
     "url": "./g/one-slice/",
     "hue": 350,
     "tag": "切"
+  },
+  {
+    "id": "herd-dot",
+    "title": "牧点",
+    "subtitle": "HERD",
+    "blurb": "用一圈光把散点赶进栏。",
+    "url": "./g/herd-dot/",
+    "hue": 95,
+    "tag": "牧"
   }
 ]
