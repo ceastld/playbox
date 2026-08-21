@@ -43,5 +43,14 @@
     "url": "./g/ghost-jump/",
     "hue": 268,
     "tag": "跳"
+  },
+  {
+    "id": "weave-net",
+    "title": "织网",
+    "subtitle": "WEAVE",
+    "blurb": "同色点连线，线不能交叉。",
+    "url": "./g/weave-net/",
+    "hue": 280,
+    "tag": "织"
   }
 ]

@@ -84,7 +84,7 @@
     "blurb": "同色点连线，线不能交叉。",
     "hue": 280,
     "tag": "织",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/weave-net/"
   },
   {
@@ -106,7 +106,7 @@
     "blurb": "播种、等待、收割，别让藤蔓堵路。",
     "hue": 110,
     "tag": "养",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/seed-cut/"
   },
   {
