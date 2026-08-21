@@ -61,5 +61,32 @@
     "url": "./g/flip-well/",
     "hue": 48,
     "tag": "转"
+  },
+  {
+    "id": "beat-blade",
+    "title": "节拍刃",
+    "subtitle": "BEAT",
+    "blurb": "只在拍点出刀，空拍会折刃。",
+    "url": "./g/beat-blade/",
+    "hue": 330,
+    "tag": "律"
+  },
+  {
+    "id": "sonar-dive",
+    "title": "潜航",
+    "subtitle": "DIVE",
+    "blurb": "上浮下潜躲开声呐环，氧气在掉。",
+    "url": "./g/sonar-dive/",
+    "hue": 195,
+    "tag": "潜"
+  },
+  {
+    "id": "seed-cut",
+    "title": "剪苗",
+    "subtitle": "SEED",
+    "blurb": "播种、等待、收割，别让藤蔓堵路。",
+    "url": "./g/seed-cut/",
+    "hue": 110,
+    "tag": "养"
   }
 ]

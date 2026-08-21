@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#05030c" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>剪苗 · SEED</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2305030c'/%3E%3Cpath d='M16 26 V14' stroke='%2300f0ff' stroke-width='2' stroke-linecap='round'/%3E%3Cpath d='M16 16 C10 12 9 7 13 6 C15 10 16 12 16 16' fill='%23ff3db8'/%3E%3Cpath d='M16 16 C22 12 23 7 19 6 C17 10 16 12 16 16' fill='%2300f0ff'/%3E%3Ccircle cx='16' cy='27' r='2.2' fill='%23ffe36b'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <canvas id="view" aria-label="剪苗苗圃"></canvas>
+
+  <div id="hud" class="hud hidden">
+    <header class="hud-top">
+      <div class="brand">
+        <strong>剪苗</strong>
+        <span>SEED</span>
+      </div>
+      <div class="readouts">
+        <div class="read">
+          <em>收成</em>
+          <b id="crop">0/12</b>
+        </div>
+        <div class="read">
+          <em>通路</em>
+          <b id="path">通</b>
+        </div>
+        <div class="read">
+          <em>时节</em>
+          <b id="time">50.0</b>
+        </div>
+      </div>
+      <div class="tools">
+        <button type="button" id="btn-mute" aria-label="静音">音</button>
+        <button type="button" id="btn-retry" aria-label="重开">重开</button>
+      </div>
+    </header>
+    <p id="hint" class="hint">点土播种 · 熟了收割 · 藤蔓要剪</p>
+  </div>
+
+  <div id="panel" class="panel" role="dialog" aria-labelledby="panel-title">
+    <div class="card" id="card">
+      <p class="kicker" id="panel-kicker">SEED</p>
+      <h1 id="panel-title">剪苗</h1>
+      <p class="lead" id="panel-lead">点土播种，熟了收割。<br />别让藤蔓堵住通往粮仓的路。</p>
+      <p class="meta" id="panel-meta">收满 12 颗。通路被堵或时节耗尽则败。</p>
+      <button type="button" id="btn-main">下田</button>
+      <p class="foot" id="panel-foot">方向键走动 · 空格动作 · M 静音</p>
+    </div>
+  </div>
+
+  <script src="js/game.js"></script>
+</body>
+</html>

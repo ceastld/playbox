@@ -62,7 +62,7 @@
     "blurb": "只在拍点出刀，空拍会折刃。",
     "hue": 330,
     "tag": "律",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/beat-blade/"
   },
   {
@@ -95,7 +95,7 @@
     "blurb": "上浮下潜躲开声呐环，氧气在掉。",
     "hue": 195,
     "tag": "潜",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/sonar-dive/"
   },
   {
@@ -106,7 +106,7 @@
     "blurb": "播种、等待、收割，别让藤蔓堵路。",
     "hue": 110,
     "tag": "养",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/seed-cut/"
   },
   {
@@ -128,7 +128,7 @@
     "blurb": "旋转物块去吻合远处的剪影。",
     "hue": 40,
     "tag": "形",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/shadow-fit/"
   },
   {
@@ -139,7 +139,7 @@
     "blurb": "两发子弹共享传送，用一门送另一门。",
     "hue": 300,
     "tag": "传",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/two-port/"
   },
   {
@@ -150,7 +150,7 @@
     "blurb": "左右微调，别让竿倒下。",
     "hue": 25,
     "tag": "衡",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/pole-balance/"
   },
   {
