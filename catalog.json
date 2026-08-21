@@ -142,5 +142,14 @@
     "url": "./g/sling-orb/",
     "hue": 320,
     "tag": "射"
+  },
+  {
+    "id": "laser-lane",
+    "title": "光巷",
+    "subtitle": "LANES",
+    "blurb": "激光扫过巷道，卡在缝里。",
+    "url": "./g/laser-lane/",
+    "hue": 0,
+    "tag": "躲"
   }
 ]

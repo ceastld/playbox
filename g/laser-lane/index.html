@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#05030c" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <title>光巷 · LANES</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2305030c'/%3E%3Cpath d='M4 8h24M4 24h24' stroke='%2300f0ff' stroke-width='2'/%3E%3Cpath d='M16 4v6M16 22v6' stroke='%2300f0ff' stroke-width='2.4' stroke-linecap='round'/%3E%3Cpath d='M6 16h7M19 16h7' stroke='%23ff3db8' stroke-width='2.6' stroke-linecap='round'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>光巷</b>
+        <span>LANES</span>
+      </div>
+      <div class="status">
+        <span id="stage-label">—</span>
+        <div class="row">
+          <span id="dist-label">距闸 —</span>
+          <span class="pips" id="pips" aria-label="剩余相位"></span>
+        </div>
+      </div>
+      <div class="tools">
+        <button type="button" id="btn-mute" title="M">声</button>
+        <button type="button" id="btn-retry" title="R">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <canvas id="c" aria-label="光巷巷道"></canvas>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden"></div>
+      <div id="pad" class="pad">
+        <button type="button" id="btn-up" aria-label="贴上壁">上缝</button>
+        <button type="button" id="btn-down" aria-label="贴下壁">下缝</button>
+      </div>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">LANES</p>
+          <h1 id="ov-title">光巷</h1>
+          <p class="lead" id="ov-lead">激光扫过整条巷道。贴进发亮的缝，才能活着过去。<br />开跑后不能停，卡进缝里等光过去。</p>
+          <p class="ops" id="ov-ops">W / ↑ 贴上壁 · S / ↓ 贴下壁 · 拖屏幕 · M 静音</p>
+          <button type="button" id="ov-btn">进巷</button>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">激光扫巷 · 卡进发亮的缝</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>

@@ -183,7 +183,7 @@
     "blurb": "激光扫过巷道，卡在缝里。",
     "hue": 0,
     "tag": "躲",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/laser-lane/"
   },
   {
@@ -227,7 +227,7 @@
     "blurb": "三原色滴管，调到目标色才开门。",
     "hue": 340,
     "tag": "色",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/mix-vial/"
   },
   {
