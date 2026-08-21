@@ -425,7 +425,7 @@
     "blurb": "你看见的是镜像，实际走相反。",
     "hue": 285,
     "tag": "迷",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/mirror-maze/"
   },
   {
@@ -436,7 +436,7 @@
     "blurb": "按谱面高低接住落下的音。",
     "hue": 260,
     "tag": "谱",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/staff-notes/"
   },
   {
@@ -458,7 +458,7 @@
     "blurb": "两根针都要对上掉落的时刻。",
     "hue": 45,
     "tag": "时",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/clock-hand/"
   },
   {
@@ -469,7 +469,7 @@
     "blurb": "墨会扩散，用空白把它堵成字。",
     "hue": 240,
     "tag": "墨",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/ink-bleed/"
   },
   {

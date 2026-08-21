@@ -331,5 +331,23 @@
     "url": "./g/heat-climb/",
     "hue": 8,
     "tag": "爬"
+  },
+  {
+    "id": "mirror-maze",
+    "title": "镜廊",
+    "subtitle": "MAZE",
+    "blurb": "你看见的是镜像，实际走相反。",
+    "url": "./g/mirror-maze/",
+    "hue": 285,
+    "tag": "迷"
+  },
+  {
+    "id": "staff-notes",
+    "title": "拾谱",
+    "subtitle": "STAFF",
+    "blurb": "按谱面高低接住落下的音。",
+    "url": "./g/staff-notes/",
+    "hue": 260,
+    "tag": "谱"
   }
 ]
