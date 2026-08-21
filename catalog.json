@@ -178,5 +178,14 @@
     "url": "./g/park-bay/",
     "hue": 170,
     "tag": "停"
+  },
+  {
+    "id": "mix-vial",
+    "title": "调色",
+    "subtitle": "MIX",
+    "blurb": "三原色滴管，调到目标色才开门。",
+    "url": "./g/mix-vial/",
+    "hue": 340,
+    "tag": "色"
   }
 ]

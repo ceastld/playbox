@@ -227,7 +227,7 @@
     "blurb": "三原色滴管，调到目标色才开门。",
     "hue": 340,
     "tag": "色",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/mix-vial/"
   },
   {
@@ -271,7 +271,7 @@
     "blurb": "一刀切开指定比例，不能多割。",
     "hue": 350,
     "tag": "切",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/one-slice/"
   },
   {

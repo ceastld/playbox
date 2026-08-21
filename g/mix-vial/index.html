@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#05030c" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>调色 · MIX</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2305030c'/%3E%3Cellipse cx='16' cy='20' rx='8' ry='9' fill='none' stroke='%2300f0ff' stroke-width='1.6'/%3E%3Cpath d='M12 11h8v4c0 1-1 2-4 2s-4-1-4-2z' fill='%23ff3db8'/%3E%3Ccircle cx='10' cy='6' r='2.2' fill='%23ff3d6a'/%3E%3Ccircle cx='16' cy='5' r='2.2' fill='%233dff88'/%3E%3Ccircle cx='22' cy='6' r='2.2' fill='%2300b8ff'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <canvas id="view" aria-label="调色实验室"></canvas>
+  <div class="scan" aria-hidden="true"></div>
+
+  <div id="hud" class="hud hidden">
+    <header class="hud-top">
+      <div class="brand">
+        <strong>调色</strong>
+        <span>MIX</span>
+      </div>
+      <div class="readouts">
+        <div class="read">
+          <em>门锁</em>
+          <b id="door">1/5</b>
+          <span class="pips" id="pips" aria-label="剩余生命"></span>
+        </div>
+        <div class="read">
+          <em>契合</em>
+          <b id="fit">0%</b>
+        </div>
+        <div class="read">
+          <em>时限</em>
+          <b id="time">90</b>
+        </div>
+      </div>
+      <div class="tools">
+        <button type="button" id="btn-dump" title="X">倾倒</button>
+        <button type="button" id="btn-mute" title="M" aria-label="静音">音</button>
+        <button type="button" id="btn-retry" aria-label="重开">重开</button>
+      </div>
+    </header>
+
+    <div class="hud-bot">
+      <p id="hint" class="hint">Q 红 · W 绿 · E 蓝 · X 倾倒</p>
+      <div class="dock" id="dock">
+        <button type="button" id="btn-r" class="prim r">红<span>Q</span></button>
+        <button type="button" id="btn-g" class="prim g">绿<span>W</span></button>
+        <button type="button" id="btn-b" class="prim b">蓝<span>E</span></button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <div id="panel" class="panel" role="dialog" aria-labelledby="panel-title">
+    <div class="card" id="card">
+      <p class="kicker" id="panel-kicker">MIX</p>
+      <h1 id="panel-title">调色</h1>
+      <p class="lead" id="panel-lead">三原色滴入瓶中。<br />调到门锁的颜色，门才会开。</p>
+      <p class="meta" id="panel-meta">五扇门，三瓶命。溢满或超时则败。</p>
+      <button type="button" id="btn-main">开锁</button>
+      <p class="foot" id="panel-foot">QWE 滴色 · X 倾倒 · M 静音</p>
+    </div>
+  </div>
+
+  <script src="js/game.js"></script>
+</body>
+</html>
