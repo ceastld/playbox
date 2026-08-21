@@ -194,7 +194,7 @@
     "blurb": "旋转管子让水流到出口。",
     "hue": 185,
     "tag": "管",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/pipe-turn/"
   },
   {
@@ -238,7 +238,7 @@
     "blurb": "格子按节奏点亮，踩错就碎。",
     "hue": 290,
     "tag": "踏",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/tile-beat/"
   },
   {

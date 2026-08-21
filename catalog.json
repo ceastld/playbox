@@ -151,5 +151,14 @@
     "url": "./g/laser-lane/",
     "hue": 0,
     "tag": "躲"
+  },
+  {
+    "id": "pipe-turn",
+    "title": "转管",
+    "subtitle": "PIPES",
+    "blurb": "旋转管子让水流到出口。",
+    "url": "./g/pipe-turn/",
+    "hue": 185,
+    "tag": "管"
   }
 ]
