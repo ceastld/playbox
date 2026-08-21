@@ -161,7 +161,7 @@
     "blurb": "亮一次路径，灭灯后凭记忆走回去。",
     "hue": 255,
     "tag": "记",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/memory-walk/"
   },
   {
@@ -172,7 +172,7 @@
     "blurb": "拉弓把光球打进移动的环。",
     "hue": 320,
     "tag": "射",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/sling-orb/"
   },
   {
@@ -205,7 +205,7 @@
     "blurb": "三步以内把箱子推上印记。",
     "hue": 30,
     "tag": "推",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/crate-nudge/"
   },
   {
@@ -216,7 +216,7 @@
     "blurb": "没倒车雷达，靠镜像把船停进坞。",
     "hue": 170,
     "tag": "停",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/park-bay/"
   },
   {

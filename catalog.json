@@ -124,5 +124,23 @@
     "url": "./g/two-port/",
     "hue": 300,
     "tag": "传"
+  },
+  {
+    "id": "memory-walk",
+    "title": "记路",
+    "subtitle": "RECALL",
+    "blurb": "亮一次路径，灭灯后凭记忆走回去。",
+    "url": "./g/memory-walk/",
+    "hue": 255,
+    "tag": "记"
+  },
+  {
+    "id": "sling-orb",
+    "title": "弹射",
+    "subtitle": "SLING",
+    "blurb": "拉弓把光球打进移动的环。",
+    "url": "./g/sling-orb/",
+    "hue": 320,
+    "tag": "射"
   }
 ]

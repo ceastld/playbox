@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#05030c" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <title>记路 · RECALL</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2305030c'/%3E%3Cpath d='M6 24h6v-8h8V8h6' fill='none' stroke='%2300f0ff' stroke-width='2.4' stroke-linecap='square'/%3E%3Ccircle cx='6' cy='24' r='2.4' fill='%23ff3db8'/%3E%3Ccircle cx='26' cy='8' r='2.2' fill='%2300f0ff'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>记路</b>
+        <span>RECALL</span>
+      </div>
+      <div class="status">
+        <span id="stage-label">—</span>
+        <div class="row">
+          <div class="mem" id="mem-wrap" title="记忆">
+            <em>记忆</em>
+            <div class="mem-track" aria-hidden="true"><i id="mem-fill"></i></div>
+          </div>
+          <span class="pips" id="pips" aria-label="剩余性命"></span>
+        </div>
+      </div>
+      <div class="tools">
+        <button type="button" id="btn-mute" title="M">声</button>
+        <button type="button" id="btn-retry" title="R">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <canvas id="c" aria-label="记路棋盘"></canvas>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden"></div>
+      <div id="pad" class="pad" aria-hidden="true">
+        <button type="button" id="btn-up" aria-label="向上">上</button>
+        <div class="pad-mid">
+          <button type="button" id="btn-left" aria-label="向左">左</button>
+          <button type="button" id="btn-down" aria-label="向下">下</button>
+          <button type="button" id="btn-right" aria-label="向右">右</button>
+        </div>
+      </div>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">RECALL</p>
+          <h1 id="ov-title">记路</h1>
+          <p class="lead" id="ov-lead">灯亮一次。灭灯后，凭记忆走回家。<br />岔路上的地砖看起来一样，踏空即坠。</p>
+          <p class="ops" id="ov-ops">WASD / 方向键逐格 · 点邻格或滑动 · M 静音</p>
+          <button type="button" id="ov-btn">看路</button>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">亮一次路径 · 灭灯后原路走回品红的家</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>
