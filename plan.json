@@ -40,7 +40,7 @@
     "blurb": "涨潮前把路线画完，水会吞掉你走过的岸。",
     "hue": 200,
     "tag": "速",
-    "status": "queued",
+    "status": "shipped",
     "dir": "g/tide-trace/"
   },
   {
@@ -51,7 +51,7 @@
     "blurb": "平台只出现在你上一轮起跳的位置。",
     "hue": 268,
     "tag": "跳",
-    "status": "queued",
+    "status": "shipped",
     "dir": "g/ghost-jump/"
   },
   {
@@ -62,7 +62,7 @@
     "blurb": "只在拍点出刀，空拍会折刃。",
     "hue": 330,
     "tag": "律",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/beat-blade/"
   },
   {
@@ -73,7 +73,7 @@
     "blurb": "冷却好了才能翻转重力，落地要算好。",
     "hue": 48,
     "tag": "转",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/flip-well/"
   },
   {
@@ -84,7 +84,7 @@
     "blurb": "同色点连线，线不能交叉。",
     "hue": 280,
     "tag": "织",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/weave-net/"
   },
   {
@@ -95,7 +95,7 @@
     "blurb": "上浮下潜躲开声呐环，氧气在掉。",
     "hue": 195,
     "tag": "潜",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/sonar-dive/"
   },
   {

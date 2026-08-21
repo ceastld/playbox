@@ -25,5 +25,23 @@
     "url": "./g/melt-core/",
     "hue": 18,
     "tag": "稳"
+  },
+  {
+    "id": "tide-trace",
+    "title": "潮痕",
+    "subtitle": "TIDE",
+    "blurb": "涨潮前把路线画完，水会吞掉你走过的岸。",
+    "url": "./g/tide-trace/",
+    "hue": 200,
+    "tag": "速"
+  },
+  {
+    "id": "ghost-jump",
+    "title": "叠跳",
+    "subtitle": "ECHO JUMP",
+    "blurb": "平台只出现在你上一轮起跳的位置。",
+    "url": "./g/ghost-jump/",
+    "hue": 268,
+    "tag": "跳"
   }
 ]

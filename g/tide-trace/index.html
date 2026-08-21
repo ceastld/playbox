@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#05030c" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <title>潮痕 · TIDE</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2305030c'/%3E%3Cpath d='M4 22c3-4 6-4 9 0s6 4 9 0 6-4 9 0' fill='none' stroke='%2300f0ff' stroke-width='2'/%3E%3Ccircle cx='22' cy='10' r='3' fill='%23ffe36b'/%3E%3Cpath d='M22 13v6' stroke='%23ff3db8' stroke-width='2'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="bg" aria-hidden="true"></div>
+  <div class="scan" aria-hidden="true"></div>
+
+  <div id="app">
+    <header class="top">
+      <div class="brand">
+        <h1>潮痕</h1>
+        <p class="sub">TIDE</p>
+      </div>
+      <div class="meta">
+        <span id="stage-label">关卡 1 / 8</span>
+        <span class="dot">·</span>
+        <span id="name-label">浅滩</span>
+        <div class="tide" title="潮距">
+          <span>潮距</span>
+          <div class="tide-bar" aria-hidden="true"><i id="tide-fill"></i></div>
+        </div>
+      </div>
+      <div class="tools">
+        <button type="button" id="btn-mute" title="静音（M）">声开</button>
+        <button type="button" id="btn-restart" title="重来（R）">重来</button>
+      </div>
+    </header>
+
+    <main class="play">
+      <div class="board-wrap">
+        <canvas id="board" width="720" height="480" tabindex="0" aria-label="潮痕沙滩"></canvas>
+      </div>
+      <aside class="side">
+        <p class="hint" id="hint">在潮水追上你之前，走到金色灯塔。走过的岸会被水吞没。</p>
+        <div class="pad" id="pad">
+          <button type="button" data-dir="U" aria-label="上">▲</button>
+          <button type="button" data-dir="L" aria-label="左">◀</button>
+          <button type="button" data-dir="R" aria-label="右">▶</button>
+          <button type="button" data-dir="D" aria-label="下">▼</button>
+        </div>
+        <p class="legend">
+          <span class="you">你</span>
+          <span class="wet">潮痕</span>
+          <span class="goal">灯塔</span>
+        </p>
+      </aside>
+    </main>
+
+    <div id="overlay" class="overlay" role="dialog" aria-modal="true">
+      <p class="ov-kicker" id="ov-kicker">TIDE</p>
+      <h2 id="ov-title">潮痕</h2>
+      <p id="ov-msg">先画出通往灯塔的路。<br />潮水会顺着脚印涌来，吞掉你走过的岸。</p>
+      <div class="ov-actions" id="ov-actions"></div>
+      <p class="ov-help" id="ov-help">拖拽绘制 · WASD / 方向键 · 屏幕十字 · M 静音</p>
+    </div>
+  </div>
+
+  <script src="js/game.js"></script>
+</body>
+</html>
