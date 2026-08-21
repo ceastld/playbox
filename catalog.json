@@ -268,5 +268,14 @@
     "url": "./g/mini-rewind/",
     "hue": 270,
     "tag": "倒"
+  },
+  {
+    "id": "orbit-tap",
+    "title": "轨拍",
+    "subtitle": "ORBIT TAP",
+    "blurb": "在轨道交点的瞬间点射。",
+    "url": "./g/orbit-tap/",
+    "hue": 310,
+    "tag": "轨"
   }
 ]

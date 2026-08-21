@@ -348,7 +348,7 @@
     "blurb": "在轨道交点的瞬间点射。",
     "hue": 310,
     "tag": "轨",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/orbit-tap/"
   },
   {
@@ -381,7 +381,7 @@
     "blurb": "用手挡风，烛火不能灭。",
     "hue": 12,
     "tag": "护",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/candle-wind/"
   },
   {
