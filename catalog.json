@@ -277,5 +277,14 @@
     "url": "./g/orbit-tap/",
     "hue": 310,
     "tag": "轨"
+  },
+  {
+    "id": "rain-cloth",
+    "title": "收衣",
+    "subtitle": "RAIN",
+    "blurb": "雨来之前收完衣服，远的先湿。",
+    "url": "./g/rain-cloth/",
+    "hue": 230,
+    "tag": "收"
   }
 ]

@@ -370,7 +370,7 @@
     "blurb": "雨来之前收完衣服，远的先湿。",
     "hue": 230,
     "tag": "收",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/rain-cloth/"
   },
   {
@@ -392,7 +392,7 @@
     "blurb": "领头走，虫群有延迟，别带进刺。",
     "hue": 130,
     "tag": "引",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/swarm-lead/"
   },
   {

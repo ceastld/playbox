@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#05030c" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>收衣 · RAIN</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2305030c'/%3E%3Cpath d='M4 10 H28' stroke='%2300f0ff' stroke-width='1.8' stroke-linecap='round'/%3E%3Cpath d='M9 10 L9 20 L13 20 L13 10' fill='%23ff3db8'/%3E%3Cpath d='M18 10 L16 22 H22 L20 10' fill='%2300f0ff'/%3E%3Cpath d='M6 6 L8 14' stroke='%238b90b8' stroke-width='1.2'/%3E%3Cpath d='M14 4 L15 12' stroke='%238b90b8' stroke-width='1.2'/%3E%3Cpath d='M24 5 L22 13' stroke='%238b90b8' stroke-width='1.2'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>收衣</b>
+        <span>RAIN</span>
+      </div>
+      <div class="status">
+        <span id="stage-label">—</span>
+        <div class="row">
+          <span id="take-label">—</span>
+          <span id="rain-label">—</span>
+          <span class="pips" id="pips" aria-label="剩余次数"></span>
+        </div>
+      </div>
+      <div class="tools">
+        <button type="button" id="btn-mute" title="M">声</button>
+        <button type="button" id="btn-retry" title="R">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <canvas id="c" aria-label="天台晾衣"></canvas>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden"></div>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">RAIN</p>
+          <h1 id="ov-title">收衣</h1>
+          <p class="lead" id="ov-lead">雨从天台远处压过来。远的衣服先湿。<br />先冲最远那件，再往回收。</p>
+          <p class="ops" id="ov-ops">WASD / 方向键走动 · 点地或点衣服跑过去 · 靠近即收 · M 静音</p>
+          <button type="button" id="ov-btn">收衣</button>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">远的先湿 · 先收远处 · 靠近即收</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>
