@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#05030c" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>碰杯 · TUNE</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2305030c'/%3E%3Cpath d='M8 6c-3 6-3 10 0 12 2 1.4 4 1.4 6 0 3-2 3-6 0-12z' fill='none' stroke='%23ff3db8' stroke-width='1.5'/%3E%3Cpath d='M18 8c-2.4 5-2.4 8.4 0 10.2 1.6 1.2 3.4 1.2 5 0 2.4-1.8 2.4-5.2 0-10.2z' fill='none' stroke='%2300f0ff' stroke-width='1.5'/%3E%3Cpath d='M11 18v6 M21 18.4v5.6' stroke='%23ffe36b' stroke-width='1.3' stroke-linecap='round'/%3E%3Cpath d='M8 24.4h6 M18 24.4h6' stroke='%23ffe36b' stroke-width='1.4' stroke-linecap='round'/%3E%3Ccircle cx='16' cy='9' r='1.6' fill='%23ffe36b'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <canvas id="view" aria-label="碰杯凑和弦"></canvas>
+  <div class="scan" aria-hidden="true"></div>
+
+  <div id="hud" class="hud hidden">
+    <header class="hud-top">
+      <div class="brand">
+        <strong>碰杯</strong>
+        <span>TUNE</span>
+      </div>
+      <div class="readouts">
+        <div class="read">
+          <em>席</em>
+          <b id="door">1/9</b>
+          <span class="pips" id="pips" aria-label="剩余生命"></span>
+        </div>
+        <div class="read">
+          <em>契合</em>
+          <b id="fit">0/2</b>
+        </div>
+        <div class="read">
+          <em>时限</em>
+          <b id="time">22</b>
+        </div>
+      </div>
+      <div class="tools">
+        <button type="button" id="btn-listen" title="空格">再听 2</button>
+        <button type="button" id="btn-mute" title="M" aria-label="静音">音</button>
+        <button type="button" id="btn-retry" aria-label="重开" title="R">重开</button>
+      </div>
+    </header>
+
+    <div class="hud-bot">
+      <p id="hint" class="hint">敲亮着的杯子，让它们一起响</p>
+      <div class="dock" id="dock" role="group" aria-label="杯子"></div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <div id="panel" class="panel" role="dialog" aria-labelledby="panel-title">
+    <div class="card" id="card">
+      <p class="kicker" id="panel-kicker">TUNE</p>
+      <h1 id="panel-title">碰杯</h1>
+      <p class="lead" id="panel-lead">敲杯子凑出目标和弦。<br />要一起响，多敲一只都不算。</p>
+      <p class="meta" id="panel-meta">九席碰杯，三条命。余音会散，后席要连敲。</p>
+      <button type="button" id="btn-main">入席</button>
+      <p class="foot" id="panel-foot">1–8 / ASDFJKL; 敲杯 · 空格再听 · M 静音</p>
+    </div>
+  </div>
+
+  <script src="js/game.js"></script>
+</body>
+</html>

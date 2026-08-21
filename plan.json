@@ -7,7 +7,7 @@
     "blurb": "你和镜中人同时走，两边都要落在安全格。",
     "hue": 312,
     "tag": "巧",
-    "status": "hardening",
+    "status": "shipped",
     "dir": "g/mirror-step/"
   },
   {
@@ -18,7 +18,7 @@
     "blurb": "黑暗里只能靠一次声呐看清轮廓，看完就灭。",
     "hue": 188,
     "tag": "察",
-    "status": "hardening",
+    "status": "shipped",
     "dir": "g/echo-ping/"
   },
   {
@@ -557,7 +557,7 @@
     "blurb": "按节拍接水，满到线停，溢了就输。",
     "hue": 205,
     "tag": "接",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/drip-fill/"
   },
   {
@@ -568,7 +568,7 @@
     "blurb": "抽对的绳结，抽错会勒紧别的。",
     "hue": 28,
     "tag": "绳",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/knot-pull/"
   },
   {
@@ -579,7 +579,7 @@
     "blurb": "敲杯子凑出目标和弦。",
     "hue": 48,
     "tag": "音",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/glass-tune/"
   },
   {
@@ -590,7 +590,7 @@
     "blurb": "画一条小路让蚁列走到糖。",
     "hue": 35,
     "tag": "径",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/ant-line/"
   },
   {
@@ -601,7 +601,7 @@
     "blurb": "只接一种颜色的雪，别的要躲开。",
     "hue": 210,
     "tag": "接",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/snow-catch/"
   },
   {
@@ -612,7 +612,7 @@
     "blurb": "门闪一下，记住哪扇后面有钥。",
     "hue": 280,
     "tag": "记",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/door-peek/"
   },
   {
@@ -623,7 +623,7 @@
     "blurb": "只踩在扩散的涟漪环上过河。",
     "hue": 188,
     "tag": "波",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/ripple-step/"
   },
   {
@@ -634,7 +634,7 @@
     "blurb": "绕线不交叉，绕满一个球。",
     "hue": 330,
     "tag": "绕",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/yarn-ball/"
   },
   {

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#05030c" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>抽结 · KNOT</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2305030c'/%3E%3Cellipse cx='14' cy='18' rx='9' ry='6' fill='none' stroke='%2300f0ff' stroke-width='2'/%3E%3Cellipse cx='18' cy='14' rx='9' ry='6' fill='none' stroke='%23ff3db8' stroke-width='2'/%3E%3Ccircle cx='25' cy='11' r='3.2' fill='none' stroke='%23ffe36b' stroke-width='1.8'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>抽结</b>
+        <span>KNOT</span>
+      </div>
+      <div class="status">
+        <span id="stage-label">—</span>
+        <div class="row">
+          <span id="left-label">结 —</span>
+          <span id="ten-label">勒 —</span>
+          <span id="time-label">—</span>
+          <span class="pips" id="pips" aria-label="剩余性命"></span>
+        </div>
+      </div>
+      <div class="tools">
+        <button type="button" id="btn-pull" title="空格">抽</button>
+        <button type="button" id="btn-mute" title="M">声</button>
+        <button type="button" id="btn-retry" title="R">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <canvas id="c" aria-label="抽结绳团"></canvas>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden"></div>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">KNOT</p>
+          <h1 id="ov-title">抽结</h1>
+          <p class="lead" id="ov-lead">抽对的绳结会整根松开。抽错，压在它上面的结会被勒紧。<br />交叉处，完整的绳在上，断开的在下。</p>
+          <p class="ops" id="ov-ops">拖结向外抽出 · 方向键选择 · 空格抽取 · M 静音</p>
+          <button type="button" id="ov-btn">上手</button>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">松的结会晃 · 交叉完整的在上 · 抽错会勒紧压着它的结</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>

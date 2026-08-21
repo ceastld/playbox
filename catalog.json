@@ -448,5 +448,32 @@
     "url": "./g/last-light/",
     "hue": 22,
     "tag": "光"
+  },
+  {
+    "id": "drip-fill",
+    "title": "滴满",
+    "subtitle": "DRIP",
+    "blurb": "按节拍接水，满到线停，溢了就输。",
+    "url": "./g/drip-fill/",
+    "hue": 205,
+    "tag": "接"
+  },
+  {
+    "id": "knot-pull",
+    "title": "抽结",
+    "subtitle": "KNOT",
+    "blurb": "抽对的绳结，抽错会勒紧别的。",
+    "url": "./g/knot-pull/",
+    "hue": 28,
+    "tag": "绳"
+  },
+  {
+    "id": "glass-tune",
+    "title": "碰杯",
+    "subtitle": "TUNE",
+    "blurb": "敲杯子凑出目标和弦。",
+    "url": "./g/glass-tune/",
+    "hue": 48,
+    "tag": "音"
   }
 ]

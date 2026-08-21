@@ -21,15 +21,24 @@
   const TAP_MS = 220;
   const TAP_PX = 14;
 
+  let fadeDur = FADE;
+  let moverSpeed = MOVER_SPEED;
+  let pingCool = PING_COOL;
+
   const D = (n) => ".".repeat(n);
   const H = (n) => "#".repeat(n);
   const Z = (n) => "!".repeat(n);
+  const TEETH_A = H(2) + Z(2) + D(4) + H(2) + Z(2) + D(4) + H(2) + Z(2) + D(4) + H(2) + D(2);
+  const TEETH_B = D(4) + H(2) + Z(2) + D(4) + H(2) + Z(2) + D(4) + H(2) + Z(2) + D(4);
 
   const STAGES = [
     {
       name: "初响",
       sub: "FIRST",
-      pings: 5,
+      pings: 6,
+      fade: 0.95,
+      cool: 0.42,
+      hint: "空格发声",
       inner: [
         "P" + D(27),
         D(28),
@@ -50,7 +59,10 @@
     {
       name: "折廊",
       sub: "BEND",
-      pings: 5,
+      pings: 6,
+      fade: 0.88,
+      cool: 0.46,
+      hint: "声波绕墙",
       inner: [
         "P" + D(27),
         H(27) + ".",
@@ -72,6 +84,9 @@
       name: "刺径",
       sub: "THORN",
       pings: 6,
+      fade: 0.82,
+      cool: 0.5,
+      hint: "避开尖刺",
       inner: [
         "P" + D(27),
         D(28),
@@ -93,6 +108,8 @@
       name: "盲井",
       sub: "WELL",
       pings: 5,
+      fade: 0.76,
+      cool: 0.52,
       inner: [
         "P" + D(4) + H(3) + D(17) + H(3),
         D(5) + H(3) + D(17) + H(3),
@@ -114,6 +131,10 @@
       name: "游影",
       sub: "DRIFT",
       pings: 7,
+      fade: 0.72,
+      cool: 0.55,
+      moverSpeed: 72,
+      hint: "粉球会动",
       inner: [
         "P" + D(12) + H(2) + D(13),
         D(13) + H(2) + D(13),
@@ -135,6 +156,8 @@
       name: "窄隙",
       sub: "GAP",
       pings: 5,
+      fade: 0.66,
+      cool: 0.58,
       inner: [
         "P" + D(27),
         H(27) + ".",
@@ -155,7 +178,10 @@
     {
       name: "双潮",
       sub: "TIDE",
-      pings: 6,
+      pings: 5,
+      fade: 0.62,
+      cool: 0.62,
+      moverSpeed: 90,
       inner: [
         "P" + D(12) + "#" + D(14),
         D(13) + "#" + D(14),
@@ -176,7 +202,10 @@
     {
       name: "终响",
       sub: "LAST",
-      pings: 5,
+      pings: 4,
+      fade: 0.58,
+      cool: 0.66,
+      moverSpeed: 96,
       inner: [
         "P" + D(12) + "#" + D(4) + Z(4) + D(6),
         D(13) + "#" + D(14),
@@ -191,6 +220,101 @@
         D(4) + Z(4) + D(5) + "#" + D(14),
         D(13) + "#" + D(14),
         D(13) + "#" + D(9) + Z(3) + "X" + D(1),
+        D(13) + "#" + D(14)
+      ]
+    },
+    {
+      name: "回廊",
+      sub: "HALL",
+      pings: 4,
+      fade: 0.54,
+      cool: 0.68,
+      inner: [
+        "P" + D(27),
+        H(24) + Z(3) + ".",
+        D(28),
+        "." + Z(3) + H(24),
+        D(28),
+        H(24) + Z(3) + ".",
+        D(28),
+        "." + Z(3) + H(24),
+        D(28),
+        H(24) + Z(3) + ".",
+        D(28),
+        "." + Z(3) + H(24),
+        D(27) + "X",
+        D(28)
+      ]
+    },
+    {
+      name: "交叉",
+      sub: "CROSS",
+      pings: 4,
+      fade: 0.5,
+      cool: 0.7,
+      moverSpeed: 102,
+      inner: [
+        "P" + D(4) + Z(2) + D(16) + Z(2) + D(3),
+        D(5) + Z(2) + D(16) + Z(2) + D(3),
+        H(2) + D(22) + H(4),
+        H(2) + D(4) + ">" + D(12) + "<" + D(4) + H(4),
+        H(2) + D(22) + H(4),
+        D(28),
+        D(6) + "v" + D(14) + "v" + D(6),
+        D(28),
+        H(4) + D(22) + H(2),
+        H(4) + D(4) + ">" + D(12) + "<" + D(4) + H(2),
+        H(4) + D(22) + H(2),
+        D(5) + Z(2) + D(16) + Z(2) + D(3),
+        D(5) + Z(2) + D(16) + Z(2) + D(2) + "X",
+        D(5) + Z(2) + D(16) + Z(2) + D(3)
+      ]
+    },
+    {
+      name: "齿缝",
+      sub: "TEETH",
+      pings: 3,
+      fade: 0.46,
+      cool: 0.74,
+      moverSpeed: 108,
+      inner: [
+        "P" + D(27),
+        TEETH_B,
+        TEETH_B,
+        D(5) + ">" + D(16) + "<" + D(5),
+        TEETH_A,
+        TEETH_A,
+        D(28),
+        TEETH_B,
+        TEETH_B,
+        D(5) + ">" + D(16) + "<" + D(5),
+        TEETH_A,
+        TEETH_A,
+        D(27) + "X",
+        D(28)
+      ]
+    },
+    {
+      name: "末夜",
+      sub: "VOID",
+      pings: 3,
+      fade: 0.42,
+      cool: 0.8,
+      moverSpeed: 116,
+      inner: [
+        "P" + D(6) + Z(3) + D(3) + "#" + D(4) + Z(3) + D(7),
+        D(13) + "#" + D(14),
+        D(1) + ">" + D(11) + "#" + D(1) + "<" + D(12),
+        D(13) + "#" + D(14),
+        H(4) + D(4) + Z(2) + D(3) + "#" + D(4) + Z(2) + D(3) + H(4) + D(1),
+        D(13) + "#" + D(14),
+        D(2) + "v" + D(10) + "#" + D(6) + "v" + D(7),
+        D(28),
+        D(13) + "#" + D(14),
+        D(13) + "#" + D(1) + "<" + D(12),
+        D(4) + Z(4) + D(5) + "#" + D(4) + Z(3) + D(7),
+        D(13) + "#" + D(14),
+        D(13) + "#" + D(8) + Z(3) + "X" + D(2),
         D(13) + "#" + D(14)
       ]
     }
@@ -233,8 +357,8 @@
   }
 
   function fadeVis(age) {
-    if (age < 0 || age > FADE) return 0;
-    const t = 1 - age / FADE;
+    if (age < 0 || age > fadeDur) return 0;
+    const t = 1 - age / fadeDur;
     return t * t * (3 - 2 * t);
   }
 
@@ -622,7 +746,7 @@
       }
       pingsLeft--;
       renderHud();
-      cooldown = PING_COOL;
+      cooldown = pingCool;
     }
     const field = buildPingField(player.x, player.y);
     pings.push({
@@ -683,7 +807,7 @@
   function showToast(text) {
     toastEl.textContent = text;
     toastEl.classList.remove("hidden");
-    toastT = 1.35;
+    toastT = 1.7;
   }
 
   function renderHud() {
@@ -691,7 +815,7 @@
       stageLabel.textContent = "黑暗里听路";
     } else {
       const s = STAGES[stageIndex];
-      stageLabel.textContent = (stageIndex + 1) + " / 8　" + s.name;
+      stageLabel.textContent = (stageIndex + 1) + " / " + STAGES.length + "　" + s.name;
     }
     pipsEl.innerHTML = "";
     const max = Math.max(pingsMax, 1);
@@ -723,9 +847,9 @@
     if (kind === "title") {
       ovKicker.textContent = "PING";
       ovTitle.textContent = "回声";
-      ovLead.textContent = "世界是黑的。发出声波，墙与危险亮起一瞬，随即没入暗处。在有限的回声里，走到出口。";
+      ovLead.textContent = "世界是黑的。发出声波，墙与危险亮起一瞬，随即没入暗处。在有限的回声里，走过十二段黑暗。";
       ovOps.textContent = coarse
-        ? "拖拽移动 · 点按或右上「声波」发声 · 共八关"
+        ? "拖拽移动 · 点按或右上「声波」发声 · 共十二关"
         : "WASD / 方向键移动 · 空格或点按发声波 · 拖拽也可移动 · M 静音";
       ovBtn.textContent = "开始";
     } else if (kind === "dead") {
@@ -737,13 +861,13 @@
     } else if (kind === "clear") {
       ovKicker.textContent = "ECHO";
       ovTitle.textContent = "回响抵达";
-      ovLead.textContent = "声波撞上了门。还剩 " + (8 - stageIndex - 1) + " 关黑暗。";
+      ovLead.textContent = "声波撞上了门。还剩 " + (STAGES.length - stageIndex - 1) + " 关黑暗。";
       ovOps.textContent = "";
       ovBtn.textContent = "下一关";
     } else if (kind === "win") {
       ovKicker.textContent = "SILENCE";
-      ovTitle.textContent = "八声落定";
-      ovLead.textContent = "夜不再说话。你把路记在了骨头里。";
+      ovTitle.textContent = "十二声落定";
+      ovLead.textContent = "夜不再说话。你把十二段路记在了骨头里。";
       ovOps.textContent = "";
       ovBtn.textContent = "再来一局";
     }
@@ -769,6 +893,9 @@
     parseGrid(TITLE_INNER, true);
     player.x = WORLD_W * 0.5;
     player.y = WORLD_H * 0.5;
+    fadeDur = FADE;
+    moverSpeed = MOVER_SPEED;
+    pingCool = PING_COOL;
     pingsLeft = 0;
     pingsMax = 0;
     cooldown = 0;
@@ -786,13 +913,17 @@
     ending = null;
     shake = 0;
     parseGrid(s.inner, true);
+    fadeDur = s.fade || FADE;
+    moverSpeed = s.moverSpeed || MOVER_SPEED;
+    pingCool = s.cool || PING_COOL;
     pingsLeft = s.pings;
     pingsMax = s.pings;
     cooldown = 0.15;
     autoPingT = i === 0 ? 0.4 : -1;
     hideOverlay();
     renderHud();
-    showToast((i + 1) + " / 8　" + s.name);
+    const tag = (i + 1) + " / " + STAGES.length + "　" + s.name;
+    showToast(s.hint ? tag + " · " + s.hint : tag);
   }
 
   function kill() {
@@ -927,7 +1058,7 @@
   function updateMovers(dt) {
     for (let i = 0; i < movers.length; i++) {
       const m = movers[i];
-      const step = MOVER_SPEED * dt;
+      const step = moverSpeed * dt;
       const nx = m.x + m.vx * step;
       const ny = m.y + m.vy * step;
       if (circleHitsWall(nx, ny, MOVER_R + 1)) {
@@ -1167,7 +1298,7 @@
     ctx.stroke();
 
     if (mode === "play" && !frozen) {
-      const ready = 1 - clamp(cooldown / PING_COOL, 0, 1);
+      const ready = 1 - clamp(cooldown / pingCool, 0, 1);
       ctx.beginPath();
       ctx.arc(player.x, player.y, PLAYER_R + 5, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * ready);
       ctx.strokeStyle = ready >= 1 ? "rgba(0,240,255,0.55)" : "rgba(255,61,184,0.55)";
