@@ -315,7 +315,7 @@
     "blurb": "两幅星图有一处不同，快指出来。",
     "hue": 220,
     "tag": "找",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/spot-diff/"
   },
   {
@@ -326,7 +326,7 @@
     "blurb": "按住倒带三秒，用旧自己挡新障碍。",
     "hue": 270,
     "tag": "倒",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/mini-rewind/"
   },
   {
@@ -359,7 +359,7 @@
     "blurb": "把破损图块拖回原位。",
     "hue": 160,
     "tag": "修",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/pixel-mend/"
   },
   {
@@ -370,7 +370,7 @@
     "blurb": "雨来之前收完衣服，远的先湿。",
     "hue": 230,
     "tag": "收",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/rain-cloth/"
   },
   {

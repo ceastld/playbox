@@ -250,5 +250,23 @@
     "url": "./g/sail-gust/",
     "hue": 175,
     "tag": "帆"
+  },
+  {
+    "id": "spot-diff",
+    "title": "寻隙",
+    "subtitle": "SPOT",
+    "blurb": "两幅星图有一处不同，快指出来。",
+    "url": "./g/spot-diff/",
+    "hue": 220,
+    "tag": "找"
+  },
+  {
+    "id": "mini-rewind",
+    "title": "倒带",
+    "subtitle": "REWIND",
+    "blurb": "按住倒带三秒，用旧自己挡新障碍。",
+    "url": "./g/mini-rewind/",
+    "hue": 270,
+    "tag": "倒"
   }
 ]
