@@ -313,5 +313,14 @@
     "url": "./g/candle-wind/",
     "hue": 12,
     "tag": "护"
+  },
+  {
+    "id": "swarm-lead",
+    "title": "引虫",
+    "subtitle": "SWARM",
+    "blurb": "领头走，虫群有延迟，别带进刺。",
+    "url": "./g/swarm-lead/",
+    "hue": 130,
+    "tag": "引"
   }
 ]
