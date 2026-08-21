@@ -634,7 +634,7 @@
     "blurb": "绕线不交叉，绕满一个球。",
     "hue": 330,
     "tag": "绕",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/yarn-ball/"
   },
   {
@@ -667,7 +667,7 @@
     "blurb": "按住瞄准，松手打水漂到对岸。",
     "hue": 195,
     "tag": "漂",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/pebble-skip/"
   },
   {

@@ -495,5 +495,15 @@
     "hue": 280,
     "tag": "记",
     "dir": "g/door-peek/"
+  },
+  {
+    "n": 58,
+    "id": "yarn-ball",
+    "title": "绕线",
+    "subtitle": "YARN",
+    "blurb": "绕线不交叉，绕满一个球。",
+    "hue": 330,
+    "tag": "绕",
+    "dir": "g/yarn-ball/"
   }
 ]
