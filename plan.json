@@ -260,7 +260,7 @@
     "blurb": "时机停手，塔要直。",
     "hue": 15,
     "tag": "叠",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/stack-tower/"
   },
   {
@@ -271,7 +271,7 @@
     "blurb": "一刀切开指定比例，不能多割。",
     "hue": 350,
     "tag": "切",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/one-slice/"
   },
   {
@@ -304,7 +304,7 @@
     "blurb": "借阵风转向，别撞礁。",
     "hue": 175,
     "tag": "帆",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/sail-gust/"
   },
   {
@@ -315,7 +315,7 @@
     "blurb": "两幅星图有一处不同，快指出来。",
     "hue": 220,
     "tag": "找",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/spot-diff/"
   },
   {

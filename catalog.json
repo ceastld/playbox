@@ -205,5 +205,23 @@
     "url": "./g/wire-close/",
     "hue": 55,
     "tag": "电"
+  },
+  {
+    "id": "stack-tower",
+    "title": "叠塔",
+    "subtitle": "STACK",
+    "blurb": "时机停手，塔要直。",
+    "url": "./g/stack-tower/",
+    "hue": 15,
+    "tag": "叠"
+  },
+  {
+    "id": "one-slice",
+    "title": "一刀",
+    "subtitle": "SLICE",
+    "blurb": "一刀切开指定比例，不能多割。",
+    "url": "./g/one-slice/",
+    "hue": 350,
+    "tag": "切"
   }
 ]

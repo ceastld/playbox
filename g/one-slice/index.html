@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#05030c" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>一刀 · SLICE</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2305030c'/%3E%3Cellipse cx='16' cy='20' rx='8' ry='7' fill='%23ff3db8'/%3E%3Cpath d='M16 4 v22' stroke='%2300f0ff' stroke-width='2' stroke-linecap='round'/%3E%3Cpath d='M13 5 h6 l-1 4 h-4z' fill='%23ffe36b'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="scan" aria-hidden="true"></div>
+  <canvas id="view" aria-label="一刀砧板"></canvas>
+
+  <div id="hud" class="hud hidden">
+    <header class="hud-top">
+      <div class="brand">
+        <strong>一刀</strong>
+        <span>SLICE</span>
+      </div>
+      <div class="readouts">
+        <div class="read">
+          <em>刀序</em>
+          <b id="round">1/6</b>
+        </div>
+        <div class="read">
+          <em>成数</em>
+          <b id="mark">对半</b>
+        </div>
+        <div class="read">
+          <em>时</em>
+          <b id="time">10.0</b>
+        </div>
+      </div>
+      <div class="right">
+        <div class="blades" id="blades" title="余刀" aria-label="剩余刀">
+          <i></i><i></i><i></i>
+        </div>
+        <div class="tools">
+          <button type="button" id="btn-mute" title="静音（M）">声开</button>
+          <button type="button" id="btn-retry" title="重开（R）">重开</button>
+        </div>
+      </div>
+    </header>
+    <p id="hint" class="hint">青块对准成数 · 只能一刀</p>
+  </div>
+
+  <button type="button" id="btn-cut" class="cut-btn hidden" aria-label="落刀">切</button>
+
+  <div id="panel" class="panel" role="dialog" aria-labelledby="panel-title">
+    <div class="card" id="card">
+      <p class="kicker" id="panel-kicker">SLICE</p>
+      <h1 id="panel-title">一刀</h1>
+      <p class="lead" id="panel-lead">一刀切开指定比例。<br />只能下一刀，不能多割。</p>
+      <p class="meta" id="panel-meta">小块要对上成数。切偏、空刀、迟了都会折刃。六刀皆准则胜。</p>
+      <div class="legend" aria-hidden="true">
+        <span class="lg-a">◆ 小块</span>
+        <span class="lg-b">◇ 大块</span>
+      </div>
+      <button type="button" id="btn-main">开刃</button>
+      <p class="foot" id="panel-foot">← → 移刃 · 空格落刀 · 拖移 / 点按 · M 静音</p>
+    </div>
+  </div>
+
+  <script src="js/game.js"></script>
+</body>
+</html>

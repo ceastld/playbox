@@ -1,0 +1,321 @@
+:root {
+  --bg: #05030c;
+  --ink: #f6f3ff;
+  --dim: #9aa0c8;
+  --pink: #ff3db8;
+  --cyan: #00f0ff;
+  --gold: #ffe36b;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "Segoe UI", "PingFang SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+  overscroll-behavior: none;
+}
+
+canvas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.scan {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 4;
+  opacity: 0.04;
+  background: repeating-linear-gradient(
+    to bottom,
+    #fff 0 1px,
+    transparent 1px 4px
+  );
+}
+
+.hud {
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: calc(12px + env(safe-area-inset-top)) 16px calc(14px + env(safe-area-inset-bottom));
+}
+
+.hud-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand { min-width: 92px; }
+
+.brand strong {
+  display: block;
+  font-size: 22px;
+  letter-spacing: 0.28em;
+  font-weight: 900;
+  background: linear-gradient(90deg, var(--pink), #fff 46%, var(--cyan));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.brand span {
+  font-size: 10px;
+  letter-spacing: 0.42em;
+  color: var(--cyan);
+}
+
+.readouts {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+}
+
+.read { text-align: center; }
+
+.read em {
+  display: block;
+  font-style: normal;
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  color: var(--dim);
+}
+
+.read b {
+  font-size: 22px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+  text-shadow: 0 0 16px rgba(0, 240, 255, 0.35);
+}
+
+.read.danger b {
+  color: var(--pink);
+  text-shadow: 0 0 16px rgba(255, 61, 184, 0.45);
+}
+
+.read.warn b {
+  color: var(--gold);
+  text-shadow: 0 0 16px rgba(255, 227, 107, 0.35);
+}
+
+.right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.blades {
+  display: flex;
+  gap: 5px;
+}
+
+.blades i {
+  display: block;
+  width: 9px;
+  height: 22px;
+  border-radius: 2px 2px 1px 1px;
+  background: linear-gradient(180deg, var(--cyan), var(--pink));
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.45);
+  clip-path: polygon(50% 0, 100% 18%, 86% 100%, 14% 100%, 0 18%);
+}
+
+.blades i.off {
+  opacity: 0.18;
+  box-shadow: none;
+  background: #3a3550;
+}
+
+.tools {
+  display: flex;
+  gap: 8px;
+  pointer-events: auto;
+}
+
+button {
+  font: inherit;
+  color: #fff;
+  cursor: pointer;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.05);
+  letter-spacing: 0.14em;
+}
+
+.tools button {
+  pointer-events: auto;
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+.tools button:hover,
+#btn-main:hover,
+.cut-btn:hover {
+  border-color: rgba(0, 240, 255, 0.55);
+  box-shadow: 0 0 18px rgba(0, 240, 255, 0.18);
+}
+
+button:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 2px;
+}
+
+.hint {
+  text-align: center;
+  font-size: 13px;
+  letter-spacing: 0.18em;
+  color: #c9c6e8;
+  text-shadow: 0 2px 12px #05030c;
+  margin-bottom: 56px;
+}
+
+.hint.warn {
+  color: var(--pink);
+  letter-spacing: 0.14em;
+}
+
+.hint.ok {
+  color: var(--cyan);
+}
+
+.hint.gold {
+  color: var(--gold);
+}
+
+.cut-btn {
+  position: fixed;
+  z-index: 3;
+  left: 50%;
+  bottom: calc(18px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 0.28em;
+  color: #05030c;
+  border: 2px solid rgba(0, 240, 255, 0.7);
+  background: radial-gradient(circle at 35% 30%, #7af6ff, var(--cyan) 42%, #ff3db8);
+  box-shadow:
+    0 0 28px rgba(0, 240, 255, 0.35),
+    0 8px 20px rgba(0, 0, 0, 0.35);
+}
+
+.cut-btn:active {
+  transform: translateX(-50%) scale(0.96);
+}
+
+.panel {
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: radial-gradient(ellipse at 50% 45%, rgba(5, 3, 12, 0.18), rgba(5, 3, 12, 0.62) 70%);
+}
+
+.panel.hidden,
+.hud.hidden,
+.cut-btn.hidden { display: none; }
+
+.card {
+  width: min(420px, 92vw);
+  padding: 28px 26px 22px;
+  text-align: center;
+  border-radius: 22px;
+  border: 1px solid rgba(255, 61, 184, 0.32);
+  background: rgba(8, 5, 18, 0.82);
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, 0.45),
+    0 0 40px rgba(255, 61, 184, 0.12),
+    inset 0 0 40px rgba(0, 240, 255, 0.04);
+  backdrop-filter: blur(10px);
+}
+
+.kicker {
+  font-size: 11px;
+  letter-spacing: 0.42em;
+  color: var(--cyan);
+  text-transform: uppercase;
+}
+
+.card h1 {
+  margin: 8px 0 10px;
+  font-size: clamp(40px, 10vw, 64px);
+  letter-spacing: 0.22em;
+  font-weight: 900;
+  background: linear-gradient(110deg, var(--pink), #fff 48%, var(--cyan));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.lead {
+  color: #d5d2ee;
+  line-height: 1.7;
+  font-size: 15px;
+}
+
+.meta {
+  margin-top: 10px;
+  color: var(--dim);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.legend {
+  margin-top: 14px;
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  font-size: 12px;
+  letter-spacing: 0.16em;
+}
+
+.lg-a { color: var(--cyan); }
+.lg-b { color: var(--pink); }
+
+#btn-main {
+  margin-top: 22px;
+  padding: 12px 28px;
+  font-size: 15px;
+  letter-spacing: 0.22em;
+  border-color: rgba(0, 240, 255, 0.4);
+  background: linear-gradient(180deg, rgba(0, 240, 255, 0.16), rgba(255, 61, 184, 0.12));
+}
+
+.foot {
+  margin-top: 14px;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  color: var(--dim);
+}
+
+.card.win { border-color: rgba(0, 240, 255, 0.5); }
+.card.lose { border-color: rgba(255, 61, 184, 0.6); }
+
+@media (max-width: 640px) {
+  .brand strong { font-size: 18px; letter-spacing: 0.16em; }
+  .read b { font-size: 17px; }
+  .readouts { gap: 10px; }
+  .hint { font-size: 12px; letter-spacing: 0.08em; margin-bottom: 88px; }
+  .cut-btn { width: 68px; height: 68px; }
+}
