@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#05030c" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>补像素 · MEND</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2305030c'/%3E%3Crect x='6' y='6' width='8' height='8' fill='%23ff3db8'/%3E%3Crect x='14' y='6' width='8' height='8' fill='%2300f0ff'/%3E%3Crect x='6' y='14' width='8' height='8' fill='%2300f0ff' opacity='.45'/%3E%3Crect x='18' y='18' width='8' height='8' fill='%23ff3db8'/%3E%3Crect x='22' y='10' width='4' height='4' fill='%23ffe36b'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <canvas id="view" aria-label="把破损图块拖回原位"></canvas>
+  <div class="scan" aria-hidden="true"></div>
+
+  <div id="hud" class="hud hidden">
+    <header class="hud-top">
+      <div class="brand">
+        <strong>补像素</strong>
+        <span>MEND</span>
+      </div>
+      <div class="readouts">
+        <div class="read">
+          <em>图</em>
+          <b id="round">1/5</b>
+        </div>
+        <div class="read">
+          <em>缺口</em>
+          <b id="holes">2</b>
+        </div>
+        <div class="read">
+          <em>命</em>
+          <span class="pips" id="pips" aria-label="剩余命"><i></i><i></i><i></i></span>
+        </div>
+        <div class="read">
+          <em>时</em>
+          <b id="time">20.0</b>
+        </div>
+      </div>
+      <div class="tools">
+        <button type="button" id="btn-prev" title="Q">上一块</button>
+        <button type="button" id="btn-next" title="E">下一块</button>
+        <button type="button" id="btn-snap" title="空格">放入</button>
+        <button type="button" id="btn-mute" title="静音（M）">音</button>
+        <button type="button" id="btn-retry" title="重开（R）">重开</button>
+      </div>
+    </header>
+    <p id="hint" class="hint">拖回缺口 · 近了会吸住</p>
+  </div>
+
+  <div id="panel" class="panel" role="dialog" aria-labelledby="panel-title">
+    <div class="card" id="card">
+      <p class="kicker" id="panel-kicker">MEND</p>
+      <h1 id="panel-title">补像素</h1>
+      <p class="lead" id="panel-lead">图块碎了。把它们拖回原来的缺口。</p>
+      <p class="meta" id="panel-meta">五幅霓虹图。近了会吸住；放错会弹开并扣命。时尽或三命用完即负。</p>
+      <button type="button" id="btn-main">开补</button>
+      <p class="foot" id="panel-foot">拖动图块 · Q/E 选块 · WASD 移动 · 空格放入 · M 静音</p>
+    </div>
+  </div>
+
+  <script src="js/game.js"></script>
+</body>
+</html>

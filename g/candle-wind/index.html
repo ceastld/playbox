@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#05030c" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>护烛 · CANDLE</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2305030c'/%3E%3Cpath d='M14 28h4c1.2 0 2-1 2-2.2V16h-8v9.8C12 27 12.8 28 14 28z' fill='%23f6f3ff'/%3E%3Cpath d='M16 15c-2.2-3.2.6-5.6 0-8 2.8 1.4 4.8 4.2 2.4 7.2' fill='%23ffe36b'/%3E%3Cpath d='M16 15c-1.1-1.8.2-3.2 0-4.6 1.6.8 2.6 2.4 1.4 4.2' fill='%23ff3db8'/%3E%3Ccircle cx='16' cy='8.2' r='1.1' fill='%23fff'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>护烛</b>
+        <span>CANDLE</span>
+      </div>
+      <div class="status">
+        <div class="bal" id="bal-wrap" title="火">
+          <em>火</em>
+          <div class="bal-track" aria-hidden="true"><i id="bal-fill"></i></div>
+        </div>
+        <div class="row">
+          <span id="guard-label">守 —</span>
+          <span id="time-label">—</span>
+        </div>
+      </div>
+      <div class="tools">
+        <button type="button" id="btn-mute" title="M">声</button>
+        <button type="button" id="btn-retry" title="R">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <canvas id="c" aria-label="护烛挡风"></canvas>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden"></div>
+      <div id="pad" class="pad">
+        <button type="button" id="btn-left" aria-label="逆时针转掌">逆</button>
+        <button type="button" id="btn-right" aria-label="顺时针转掌">顺</button>
+      </div>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">CANDLE</p>
+          <h1 id="ov-title">护烛</h1>
+          <p class="lead" id="ov-lead">把掌心转到风吹来的一侧。<br />挡住阵风，烛火不能灭。</p>
+          <p class="ops" id="ov-ops">← → / A D 绕烛转掌 · 拖向风口 · M 静音</p>
+          <button type="button" id="ov-btn">护烛</button>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">掌心对着风口 · 别让火灭</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>

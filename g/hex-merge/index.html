@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#05030c" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>六合 · HEX</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2305030c'/%3E%3Cpath d='M16 4l9 5.2v10.6L16 25l-9-5.2V9.2z' fill='none' stroke='%23ff3db8' stroke-width='2'/%3E%3Cpath d='M16 4l9 5.2-4.5 2.6L16 9.2z' fill='%2300f0ff' opacity='.9'/%3E%3Cpath d='M25 9.2v10.6l-4.5-2.6V11.8z' fill='%23ff3db8' opacity='.55'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>六合</b>
+        <span>HEX</span>
+      </div>
+      <div class="status">
+        <span id="stage-label">—</span>
+        <div class="row">
+          <span id="time-label">—</span>
+          <span class="pips" id="pips" aria-label="剩余性命"></span>
+          <span id="goal-label">目标 —</span>
+        </div>
+      </div>
+      <div class="tools">
+        <button type="button" id="btn-ccw" title="Q">左</button>
+        <button type="button" id="btn-cw" title="E">右</button>
+        <button type="button" id="btn-mute" title="M">声</button>
+        <button type="button" id="btn-retry" title="R">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <canvas id="c" tabindex="0" aria-label="六合熔炉"></canvas>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden"></div>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">HEX</p>
+          <h1 id="ov-title">六合</h1>
+          <p class="lead" id="ov-lead">同阶晶石要开口对上才会融合。<br />转一转，让亮边吻上。</p>
+          <p class="ops" id="ov-ops">点空位落晶 · 点场上晶石旋转 · Q/E 转手牌 · M 静音</p>
+          <button type="button" id="ov-btn">开炉</button>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">同阶 · 开口相对 · 才会融</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>

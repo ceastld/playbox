@@ -337,7 +337,7 @@
     "blurb": "六边形合成，边要对齐才能融。",
     "hue": 205,
     "tag": "合",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/hex-merge/"
   },
   {
@@ -359,7 +359,7 @@
     "blurb": "把破损图块拖回原位。",
     "hue": 160,
     "tag": "修",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/pixel-mend/"
   },
   {
@@ -381,7 +381,7 @@
     "blurb": "用手挡风，烛火不能灭。",
     "hue": 12,
     "tag": "护",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/candle-wind/"
   },
   {
@@ -403,7 +403,7 @@
     "blurb": "折叠纸面，让路径接到出口。",
     "hue": 145,
     "tag": "折",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/fold-path/"
   },
   {
@@ -414,7 +414,7 @@
     "blurb": "梯子越爬越烫，要交替冷却。",
     "hue": 8,
     "tag": "爬",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/heat-climb/"
   },
   {
@@ -425,7 +425,7 @@
     "blurb": "你看见的是镜像，实际走相反。",
     "hue": 285,
     "tag": "迷",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/mirror-maze/"
   },
   {
