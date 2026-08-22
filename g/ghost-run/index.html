@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#0c0310" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>魔界 · GHOST</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230c0310'/%3E%3Crect x='2' y='2' width='28' height='28' rx='4' fill='%23160818' stroke='%23ff2aa8' stroke-width='1.4'/%3E%3Ccircle cx='24' cy='9' r='4' fill='%23ff6ac4' opacity='.7'/%3E%3Cpath d='M4 24h24' stroke='%237a3a88' stroke-width='1.4' opacity='.7'/%3E%3Crect x='6' y='18' width='5' height='7' fill='%23301828'/%3E%3Cpath d='M7 18v-4h3v4' fill='%23402038'/%3E%3Ccircle cx='14' cy='14' r='3.2' fill='%23c8d4e8'/%3E%3Crect x='12.2' y='16.6' width='3.8' height='6.2' rx='.6' fill='%23c8d4e8'/%3E%3Crect x='12.4' y='20.4' width='3.4' height='2.4' fill='%23ff2a4a'/%3E%3Crect x='16' y='16.2' width='8' height='1.4' rx='.3' fill='%23ffe36b'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>魔界</b>
+        <span>GHOST</span>
+      </div>
+      <div class="status">
+        <div class="scores" aria-live="polite">
+          <div class="score" id="score-box">
+            <em>分数</em>
+            <b id="score">0</b>
+            <span id="score-add" class="score-add" hidden>+0</span>
+          </div>
+          <div class="score best">
+            <em>最高</em>
+            <b id="best">0</b>
+          </div>
+          <div class="score combo" id="combo-box">
+            <em>连击</em>
+            <b id="combo">×1</b>
+          </div>
+        </div>
+        <div class="row">
+          <span id="stage-label">墓地</span>
+          <span id="tag-label">墓地</span>
+          <span id="armor-label" class="armor">铠甲</span>
+          <span id="gun-label" class="gun">长枪</span>
+          <span class="pips" id="pips" aria-label="剩余性命"></span>
+        </div>
+      </div>
+      <div class="tools">
+        <div class="modes" role="radiogroup" aria-label="模式">
+          <button type="button" id="mode-grave" aria-pressed="true">墓地</button>
+          <button type="button" id="mode-moon" aria-pressed="false">赤月</button>
+        </div>
+        <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
+        <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <div class="board-wrap">
+        <canvas id="c" tabindex="0" role="application" aria-label="魔界，侧向走跳，空格丢枪，铠甲碎了还能打"></canvas>
+      </div>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden"></div>
+      <div id="chain-pop" class="chain-pop hidden" aria-hidden="true">×2</div>
+      <div id="pad" class="pad">
+        <button type="button" id="btn-jump" aria-label="跳跃">跳</button>
+        <button type="button" id="btn-left" aria-label="左">左</button>
+        <button type="button" id="btn-fire" aria-label="丢枪">投</button>
+        <button type="button" id="btn-right" aria-label="右">右</button>
+        <button type="button" id="btn-duck" aria-label="蹲下">蹲</button>
+      </div>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">GHOST</p>
+          <h1 id="ov-title">魔界</h1>
+          <p class="lead" id="ov-lead">铠甲一打即碎，内裤再挨一击丢命。<br />丢长枪，捡匕、火、斧，冲进魔城。</p>
+          <p class="ops" id="ov-ops">方向键 / WASD 走跳蹲 · 空格丢枪 · R 重开 · M 静音</p>
+          <div class="ov-actions" id="ov-start">
+            <button type="button" id="btn-grave">墓地</button>
+            <button type="button" id="btn-moon">赤月</button>
+          </div>
+          <div class="ov-actions gone" id="ov-end">
+            <button type="button" id="ov-again">再来</button>
+            <button type="button" id="ov-menu">换模式</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">走跳 · 空格丢枪 · 铠甲碎了还能打 · 再挨一下丢命</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>

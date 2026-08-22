@@ -1892,5 +1892,17 @@
     "dir": "g/axe-war/",
     "url": "./g/axe-war/",
     "kind": "remake"
+  },
+  {
+    "n": 178,
+    "id": "ghost-run",
+    "title": "魔界",
+    "subtitle": "GHOST",
+    "blurb": "盔甲碎了还要往前冲。",
+    "hue": 318,
+    "tag": "复刻",
+    "dir": "g/ghost-run/",
+    "url": "./g/ghost-run/",
+    "kind": "remake"
   }
 ]
