@@ -1700,5 +1700,29 @@
     "dir": "g/space-rush/",
     "url": "./g/space-rush/",
     "kind": "remake"
+  },
+  {
+    "n": 163,
+    "id": "ikari-run",
+    "title": "怒火",
+    "subtitle": "IKARI",
+    "blurb": "丛林里边走边打，坦克也能开。",
+    "hue": 12,
+    "tag": "复刻",
+    "dir": "g/ikari-run/",
+    "url": "./g/ikari-run/",
+    "kind": "remake"
+  },
+  {
+    "n": 164,
+    "id": "after-burn",
+    "title": "超音",
+    "subtitle": "BURNER",
+    "blurb": "3D空战锁敌开火，别被导弹咬。",
+    "hue": 210,
+    "tag": "复刻",
+    "dir": "g/after-burn/",
+    "url": "./g/after-burn/",
+    "kind": "remake"
   }
 ]
