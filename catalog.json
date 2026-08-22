@@ -675,5 +675,35 @@
     "hue": 215,
     "tag": "轮",
     "dir": "g/pulley-two/"
+  },
+  {
+    "n": 76,
+    "id": "kite-line",
+    "title": "放鸢",
+    "subtitle": "KITE",
+    "blurb": "放线收线，让风筝停在窗口。",
+    "hue": 200,
+    "tag": "鸢",
+    "dir": "g/kite-line/"
+  },
+  {
+    "n": 77,
+    "id": "bead-drop",
+    "title": "落珠",
+    "subtitle": "BEADS",
+    "blurb": "倾斜木板让珠子掉进洞。",
+    "hue": 265,
+    "tag": "珠",
+    "dir": "g/bead-drop/"
+  },
+  {
+    "n": 78,
+    "id": "echo-clap",
+    "title": "拍回",
+    "subtitle": "CLAP",
+    "blurb": "把房间回声的节奏拍回去。",
+    "hue": 320,
+    "tag": "拍",
+    "dir": "g/echo-clap/"
   }
 ]

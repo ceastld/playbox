@@ -832,7 +832,7 @@
     "blurb": "放线收线，让风筝停在窗口。",
     "hue": 200,
     "tag": "鸢",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/kite-line/"
   },
   {
@@ -843,7 +843,7 @@
     "blurb": "倾斜木板让珠子掉进洞。",
     "hue": 265,
     "tag": "珠",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/bead-drop/"
   },
   {
@@ -854,7 +854,7 @@
     "blurb": "把房间回声的节奏拍回去。",
     "hue": 320,
     "tag": "拍",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/echo-clap/"
   },
   {
@@ -865,7 +865,7 @@
     "blurb": "刷湿气让青苔连到门。",
     "hue": 110,
     "tag": "苔",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/moss-grow/"
   },
   {
@@ -876,7 +876,7 @@
     "blurb": "针落进移动的碗。",
     "hue": 160,
     "tag": "投",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/pin-bowl/"
   },
   {
@@ -887,7 +887,7 @@
     "blurb": "按顺序揭纱，撕了就输。",
     "hue": 310,
     "tag": "纱",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/veil-lift/"
   },
   {
