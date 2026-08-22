@@ -2108,5 +2108,41 @@
     "dir": "g/alex-leap/",
     "url": "./g/alex-leap/",
     "kind": "remake"
+  },
+  {
+    "n": 194,
+    "id": "pac-land",
+    "title": "豆陆",
+    "subtitle": "LAND",
+    "blurb": "一路往前跑，别掉坑里。",
+    "hue": 56,
+    "tag": "复刻",
+    "dir": "g/pac-land/",
+    "url": "./g/pac-land/",
+    "kind": "remake"
+  },
+  {
+    "n": 196,
+    "id": "sea-1943",
+    "title": "海空",
+    "subtitle": "1943",
+    "blurb": "打飞机补血，冲过航母。",
+    "hue": 200,
+    "tag": "复刻",
+    "dir": "g/sea-1943/",
+    "url": "./g/sea-1943/",
+    "kind": "remake"
+  },
+  {
+    "n": 198,
+    "id": "pooyan",
+    "title": "猪羊",
+    "subtitle": "POO",
+    "blurb": "气球射下来，别让狼摸到。",
+    "hue": 348,
+    "tag": "复刻",
+    "dir": "g/pooyan/",
+    "url": "./g/pooyan/",
+    "kind": "remake"
   }
 ]

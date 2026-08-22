@@ -2223,7 +2223,7 @@
     "blurb": "一路往前跑，别掉坑里。",
     "hue": 56,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/pac-land/",
     "kind": "remake"
   },
@@ -2247,7 +2247,7 @@
     "blurb": "打飞机补血，冲过航母。",
     "hue": 200,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/sea-1943/",
     "kind": "remake"
   },
@@ -2271,7 +2271,7 @@
     "blurb": "气球射下来，别让狼摸到。",
     "hue": 348,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/pooyan/",
     "kind": "remake"
   },
@@ -2297,6 +2297,42 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/pengo-push/",
+    "kind": "remake"
+  },
+  {
+    "n": 201,
+    "id": "balloon-kid",
+    "title": "气斗",
+    "subtitle": "BALLOON",
+    "blurb": "拍气球升空，把人拍下来。",
+    "hue": 204,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/balloon-kid/",
+    "kind": "remake"
+  },
+  {
+    "n": 202,
+    "id": "ninja-gaid",
+    "title": "影忍",
+    "subtitle": "GAIDEN",
+    "blurb": "墙上一跳，手里的剑不能停。",
+    "hue": 0,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/ninja-gaid/",
+    "kind": "remake"
+  },
+  {
+    "n": 203,
+    "id": "bomb-jack",
+    "title": "炸跳",
+    "subtitle": "JACK",
+    "blurb": "炸弹全收完再走。",
+    "hue": 50,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/bomb-jack/",
     "kind": "remake"
   }
 ]

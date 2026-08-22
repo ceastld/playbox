@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" fill="none">
+  <rect width="800" height="450" fill="#0a0904"/>
+  <rect width="800" height="450" fill="url(#sky)"/>
+  <defs>
+    <linearGradient id="sky" x1="400" y1="0" x2="400" y2="450">
+      <stop stop-color="#1a140c"/>
+      <stop offset="0.55" stop-color="#16100c"/>
+      <stop offset="1" stop-color="#22180c"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#ffe14a"/>
+      <stop offset="1" stop-color="#ffe36b"/>
+    </linearGradient>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="4" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <path d="M0 250 Q120 190 240 250 T480 230 T800 260 L800 450 L0 450 Z" fill="#3a4a28" opacity=".35"/>
+  <path d="M0 300 Q160 240 320 300 T640 280 T800 310 L800 450 L0 450 Z" fill="#2a3820" opacity=".55"/>
+  <rect x="0" y="338" width="800" height="112" fill="#3a4a28"/>
+  <rect x="0" y="338" width="800" height="8" fill="#6adf4a"/>
+  <rect x="292" y="338" width="78" height="112" fill="#120814"/>
+  <rect x="292" y="338" width="78" height="4" fill="#ff3db8" opacity=".45"/>
+  <rect x="610" y="338" width="56" height="112" fill="#120814"/>
+  <rect x="610" y="338" width="56" height="4" fill="#ff3db8" opacity=".4"/>
+  <rect x="418" y="268" width="96" height="10" rx="2" fill="#c87838"/>
+  <rect x="418" y="268" width="96" height="3" fill="#ffe36b" opacity=".35"/>
+  <path d="M198 332 L214 332 L208 348 L204 348 Z" fill="#00f0ff"/>
+  <rect x="202" y="322" width="8" height="10" fill="#ffe36b"/>
+  <circle cx="150" cy="312" r="5" fill="#ffe36b"/>
+  <circle cx="178" cy="312" r="5" fill="#ffe36b"/>
+  <circle cx="240" cy="312" r="5" fill="#ffe36b"/>
+  <circle cx="400" cy="250" r="6" fill="#fff8d8"/>
+  <circle cx="400" cy="250" r="8" fill="none" stroke="#ffe36b" stroke-width="1.4"/>
+  <g transform="translate(246 318)">
+    <path d="M0 -22 A16 16 0 1 1 12 -8 L0 -8 Z" fill="#ffe14a" filter="url(#glow)"/>
+    <circle cx="-3" cy="-16" r="2" fill="#0a0904"/>
+    <rect x="-8" y="-2" width="6" height="10" rx="1.5" fill="#ffe14a"/>
+    <rect x="2" y="-2" width="6" height="10" rx="1.5" fill="#ffe14a"/>
+    <g transform="translate(0 -30) rotate(25)">
+      <line x1="-14" y1="0" x2="14" y2="0" stroke="#00f0ff" stroke-width="3"/>
+      <circle r="5" fill="#00f0ff"/>
+    </g>
+  </g>
+  <g transform="translate(520 250)">
+    <path d="M-14 6 Q-14 -18 0 -18 Q14 -18 14 6 L10 16 L5 8 L0 16 L-5 8 L-10 16 Z" fill="#ff82be"/>
+    <circle cx="-5" cy="-6" r="2.2" fill="#0a0904"/>
+    <circle cx="5" cy="-6" r="2.2" fill="#0a0904"/>
+  </g>
+  <g transform="translate(700 300)">
+    <ellipse cx="-12" cy="-4" rx="10" ry="5" fill="#fff6dc" opacity=".45" transform="rotate(-30)"/>
+    <ellipse cx="12" cy="-4" rx="10" ry="5" fill="#fff6dc" opacity=".45" transform="rotate(30)"/>
+    <circle r="9" fill="#ff82be"/>
+    <circle cx="-3" cy="-2" r="1.4" fill="#0a0904"/>
+    <circle cx="3" cy="-2" r="1.4" fill="#0a0904"/>
+    <circle cy="-14" r="3.2" fill="#ffe36b"/>
+  </g>
+  <g transform="translate(90 310)">
+    <rect x="-18" y="-28" width="36" height="28" fill="#6a3a28"/>
+    <path d="M-22 -28 L0 -48 L22 -28 Z" fill="#ff3db8"/>
+    <rect x="-4" y="-16" width="10" height="16" fill="#ffe36b" opacity=".8"/>
+  </g>
+  <text x="40" y="48" fill="#ffe14a" font-size="28" font-family="Segoe UI, sans-serif" font-weight="800" letter-spacing="8">豆陆</text>
+  <text x="40" y="68" fill="#fff08a" font-size="11" font-family="Segoe UI, sans-serif" letter-spacing="6">LAND</text>
+</svg>
