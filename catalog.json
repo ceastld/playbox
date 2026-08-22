@@ -2516,5 +2516,53 @@
     "dir": "g/asteroids/",
     "url": "./g/asteroids/",
     "kind": "remake"
+  },
+  {
+    "n": 230,
+    "id": "battlezone",
+    "title": "坦克",
+    "subtitle": "TANK",
+    "blurb": "线框地平线上，先开炮的活。",
+    "hue": 78,
+    "tag": "复刻",
+    "dir": "g/battlezone/",
+    "url": "./g/battlezone/",
+    "kind": "remake"
+  },
+  {
+    "n": 231,
+    "id": "tron-cycle",
+    "title": "光环",
+    "subtitle": "TRON",
+    "blurb": "光墙往后铺，别撞自己的尾巴。",
+    "hue": 186,
+    "tag": "复刻",
+    "dir": "g/tron-cycle/",
+    "url": "./g/tron-cycle/",
+    "kind": "remake"
+  },
+  {
+    "n": 232,
+    "id": "outrun",
+    "title": "疾风",
+    "subtitle": "RUN",
+    "blurb": "公路甩尾，看准分叉再选边。",
+    "hue": 14,
+    "tag": "复刻",
+    "dir": "g/outrun/",
+    "url": "./g/outrun/",
+    "kind": "remake"
+  },
+  {
+    "n": 234,
+    "id": "star-castle",
+    "title": "星堡",
+    "subtitle": "CAST",
+    "blurb": "绕堡反弹开火，把核打穿。",
+    "hue": 268,
+    "tag": "复刻",
+    "dir": "g/star-castle/",
+    "url": "./g/star-castle/",
+    "kind": "remake"
   }
 ]

@@ -2655,7 +2655,7 @@
     "blurb": "线框地平线上，先开炮的活。",
     "hue": 78,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/battlezone/",
     "kind": "remake"
   },
@@ -2667,7 +2667,7 @@
     "blurb": "光墙往后铺，别撞自己的尾巴。",
     "hue": 186,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/tron-cycle/",
     "kind": "remake"
   },
@@ -2679,7 +2679,7 @@
     "blurb": "公路甩尾，看准分叉再选边。",
     "hue": 14,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/outrun/",
     "kind": "remake"
   },
@@ -2703,8 +2703,56 @@
     "blurb": "绕堡反弹开火，把核打穿。",
     "hue": 268,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/star-castle/",
+    "kind": "remake"
+  },
+  {
+    "n": 235,
+    "id": "lunar-land",
+    "title": "登月",
+    "subtitle": "LAND",
+    "blurb": "省着喷火，轻轻落到平台上。",
+    "hue": 48,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/lunar-land/",
+    "kind": "remake"
+  },
+  {
+    "n": 236,
+    "id": "major-havoc",
+    "title": "浩劫",
+    "subtitle": "HAVOC",
+    "blurb": "飞过星门再钻进基地跑酷。",
+    "hue": 200,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/major-havoc/",
+    "kind": "remake"
+  },
+  {
+    "n": 237,
+    "id": "cloak-dagger",
+    "title": "斗篷",
+    "subtitle": "DAG",
+    "blurb": "迷宫里摸匕首，别让守卫发现。",
+    "hue": 272,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/cloak-dagger/",
+    "kind": "remake"
+  },
+  {
+    "n": 238,
+    "id": "gaplus",
+    "title": "加普",
+    "subtitle": "GAP",
+    "blurb": "编队俯冲，抓住那艘母舰拖走。",
+    "hue": 292,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/gaplus/",
     "kind": "remake"
   }
 ]
