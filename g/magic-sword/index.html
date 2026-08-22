@@ -55,6 +55,12 @@
           <button type="button" id="mode-climb" aria-pressed="true">闯塔</button>
           <button type="button" id="mode-tide" aria-pressed="false">魔潮</button>
         </div>
+        <label class="speed-ctl" title="速度 慢 / 中 / 快 / 极快">
+          <span>速度</span>
+          <input type="range" id="speed" min="1" max="4" step="1" value="3" aria-label="速度" />
+          <b id="speed-lab">快</b>
+        </label>
+        <button type="button" id="btn-auto" title="A" aria-label="自动" aria-pressed="false">自动</button>
         <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
         <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
       </div>
@@ -79,7 +85,7 @@
           <p class="kicker" id="ov-kicker">SWORD</p>
           <h1 id="ov-title">魔剑</h1>
           <p class="lead" id="ov-lead">往右走、往上爬魔塔。长剑横扫，救出同伴并肩作战。小鬼、骑士、每层头目。体力打空扣一命。</p>
-          <p class="ops" id="ov-ops">方向 / WASD 走 · 上跳/爬梯 · 空格挥剑 · R 重开 · M 静音</p>
+          <p class="ops" id="ov-ops">方向 / D 走 · 上跳/爬梯 · 空格挥剑 · A 自动 · R 重开 · M 静音</p>
           <div class="ov-actions" id="ov-start">
             <button type="button" id="btn-climb">闯塔</button>
             <button type="button" id="btn-tide">魔潮</button>
@@ -92,7 +98,7 @@
       </div>
     </div>
 
-    <footer class="hint" id="hint">往右走、往上爬 · 空格长斩 · 劈笼救同伴 · 体力打空扣一命</footer>
+    <footer class="hint" id="hint">往右走、往上爬 · 空格长斩 · 劈笼救同伴 · A 自动 · 体力打空扣一命</footer>
   </div>
   <script src="js/game.js"></script>
 </body>
