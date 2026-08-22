@@ -1376,5 +1376,17 @@
     "dir": "g/joust-kick/",
     "url": "./g/joust-kick/",
     "kind": "remake"
+  },
+  {
+    "n": 135,
+    "id": "ski-slide",
+    "title": "雪道",
+    "subtitle": "SKI",
+    "blurb": "往下滑，躲开树。",
+    "hue": 190,
+    "tag": "复刻",
+    "dir": "g/ski-slide/",
+    "url": "./g/ski-slide/",
+    "kind": "remake"
   }
 ]

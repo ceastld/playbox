@@ -1515,7 +1515,7 @@
     "blurb": "往下滑，躲开树。",
     "hue": 190,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/ski-slide/",
     "kind": "remake"
   },
@@ -1565,6 +1565,18 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/moon-run/",
+    "kind": "remake"
+  },
+  {
+    "n": 140,
+    "id": "lode-dig",
+    "title": "矿掘",
+    "subtitle": "DIG",
+    "blurb": "挖地道，泵爆地下怪。",
+    "hue": 48,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/lode-dig/",
     "kind": "remake"
   }
 ]
