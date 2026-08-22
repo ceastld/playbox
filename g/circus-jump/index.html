@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#05030c" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>杂技 · CIRCUS</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2305030c'/%3E%3Ccircle cx='8' cy='7' r='3.1' fill='%23ffe36b'/%3E%3Ccircle cx='16' cy='6.2' r='3.2' fill='%23ff3db8'/%3E%3Ccircle cx='24' cy='7.2' r='3.1' fill='%2300f0ff'/%3E%3Cpath d='M8 10.2 L8 13.4 M16 9.4 L16 13.4 M24 10.4 L24 13.6' stroke='%238b90b8' stroke-width='.6'/%3E%3Ccircle cx='16' cy='19.2' r='3.4' fill='%23ff8ac4'/%3E%3Cpath d='M16 15.4 L16 13.2 L13.4 16.6 L18.6 16.6 Z' fill='%23ff3db8'/%3E%3Crect x='9' y='25.2' width='14' height='2.4' rx='1.2' fill='%2300f0ff'/%3E%3Crect x='14.2' y='25.4' width='3.6' height='2' rx='.7' fill='%23ffe36b'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>杂技</b>
+        <span>CIRCUS</span>
+      </div>
+      <div class="status">
+        <div class="scores" aria-live="polite">
+          <div class="score" id="score-box">
+            <em>得分</em>
+            <b id="score">0</b>
+            <span id="score-add" class="score-add" hidden>+0</span>
+          </div>
+          <div class="score best">
+            <em>最高</em>
+            <b id="best">0</b>
+          </div>
+          <div class="score combo" id="combo-box">
+            <em>连弹</em>
+            <b id="combo">×0</b>
+          </div>
+        </div>
+        <div class="row">
+          <span id="stage-label">杂技</span>
+          <span id="tag-label">CIRCUS</span>
+          <span class="pips" id="pips" aria-label="剩余生命"></span>
+        </div>
+      </div>
+      <div class="tools">
+        <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
+        <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <canvas id="c" tabindex="0" role="application" aria-label="杂技，滑动蹦床接住小丑戳破气球"></canvas>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden"></div>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">CIRCUS</p>
+          <h1 id="ov-title">杂技</h1>
+          <p class="lead" id="ov-lead">滑动蹦床接住落下的小丑，弹上去戳破气球。<br />接在正中弹得最高，同一颜色最后一个有奖励。</p>
+          <p class="ops" id="ov-ops">← → / A D 移动蹦床 · 正中弹得更高 · R 重开 · M 静音</p>
+          <div class="ov-actions">
+            <button type="button" id="btn-circus">马戏</button>
+            <button type="button" id="btn-rally">连弹</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">左右滑动蹦床 · 正中弹得更高 · R 重开</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>

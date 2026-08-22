@@ -2204,5 +2204,17 @@
     "dir": "g/bomb-jack/",
     "url": "./g/bomb-jack/",
     "kind": "remake"
+  },
+  {
+    "n": 205,
+    "id": "circus-jump",
+    "title": "杂技",
+    "subtitle": "CIRCUS",
+    "blurb": "蹦床弹上去，戳破气球。",
+    "hue": 330,
+    "tag": "复刻",
+    "dir": "g/circus-jump/",
+    "url": "./g/circus-jump/",
+    "kind": "remake"
   }
 ]

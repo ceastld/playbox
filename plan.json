@@ -2355,7 +2355,7 @@
     "blurb": "蹦床弹上去，戳破气球。",
     "hue": 330,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/circus-jump/",
     "kind": "remake"
   },
@@ -2393,6 +2393,18 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/gyruss/",
+    "kind": "remake"
+  },
+  {
+    "n": 209,
+    "id": "robotron",
+    "title": "狂扫",
+    "subtitle": "ROBO",
+    "blurb": "一边走一边打，人要护住。",
+    "hue": 178,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/robotron/",
     "kind": "remake"
   }
 ]
