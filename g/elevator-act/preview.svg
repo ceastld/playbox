@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" fill="#08060a"/>
+  <rect x="8" y="4" width="48" height="50" rx="3" fill="#121018" stroke="#ffb018" stroke-width="1.4"/>
+  <path d="M10 16h44M10 28h44M10 40h44M10 52h44" stroke="#ffc94a" stroke-width="1.15" opacity=".55"/>
+  <rect x="20" y="6" width="6.4" height="46" fill="#0a1218"/>
+  <rect x="38" y="6" width="6.4" height="46" fill="#0a1218"/>
+  <rect x="20.6" y="34" width="5.2" height="7.2" rx=".5" fill="#00f0ff"/>
+  <rect x="38.6" y="16" width="5.2" height="7.2" rx=".5" fill="#ffe36b"/>
+  <rect x="20.6" y="22" width="5.2" height="1.1" fill="#ffb018" opacity=".7"/>
+  <rect x="38.6" y="40" width="5.2" height="1.1" fill="#ffb018" opacity=".7"/>
+  <rect x="12" y="30" width="3.4" height="7.4" fill="#00f0ff"/>
+  <rect x="11.4" y="28.6" width="4.6" height="1.6" rx=".4" fill="#ffe36b"/>
+  <rect x="48" y="18" width="3.2" height="7" fill="#ff3db8"/>
+  <rect x="13.2" y="18.4" width="3.6" height="2.6" rx=".3" fill="#ff3a3a"/>
+  <rect x="45" y="42.2" width="3.6" height="2.6" rx=".3" fill="#ff3a3a"/>
+  <rect x="10" y="54.4" width="10" height="4.2" rx="1" fill="#ff3a3a"/>
+  <circle cx="12.6" cy="58.2" r=".7" fill="#ffe36b"/>
+  <circle cx="17.6" cy="58.2" r=".7" fill="#ffe36b"/>
+  <rect x="8" y="4" width="48" height="50" rx="3" fill="none" stroke="#00f0ff" stroke-width=".45" opacity=".45"/>
+</svg>

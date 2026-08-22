@@ -2463,7 +2463,7 @@
     "blurb": "迷宫里对射，别让怪摸到。",
     "hue": 276,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/wizard-wor/",
     "kind": "remake"
   },
@@ -2475,7 +2475,7 @@
     "blurb": "楼层穿梭，开门对射。",
     "hue": 42,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/elevator-act/",
     "kind": "remake"
   },
@@ -2487,7 +2487,7 @@
     "blurb": "靶场连射，打爆会走的鸭子。",
     "hue": 18,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/carnival/",
     "kind": "remake"
   },
@@ -2499,7 +2499,7 @@
     "blurb": "斜城蹦跳，别被猩猩拍扁。",
     "hue": 138,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/congo-bongo/",
     "kind": "remake"
   },
@@ -2513,6 +2513,54 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/gorf/",
+    "kind": "remake"
+  },
+  {
+    "n": 219,
+    "id": "food-fight",
+    "title": "食堂",
+    "subtitle": "FOOD",
+    "blurb": "满地扔饭，砸中再补一脚。",
+    "hue": 22,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/food-fight/",
+    "kind": "remake"
+  },
+  {
+    "n": 220,
+    "id": "qbert",
+    "title": "方跳",
+    "subtitle": "QBERT",
+    "blurb": "斜方格蹦跳，把颜色全翻过来。",
+    "hue": 32,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/qbert/",
+    "kind": "remake"
+  },
+  {
+    "n": 221,
+    "id": "zookeeper",
+    "title": "园守",
+    "subtitle": "ZOO",
+    "blurb": "墙缝往外窜，连射把它们顶回去。",
+    "hue": 132,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/zookeeper/",
+    "kind": "remake"
+  },
+  {
+    "n": 222,
+    "id": "crazy-climb",
+    "title": "爬窗",
+    "subtitle": "CLIMB",
+    "blurb": "双手扒楼，躲开花盆和电工。",
+    "hue": 198,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/crazy-climb/",
     "kind": "remake"
   }
 ]

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#05030c" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>刚果 · BONGO</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2305030c'/%3E%3Cpath d='M16 6l8 4.6v9.2L16 24.4 8 19.8V10.6z' fill='%231a3a22'/%3E%3Cpath d='M8 10.6L16 15.2l8-4.6L16 6z' fill='%233dff88'/%3E%3Cpath d='M8 10.6v9.2L16 24.4v-9.2z' fill='%231a5a38'/%3E%3Cellipse cx='16' cy='12.2' rx='2.4' ry='2.1' fill='%23ffe36b'/%3E%3Ccircle cx='16' cy='11.2' r='1.5' fill='%23c8a050'/%3E%3Ccircle cx='22' cy='8' r='2.1' fill='%23c86828'/%3E%3Ccircle cx='23' cy='7.2' r='.7' fill='%23ffd8a0'/%3E%3Ccircle cx='11' cy='20' r='1.6' fill='%23a05018'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>刚果</b>
+        <span>BONGO</span>
+      </div>
+      <div class="status">
+        <div class="scores" aria-live="polite">
+          <div class="score" id="score-box">
+            <em>分数</em>
+            <b id="score">0</b>
+            <span id="score-add" class="score-add" hidden>+0</span>
+          </div>
+          <div class="score">
+            <em>轮</em>
+            <b id="round">1</b>
+          </div>
+          <div class="score best">
+            <em>最高</em>
+            <b id="best">0</b>
+          </div>
+          <div class="score combo" id="combo-box">
+            <em>连跳</em>
+            <b id="combo">×1</b>
+          </div>
+        </div>
+        <div class="row">
+          <span id="mode-label">斜坡</span>
+          <span id="scene-label">密林</span>
+          <div class="fill climb" id="climb-wrap" title="距猿">
+            <em>猿</em>
+            <div class="fill-track" aria-hidden="true"><i id="climb-bar"></i></div>
+          </div>
+          <span class="pips" id="pips" aria-label="剩余性命"></span>
+        </div>
+      </div>
+      <div class="tools">
+        <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
+        <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <canvas id="c" tabindex="0" role="application" aria-label="刚果邦戈，等距跳台，躲开椰子犀牛蛇和水，追上猩猩"></canvas>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden"></div>
+      <div id="pad" class="pad">
+        <button type="button" id="btn-nw" aria-label="左上">↖</button>
+        <button type="button" id="btn-ne" aria-label="右上">↗</button>
+        <button type="button" id="btn-sw" aria-label="左下">↙</button>
+        <button type="button" id="btn-se" aria-label="右下">↘</button>
+      </div>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">BONGO</p>
+          <h1 id="ov-title">刚果</h1>
+          <p class="lead" id="ov-lead">等距跳上台阶。椰子砸下来、犀牛冲过来、蛇爬、水会淹。先追上猩猩，再进草原。</p>
+          <p class="ops" id="ov-ops">方向键或 WASD  hop · 点邻格 / 滑动 · R 重开 · M 静音</p>
+          <div class="ov-actions" id="ov-start">
+            <button type="button" id="btn-slope">斜坡</button>
+            <button type="button" id="btn-rush">暴走</button>
+          </div>
+          <div class="ov-actions gone" id="ov-end">
+            <button type="button" id="ov-retry">再来</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">一次跳一格 · 躲开椰子犀牛蛇 · 落水即死 · 追上猩猩进下一屏</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>

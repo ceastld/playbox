@@ -2324,5 +2324,53 @@
     "dir": "g/mappy/",
     "url": "./g/mappy/",
     "kind": "remake"
+  },
+  {
+    "n": 214,
+    "id": "wizard-wor",
+    "title": "巫廊",
+    "subtitle": "WOR",
+    "blurb": "迷宫里对射，别让怪摸到。",
+    "hue": 276,
+    "tag": "复刻",
+    "dir": "g/wizard-wor/",
+    "url": "./g/wizard-wor/",
+    "kind": "remake"
+  },
+  {
+    "n": 215,
+    "id": "elevator-act",
+    "title": "电梯",
+    "subtitle": "LIFT",
+    "blurb": "楼层穿梭，开门对射。",
+    "hue": 42,
+    "tag": "复刻",
+    "dir": "g/elevator-act/",
+    "url": "./g/elevator-act/",
+    "kind": "remake"
+  },
+  {
+    "n": 216,
+    "id": "carnival",
+    "title": "嘉年",
+    "subtitle": "FAIR",
+    "blurb": "靶场连射，打爆会走的鸭子。",
+    "hue": 18,
+    "tag": "复刻",
+    "dir": "g/carnival/",
+    "url": "./g/carnival/",
+    "kind": "remake"
+  },
+  {
+    "n": 217,
+    "id": "congo-bongo",
+    "title": "刚果",
+    "subtitle": "BONGO",
+    "blurb": "斜城蹦跳，别被猩猩拍扁。",
+    "hue": 138,
+    "tag": "复刻",
+    "dir": "g/congo-bongo/",
+    "url": "./g/congo-bongo/",
+    "kind": "remake"
   }
 ]
