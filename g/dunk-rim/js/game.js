@@ -1,5 +1,7 @@
 'use strict';
 
+/* Side-view hoop shots. Optional autoplay aims dunks at the rim. */
+
 (function () {
   const WORLD_W = 960;
   const WORLD_H = 540;
@@ -25,9 +27,12 @@
   const NET_M = 6;
   const BEST_KEY = 'playbox-dunk-rim-best';
   const MUTE_KEY = 'playbox-dunk-rim-mute';
+  const AUTO_SPEED_KEY = 'playbox-dunk-rim-auto-speed';
+  const SPEED_LABELS = ['', '慢', '中', '快', '极快'];
+  const AUTO_AIM = [0, 0.40, 0.16, 0.05, 0];
   const REDUCE = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const OPS_TITLE = '拖拽瞄准 · 空格投出 · 连灌不断直到投失 · 限时六十秒 · M 静音';
-  const OPS_PLAY = '拖拽瞄准 · ←→ 角度 · ↑↓ 力度 · 空格投出 · R 重开 · M 静音';
+  const OPS_TITLE = '拖拽瞄准 · 空格投出 · 连灌不断直到投失 · 限时六十秒 · A 自动 · M 静音';
+  const OPS_PLAY = '拖拽瞄准 · ←→ 角度 · ↑↓ 力度 · 空格投出 · A 自动 · R 重开 · M 静音';
 
   const canvas = document.getElementById('c');
   const ctx = canvas.getContext('2d', { alpha: false });
@@ -41,6 +46,9 @@
   const btnTimed = document.getElementById('btn-timed');
   const btnMute = document.getElementById('btn-mute');
   const btnRetry = document.getElementById('btn-retry');
+  const btnAuto = document.getElementById('btn-auto');
+  const speedEl = document.getElementById('speed');
+  const speedLab = document.getElementById('speed-lab');
   const scoreEl = document.getElementById('score');
   const scoreBox = document.getElementById('score-box');
   const scoreAdd = document.getElementById('score-add');
@@ -104,6 +112,11 @@
     net: [],
     heat: 0
   };
+
+  let autoOn = false;
+  let autoSpeed = 3;
+  let autoPlan = null;
+  let autoCd = 0;
 
   function clamp(v, a, b) {
     return v < a ? a : v > b ? b : v;
@@ -279,6 +292,20 @@
       const o = JSON.parse(raw);
       G.bestS = o.s | 0;
       G.bestT = o.t | 0;
+    } catch (e) { /* ignore */ }
+  }
+
+  function loadAutoSpeed() {
+    try {
+      const n = parseInt(localStorage.getItem(AUTO_SPEED_KEY) || '3', 10);
+      if (n >= 1 && n <= 4) return n;
+    } catch (e) { /* ignore */ }
+    return 3;
+  }
+
+  function saveAutoSpeed(n) {
+    try {
+      localStorage.setItem(AUTO_SPEED_KEY, String(n));
     } catch (e) { /* ignore */ }
   }
 
@@ -498,8 +525,7 @@
     return G.combo;
   }
 
-  function hoopAt(clock) {
-    const lv = G.mode === 'title' ? 0 : moveLevel();
+  function hoopPos(clock, lv) {
     let x = G.hoop.bx;
     let y = G.hoop.by;
     if (lv >= 3) {
@@ -513,6 +539,11 @@
       x += Math.sin(clock * spdX + 0.65) * ampX;
     }
     return { x: x, y: y };
+  }
+
+  function hoopAt(clock) {
+    const lv = G.mode === 'title' ? 0 : moveLevel();
+    return hoopPos(clock, lv);
   }
 
   function syncHoop() {
@@ -599,7 +630,7 @@
   }
 
   function beginPull(wx, wy) {
-    if (!canShoot()) return;
+    if (autoOn || !canShoot()) return;
     G.pulling = true;
     pointer.sx = wx;
     pointer.sy = wy;
@@ -657,6 +688,7 @@
 
   function hitStop(ms, slow) {
     if (REDUCE) return;
+    if (autoOn && autoSpeed >= 4) return;
     if (slow) G.slow = Math.max(G.slow, ms);
     else G.stop = Math.max(G.stop, ms);
   }
@@ -909,6 +941,8 @@
     G.punch = 1;
     G.arm = 0;
     G.heat = 0;
+    autoPlan = null;
+    autoCd = 0;
     G.lastTick = 99;
     G.overPending = false;
     G.newBest = false;
@@ -967,7 +1001,7 @@
       ovOps.textContent = OPS_TITLE;
       btnStreak.textContent = '连灌';
       btnTimed.textContent = '限时';
-      hintEl.textContent = '拖拽瞄准 · 空心入网 · R 重开';
+      hintEl.textContent = '拖拽瞄准 · 空心入网 · A 自动 · R 重开';
       hintEl.className = 'hint';
     } else if (G.mode === 'win') {
       panel.classList.add('win');
@@ -1055,6 +1089,310 @@
     }
   }
 
+  function simLevel(clock, kind, combo, makes) {
+    if (kind === 'timed') return makes + (clock > 18 ? 2 : 0);
+    return combo;
+  }
+
+  function simBounce(ball, cx, cy, rr) {
+    const dx = ball.x - cx;
+    const dy = ball.y - cy;
+    const d = hypot(dx, dy);
+    const min = BALL_R + rr;
+    if (d >= min || d < 0.0008) return false;
+    const nx = dx / d;
+    const ny = dy / d;
+    const overlap = min - d;
+    ball.x += nx * overlap;
+    ball.y += ny * overlap;
+    const vn = ball.vx * nx + ball.vy * ny;
+    if (vn < 0) {
+      const e = 0.52;
+      ball.vx -= (1 + e) * vn * nx;
+      ball.vy -= (1 + e) * vn * ny;
+      const tx = -ny;
+      const ty = nx;
+      const vt = ball.vx * tx + ball.vy * ty;
+      ball.vx -= vt * tx * 0.22;
+      ball.vy -= vt * ty * 0.22;
+      return true;
+    }
+    return false;
+  }
+
+  function simCollide(ball, hoop) {
+    const frontX = hoop.x - hoop.inner;
+    const backX = hoop.x + hoop.inner;
+    const ry = hoop.y;
+    if (simBounce(ball, frontX, ry, hoop.tube) || simBounce(ball, backX, ry, hoop.tube)) {
+      ball.rim = true;
+    }
+    const bx1 = hoop.x + hoop.inner + hoop.tube + 5;
+    const by1 = hoop.y - 90;
+    const by2 = hoop.y + 20;
+    if (ball.x + BALL_R > bx1 && ball.x - BALL_R < bx1 + 8 && ball.y + BALL_R > by1 && ball.y - BALL_R < by2) {
+      const fromL = (ball.x + BALL_R) - bx1;
+      if (ball.vx > 0 && fromL < 16) {
+        ball.x = bx1 - BALL_R;
+        ball.vx = -Math.abs(ball.vx) * 0.54;
+        ball.vy *= 0.88;
+        ball.board = true;
+      }
+    }
+    if (ball.y > FLOOR_Y - BALL_R) {
+      ball.y = FLOOR_Y - BALL_R;
+      if (ball.vy > 0) {
+        ball.live = false;
+        ball.miss = true;
+      }
+    }
+    if (ball.x < -40 || ball.x > WORLD_W + 50 || ball.y < -60 || ball.y > WORLD_H + 30) {
+      if (ball.live && !ball.scored) {
+        ball.live = false;
+        ball.miss = true;
+      }
+    }
+  }
+
+  function simMake(ball, prevY, hoop) {
+    if (ball.scored || ball.passed) return;
+    if (ball.vy < 40) return;
+    const within = Math.abs(ball.x - hoop.x) < hoop.inner - 1.8;
+    const crossed = prevY < hoop.y + 2 && ball.y >= hoop.y - 3;
+    if (within && crossed) {
+      let kind = 'rim';
+      if (!ball.rim && !ball.board) kind = 'swish';
+      else if (ball.board && !ball.rim) kind = 'bank';
+      ball.scored = true;
+      ball.passed = true;
+      ball.kind = kind;
+      ball.dunk = ball.vy > 360;
+      ball.madeVy = ball.vy;
+      ball.madeOff = Math.abs(ball.x - hoop.x);
+    }
+  }
+
+  function simShot(angle, power, clock0, kind, combo, makes) {
+    const spd = speedOf(power);
+    const ball = {
+      x: AX,
+      y: AY,
+      vx: Math.cos(angle) * spd,
+      vy: Math.sin(angle) * spd,
+      live: true,
+      scored: false,
+      rim: false,
+      board: false,
+      passed: false,
+      miss: false,
+      kind: null,
+      dunk: false,
+      madeVy: 0,
+      madeOff: 99
+    };
+    let clock = clock0;
+    for (let frame = 0; frame < 200; frame++) {
+      clock += STEP;
+      const p = hoopPos(clock, simLevel(clock, kind, combo, makes));
+      const hoop = { x: p.x, y: p.y, inner: INNER, tube: TUBE };
+      const h = STEP / 2;
+      for (let s = 0; s < 2; s++) {
+        if (!ball.live && ball.y > FLOOR_Y + 40) break;
+        const prevY = ball.y;
+        ball.vy += GRAV * h;
+        ball.x += ball.vx * h;
+        ball.y += ball.vy * h;
+        simCollide(ball, hoop);
+        if (ball.live || ball.scored) simMake(ball, prevY, hoop);
+      }
+      if (ball.scored || !ball.live) break;
+    }
+    return ball;
+  }
+
+  function shotFromTime(t, hx, hy) {
+    if (t < 0.22) return null;
+    const dx = hx - AX;
+    const dy = hy - AY;
+    const vx = dx / t;
+    const vy0 = (dy - 0.5 * GRAV * t * t) / t;
+    const spd = hypot(vx, vy0);
+    const ang = Math.atan2(vy0, vx);
+    const power = (spd - MIN_SPD) / (MAX_SPD - MIN_SPD);
+    if (ang < ANG_MIN || ang > ANG_MAX) return null;
+    if (power < MIN_FIRE || power > 1.02) return null;
+    return {
+      angle: clamp(ang, ANG_MIN, ANG_MAX),
+      power: clamp(power, MIN_FIRE, 1)
+    };
+  }
+
+  function rateSim(r, wait) {
+    if (!r.scored) return -1e9;
+    let s = 12000;
+    if (r.dunk) s += 900;
+    if (r.kind === 'swish') s += 520;
+    else if (r.kind === 'bank') s += 90;
+    s += Math.max(0, 36 - r.madeOff) * 10;
+    s += Math.min(520, r.madeVy) * 0.35;
+    s -= wait * (autoSpeed >= 3 ? 420 : 90);
+    return s;
+  }
+
+  function considerShot(best, angle, power, wait, fireClock, kind, combo, makes) {
+    const r = simShot(angle, power, fireClock, kind, combo, makes);
+    const s = rateSim(r, wait);
+    if (s <= best.score) return best;
+    return {
+      score: s,
+      angle: angle,
+      power: power,
+      wait: wait,
+      dunk: r.dunk,
+      kind: r.kind
+    };
+  }
+
+  function findAutoShot() {
+    const kind = G.kind;
+    const combo = G.combo;
+    const makes = G.makes;
+    const clock0 = G.clock;
+    const lvNow = simLevel(clock0, kind, combo, makes);
+    const moving = lvNow >= 3 || (kind === 'timed' && clock0 + 1.6 > 18);
+    const minW = AUTO_AIM[autoSpeed] || 0;
+    const wMax = minW + (moving ? (autoSpeed >= 3 ? 0.72 : 1.15) : 0);
+    const wStep = autoSpeed >= 4 ? 0.05 : 0.07;
+    const offsets = [[0, 0], [0, -4], [0, 4], [-5, 0], [5, 0], [0, -7], [6, 2]];
+    let best = { score: -1e9, angle: G.angle, power: G.power, wait: minW, dunk: false, kind: null };
+    for (let w = minW; w <= wMax + 1e-6; w += wStep) {
+      const fireClock = clock0 + w;
+      for (let t = 0.52; t <= 1.56; t += 0.045) {
+        const hp = hoopPos(fireClock + t, simLevel(fireClock + t, kind, combo, makes));
+        for (let oi = 0; oi < offsets.length; oi++) {
+          const c = shotFromTime(t, hp.x + offsets[oi][0], hp.y + offsets[oi][1]);
+          if (!c) continue;
+          best = considerShot(best, c.angle, c.power, w, fireClock, kind, combo, makes);
+          if (best.score > 0 && best.dunk && best.kind === 'swish' && w <= minW + 0.001) {
+            return best;
+          }
+        }
+      }
+    }
+    if (best.score > 0) return best;
+    for (let a = ANG_MIN; a <= ANG_MAX; a += 0.05) {
+      for (let p = 0.42; p <= 1.001; p += 0.06) {
+        best = considerShot(best, a, p, minW, clock0 + minW, kind, combo, makes);
+      }
+    }
+    return best.score > 0 ? best : null;
+  }
+
+  function syncAutoUi() {
+    btnAuto.classList.toggle('on', autoOn);
+    btnAuto.setAttribute('aria-pressed', autoOn ? 'true' : 'false');
+    btnAuto.textContent = autoOn ? '停下' : '自动';
+    btnAuto.setAttribute('aria-label', autoOn ? '停止自动' : '自动');
+  }
+
+  function syncSpeedUi() {
+    speedEl.value = String(autoSpeed);
+    speedLab.textContent = SPEED_LABELS[autoSpeed];
+    speedEl.title = SPEED_LABELS[autoSpeed];
+    speedEl.setAttribute('aria-valuetext', SPEED_LABELS[autoSpeed]);
+  }
+
+  function setAutoSpeed(n) {
+    n = parseInt(n, 10);
+    if (!(n >= 1 && n <= 4)) n = 3;
+    autoSpeed = n;
+    saveAutoSpeed(autoSpeed);
+    syncSpeedUi();
+  }
+
+  function clearPlayerAim() {
+    keys.l = false;
+    keys.r = false;
+    keys.u = false;
+    keys.d = false;
+    if (G.pulling) {
+      G.pulling = false;
+      pointer.down = false;
+      pointer.id = null;
+      canvas.classList.remove('drawing');
+      G.angle = G.restAngle;
+      G.power = G.restPower;
+    }
+  }
+
+  function toggleAuto() {
+    autoOn = !autoOn;
+    autoPlan = null;
+    autoCd = 0;
+    clearPlayerAim();
+    syncAutoUi();
+    if (!autoOn) return;
+    audio.ensure();
+    if (G.mode === 'title') startRun('streak');
+  }
+
+  function fireAutoShot(plan) {
+    if (!plan || !canShoot()) return false;
+    G.angle = plan.angle;
+    G.power = plan.power;
+    G.restAngle = plan.angle;
+    G.restPower = plan.power;
+    G.pulling = false;
+    canvas.classList.remove('drawing');
+    fire(false);
+    autoPlan = null;
+    autoCd = 0;
+    return true;
+  }
+
+  function tickAuto(dt) {
+    if (!autoOn || G.mode !== 'play') return;
+    if (!canShoot()) {
+      autoPlan = null;
+      return;
+    }
+    if (autoPlan) {
+      autoPlan.left -= dt;
+      const total = Math.max(0.0001, autoPlan.total);
+      const k = autoSpeed >= 4 ? 1 : Math.min(1, 1 - autoPlan.left / total);
+      const ease = k * k * (3 - 2 * k);
+      G.angle = lerp(autoPlan.fromA, autoPlan.angle, ease);
+      G.power = lerp(autoPlan.fromP, autoPlan.power, ease);
+      G.restAngle = G.angle;
+      G.restPower = G.power;
+      if (autoPlan.left <= 0) fireAutoShot(autoPlan);
+      return;
+    }
+    autoCd -= dt;
+    if (autoCd > 0) return;
+    const shot = findAutoShot();
+    if (!shot) {
+      autoCd = autoSpeed >= 3 ? 0.04 : 0.1;
+      return;
+    }
+    const delay = Math.max(0, shot.wait);
+    if (delay <= 0.001 && autoSpeed >= 4) {
+      fireAutoShot(shot);
+      return;
+    }
+    autoPlan = {
+      angle: shot.angle,
+      power: shot.power,
+      fromA: G.angle,
+      fromP: G.power,
+      left: delay,
+      total: delay,
+      dunk: shot.dunk,
+      kind: shot.kind
+    };
+    if (delay <= 0.001) fireAutoShot(autoPlan);
+  }
+
   function updatePlay(dt) {
     G.lock = Math.max(0, G.lock - dt);
     G.clock += dt;
@@ -1072,7 +1410,7 @@
         if (!G.flight) endRun('time');
       }
     }
-    if (!G.pulling && !G.flight && G.mode === 'play' && G.lock <= 0) {
+    if (!autoOn && !G.pulling && !G.flight && G.mode === 'play' && G.lock <= 0) {
       const turn = (keys.l ? -1 : 0) + (keys.r ? 1 : 0);
       const pow = (keys.u ? 1 : 0) + (keys.d ? -1 : 0);
       if (turn) {
@@ -1094,6 +1432,7 @@
       G.endT -= dt;
       if (G.endT <= 0) endRun('miss');
     }
+    if (autoOn) tickAuto(dt);
   }
 
   function updateTitle(dt) {
@@ -1641,6 +1980,12 @@
       retry();
       return;
     }
+    if (e.code === 'KeyA') {
+      e.preventDefault();
+      if (e.repeat) return;
+      toggleAuto();
+      return;
+    }
     if (e.code === 'Escape' && G.pulling) {
       G.pulling = false;
       pointer.down = false;
@@ -1670,7 +2015,17 @@
       }
       return;
     }
-    if (e.code === 'KeyA' || e.code === 'ArrowLeft') keys.l = true;
+    if (autoOn) {
+      if (
+        e.code === 'ArrowLeft' || e.code === 'ArrowRight' || e.code === 'ArrowUp' || e.code === 'ArrowDown' ||
+        e.code === 'KeyD' || e.code === 'KeyW' || e.code === 'KeyS' ||
+        e.code === 'Space' || e.code === 'Enter'
+      ) {
+        e.preventDefault();
+      }
+      return;
+    }
+    if (e.code === 'ArrowLeft') keys.l = true;
     if (e.code === 'KeyD' || e.code === 'ArrowRight') keys.r = true;
     if (e.code === 'KeyW' || e.code === 'ArrowUp') keys.u = true;
     if (e.code === 'KeyS' || e.code === 'ArrowDown') keys.d = true;
@@ -1681,14 +2036,14 @@
   });
 
   window.addEventListener('keyup', function (e) {
-    if (e.code === 'KeyA' || e.code === 'ArrowLeft') keys.l = false;
+    if (e.code === 'ArrowLeft') keys.l = false;
     if (e.code === 'KeyD' || e.code === 'ArrowRight') keys.r = false;
     if (e.code === 'KeyW' || e.code === 'ArrowUp') keys.u = false;
     if (e.code === 'KeyS' || e.code === 'ArrowDown') keys.d = false;
   });
 
   canvas.addEventListener('pointerdown', function (e) {
-    if (G.mode !== 'play') return;
+    if (G.mode !== 'play' || autoOn) return;
     e.preventDefault();
     audio.ensure();
     canvas.setPointerCapture(e.pointerId);
@@ -1740,6 +2095,12 @@
     audio.ensure();
     audio.setMuted(!audio.muted);
   });
+  btnAuto.addEventListener('click', function () {
+    toggleAuto();
+  });
+  speedEl.addEventListener('input', function () {
+    setAutoSpeed(speedEl.value);
+  });
   btnRetry.addEventListener('click', function () {
     retry();
   });
@@ -1756,11 +2117,14 @@
   if (window.visualViewport) window.visualViewport.addEventListener('resize', resize);
 
   loadBest();
+  autoSpeed = loadAutoSpeed();
   makeMotes();
   initNet();
   resize();
   showOverlay();
   syncHud(true);
+  syncAutoUi();
+  syncSpeedUi();
   audio.setMuted(audio.muted);
   requestAnimationFrame(loop);
 })();
