@@ -1412,5 +1412,29 @@
     "dir": "g/pipe-flow/",
     "url": "./g/pipe-flow/",
     "kind": "remake"
+  },
+  {
+    "n": 138,
+    "id": "bomb-maze",
+    "title": "炸巷",
+    "subtitle": "BOMB",
+    "blurb": "放炸弹，炸开墙，别把自己炸了。",
+    "hue": 22,
+    "tag": "复刻",
+    "dir": "g/bomb-maze/",
+    "url": "./g/bomb-maze/",
+    "kind": "remake"
+  },
+  {
+    "n": 139,
+    "id": "moon-run",
+    "title": "月巡",
+    "subtitle": "MOON",
+    "blurb": "月球车边开边打，坑要跳。",
+    "hue": 210,
+    "tag": "复刻",
+    "dir": "g/moon-run/",
+    "url": "./g/moon-run/",
+    "kind": "remake"
   }
 ]

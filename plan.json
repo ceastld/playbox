@@ -1551,7 +1551,7 @@
     "blurb": "放炸弹，炸开墙，别把自己炸了。",
     "hue": 22,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/bomb-maze/",
     "kind": "remake"
   },
@@ -1563,7 +1563,7 @@
     "blurb": "月球车边开边打，坑要跳。",
     "hue": 210,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/moon-run/",
     "kind": "remake"
   },
@@ -1601,6 +1601,30 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/ice-peak/",
+    "kind": "remake"
+  },
+  {
+    "n": 143,
+    "id": "river-raid",
+    "title": "河袭",
+    "subtitle": "RIVER",
+    "blurb": "沿河道飞，打船打桥，别撞岸。",
+    "hue": 142,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/river-raid/",
+    "kind": "remake"
+  },
+  {
+    "n": 144,
+    "id": "tapper-pour",
+    "title": "酒保",
+    "subtitle": "TAP",
+    "blurb": "倒酒滑过去，空杯滑回来接住。",
+    "hue": 12,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/tapper-pour/",
     "kind": "remake"
   }
 ]
