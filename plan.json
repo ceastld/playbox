@@ -2583,7 +2583,7 @@
     "blurb": "俯视赛道甩尾，别撞墙。",
     "hue": 8,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/super-sprint/",
     "kind": "remake"
   },
@@ -2607,7 +2607,7 @@
     "blurb": "公园里连跳，转够720再落地。",
     "hue": 168,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/skate-720/",
     "kind": "remake"
   },
@@ -2631,7 +2631,7 @@
     "blurb": "蘑菇林里打虫，蜘蛛一落就砸。",
     "hue": 118,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/millipede/",
     "kind": "remake"
   },
@@ -2657,6 +2657,42 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/battlezone/",
+    "kind": "remake"
+  },
+  {
+    "n": 231,
+    "id": "tron-cycle",
+    "title": "光环",
+    "subtitle": "TRON",
+    "blurb": "光墙往后铺，别撞自己的尾巴。",
+    "hue": 186,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/tron-cycle/",
+    "kind": "remake"
+  },
+  {
+    "n": 232,
+    "id": "outrun",
+    "title": "疾风",
+    "subtitle": "RUN",
+    "blurb": "公路甩尾，看准分叉再选边。",
+    "hue": 14,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/outrun/",
+    "kind": "remake"
+  },
+  {
+    "n": 233,
+    "id": "warlords",
+    "title": "城砖",
+    "subtitle": "WARL",
+    "blurb": "四角守城，火球砸砖砸人。",
+    "hue": 12,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/warlords/",
     "kind": "remake"
   }
 ]

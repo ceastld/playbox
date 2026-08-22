@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#041612" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>滑板 · SK8</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23041612'/%3E%3Crect x='6' y='16' width='20' height='5' rx='2.4' fill='%2300ffcc'/%3E%3Ccircle cx='10' cy='22' r='2.1' fill='%23ff3db8'/%3E%3Ccircle cx='22' cy='22' r='2.1' fill='%23ff3db8'/%3E%3Ccircle cx='16' cy='13' r='3.2' fill='%23e8fff8'/%3E%3Crect x='13' y='15.2' width='6' height='5' rx='1' fill='%2300f0ff'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>滑板</b>
+        <span>SK8</span>
+      </div>
+      <div class="status">
+        <div class="scores" aria-live="polite">
+          <div class="score" id="score-box">
+            <em>分数</em>
+            <b id="score">0</b>
+            <span id="score-add" class="score-add" hidden>+0</span>
+          </div>
+          <div class="score best">
+            <em>最高</em>
+            <b id="best">0</b>
+          </div>
+          <div class="score time" id="time-box">
+            <em>现金</em>
+            <b id="time">56.0</b>
+          </div>
+          <div class="score tix" id="tix-box">
+            <em>票</em>
+            <b id="tix">0</b>
+          </div>
+        </div>
+        <div class="row">
+          <span id="stage-label">公园</span>
+          <span id="tag-label">SK8</span>
+          <div class="fill clock" id="time-wrap" title="剩余现金">
+            <em>限</em>
+            <div class="fill-track" aria-hidden="true"><i id="time-bar"></i></div>
+          </div>
+          <span id="combo-label" class="combo" hidden>连滑 ×1</span>
+        </div>
+      </div>
+      <div class="tools">
+        <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
+        <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <canvas id="c" tabindex="0" role="application" aria-label="滑板，俯视滑板公园，冲坡起飞，空中转板，对齐落地"></canvas>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden"></div>
+      <div id="chain-pop" class="chain-pop hidden" aria-hidden="true">720°</div>
+      <div id="pad" class="pad">
+        <button type="button" id="btn-up" aria-label="上">上</button>
+        <button type="button" id="btn-left" aria-label="左">左</button>
+        <button type="button" id="btn-right" aria-label="右">右</button>
+        <button type="button" id="btn-down" aria-label="下">下</button>
+      </div>
+      <button type="button" id="btn-jump" class="pad-jump" aria-label="起跳">跳</button>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">SK8</p>
+          <h1 id="ov-title">滑板</h1>
+          <p class="lead" id="ov-lead">俯视滑板公园。冲坡起飞，空中转板，对齐落地拿分。</p>
+          <p class="ops" id="ov-ops">方向键滑行 · 空格起跳 · 空中←→转板 · 买票参赛 · R 重开 · M 静音</p>
+          <div class="ov-actions" id="ov-start">
+            <button type="button" id="btn-park">公园</button>
+            <button type="button" id="btn-extreme">极限</button>
+          </div>
+          <div class="ov-actions gone" id="ov-end">
+            <button type="button" id="ov-retry">再滑</button>
+            <button type="button" id="ov-modes">换模式</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">冲坡起飞 · 空中转板对齐落地 · 捡现金续时 · R 重开</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>

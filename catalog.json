@@ -2468,5 +2468,41 @@
     "dir": "g/ikaruga/",
     "url": "./g/ikaruga/",
     "kind": "remake"
+  },
+  {
+    "n": 224,
+    "id": "super-sprint",
+    "title": "超赛",
+    "subtitle": "SPRT",
+    "blurb": "俯视赛道甩尾，别撞墙。",
+    "hue": 8,
+    "tag": "复刻",
+    "dir": "g/super-sprint/",
+    "url": "./g/super-sprint/",
+    "kind": "remake"
+  },
+  {
+    "n": 226,
+    "id": "skate-720",
+    "title": "滑板",
+    "subtitle": "SK8",
+    "blurb": "公园里连跳，转够720再落地。",
+    "hue": 168,
+    "tag": "复刻",
+    "dir": "g/skate-720/",
+    "url": "./g/skate-720/",
+    "kind": "remake"
+  },
+  {
+    "n": 228,
+    "id": "millipede",
+    "title": "千足",
+    "subtitle": "MILL",
+    "blurb": "蘑菇林里打虫，蜘蛛一落就砸。",
+    "hue": 118,
+    "tag": "复刻",
+    "dir": "g/millipede/",
+    "url": "./g/millipede/",
+    "kind": "remake"
   }
 ]
