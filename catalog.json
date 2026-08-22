@@ -1676,5 +1676,29 @@
     "dir": "g/zax-iso/",
     "url": "./g/zax-iso/",
     "kind": "remake"
+  },
+  {
+    "n": 160,
+    "id": "punch-bag",
+    "title": "拳台",
+    "subtitle": "PUNCH",
+    "blurb": "盯破绽出拳，躲开重击。",
+    "hue": 6,
+    "tag": "复刻",
+    "dir": "g/punch-bag/",
+    "url": "./g/punch-bag/",
+    "kind": "remake"
+  },
+  {
+    "n": 161,
+    "id": "space-rush",
+    "title": "空间",
+    "subtitle": "HARRIER",
+    "blurb": "3D空间里冲，左右躲开火。",
+    "hue": 188,
+    "tag": "复刻",
+    "dir": "g/space-rush/",
+    "url": "./g/space-rush/",
+    "kind": "remake"
   }
 ]

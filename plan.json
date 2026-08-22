@@ -1815,7 +1815,7 @@
     "blurb": "盯破绽出拳，躲开重击。",
     "hue": 6,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/punch-bag/",
     "kind": "remake"
   },
@@ -1827,7 +1827,7 @@
     "blurb": "3D空间里冲，左右躲开火。",
     "hue": 188,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/space-rush/",
     "kind": "remake"
   },
@@ -1865,6 +1865,30 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/after-burn/",
+    "kind": "remake"
+  },
+  {
+    "n": 165,
+    "id": "r-type-run",
+    "title": "武装",
+    "subtitle": "RTYPE",
+    "blurb": "横版打飞机，力场球能挡能射。",
+    "hue": 322,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/r-type-run/",
+    "kind": "remake"
+  },
+  {
+    "n": 166,
+    "id": "hang-on",
+    "title": "摩托",
+    "subtitle": "HANGON",
+    "blurb": "压弯飙车，别摔出去。",
+    "hue": 18,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/hang-on/",
     "kind": "remake"
   }
 ]
