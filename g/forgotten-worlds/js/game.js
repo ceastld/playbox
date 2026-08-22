@@ -14,7 +14,10 @@
   const SAT_MAX = 2;
   const BEST_KEY = 'playbox-forgotten-worlds-best';
   const MUTE_KEY = 'playbox-forgotten-worlds-mute';
-  const OPS = '方向 / WASD 移动 · 鼠标或 IJKL 瞄准 · 空格射击 · R 重开 · M 静音';
+  const AUTO_SPEED_KEY = 'playbox-forgotten-worlds-auto-speed';
+  const SPEED_LABELS = ['', '慢', '中', '快', '极快'];
+  const AUTO_SCALE = [1, 0.52, 0.78, 1, 3.6];
+  const OPS = '方向 / WASD 移动 · 鼠标或 IJKL 瞄准 · 空格射击 · A 自动 · R 重开 · M 静音';
   const REDUCE = typeof window !== 'undefined' && window.matchMedia
     ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
     : false;
@@ -143,6 +146,9 @@
   const ovMenu = document.getElementById('ov-menu');
   const btnMute = document.getElementById('btn-mute');
   const btnRetry = document.getElementById('btn-retry');
+  const btnAuto = document.getElementById('btn-auto');
+  const speedEl = document.getElementById('speed');
+  const speedLab = document.getElementById('speed-lab');
   const scoreEl = document.getElementById('score');
   const bestEl = document.getElementById('best');
   const goldEl = document.getElementById('gold');
@@ -172,6 +178,12 @@
   let wpnTok = 0;
   let satTok = 0;
   let aimSrc = 'key';
+  let autoOn = false;
+  let autoSpeed = 3;
+  let autoOvWait = 0;
+  let autoMoveX = 0;
+  let autoMoveY = 0;
+  let autoTarget = null;
 
   const keys = {
     l: false, r: false, u: false, d: false,
@@ -461,6 +473,18 @@
     } catch (err) { /* ignore */ }
   }
 
+  function loadAutoSpeed() {
+    try {
+      const n = parseInt(localStorage.getItem(AUTO_SPEED_KEY) || '3', 10);
+      if (n >= 1 && n <= 4) return n;
+    } catch (err) { /* ignore */ }
+    return 3;
+  }
+
+  function saveAutoSpeed(n) {
+    try { localStorage.setItem(AUTO_SPEED_KEY, String(n)); } catch (err) { /* ignore */ }
+  }
+
   function addScore(n) {
     if ((G.mode !== 'play' && G.mode !== 'shop') || n <= 0) return;
     G.score += n;
@@ -610,12 +634,19 @@
         comboEl.hidden = true;
       }
     }
-    if (G.mode === 'title') setHint(OPS, '');
+    if (autoOn) {
+      if (G.mode === 'title') setHint('自动托管 · 即将开局 · A 停下', 'hot');
+      else if (G.mode === 'shop') setHint('托管中 · 武装店 · A 停下', 'hot');
+      else if (G.mode === 'lose') setHint('自动仍开着 · 即将再开 · A 停下', 'warn');
+      else if (G.mode === 'win') setHint('自动仍开着 · 即将再开 · A 停下', 'hot');
+      else if (G.lives === 1) setHint('托管中 · 最后一命 · A 停下', 'warn');
+      else setHint('托管中 · 转炮打空打地 · A 停下', 'hot');
+    } else if (G.mode === 'title') setHint(OPS, '');
     else if (G.mode === 'lose') setHint('R 重开 · 撞机或中弹扣一命', 'warn');
     else if (G.mode === 'win') setHint('神殿重光 · R 再来一局', 'hot');
     else if (G.mode === 'shop') setHint('1 散射 · 2 卫星 · 回车出发 · 金币花不完可留', 'hot');
     else if (G.lives === 1) setHint('最后一命 · 转炮打空打地 · 拾金', 'warn');
-    else setHint('WASD 飞 · 鼠标 / IJKL 转炮 · 空格射击 · 拾金进店', '');
+    else setHint('WASD 飞 · 鼠标 / IJKL 转炮 · 空格射击 · A 自动 · 拾金进店', '');
     syncPips();
   }
 
@@ -1622,6 +1653,263 @@
     }
   }
 
+  function clearAutoKeys() {
+    keys.l = false;
+    keys.r = false;
+    keys.u = false;
+    keys.d = false;
+    keys.aimL = false;
+    keys.aimR = false;
+    keys.aimU = false;
+    keys.aimD = false;
+    G.fireHold = false;
+    pointer.down = false;
+  }
+
+  function syncAutoUi() {
+    if (!btnAuto) return;
+    btnAuto.classList.toggle('on', autoOn);
+    btnAuto.setAttribute('aria-pressed', autoOn ? 'true' : 'false');
+    btnAuto.textContent = autoOn ? '停下' : '自动';
+    btnAuto.setAttribute('aria-label', autoOn ? '停止自动' : '自动');
+  }
+
+  function syncSpeedUi() {
+    if (speedEl) speedEl.value = String(autoSpeed);
+    if (speedLab) speedLab.textContent = SPEED_LABELS[autoSpeed];
+    if (speedEl) {
+      speedEl.title = SPEED_LABELS[autoSpeed];
+      speedEl.setAttribute('aria-valuetext', SPEED_LABELS[autoSpeed]);
+    }
+  }
+
+  function autoScale() {
+    if (!autoOn || G.mode !== 'play') return 1;
+    return AUTO_SCALE[autoSpeed] || 1;
+  }
+
+  function setAutoSpeed(n) {
+    n = parseInt(n, 10);
+    if (!isFinite(n) || n < 1 || n > 4) n = 3;
+    autoSpeed = n;
+    saveAutoSpeed(autoSpeed);
+    syncSpeedUi();
+  }
+
+  function toggleAuto() {
+    autoOn = !autoOn;
+    autoOvWait = 0;
+    autoMoveX = 0;
+    autoMoveY = 0;
+    autoTarget = null;
+    clearAutoKeys();
+    syncAutoUi();
+    if (autoOn) {
+      audio.ensure();
+      if (G.mode === 'title') startGame('raid');
+    }
+    syncHud();
+  }
+
+  function entPred(en, t) {
+    let x = en.x;
+    let y = en.y;
+    if (en.ground && en.vx === 0 && en.type !== 'mid' && en.type !== 'boss') {
+      x -= scrollSpd() * t;
+    } else {
+      x += (en.vx || 0) * t;
+      y += (en.vy || 0) * t;
+    }
+    if (en.type === 'imp') y = en.baseY + Math.sin((en.t + t) * 3.2 + en.phase) * 18;
+    else if (en.type === 'wyrm') y = en.baseY + Math.sin((en.t + t) * 2.6 + en.phase) * 46;
+    else if (en.type === 'drake') y = en.baseY + Math.sin((en.t + t) * 1.5) * 28;
+    else if (en.type === 'mid' && !en.ground) y = en.baseY + Math.sin((en.t + t) * 1.1) * 40;
+    else if (en.type === 'boss' && !en.ground) y = clamp(en.baseY + Math.sin((en.t + t) * 0.9) * 70, 70, GROUND - 60);
+    return { x: x, y: y };
+  }
+
+  function pickAutoTarget() {
+    const px = G.player.x;
+    const py = G.player.y;
+    let best = null;
+    let bestS = -1e12;
+    for (let i = 0; i < G.ents.length; i++) {
+      const en = G.ents[i];
+      if (en.hp <= 0) continue;
+      if (en.x < -30 || en.x > VW + 50) continue;
+      const d = hypot(en.x - px, en.y - py);
+      let sc = (en.score || 50) * 1.4 / (d + 48);
+      if (en.type === 'boss') sc += 90;
+      else if (en.type === 'mid') sc += 55;
+      else if (en.type === 'dive') sc += 22;
+      else if (en.type === 'drake') sc += 14;
+      else if (en.ground) sc += 8;
+      if (en.x > VW - 8 && en.type !== 'boss' && en.type !== 'mid') sc *= 0.42;
+      if (en.x < 24) sc -= 12;
+      sc += (en.maxHp - en.hp) * 0.35;
+      if (autoTarget === en) sc += 6;
+      if (sc > bestS) {
+        bestS = sc;
+        best = en;
+      }
+    }
+    autoTarget = best;
+    return best;
+  }
+
+  function scoreAutoPos(nx, ny, look) {
+    const inv = G.invuln > 0.12;
+    const panic = inv ? 0.16 : 1;
+    let score = 0;
+    const homeX = hasBig() ? 78 : (isStorm() ? 118 : 96);
+    const tgt = autoTarget;
+    let homeY = 210;
+    if (tgt) {
+      if (tgt.ground) homeY = 188;
+      else homeY = clamp(tgt.y, 86, GROUND - 70);
+    }
+    score -= Math.abs(nx - homeX) * 2.4;
+    score -= Math.abs(ny - homeY) * 1.15;
+    if (nx < 36) score -= 80;
+    if (nx > 240) score -= (nx - 240) * 8;
+    if (ny < 40 || ny > GROUND - 28) score -= 120;
+
+    let closestAir = 1e9;
+    for (let i = 0; i < G.ents.length; i++) {
+      const en = G.ents[i];
+      if (en.hp <= 0) continue;
+      const p = entPred(en, look);
+      const d = hypot(p.x - nx, p.y - ny);
+      if (!en.ground) {
+        if (d < closestAir) closestAir = d;
+        const contact = 10 + en.r * 0.72 + 10;
+        if (d < contact) score -= 18000 * panic;
+        else if (d < contact + 70) score -= ((contact + 70 - d) * 55) * panic;
+        if (en.type === 'dive' && p.y < ny + 30) {
+          const dx = Math.abs(p.x - nx);
+          if (dx < 46) score -= (46 - dx) * 90 * panic;
+        }
+      }
+    }
+
+    for (let i = 0; i < G.eShots.length; i++) {
+      const s = G.eShots[i];
+      const rx = s.x - nx;
+      const ry = s.y - ny;
+      const v2 = s.vx * s.vx + s.vy * s.vy + 1;
+      const tHit = clamp(-(rx * s.vx + ry * s.vy) / v2, 0, 0.55);
+      const d = hypot(s.x + s.vx * tHit - nx, s.y + s.vy * tHit - ny);
+      const rad = 12 + s.r;
+      if (d < rad) score -= ((rad - d) * 4200) * panic;
+      else if (d < rad + 28) score -= ((rad + 28 - d) * 38) * panic;
+    }
+
+    if (closestAir > 72 && G.deadT <= 0) {
+      for (let i = 0; i < G.coins.length; i++) {
+        const c = G.coins[i];
+        const d = hypot(c.x - nx, c.y - ny);
+        if (d < 130) score += 2200 / (d + 12);
+      }
+    }
+    if (tgt && !tgt.ground) score -= Math.abs(ny - tgt.y) * 0.8;
+    return score;
+  }
+
+  function autoThink() {
+    keys.l = false;
+    keys.r = false;
+    keys.u = false;
+    keys.d = false;
+    G.fireHold = false;
+    if (G.mode !== 'play' || G.deadT > 0) return;
+
+    const tgt = pickAutoTarget();
+    const look = 0.16;
+    const spd = plySpd();
+    const px = G.player.x;
+    const py = G.player.y;
+    const reach = spd * look;
+    let bestS = scoreAutoPos(px, py, look);
+    let bx = 0;
+    let by = 0;
+    const stayS = bestS;
+    const nDir = 12;
+    for (let i = 0; i < nDir; i++) {
+      const a = (TAU * i) / nDir;
+      const dx = Math.cos(a);
+      const dy = Math.sin(a);
+      const nx = clamp(px + dx * reach, 28, VW - 28);
+      const ny = clamp(py + dy * reach, 28, GROUND - 18);
+      const s = scoreAutoPos(nx, ny, look);
+      if (s > bestS) {
+        bestS = s;
+        bx = dx;
+        by = dy;
+      }
+    }
+    const cur = scoreAutoPos(
+      clamp(px + autoMoveX * reach, 28, VW - 28),
+      clamp(py + autoMoveY * reach, 28, GROUND - 18),
+      look
+    );
+    const danger = bestS < -800 || cur < -800;
+    if (bestS > stayS + (danger ? 18 : 55) && bestS > cur + (danger ? 12 : 40)) {
+      autoMoveX = bx;
+      autoMoveY = by;
+    } else if (stayS >= bestS - 12) {
+      autoMoveX = 0;
+      autoMoveY = 0;
+    }
+
+    if (autoMoveX < -0.28) keys.l = true;
+    else if (autoMoveX > 0.28) keys.r = true;
+    if (autoMoveY < -0.28) keys.u = true;
+    else if (autoMoveY > 0.28) keys.d = true;
+
+    if (tgt) {
+      const d = hypot(tgt.x - px, tgt.y - py) || 1;
+      const eta = Math.min(0.38, d / 640);
+      const p = entPred(tgt, eta);
+      G.aimAng = Math.atan2(p.y - py, p.x - px);
+      G.fireHold = true;
+    } else if (G.ents.length) {
+      G.aimAng = 0;
+      G.fireHold = true;
+    } else {
+      G.aimAng = 0;
+    }
+  }
+
+  function tickAutoFlow(dt) {
+    if (!autoOn) return;
+    if (G.mode === 'title') {
+      autoOvWait += dt;
+      if (autoOvWait >= (autoSpeed >= 3 ? 0.25 : 0.5)) {
+        autoOvWait = 0;
+        startGame('raid');
+      }
+      return;
+    }
+    if (G.mode === 'shop') {
+      autoOvWait += dt;
+      const wait = autoSpeed >= 4 ? 0.08 : autoSpeed >= 3 ? 0.28 : autoSpeed >= 2 ? 0.45 : 0.7;
+      if (autoOvWait >= wait) {
+        autoOvWait = 0;
+        if (G.spread < SPREAD_MAX && G.gold >= spreadCost()) buySpread();
+        else if (G.sats.length < SAT_MAX && G.gold >= satCost()) buySat();
+        else leaveShop();
+      }
+      return;
+    }
+    if (G.mode === 'lose' || G.mode === 'win') {
+      autoOvWait += dt;
+      if (autoOvWait >= (autoSpeed >= 3 ? 0.7 : 1.15)) {
+        autoOvWait = 0;
+        startGame(G.kind || 'raid');
+      }
+    }
+  }
+
   function jetpack(dt) {
     G.jetT += dt;
     if (G.deadT > 0) return;
@@ -1650,7 +1938,7 @@
       dy /= len;
       G.player.vx = dx * spd;
       G.player.vy = dy * spd;
-    } else if (pointer.down && aimSrc === 'ptr') {
+    } else if (!autoOn && pointer.down && aimSrc === 'ptr') {
       const near = hypot(pointer.x - G.player.x, pointer.y - G.player.y) < 96;
       if (near) {
         G.player.x = lerp(G.player.x, pointer.x, 1 - Math.exp(-dt * 10));
@@ -1692,13 +1980,18 @@
 
   function update(dt) {
     G.t += dt;
+    if (autoOn) tickAutoFlow(dt);
     if (G.stop > 0) {
-      G.stop -= dt;
-      updateFx(dt * 0.18);
-      return;
+      if (autoOn && autoSpeed >= 4 && G.mode === 'play') G.stop = 0;
+      else {
+        G.stop -= dt;
+        updateFx(dt * 0.18);
+        return;
+      }
     }
     updateFx(dt);
     updateAim(dt);
+    if (autoOn && G.mode === 'play' && G.deadT <= 0) autoThink();
 
     if (G.mode === 'title') {
       G.player.x = 88;
@@ -2379,7 +2672,7 @@
     showOverlay(
       'title',
       '忘界',
-      '飞甲武士停在左舷。360° 转炮，空中地面都能打。拾金币进店买散射、卫星。撞机扣一命。',
+      '飞甲武士停在左舷。360° 转炮，空中地面都能打。拾金币进店买散射、卫星。撞机扣一命。A 自动。',
       'FORG'
     );
     syncHud();
@@ -2412,36 +2705,52 @@
   function onKey(e, down) {
     const k = e.key;
     const code = e.code;
+    if (k === 'a' || k === 'A' || code === 'KeyA') {
+      e.preventDefault();
+      if (down && !e.repeat) toggleAuto();
+      return;
+    }
     const isMove = k === 'ArrowLeft' || k === 'ArrowRight' || k === 'ArrowUp' || k === 'ArrowDown'
-      || k === 'a' || k === 'A' || k === 'd' || k === 'D' || k === 'w' || k === 'W' || k === 's' || k === 'S';
+      || k === 'd' || k === 'D' || k === 'w' || k === 'W' || k === 's' || k === 'S';
     const isAim = k === 'i' || k === 'I' || k === 'j' || k === 'J' || k === 'k' || k === 'K' || k === 'l' || k === 'L';
     const space = k === ' ' || k === 'Spacebar' || code === 'Space';
 
-    if (k === 'ArrowLeft' || k === 'a' || k === 'A' || k === 'Left') keys.l = down;
-    if (k === 'ArrowRight' || k === 'd' || k === 'D' || k === 'Right') keys.r = down;
-    if (k === 'ArrowUp' || k === 'w' || k === 'W' || k === 'Up') keys.u = down;
-    if (k === 'ArrowDown' || k === 's' || k === 'S' || k === 'Down') keys.d = down;
-    if (k === 'j' || k === 'J') {
-      keys.aimL = down;
-      if (down) aimSrc = 'key';
-    }
-    if (k === 'l' || k === 'L') {
-      keys.aimR = down;
-      if (down) aimSrc = 'key';
-    }
-    if (k === 'i' || k === 'I') {
-      keys.aimU = down;
-      if (down) aimSrc = 'key';
-    }
-    if (k === 'k' || k === 'K') {
-      keys.aimD = down;
-      if (down) aimSrc = 'key';
+    if (!autoOn) {
+      if (k === 'ArrowLeft' || k === 'Left') keys.l = down;
+      if (k === 'ArrowRight' || k === 'd' || k === 'D' || k === 'Right') keys.r = down;
+      if (k === 'ArrowUp' || k === 'w' || k === 'W' || k === 'Up') keys.u = down;
+      if (k === 'ArrowDown' || k === 's' || k === 'S' || k === 'Down') keys.d = down;
+      if (k === 'j' || k === 'J') {
+        keys.aimL = down;
+        if (down) aimSrc = 'key';
+      }
+      if (k === 'l' || k === 'L') {
+        keys.aimR = down;
+        if (down) aimSrc = 'key';
+      }
+      if (k === 'i' || k === 'I') {
+        keys.aimU = down;
+        if (down) aimSrc = 'key';
+      }
+      if (k === 'k' || k === 'K') {
+        keys.aimD = down;
+        if (down) aimSrc = 'key';
+      }
+    } else if (!down) {
+      if (k === 'ArrowLeft' || k === 'Left') keys.l = false;
+      if (k === 'ArrowRight' || k === 'd' || k === 'D' || k === 'Right') keys.r = false;
+      if (k === 'ArrowUp' || k === 'w' || k === 'W' || k === 'Up') keys.u = false;
+      if (k === 'ArrowDown' || k === 's' || k === 'S' || k === 'Down') keys.d = false;
+      if (k === 'j' || k === 'J') keys.aimL = false;
+      if (k === 'l' || k === 'L') keys.aimR = false;
+      if (k === 'i' || k === 'I') keys.aimU = false;
+      if (k === 'k' || k === 'K') keys.aimD = false;
     }
 
     if (down && (isMove || isAim || space || k === 'Enter')) e.preventDefault();
 
     if (!down) {
-      if (space) G.fireHold = false;
+      if (space && !autoOn) G.fireHold = false;
       return;
     }
     if (k === 'm' || k === 'M') {
@@ -2453,6 +2762,7 @@
       restart();
       return;
     }
+    if (autoOn) return;
     if (k === '1') {
       if (G.mode === 'shop') buySpread();
       else if (overlayOpen()) primaryAction();
@@ -2481,6 +2791,7 @@
     canvas.addEventListener('pointerdown', function (e) {
       audio.ensure();
       e.preventDefault();
+      if (autoOn) return;
       pointer.down = true;
       pointer.hover = true;
       pointer.id = e.pointerId;
@@ -2499,6 +2810,7 @@
       }
     });
     canvas.addEventListener('pointermove', function (e) {
+      if (autoOn) return;
       const w = pointerWorld(e);
       pointer.x = w.x;
       pointer.y = w.y;
@@ -2515,7 +2827,7 @@
       if (pointer.id != null && e.pointerId !== pointer.id && pointer.down) return;
       pointer.down = false;
       pointer.id = null;
-      G.fireHold = false;
+      if (!autoOn) G.fireHold = false;
     }
     canvas.addEventListener('pointerup', up);
     canvas.addEventListener('pointercancel', up);
@@ -2540,13 +2852,17 @@
     let dt = t - last;
     last = t;
     if (dt > 0.05) dt = 0.05;
-    acc += dt;
+    const turbo = autoOn && autoSpeed >= 4 && G.mode === 'play';
+    if (turbo) G.stop = 0;
+    acc += dt * autoScale();
     let n = 0;
-    while (acc >= STEP && n < 5) {
+    const maxSteps = turbo ? 16 : 5;
+    while (acc >= STEP && n < maxSteps) {
       update(STEP);
       acc -= STEP;
       n += 1;
     }
+    if (acc > STEP * 4) acc = 0;
     draw();
   }
 
@@ -2558,6 +2874,9 @@
 
   loadBest();
   initMute();
+  autoSpeed = loadAutoSpeed();
+  syncSpeedUi();
+  syncAutoUi();
   goTitle();
   resize();
   bindPointer();
@@ -2597,6 +2916,12 @@
       audio.setMuted(!audio.muted);
     });
   }
+  if (btnAuto) btnAuto.addEventListener('click', toggleAuto);
+  if (speedEl) {
+    const onSpeed = function () { setAutoSpeed(speedEl.value); };
+    speedEl.addEventListener('input', onSpeed);
+    speedEl.addEventListener('change', onSpeed);
+  }
 
   window.addEventListener('keydown', function (e) { onKey(e, true); });
   window.addEventListener('keyup', function (e) { onKey(e, false); });
@@ -2612,7 +2937,7 @@
       keys.aimR = false;
       keys.aimU = false;
       keys.aimD = false;
-      G.fireHold = false;
+      if (!autoOn) G.fireHold = false;
     }
   });
 
