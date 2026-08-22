@@ -1964,5 +1964,65 @@
     "dir": "g/bubble-twin/",
     "url": "./g/bubble-twin/",
     "kind": "remake"
+  },
+  {
+    "n": 184,
+    "id": "invader",
+    "title": "侵星",
+    "subtitle": "INV",
+    "blurb": "盾牌后面打外星人。",
+    "hue": 132,
+    "tag": "复刻",
+    "dir": "g/invader/",
+    "url": "./g/invader/",
+    "kind": "remake"
+  },
+  {
+    "n": 185,
+    "id": "twin-bee",
+    "title": "双蜂",
+    "subtitle": "BEE",
+    "blurb": "竖版打飞机，捡铃铛换武装。",
+    "hue": 52,
+    "tag": "复刻",
+    "dir": "g/twin-bee/",
+    "url": "./g/twin-bee/",
+    "kind": "remake"
+  },
+  {
+    "n": 186,
+    "id": "duck-hunt",
+    "title": "猎鸭",
+    "subtitle": "DUCK",
+    "blurb": "枪口跟着飞鸟走。",
+    "hue": 24,
+    "tag": "复刻",
+    "dir": "g/duck-hunt/",
+    "url": "./g/duck-hunt/",
+    "kind": "remake"
+  },
+  {
+    "n": 187,
+    "id": "street-fist",
+    "title": "街霸",
+    "subtitle": "FIST",
+    "blurb": "出招打一套，再看血条。",
+    "hue": 8,
+    "tag": "复刻",
+    "dir": "g/street-fist/",
+    "url": "./g/street-fist/",
+    "kind": "remake"
+  },
+  {
+    "n": 188,
+    "id": "xevi-run",
+    "title": "空袭",
+    "subtitle": "XEVI",
+    "blurb": "天上打、地上轰。",
+    "hue": 84,
+    "tag": "复刻",
+    "dir": "g/xevi-run/",
+    "url": "./g/xevi-run/",
+    "kind": "remake"
   }
 ]

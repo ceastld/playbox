@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#100e04" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>双蜂 · BEE</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23100e04'/%3E%3Cellipse cx='16' cy='18' rx='8' ry='7' fill='%23f0d419'/%3E%3Crect x='10' y='16' width='12' height='3' fill='%23120e04'/%3E%3Cellipse cx='10' cy='16' rx='4' ry='2.4' fill='%23e8fff8' opacity='.75'/%3E%3Cellipse cx='22' cy='16' rx='4' ry='2.4' fill='%23e8fff8' opacity='.75'/%3E%3Ccircle cx='13.6' cy='14.2' r='1.2' fill='%23120e04'/%3E%3Ccircle cx='18.4' cy='14.2' r='1.2' fill='%23120e04'/%3E%3Crect x='14.4' y='7' width='3.2' height='6' rx='.8' fill='%2300f0ff'/%3E%3Ccircle cx='24' cy='8' r='3.2' fill='%23ffe36b'/%3E%3Ccircle cx='24' cy='8' r='1.4' fill='%23fff6d0'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>双蜂</b>
+        <span>BEE</span>
+      </div>
+      <div class="status">
+        <div class="scores" aria-live="polite">
+          <div class="score" id="score-box">
+            <em>分数</em>
+            <b id="score">0</b>
+            <span id="score-add" class="score-add" hidden>+0</span>
+          </div>
+          <div class="score best">
+            <em>最高</em>
+            <b id="best">0</b>
+          </div>
+        </div>
+        <div class="row">
+          <span id="stage-label">第 1 关</span>
+          <span id="tag-label">巡逻</span>
+          <span id="combo-label" class="combo" hidden>连击</span>
+          <span class="pips" id="pips" aria-label="剩余生命"></span>
+        </div>
+        <div class="pwr" id="pwr" role="group" aria-label="武装">
+          <span class="slot" data-id="double">双</span>
+          <span class="slot shield" data-id="barrier">盾</span>
+          <span class="slot" data-id="speed">速</span>
+        </div>
+      </div>
+      <div class="tools">
+        <button type="button" id="btn-bomb" title="C" aria-label="投弹">投</button>
+        <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
+        <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <canvas id="c" tabindex="0" role="application" aria-label="双蜂游戏区，竖直卷轴，空格打空中，C 投弹打地面，打云出铃"></canvas>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden"></div>
+      <div id="pad" class="pad">
+        <button type="button" id="btn-pad" aria-label="投弹">投</button>
+      </div>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">BEE</p>
+          <h1 id="ov-title">双蜂</h1>
+          <p class="lead" id="ov-lead">打云出铃，打铃换色。空中空格，地面投弹。</p>
+          <p class="ops" id="ov-ops">←↑↓→ / WASD 飞 · 空格射击 · C 投弹 · R 重开 · M 静音</p>
+          <div class="ov-actions" id="ov-start">
+            <button type="button" id="btn-patrol">巡逻</button>
+            <button type="button" id="btn-frenzy">乱舞</button>
+          </div>
+          <div class="ov-actions gone" id="ov-end">
+            <button type="button" id="ov-retry">再来</button>
+            <button type="button" id="ov-modes">换模式</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">打云出铃 · 打铃换色 · 黄分 蓝双 白盾 红速</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>

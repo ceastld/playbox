@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" fill="#0c0402"/>
+  <rect x="4" y="4" width="56" height="56" rx="8" fill="#140808" stroke="#ff2e0a" stroke-width="1.4"/>
+  <circle cx="50" cy="13" r="5.5" fill="#ffe36b" opacity=".45"/>
+  <rect x="8" y="16" width="10" height="18" fill="#1a0a10" opacity=".7"/>
+  <rect x="9" y="18" width="8" height="3" fill="#ff2e0a" opacity=".7"/>
+  <rect x="46" y="18" width="10" height="16" fill="#120818" opacity=".7"/>
+  <rect x="47" y="20" width="8" height="3" fill="#00f0ff" opacity=".65"/>
+  <path d="M6 46h52" stroke="#ff2e0a" stroke-width="1.4" opacity=".55"/>
+  <rect x="6" y="46" width="52" height="10" fill="#1a0c08"/>
+  <rect x="10" y="9" width="18" height="3.2" rx="1.4" fill="#3a1410"/>
+  <rect x="11" y="9.6" width="12" height="2" rx="1" fill="#ff2e0a"/>
+  <rect x="36" y="9" width="18" height="3.2" rx="1.4" fill="#102028"/>
+  <rect x="42" y="9.6" width="11" height="2" rx="1" fill="#00f0ff"/>
+  <circle cx="32" cy="10.6" r="2.4" fill="#ffe36b"/>
+  <circle cx="18" cy="26" r="3.4" fill="#e8b090"/>
+  <rect x="15.4" y="29.2" width="5.4" height="8.4" rx=".8" fill="#ff2e0a"/>
+  <rect x="15.2" y="33.6" width="5.8" height="1.4" fill="#ffe36b"/>
+  <rect x="15.6" y="37.2" width="2" height="5.4" fill="#c41e10"/>
+  <rect x="18.6" y="37.2" width="2" height="5.4" fill="#c41e10"/>
+  <rect x="20.4" y="30.4" width="9" height="2.2" rx="1" fill="#e8b090"/>
+  <circle cx="46" cy="26" r="3.4" fill="#e8b090"/>
+  <rect x="43.2" y="29.2" width="5.4" height="8.4" rx=".8" fill="#00b8d4"/>
+  <rect x="43" y="33.6" width="5.8" height="1.4" fill="#7af6ff"/>
+  <rect x="43.4" y="37.2" width="2" height="5.4" fill="#087888"/>
+  <rect x="46.4" y="37.2" width="2" height="5.4" fill="#087888"/>
+  <rect x="34.6" y="31.2" width="9" height="2.2" rx="1" fill="#e8b090"/>
+  <circle cx="32" cy="31.4" r="2.2" fill="#00f0ff"/>
+  <circle cx="32" cy="31.4" r="1.1" fill="#ffe36b"/>
+  <circle cx="14" cy="20" r="1.1" fill="#ff6a3a"/>
+  <circle cx="52" cy="22" r="1" fill="#00f0ff"/>
+</svg>

@@ -2103,7 +2103,7 @@
     "blurb": "盾牌后面打外星人。",
     "hue": 132,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/invader/",
     "kind": "remake"
   },
@@ -2115,7 +2115,7 @@
     "blurb": "竖版打飞机，捡铃铛换武装。",
     "hue": 52,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/twin-bee/",
     "kind": "remake"
   },
@@ -2127,7 +2127,7 @@
     "blurb": "枪口跟着飞鸟走。",
     "hue": 24,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/duck-hunt/",
     "kind": "remake"
   },
@@ -2139,7 +2139,7 @@
     "blurb": "出招打一套，再看血条。",
     "hue": 8,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/street-fist/",
     "kind": "remake"
   },
@@ -2151,8 +2151,68 @@
     "blurb": "天上打、地上轰。",
     "hue": 84,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/xevi-run/",
+    "kind": "remake"
+  },
+  {
+    "n": 189,
+    "id": "phoenix",
+    "title": "火鸟",
+    "subtitle": "PHOX",
+    "blurb": "打鸟，盾一开就顶回去。",
+    "hue": 16,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/phoenix/",
+    "kind": "remake"
+  },
+  {
+    "n": 190,
+    "id": "puzzle-pop",
+    "title": "泡连",
+    "subtitle": "POP",
+    "blurb": "同色泡泡连成串就爆。",
+    "hue": 320,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/puzzle-pop/",
+    "kind": "remake"
+  },
+  {
+    "n": 191,
+    "id": "fantasy-sky",
+    "title": "幻想",
+    "subtitle": "ZONE",
+    "blurb": "商店买武装，一路打到头目。",
+    "hue": 280,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/fantasy-sky/",
+    "kind": "remake"
+  },
+  {
+    "n": 192,
+    "id": "wolf-gun",
+    "title": "狼牙",
+    "subtitle": "WOLF",
+    "blurb": "机枪扫过去，换弹别停。",
+    "hue": 36,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/wolf-gun/",
+    "kind": "remake"
+  },
+  {
+    "n": 193,
+    "id": "green-raid",
+    "title": "绿兵",
+    "subtitle": "RAID",
+    "blurb": "刀下去，别让人从后面捅。",
+    "hue": 120,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/green-raid/",
     "kind": "remake"
   }
 ]
