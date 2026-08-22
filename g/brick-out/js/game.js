@@ -25,8 +25,16 @@
   const POWER_CHANCE = 0.16;
   const BEST_KEY = 'playbox-brick-out-best';
   const MUTE_KEY = 'playbox-brick-out-mute';
-  const OPS = '← → 或拖动挡板 · 空格发球 · M 静音';
-  const REDUCE = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const AUTO_SPEED_KEY = 'playbox-brick-out-auto-speed';
+  const SPEED_LABELS = ['', '慢', '中', '快', '极快'];
+  const AUTO_MAX_V = [0, 540, 720, 980, 1680];
+  const AUTO_FOLLOW = [0, 8, 13, 22, 48];
+  const AUTO_LAUNCH = [0, 0.52, 0.28, 0.1, 0.02];
+  const OPS = '← → 或拖动挡板 · 空格发球 · A 自动 · M 静音';
+  const hasDom = typeof document !== 'undefined';
+  const REDUCE = typeof window !== 'undefined' && window.matchMedia
+    ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    : false;
 
   const MAG = [255, 61, 184];
   const CYN = [0, 240, 255];
@@ -83,28 +91,35 @@
     }
   ];
 
-  const canvas = document.getElementById('c');
-  const ctx = canvas.getContext('2d', { alpha: false });
-  const overlay = document.getElementById('overlay');
-  const panel = document.getElementById('panel');
-  const ovKicker = document.getElementById('ov-kicker');
-  const ovTitle = document.getElementById('ov-title');
-  const ovLead = document.getElementById('ov-lead');
-  const ovOps = document.getElementById('ov-ops');
-  const btnCampaign = document.getElementById('btn-campaign');
-  const btnEndless = document.getElementById('btn-endless');
-  const btnMute = document.getElementById('btn-mute');
-  const btnRetry = document.getElementById('btn-retry');
-  const scoreEl = document.getElementById('score');
-  const bestEl = document.getElementById('best');
-  const scoreBox = document.getElementById('score-box');
-  const scoreAdd = document.getElementById('score-add');
-  const stageLabel = document.getElementById('stage-label');
-  const tagLabel = document.getElementById('tag-label');
-  const pipsEl = document.getElementById('pips');
-  const toastEl = document.getElementById('toast');
-  const hintEl = document.getElementById('hint');
-  const stageEl = document.getElementById('stage');
+  function el(id) {
+    return hasDom ? document.getElementById(id) : null;
+  }
+
+  const canvas = el('c');
+  const ctx = canvas ? canvas.getContext('2d', { alpha: false }) : null;
+  const overlay = el('overlay');
+  const panel = el('panel');
+  const ovKicker = el('ov-kicker');
+  const ovTitle = el('ov-title');
+  const ovLead = el('ov-lead');
+  const ovOps = el('ov-ops');
+  const btnCampaign = el('btn-campaign');
+  const btnEndless = el('btn-endless');
+  const btnMute = el('btn-mute');
+  const btnRetry = el('btn-retry');
+  const btnAuto = el('btn-auto');
+  const speedEl = el('speed');
+  const speedLab = el('speed-lab');
+  const scoreEl = el('score');
+  const bestEl = el('best');
+  const scoreBox = el('score-box');
+  const scoreAdd = el('score-add');
+  const stageLabel = el('stage-label');
+  const tagLabel = el('tag-label');
+  const pipsEl = el('pips');
+  const toastEl = el('toast');
+  const hintEl = el('hint');
+  const stageEl = el('stage');
 
   let W = 1;
   let H = 1;
@@ -150,6 +165,15 @@
     hits: 0
   };
 
+  let autoOn = false;
+  let autoSpeed = 3;
+  let autoTarget = VW * 0.5;
+  let autoServeWait = 0;
+  let autoOvWait = 0;
+  let autoOffHold = 0.45;
+  let autoOffT = 0;
+  let autoOffX = -1;
+
   function clamp(v, a, b) {
     return v < a ? a : v > b ? b : v;
   }
@@ -178,7 +202,7 @@
     muted: false,
     ensure() {
       if (!this.ctx) {
-        const AC = window.AudioContext || window.webkitAudioContext;
+        const AC = typeof window !== 'undefined' && (window.AudioContext || window.webkitAudioContext);
         if (!AC) return;
         this.ctx = new AC();
         this.master = this.ctx.createGain();
@@ -190,9 +214,11 @@
     setMuted(m) {
       this.muted = m;
       if (this.master) this.master.gain.value = m ? 0 : 0.28;
-      btnMute.textContent = m ? '静' : '声';
-      btnMute.classList.toggle('muted', m);
-      btnMute.setAttribute('aria-label', m ? '取消静音' : '静音');
+      if (btnMute) {
+        btnMute.textContent = m ? '静' : '声';
+        btnMute.classList.toggle('muted', m);
+        btnMute.setAttribute('aria-label', m ? '取消静音' : '静音');
+      }
       try {
         localStorage.setItem(MUTE_KEY, m ? '1' : '0');
       } catch (err) { /* ignore */ }
@@ -289,13 +315,31 @@
     } catch (err) {
       G.best = 0;
     }
-    bestEl.textContent = String(G.best);
+    if (bestEl) bestEl.textContent = String(G.best);
   }
+
+  function loadAutoSpeed() {
+    try {
+      const n = parseInt(localStorage.getItem(AUTO_SPEED_KEY) || '3', 10);
+      if (!isFinite(n) || n < 1 || n > 4) return 3;
+      return n;
+    } catch (err) {
+      return 3;
+    }
+  }
+
+  function saveAutoSpeed(n) {
+    try {
+      localStorage.setItem(AUTO_SPEED_KEY, String(n));
+    } catch (err) { /* ignore */ }
+  }
+
+  autoSpeed = loadAutoSpeed();
 
   function saveBest() {
     if (G.score <= G.best) return;
     G.best = G.score;
-    bestEl.textContent = String(G.best);
+    if (bestEl) bestEl.textContent = String(G.best);
     try {
       localStorage.setItem(BEST_KEY, String(G.best));
     } catch (err) { /* ignore */ }
@@ -304,8 +348,9 @@
   function addScore(n) {
     if (G.mode !== 'play' || n <= 0) return;
     G.score += n;
-    scoreEl.textContent = String(G.score);
+    if (scoreEl) scoreEl.textContent = String(G.score);
     saveBest();
+    if (!scoreBox || !scoreAdd) return;
     scoreBox.classList.remove('flash');
     void scoreBox.offsetWidth;
     scoreBox.classList.add('flash');
@@ -322,20 +367,23 @@
   }
 
   function toast(msg, warn, gold) {
+    G.toastT = 1.5;
+    if (!toastEl) return;
     toastEl.textContent = msg;
     toastEl.classList.toggle('warn', !!warn);
     toastEl.classList.toggle('gold', !!gold && !warn);
     toastEl.classList.remove('hidden');
-    G.toastT = 1.5;
   }
 
   function setHint(text, kind) {
+    if (!hintEl) return;
     hintEl.textContent = text;
     hintEl.classList.toggle('hot', kind === 'hot');
     hintEl.classList.toggle('warn', kind === 'warn');
   }
 
   function syncPips() {
+    if (!pipsEl) return;
     while (pips.length < LIVES) {
       const el = document.createElement('i');
       el.className = 'pip on';
@@ -353,8 +401,9 @@
   }
 
   function syncHud() {
-    scoreEl.textContent = String(G.score);
-    bestEl.textContent = String(G.best);
+    if (scoreEl) scoreEl.textContent = String(G.score);
+    if (bestEl) bestEl.textContent = String(G.best);
+    if (!stageLabel || !tagLabel) return;
     if (G.mode === 'title') {
       stageLabel.textContent = '破砖';
       tagLabel.textContent = 'BREAK';
@@ -374,6 +423,8 @@
   }
 
   function showOverlay(kind, title, lead, primary, showEndless) {
+    autoOvWait = 0;
+    if (!overlay) return;
     overlay.classList.remove('hidden');
     overlay.setAttribute('aria-hidden', 'false');
     panel.classList.toggle('win', kind === 'win');
@@ -387,9 +438,10 @@
   }
 
   function hideOverlay() {
+    if (!overlay) return;
     overlay.classList.add('hidden');
     overlay.setAttribute('aria-hidden', 'true');
-    canvas.focus();
+    if (canvas && canvas.focus) canvas.focus();
   }
 
   function brickPos(c, y) {
@@ -500,6 +552,7 @@
     G.balls = [makeBall(G.paddle.x, G.paddle.y - 20, 0, 0)];
     stickServe();
     G.lock = 0.18;
+    autoServeWait = AUTO_LAUNCH[autoSpeed] || 0.1;
   }
 
   function launch() {
@@ -552,8 +605,8 @@
     G.hits = 0;
     G.flash = 0;
     G.shake = 0;
-    scoreEl.textContent = '0';
-    scoreAdd.hidden = true;
+    if (scoreEl) scoreEl.textContent = '0';
+    if (scoreAdd) scoreAdd.hidden = true;
   }
 
   function startCampaign() {
@@ -566,11 +619,11 @@
     buildLayout(0);
     hideOverlay();
     serve();
-    setHint('左右或拖动挡板 · 空格发球 · 别漏球', '');
+    setHint('左右或拖动挡板 · 空格发球 · A 自动 · 别漏球', '');
     toast(LAYOUTS[0].name, false, true);
     syncHud();
     audio.start();
-    canvas.focus();
+    if (canvas && canvas.focus) canvas.focus();
   }
 
   function startEndless() {
@@ -589,7 +642,7 @@
     toast('无尽', false, true);
     syncHud();
     audio.start();
-    canvas.focus();
+    if (canvas && canvas.focus) canvas.focus();
   }
 
   function restart() {
@@ -618,7 +671,7 @@
       '闯关',
       true
     );
-    setHint('左右或拖动挡板 · 空格发球 · 别漏球', '');
+    setHint('左右或拖动挡板 · 空格发球 · A 自动 · 别漏球', '');
     syncHud();
   }
 
@@ -664,9 +717,11 @@
     G.flash = 0.5;
     G.flashRgb = MAG;
     G.shake = REDUCE ? 0 : 10;
-    stageEl.classList.remove('die');
-    void stageEl.offsetWidth;
-    if (!REDUCE) stageEl.classList.add('die');
+    if (stageEl) {
+      stageEl.classList.remove('die');
+      void stageEl.offsetWidth;
+      if (!REDUCE) stageEl.classList.add('die');
+    }
     showOverlay('lose', '球漏了', '球漏下去了。得分 ' + G.score + '。', '重开', false);
     setHint('球漏了', 'warn');
     syncHud();
@@ -967,12 +1022,352 @@
     return true;
   }
 
+  function foldX(x, vx, t, xmin, xmax) {
+    const span = xmax - xmin;
+    if (!(span > 1) || !isFinite(t)) return x;
+    let dist = (x - xmin) + vx * t;
+    const period = span * 2;
+    dist = dist % period;
+    if (dist < 0) dist += period;
+    if (dist > span) return xmax - (dist - span);
+    return xmin + dist;
+  }
+
+  function timeToPaddle(b) {
+    const r = b.r;
+    const yPad = PADDLE_Y - PADDLE_H * 0.5 - r;
+    const yTop = TOP - 18 + r;
+    const xmin = WALL + r;
+    const xmax = VW - WALL - r;
+    if (Math.abs(b.vy) < 6) return { x: b.x, t: 1.4, vx: b.vx };
+    if (b.vy > 0) {
+      if (b.y >= yPad) return { x: b.x, t: 0.001, vx: b.vx };
+      const t = (yPad - b.y) / b.vy;
+      return { x: foldX(b.x, b.vx, t, xmin, xmax), t: Math.max(0.001, t), vx: b.vx };
+    }
+    const tUp = Math.max(0, (b.y - yTop) / -b.vy);
+    const tDown = (yPad - yTop) / Math.abs(b.vy);
+    const t = tUp + tDown;
+    return { x: foldX(b.x, b.vx, t, xmin, xmax), t: Math.max(0.001, t), vx: b.vx };
+  }
+
+  function pickThreatBall() {
+    let down = null;
+    let downT = 1e9;
+    let up = null;
+    let upT = 1e9;
+    for (let i = 0; i < G.balls.length; i++) {
+      const b = G.balls[i];
+      if (!b || b.dead) continue;
+      const pred = timeToPaddle(b);
+      if (b.vy > 8) {
+        let t = pred.t;
+        if (b.y > PADDLE_Y - 36) t = Math.min(t, 0.04);
+        if (t < downT) {
+          downT = t;
+          down = b;
+        }
+      } else if (pred.t < upT) {
+        upT = pred.t;
+        up = b;
+      }
+    }
+    return down || up || null;
+  }
+
+  function autoServeX() {
+    let best = VW * 0.5;
+    let bestS = -1e9;
+    for (let i = 0; i < G.bricks.length; i++) {
+      const br = G.bricks[i];
+      if (br.hp <= 0) continue;
+      let s = (720 - br.y) * 2;
+      if (br.hp >= 2) s += 220;
+      s += Math.abs(br.x + br.w * 0.5 - VW * 0.5) * 0.04;
+      if (s > bestS) {
+        bestS = s;
+        best = br.x + br.w * 0.5;
+      }
+    }
+    const side = best >= VW * 0.5 ? -16 : 16;
+    return best + side;
+  }
+
+  function simShotScore(landX, off) {
+    const ang = off * MAX_ANG;
+    const spd = Math.max(220, G.ballSpeed);
+    const r = BALL_R;
+    const xmin = WALL + r;
+    const xmax = VW - WALL - r;
+    const ymin = TOP - 18 + r;
+    let x = landX;
+    let y = PADDLE_Y - PADDLE_H * 0.5 - r - 0.4;
+    let vx = Math.sin(ang) * spd;
+    let vy = -Math.cos(ang) * spd;
+    const n = G.bricks.length;
+    const hp = new Array(n);
+    for (let i = 0; i < n; i++) hp[i] = G.bricks[i].hp;
+    let score = 12 - Math.abs(Math.abs(off) - 0.34) * 10;
+    let hits = 0;
+    const hitLimit = autoSpeed >= 4 ? 4 : autoSpeed >= 3 ? 6 : 8;
+    const tLimit = autoSpeed <= 1 ? 3.0 : 2.5;
+    const dt = autoSpeed >= 4 ? 1 / 64 : 1 / 80;
+    let t = 0;
+    while (t < tLimit && hits < hitLimit && vy !== 0) {
+      x += vx * dt;
+      y += vy * dt;
+      t += dt;
+      if (x < xmin) {
+        x = xmin;
+        vx = Math.abs(vx);
+      } else if (x > xmax) {
+        x = xmax;
+        vx = -Math.abs(vx);
+      }
+      if (y < ymin) {
+        y = ymin;
+        vy = Math.abs(vy);
+      }
+      if (y > PADDLE_Y + 12 && vy > 0) break;
+
+      let hit = -1;
+      let bestD = 1e9;
+      for (let i = 0; i < n; i++) {
+        if (hp[i] <= 0) continue;
+        const br = G.bricks[i];
+        const cx = clamp(x, br.x, br.x + br.w);
+        const cy = clamp(y, br.y, br.y + br.h);
+        const dx = x - cx;
+        const dy = y - cy;
+        const d2 = dx * dx + dy * dy;
+        if (d2 < r * r && d2 < bestD) {
+          bestD = d2;
+          hit = i;
+        }
+      }
+      if (hit < 0) continue;
+      const br = G.bricks[hit];
+      const left = x - br.x;
+      const right = br.x + br.w - x;
+      const top = y - br.y;
+      const bot = br.y + br.h - y;
+      const m = Math.min(left, right, top, bot);
+      const side = m === left || m === right;
+      if (side) {
+        if (m === left) {
+          x = br.x - r - 0.4;
+          vx = -Math.abs(vx);
+        } else {
+          x = br.x + br.w + r + 0.4;
+          vx = Math.abs(vx);
+        }
+      } else if (m === top) {
+        y = br.y - r - 0.4;
+        vy = -Math.abs(vy);
+      } else {
+        y = br.y + br.h + r + 0.4;
+        vy = Math.abs(vy);
+      }
+      hp[hit] -= 1;
+      hits += 1;
+      let s = hp[hit] <= 0 ? (br.max >= 2 ? 90 : 55) : 22;
+      if (br.hp >= 2) s += 70;
+      s += (700 - br.y) * 0.18;
+      if (side) s += 85;
+      if (vy < 0) s += 25;
+      score += s;
+    }
+    score += hits * 35;
+    if (hits === 0) score -= 80;
+    if (hits === 1 && vy > 0) score -= 40;
+    return score;
+  }
+
+  function autoAimOff(landX) {
+    const toward = landX > VW * 0.5 ? -1 : 1;
+    const mags = autoSpeed >= 4
+      ? [0.26, 0.38, 0.5, 0.16, 0.62]
+      : autoSpeed >= 3
+        ? [0.22, 0.32, 0.42, 0.52, 0.14, 0.62]
+        : [0.12, 0.22, 0.3, 0.38, 0.46, 0.54, 0.64, 0.74];
+    let bestOff = toward * 0.34;
+    let best = -1e9;
+    for (let k = 0; k < mags.length; k++) {
+      for (let s = 0; s < 2; s++) {
+        const off = mags[k] * (s === 0 ? toward : -toward);
+        const sc = simShotScore(landX, off);
+        if (sc > best) {
+          best = sc;
+          bestOff = off;
+        }
+      }
+    }
+    return clamp(bestOff, -0.86, 0.86);
+  }
+
+  function autoPickTarget() {
+    const bds = paddleBounds();
+    const half = paddleHalf();
+    if (G.serving) {
+      return clamp(autoServeX(), bds.lo, bds.hi);
+    }
+
+    const ball = pickThreatBall();
+    if (!ball) {
+      return clamp(autoServeX() + Math.sin(G.t * 2.1) * 18, bds.lo, bds.hi);
+    }
+
+    const pred = timeToPaddle(ball);
+    const goingDown = ball.vy > 8;
+    const tLeft = pred.t;
+    let landX = pred.x;
+    if (autoSpeed >= 4 && !goingDown && tLeft > 0.4) {
+      landX = ball.x + ball.vx * 0.1;
+    } else if (autoSpeed >= 3 && !goingDown && tLeft > 0.6) {
+      landX = ball.x + ball.vx * 0.16;
+    }
+    if (goingDown) landX = pred.x;
+
+    if (tLeft > 0.55 && G.powers.length) {
+      let bestP = null;
+      let bestY = -1;
+      for (let i = 0; i < G.powers.length; i++) {
+        const p = G.powers[i];
+        if (p.y > G.paddle.y + 12) continue;
+        if (p.y > G.paddle.y - 200 && p.y > bestY) {
+          bestY = p.y;
+          bestP = p;
+        }
+      }
+      if (bestP) return clamp(bestP.x, bds.lo, bds.hi);
+    }
+
+    let off = autoOffHold;
+    if (G.bricks.length) {
+      const reuse = autoSpeed >= 3 && autoOffT > 0 && Math.abs(landX - autoOffX) < 36;
+      if (reuse) {
+        off = autoOffHold;
+      } else {
+        off = autoAimOff(landX);
+        autoOffHold = off;
+        autoOffX = landX;
+        autoOffT = autoSpeed >= 4 ? 0.12 : autoSpeed >= 3 ? 0.05 : 0;
+      }
+    } else {
+      off = landX > VW * 0.5 ? -0.4 : 0.4;
+    }
+
+    const cover = Math.max(10, half - 7);
+    let tx = landX - off * half;
+    tx = clamp(tx, landX - cover, landX + cover);
+    if (tLeft > 0.75) tx += Math.sin(G.t * 2.35) * (autoSpeed <= 2 ? 16 : 8);
+    return clamp(tx, bds.lo, bds.hi);
+  }
+
+  function autoSteer(dt) {
+    const bds = paddleBounds();
+    autoOffT = Math.max(0, autoOffT - dt);
+    let target = autoPickTarget();
+    autoTarget = target;
+    const maxV = AUTO_MAX_V[autoSpeed] || 980;
+    const follow = AUTO_FOLLOW[autoSpeed] || 22;
+    const ball = pickThreatBall();
+    const pred = ball && !G.serving ? timeToPaddle(ball) : null;
+    const tLeft = pred ? pred.t : 1;
+    const landX = pred ? pred.x : target;
+    const half = paddleHalf();
+    if (pred && tLeft < 0.5) {
+      const reach = maxV * Math.max(tLeft, dt);
+      const cover = Math.max(10, half - 7);
+      const coverLo = landX - cover;
+      const coverHi = landX + cover;
+      const lo = G.paddle.x - reach;
+      const hi = G.paddle.x + reach;
+      const iLo = Math.max(lo, coverLo);
+      const iHi = Math.min(hi, coverHi);
+      if (iLo <= iHi) target = clamp(target, iLo, iHi);
+      else target = clamp(landX, bds.lo, bds.hi);
+    }
+    let cap = maxV * dt;
+    if (tLeft < 0.32) {
+      const need = Math.abs(target - G.paddle.x);
+      const panic = Math.max(maxV, need / Math.max(tLeft, 0.012));
+      cap = panic * dt;
+    }
+    let nx = lerp(G.paddle.x, target, 1 - Math.exp(-follow * dt));
+    if (nx - G.paddle.x > cap) nx = G.paddle.x + cap;
+    else if (nx - G.paddle.x < -cap) nx = G.paddle.x - cap;
+    if (tLeft < 0.1) nx = G.paddle.x + clamp(target - G.paddle.x, -cap, cap);
+    G.paddle.vx = (nx - G.paddle.x) / Math.max(dt, 0.001);
+    G.paddle.x = clamp(nx, bds.lo, bds.hi);
+  }
+
+  function syncAutoUi() {
+    if (!btnAuto) return;
+    btnAuto.classList.toggle('on', autoOn);
+    btnAuto.setAttribute('aria-pressed', autoOn ? 'true' : 'false');
+    btnAuto.textContent = autoOn ? '停' : '自动';
+    btnAuto.setAttribute('aria-label', autoOn ? '停止自动' : '自动');
+  }
+
+  function syncSpeedUi() {
+    if (!speedEl) return;
+    speedEl.value = String(autoSpeed);
+    if (speedLab) speedLab.textContent = SPEED_LABELS[autoSpeed];
+    speedEl.title = SPEED_LABELS[autoSpeed];
+    speedEl.setAttribute('aria-valuetext', SPEED_LABELS[autoSpeed]);
+  }
+
+  function setAutoSpeed(n) {
+    n = parseInt(n, 10);
+    if (!(n >= 1 && n <= 4)) n = 3;
+    autoSpeed = n;
+    saveAutoSpeed(autoSpeed);
+    syncSpeedUi();
+  }
+
+  function toggleAuto() {
+    autoOn = !autoOn;
+    keys.l = false;
+    keys.r = false;
+    pointer.down = false;
+    autoOvWait = 0;
+    autoServeWait = AUTO_LAUNCH[autoSpeed] || 0.1;
+    syncAutoUi();
+    if (!autoOn) return;
+    audio.ensure();
+    if (G.mode === 'title') startCampaign();
+  }
+
+  function tickAutoFlow(dt) {
+    if (G.mode === 'title') {
+      autoOvWait += dt;
+      if (autoOvWait >= (autoSpeed >= 3 ? 0.22 : 0.48)) {
+        autoOvWait = 0;
+        startCampaign();
+      }
+      return;
+    }
+    if (G.mode === 'win') {
+      autoOvWait += dt;
+      if (autoOvWait >= (autoSpeed >= 3 ? 0.42 : 0.85)) {
+        autoOvWait = 0;
+        primaryAction();
+      }
+    }
+  }
+
   function updatePaddle(dt) {
     const b = paddleBounds();
     const playing = G.mode === 'play' || G.mode === 'title';
     if (!playing) {
       G.paddle.vx *= Math.exp(-dt * 8);
       G.paddle.x = clamp(G.paddle.x + G.paddle.vx * dt, b.lo, b.hi);
+      return;
+    }
+
+    if (autoOn && G.mode === 'play') {
+      autoSteer(dt);
       return;
     }
 
@@ -1025,7 +1420,7 @@
     G.shake *= Math.exp(-dt * 9);
     G.flash = Math.max(0, G.flash - dt);
     G.toastT = Math.max(0, G.toastT - dt);
-    if (G.toastT <= 0) toastEl.classList.add('hidden');
+    if (G.toastT <= 0 && toastEl) toastEl.classList.add('hidden');
     for (let i = 0; i < G.bricks.length; i++) {
       G.bricks[i].flash = Math.max(0, G.bricks[i].flash - dt);
     }
@@ -1078,9 +1473,14 @@
     G.t += dt;
     G.clock += dt;
     G.lock = Math.max(0, G.lock - dt);
+    if (autoOn) tickAutoFlow(dt);
     updateWide(dt);
     updatePaddle(dt);
     if (G.serving) stickServe();
+    if (autoOn && G.mode === 'play' && G.serving && G.lock <= 0) {
+      autoServeWait -= dt;
+      if (autoServeWait <= 0) launch();
+    }
 
     if (G.mode === 'title') {
       demoTick(dt);
@@ -1436,7 +1836,7 @@
   }
 
   function overlayOpen() {
-    return !overlay.classList.contains('hidden');
+    return !!(overlay && !overlay.classList.contains('hidden'));
   }
 
   function primaryAction() {
@@ -1455,8 +1855,15 @@
 
   function onKey(e, down) {
     const k = e.key;
-    if (k === 'ArrowLeft' || k === 'a' || k === 'A' || k === 'Left') keys.l = down;
-    if (k === 'ArrowRight' || k === 'd' || k === 'D' || k === 'Right') keys.r = down;
+    if (k === 'a' || k === 'A') {
+      if (down) {
+        e.preventDefault();
+        if (!e.repeat) toggleAuto();
+      }
+      return;
+    }
+    if (k === 'ArrowLeft' || k === 'Left') keys.l = down && !autoOn;
+    if (k === 'ArrowRight' || k === 'd' || k === 'D' || k === 'Right') keys.r = down && !autoOn;
     if (down && (k === 'ArrowLeft' || k === 'ArrowRight' || k === ' ' || k === 'Spacebar' || k === 'ArrowUp' || (k === 'Enter' && overlayOpen()))) {
       e.preventDefault();
     }
@@ -1471,6 +1878,9 @@
       restart();
       return;
     }
+    if (autoOn && (k === 'ArrowLeft' || k === 'ArrowRight' || k === 'd' || k === 'D' || k === ' ' || k === 'Spacebar' || k === 'ArrowUp')) {
+      return;
+    }
     if (k === 'Enter' || k === ' ' || k === 'Spacebar' || k === 'ArrowUp') {
       if (overlayOpen()) {
         e.preventDefault();
@@ -1479,6 +1889,143 @@
       }
       if (G.mode === 'play' && G.serving) launch();
     }
+  }
+
+  function selfCheckAuto() {
+    const xmin = WALL + BALL_R;
+    const xmax = VW - WALL - BALL_R;
+    if (Math.abs(foldX(100, 200, 0, xmin, xmax) - 100) > 0.05) {
+      throw new Error('foldX t=0 should be identity');
+    }
+    const bounced = foldX(xmax - 2, 400, 0.05, xmin, xmax);
+    if (bounced > xmax + 0.2 || bounced < xmin - 0.2) {
+      throw new Error('foldX should stay in playfield');
+    }
+
+    const oldRand = Math.random;
+    let seed = 2026;
+    Math.random = function () {
+      seed = (seed * 1664525 + 1013904223) >>> 0;
+      return seed / 4294967296;
+    };
+
+    autoOn = true;
+    autoSpeed = 4;
+    G.mode = 'play';
+    G.kind = 'campaign';
+    G.layout = 0;
+    G.lives = LIVES;
+    G.score = 0;
+    G.combo = 0;
+    G.wideT = 0;
+    G.paddle.w = PADDLE_W;
+    G.paddle.x = VW * 0.5;
+    G.paddle.vx = 0;
+    G.powers = [];
+    G.hits = 0;
+    G.ballSpeed = 310;
+    G.lock = 0;
+    G.t = 0;
+    buildLayout(0);
+    const startBricks = G.bricks.length;
+    if (startBricks < 40) throw new Error('layout 0 should have many bricks');
+    serve();
+    G.lock = 0;
+    autoServeWait = 0;
+    launch();
+    if (typeof process !== 'undefined' && process.env && process.env.BRICK_OUT_AUTO_LOG) {
+      const lx = G.balls[0] ? G.balls[0].x : VW * 0.5;
+      const mags = [0.12, 0.22, 0.3, 0.38, 0.46, 0.54, 0.62, 0.74];
+      const rows = [];
+      for (let i = 0; i < mags.length; i++) {
+        rows.push({
+          off: mags[i],
+          a: Math.round(simShotScore(lx, mags[i])),
+          b: Math.round(simShotScore(lx, -mags[i]))
+        });
+      }
+      console.log('aim scores at', Math.round(lx), rows);
+    }
+
+    let intercepted = 0;
+    let reached = 0;
+    let misses = 0;
+    let steps = 0;
+    let offs = [];
+    const limit = 60 * 90;
+    while (steps < limit && G.bricks.length > 0 && G.lives > 0) {
+      steps += 1;
+      G.t += STEP;
+      G.lock = Math.max(0, G.lock - STEP);
+      autoSteer(STEP);
+      if (G.serving) {
+        stickServe();
+        if (G.lock <= 0) {
+          autoServeWait -= STEP;
+          if (autoServeWait <= 0) launch();
+        }
+      } else {
+        for (let i = 0; i < G.balls.length; i++) {
+          const b = G.balls[i];
+          const beforeVy = b.vy;
+          const near = b.vy > 0 && b.y > PADDLE_Y - 90 && b.y < PADDLE_Y + 8;
+          if (near && Math.abs(b.x - G.paddle.x) <= paddleHalf() + b.r + 10) reached += 1;
+          moveBall(b, STEP);
+          if (beforeVy > 20 && b.vy < 0) {
+            intercepted += 1;
+            offs.push(Math.round(((b.x - G.paddle.x) / paddleHalf()) * 100) / 100);
+          }
+        }
+        const live = [];
+        for (let i = 0; i < G.balls.length; i++) if (!G.balls[i].dead) live.push(G.balls[i]);
+        G.balls = live;
+        if (G.balls.length === 0) {
+          misses += 1;
+          G.lives -= 1;
+          if (G.lives <= 0) break;
+          serve();
+          G.lock = 0;
+          autoServeWait = 0;
+        }
+      }
+      for (let i = G.powers.length - 1; i >= 0; i--) {
+        const p = G.powers[i];
+        p.y += p.vy * STEP;
+        if (collectPower(p)) {
+          if (p.kind === 'wide') applyWide();
+          else applyMulti();
+          G.powers.splice(i, 1);
+        } else if (p.y - p.h > VH) {
+          G.powers.splice(i, 1);
+        }
+      }
+    }
+
+    Math.random = oldRand;
+    const cleared = startBricks - G.bricks.length;
+    if (typeof process !== 'undefined' && process.env && process.env.BRICK_OUT_AUTO_LOG) {
+      console.log('auto self-check', {
+        cleared: cleared,
+        left: G.bricks.length,
+        intercepted: intercepted,
+        reached: reached,
+        misses: misses,
+        steps: steps,
+        score: G.score,
+        lives: G.lives,
+        hits: G.hits,
+        offs: offs
+      });
+    }
+    if (reached < 6) throw new Error('AI paddle never reached the ball');
+    if (intercepted < 8) throw new Error('AI should return the ball, not only wiggle');
+    if (cleared < 22) throw new Error('AI should clear bricks in campaign, not only wiggle');
+    if (misses > 2) throw new Error('AI missed too many serves');
+  }
+
+  if (!hasDom) {
+    selfCheckAuto();
+    return;
   }
 
   canvas.addEventListener('pointerdown', function (e) {
@@ -1490,7 +2037,7 @@
     pointer.x = pointerWorldX(e);
     canvas.classList.add('press');
     try { canvas.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
-    if (!overlayOpen() && G.mode === 'play' && G.serving) launch();
+    if (!autoOn && !overlayOpen() && G.mode === 'play' && G.serving) launch();
     e.preventDefault();
   });
   canvas.addEventListener('pointermove', function (e) {
@@ -1532,6 +2079,16 @@
   btnMute.addEventListener('click', function () {
     audio.ensure();
     audio.setMuted(!audio.muted);
+  });
+  btnAuto.addEventListener('click', function () {
+    audio.ensure();
+    toggleAuto();
+  });
+  speedEl.addEventListener('input', function () {
+    setAutoSpeed(speedEl.value);
+  });
+  speedEl.addEventListener('change', function () {
+    setAutoSpeed(speedEl.value);
   });
 
   document.addEventListener('visibilitychange', function () {
@@ -1579,6 +2136,8 @@
   resize();
   bootTitle();
   syncHud();
+  syncAutoUi();
+  syncSpeedUi();
 
   let last = performance.now();
   let acc = 0;
