@@ -49,6 +49,12 @@
         </div>
       </div>
       <div class="tools">
+        <label class="speed-ctl" title="速度 慢 / 中 / 快 / 极快">
+          <span>速度</span>
+          <input type="range" id="speed" min="1" max="4" step="1" value="3" aria-label="速度" />
+          <b id="speed-lab">快</b>
+        </label>
+        <button type="button" id="btn-auto" title="A" aria-label="自动" aria-pressed="false">自动</button>
         <button type="button" id="btn-warp" title="S / ↓ / Shift" aria-label="跃迁">跃</button>
         <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
         <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
@@ -64,7 +70,7 @@
           <p class="kicker" id="ov-kicker">GUN</p>
           <h1 id="ov-title">星炮</h1>
           <p class="lead" id="ov-lead">连射编队。燃料一直掉，打爆敌机捡燃料。跃迁可把敌弹变慢。空仓掉得更快。</p>
-          <p class="ops" id="ov-ops">← → / WASD 移动 · 空格开火 · S 跃迁 · R 重开 · M 静音</p>
+          <p class="ops" id="ov-ops">← → 移动 · 空格开火 · S 跃迁 · A 自动 · R 重开 · M 静音</p>
           <div class="ov-actions">
             <button type="button" id="btn-camp">连射</button>
             <button type="button" id="btn-end">空仓</button>
@@ -73,7 +79,7 @@
       </div>
     </div>
 
-    <footer class="hint" id="hint">← → 移动 · 空格开火 · 打敌机捡燃料 · S 跃迁</footer>
+    <footer class="hint" id="hint">← → 移动 · 空格开火 · 打敌机捡燃料 · S 跃迁 · A 自动</footer>
   </div>
   <script src="js/game.js"></script>
 </body>

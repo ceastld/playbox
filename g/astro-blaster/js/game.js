@@ -13,7 +13,12 @@
   const FUEL_MAX = 100;
   const BEST_KEY = 'playbox-astro-blaster-best';
   const MUTE_KEY = 'playbox-astro-blaster-mute';
-  const OPS = '← → / WASD 移动 · 空格开火 · S 跃迁 · R 重开 · M 静音';
+  const AUTO_SPEED_KEY = 'playbox-astro-blaster-auto-speed';
+  const SPEED_LABELS = ['', '慢', '中', '快', '极快'];
+  const AUTO_MAX_V = [0, 180, 250, 340, 620];
+  const AUTO_ALIGN = [0, 8, 11, 15, 20];
+  const AUTO_TIME = [0, 0.62, 0.85, 1, 2.5];
+  const OPS = '← → 移动 · 空格开火 · S 跃迁 · A 自动 · R 重开 · M 静音';
   const REDUCE = typeof window !== 'undefined' && window.matchMedia
     ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
     : false;
@@ -105,6 +110,9 @@
   const btnMute = document.getElementById('btn-mute');
   const btnRetry = document.getElementById('btn-retry');
   const btnWarp = document.getElementById('btn-warp');
+  const btnAuto = document.getElementById('btn-auto');
+  const speedEl = document.getElementById('speed');
+  const speedLab = document.getElementById('speed-lab');
   const scoreEl = document.getElementById('score');
   const bestEl = document.getElementById('best');
   const scoreBox = document.getElementById('score-box');
@@ -135,6 +143,12 @@
 
   const keys = { l: false, r: false };
   const pointer = { down: false, hover: false, x: VW * 0.5, id: null };
+  let autoOn = false;
+  let autoSpeed = 3;
+  let autoTarget = VW * 0.5;
+  let autoFire = false;
+  let autoOvWait = 0;
+  let autoStickX = VW * 0.5;
   const pips = [];
   const particles = [];
   const sparks = [];
@@ -417,6 +431,22 @@
     if (bestEl) bestEl.textContent = String(G.best);
   }
 
+  function loadAutoSpeed() {
+    try {
+      const n = parseInt(localStorage.getItem(AUTO_SPEED_KEY) || '3', 10);
+      if (!isFinite(n) || n < 1 || n > 4) return 3;
+      return n;
+    } catch (err) {
+      return 3;
+    }
+  }
+
+  function saveAutoSpeed(n) {
+    try {
+      localStorage.setItem(AUTO_SPEED_KEY, String(n));
+    } catch (err) { /* ignore */ }
+  }
+
   function saveBest() {
     if (G.score <= G.best) return;
     G.best = G.score;
@@ -556,20 +586,22 @@
         comboEl.hidden = true;
       }
     }
-    if (G.mode === 'title') setHint(OPS, '');
-    else if (G.mode === 'lose') setHint('R 重开 · 燃料空或相撞扣命', 'warn');
-    else if (G.mode === 'win') setHint('航线打通 · R 再来 · 空格开火', 'hot');
+    if (autoOn && (G.mode === 'play' || G.mode === 'title')) setHint('托管中 · A 停下', 'hot');
+    else if (G.mode === 'title') setHint(OPS, '');
+    else if (G.mode === 'lose') setHint(autoOn ? '托管中 · R 重开接着打' : 'R 重开 · 燃料空或相撞扣命', autoOn ? 'hot' : 'warn');
+    else if (G.mode === 'win') setHint(autoOn ? '托管中 · A 停下' : '航线打通 · R 再来 · 空格开火', 'hot');
     else if (G.overheat) setHint('炮管过热 · 停手冷却才能再射', 'warn');
     else if (critFuel()) setHint('燃料危急 · 击杀翻倍 · 快捡燃料', 'warn');
     else if (G.waveKind === 'dock') setHint('清护卫后对准母舰舱口对接', 'hot');
     else if (G.waveKind === 'rock') setHint('打火球补燃料 · 别撞上', 'hot');
     else if (G.lives === 1) setHint('最后一命 · 燃料和碰撞都会扣', 'warn');
-    else setHint('← → 移动 · 空格开火 · 打敌机捡燃料 · S 跃迁', '');
+    else setHint('← → 移动 · 空格开火 · 打敌机捡燃料 · S 跃迁 · A 自动', '');
     syncPips();
     syncGauges();
   }
 
   function showOverlay(kind, title, lead, primary, secondary) {
+    autoOvWait = 0;
     if (!overlay) return;
     overlay.classList.remove('hidden');
     overlay.setAttribute('aria-hidden', 'false');
@@ -599,6 +631,7 @@
 
   function hitStop(sec) {
     if (REDUCE || G.mode !== 'play') return;
+    if (autoOn && autoSpeed >= 4) return;
     G.stop = Math.max(G.stop, sec);
   }
 
@@ -1312,10 +1345,256 @@
     }
   }
 
+  function autoClearInput() {
+    keys.l = false;
+    keys.r = false;
+    pointer.down = false;
+    G.fireHold = false;
+    autoFire = false;
+  }
+
+  function syncAutoUi() {
+    if (!btnAuto) return;
+    btnAuto.classList.toggle('on', autoOn);
+    btnAuto.setAttribute('aria-pressed', autoOn ? 'true' : 'false');
+    btnAuto.textContent = autoOn ? '停下' : '自动';
+    btnAuto.setAttribute('aria-label', autoOn ? '停止自动' : '自动');
+  }
+
+  function syncSpeedUi() {
+    if (!speedEl) return;
+    speedEl.value = String(autoSpeed);
+    if (speedLab) speedLab.textContent = SPEED_LABELS[autoSpeed];
+    speedEl.title = SPEED_LABELS[autoSpeed];
+    speedEl.setAttribute('aria-valuetext', SPEED_LABELS[autoSpeed]);
+  }
+
+  function setAutoSpeed(n) {
+    n = parseInt(n, 10);
+    if (!isFinite(n) || n < 1 || n > 4) n = 3;
+    autoSpeed = n;
+    saveAutoSpeed(autoSpeed);
+    syncSpeedUi();
+  }
+
+  function toggleAuto() {
+    autoOn = !autoOn;
+    autoOvWait = 0;
+    autoClearInput();
+    autoTarget = G.ship.x;
+    autoStickX = G.ship.x;
+    syncAutoUi();
+    syncHud();
+    if (!autoOn) return;
+    audio.ensure();
+    if (G.mode === 'title') startGame('chain');
+  }
+
+  function autoLeadX(e) {
+    const t = Math.max(0, (G.ship.y - 20 - e.y) / SHOT_V);
+    if (e.state === 'weave' || e.state === 'fall') return e.x + e.vx * t;
+    if (e.state === 'float') return e.x + e.vx * Math.min(0.35, t);
+    return e.x;
+  }
+
+  function autoDangerAt(x, horizon) {
+    let d = 0;
+    for (let i = 0; i < G.bombs.length; i++) {
+      const b = G.bombs[i];
+      if (b.vy <= 8) continue;
+      const t = (PLAYER_Y - 8 - b.y) / b.vy;
+      if (t < -0.02 || t > horizon) continue;
+      const gap = Math.abs(b.x + b.vx * t - x);
+      if (gap < 14) d += (horizon - t) * 90;
+      else if (gap < 26) d += (horizon - t) * 28;
+      else if (gap < 40) d += (horizon - t) * 8;
+    }
+    for (let i = 0; i < G.enemies.length; i++) {
+      const e = G.enemies[i];
+      if (!e.alive || (e.state !== 'dive' && e.state !== 'fall')) continue;
+      if (e.y < 360) continue;
+      const ev = e.state === 'fall' ? Math.max(80, e.vy) : 250 + G.wave * 12;
+      const t = (PLAYER_Y - e.y) / ev;
+      if (t < -0.05 || t > horizon + 0.12) continue;
+      const box = hitBox(e);
+      if (Math.abs(e.x - x) < box.hw + 12) {
+        d += (e.state === 'fall' ? 78 : 58) * Math.max(0.12, horizon - t);
+      }
+    }
+    return d;
+  }
+
+  function autoPickSafe(desired, horizon) {
+    const lo = shipMin();
+    const hi = shipMax();
+    let bestX = clamp(desired, lo, hi);
+    let best = 1e9;
+    const here = G.ship.x;
+    for (let x = lo; x <= hi; x += 10) {
+      const dang = autoDangerAt(x, horizon);
+      let cost = dang * 7.5 + Math.abs(x - desired) * 0.18;
+      if (Math.abs(x - here) < 10) cost -= 8;
+      if (x < lo + 22 || x > hi - 22) cost += 6;
+      if (cost < best) {
+        best = cost;
+        bestX = x;
+      }
+    }
+    return bestX;
+  }
+
+  function autoThink() {
+    autoFire = false;
+    autoTarget = G.ship.x;
+    if (G.mode !== 'play' || G.deadT > 0) return;
+
+    const align = AUTO_ALIGN[autoSpeed] || 14;
+    const fuelNeed = G.fuel < (isDry() ? 52 : 36);
+    const fuelCritNow = G.fuel < (isDry() ? 22 : 16);
+    const bay = G.mother && G.mother.phase === 'bay' && G.mother.bay;
+    let desired = autoStickX;
+    let aimX = null;
+    let urgent = false;
+    let pickDrop = null;
+    let dropScore = -1e9;
+    let bestE = null;
+    let bestS = -1e9;
+    let nearBombs = 0;
+    let lowThreats = 0;
+    let crowd = 0;
+
+    for (let i = 0; i < G.drops.length; i++) {
+      const d = G.drops[i];
+      if (d.y > VH - 8) continue;
+      const dist = hypot(d.x - G.ship.x, d.y - G.ship.y);
+      let s = d.amt * 1.4 - dist * 0.22 + d.y * 0.12;
+      if (d.warp && G.warp <= 0) s += 90;
+      if (fuelNeed) s += 70;
+      if (fuelCritNow) s += 140;
+      if (d.y > 500) s += 40;
+      if (s > dropScore) {
+        dropScore = s;
+        pickDrop = d;
+      }
+    }
+
+    for (let i = 0; i < G.bombs.length; i++) {
+      const b = G.bombs[i];
+      if (b.vy <= 8) continue;
+      const t = (PLAYER_Y - 8 - b.y) / b.vy;
+      if (t > 0 && t < 0.7 && Math.abs(b.x + b.vx * t - G.ship.x) < 70) {
+        crowd += 1;
+        if (b.y > 400) nearBombs += 1;
+      }
+    }
+
+    for (let i = 0; i < G.enemies.length; i++) {
+      const e = G.enemies[i];
+      if (!e.alive || e.state === 'wait') continue;
+      if ((e.state === 'dive' || e.state === 'fall') && e.y > 400 && Math.abs(e.x - G.ship.x) < 86) {
+        lowThreats += 1;
+        crowd += 1;
+        if (e.y > 520 && Math.abs(e.x - G.ship.x) < 36) urgent = true;
+      }
+      if (e.y > PLAYER_Y - 28) continue;
+      const lx = autoLeadX(e);
+      let s = e.y * 0.42 - Math.abs(lx - G.ship.x) * 0.28;
+      if (e.state === 'form' || e.state === 'orbit') s += 28;
+      if (e.state === 'dive') s += 95;
+      if (e.state === 'fall') s += 110;
+      if (e.type === 4) s += e.big ? 90 : 55;
+      if (e.type === 2) s += 36;
+      if (e.type === 5) s += 80;
+      if (e.hp > 1) s += 16;
+      if (e.y > 280) s += 22;
+      if (e.state === 'form' || e.state === 'orbit' || e.state === 'enter') {
+        let stack = 0;
+        for (let k = 0; k < G.enemies.length; k++) {
+          const o = G.enemies[k];
+          if (!o.alive || o === e || o.state === 'wait') continue;
+          if (Math.abs(o.x - e.x) < 18) stack += 1;
+        }
+        s += stack * 20;
+      }
+      if (s > bestS) {
+        bestS = s;
+        bestE = e;
+        aimX = lx;
+      }
+    }
+
+    if (bay) {
+      desired = G.mother.x;
+    } else if (pickDrop && (fuelNeed || fuelCritNow || pickDrop.y > 470 || (pickDrop.warp && G.warp <= 0))) {
+      const dropDang = autoDangerAt(pickDrop.x, 0.38);
+      if (fuelCritNow || dropDang < 36 || pickDrop.y > 540) desired = pickDrop.x;
+      else if (aimX != null) desired = lerp(aimX, pickDrop.x, 0.55);
+      else desired = pickDrop.x;
+    } else if (aimX != null) {
+      if (Math.abs(aimX - autoStickX) < 16) desired = autoStickX;
+      else desired = aimX;
+    } else {
+      desired = VW * 0.5;
+    }
+
+    const dodgeH = urgent ? 0.78 : 0.55;
+    const hereDang = autoDangerAt(G.ship.x, dodgeH);
+    if (hereDang > 18 || urgent) desired = autoPickSafe(desired, dodgeH);
+    else desired = autoPickSafe(desired, 0.42);
+
+    if (Math.abs(desired - autoStickX) > 9 || hereDang > 22) autoStickX = desired;
+    autoTarget = clamp(autoStickX, shipMin(), shipMax());
+
+    const lined = aimX != null && Math.abs(G.ship.x - aimX) < align + 8;
+    let overhead = false;
+    for (let i = 0; i < G.enemies.length; i++) {
+      const e = G.enemies[i];
+      if (!e.alive || e.state === 'wait') continue;
+      if (e.y < G.ship.y - 24 && Math.abs(autoLeadX(e) - G.ship.x) < align + 10) {
+        overhead = true;
+        break;
+      }
+    }
+    const heatOk = !G.overheat && (G.heat < (urgent ? 96 : 80));
+    autoFire = heatOk && (lined || overhead || (bestE && (bestE.state === 'fall' || bestE.state === 'dive') && Math.abs(G.ship.x - autoLeadX(bestE)) < align + 12));
+    if (bay && Math.abs(G.ship.x - G.mother.x) < 18 && !urgent) autoFire = heatOk && overhead;
+
+    if (G.warp > 0 && G.warpT <= 0 && G.ready <= 0.2 && !bay) {
+      const boxed = hereDang > 64 && autoDangerAt(autoTarget, 0.5) > 48;
+      const packed = nearBombs + lowThreats >= 3 || crowd >= 4;
+      const pinch = nearBombs >= 2 && lowThreats >= 1;
+      if (boxed || packed || pinch || (fuelCritNow && hereDang > 40)) tryWarp();
+    }
+  }
+
+  function tickAutoFlow(dt) {
+    if (!autoOn) return;
+    if (G.mode === 'title') {
+      autoOvWait += dt;
+      if (autoOvWait >= (autoSpeed >= 3 ? 0.22 : 0.48)) {
+        autoOvWait = 0;
+        startGame('chain');
+      }
+      return;
+    }
+    if (G.mode === 'lose' || G.mode === 'win') {
+      autoOvWait += dt;
+      if (autoOvWait >= (autoSpeed >= 3 ? 0.65 : 1.1)) {
+        autoOvWait = 0;
+        startGame(G.kind || 'chain');
+      }
+    }
+  }
+
   function updatePlayer(dt) {
     if (G.deadT > 0) return;
     let ax = 0;
-    if (inputSrc === 'ptr' && (pointer.down || pointer.hover)) {
+    if (autoOn && G.mode === 'play') {
+      const dx = autoTarget - G.ship.x;
+      const max = (AUTO_MAX_V[autoSpeed] || 310) * dt;
+      if (Math.abs(dx) <= Math.max(0.6, max)) G.ship.x = autoTarget;
+      else G.ship.x += (dx < 0 ? -1 : 1) * max;
+    } else if (inputSrc === 'ptr' && (pointer.down || pointer.hover)) {
       const dx = pointer.x - G.ship.x;
       if (Math.abs(dx) > 2) ax = dx > 0 ? 1 : -1;
       G.ship.x = lerp(G.ship.x, clamp(pointer.x, shipMin(), shipMax()), 1 - Math.exp(-dt * 14));
@@ -1704,7 +1983,7 @@
   }
 
   function updateHeat(dt) {
-    const firing = G.fireHold || pointer.down;
+    const firing = autoOn ? autoFire : (G.fireHold || pointer.down);
     const cool = G.overheat ? 48 : (firing ? 10 : 38);
     G.heat = Math.max(0, G.heat - cool * dt);
     if (G.overheat && G.heat < 24) {
@@ -1817,6 +2096,10 @@
   }
 
   function startGame(kind) {
+    autoOvWait = 0;
+    autoTarget = VW * 0.5;
+    autoStickX = VW * 0.5;
+    autoFire = false;
     G.kind = kind === 'dry' ? 'dry' : 'chain';
     G.mode = 'play';
     G.wave = 1;
@@ -1880,7 +2163,11 @@
     G.invuln = Math.max(0, G.invuln - dt);
     updatePlayer(dt);
     const slow = G.warpT > 0 ? 0.32 : 1;
-    if ((G.fireHold || pointer.down) && G.mode === 'play') fire();
+    if (G.mode === 'play') {
+      if (autoOn) {
+        if (autoFire) fire();
+      } else if (G.fireHold || pointer.down) fire();
+    }
     if (G.mode === 'title') {
       G.fireCd = Math.max(0, G.fireCd - dt);
       if (G.shots.length < 2 && G.fireCd <= 0) {
@@ -1906,12 +2193,18 @@
   function update(dt) {
     G.t += dt;
     G.clock += dt;
+    tickAutoFlow(dt);
 
     if (G.stop > 0) {
-      G.stop -= dt;
-      updateFx(dt * 0.4);
-      return;
+      if (autoOn && autoSpeed >= 4 && G.mode === 'play') G.stop = 0;
+      else {
+        G.stop -= dt;
+        updateFx(dt * 0.4);
+        return;
+      }
     }
+
+    if (autoOn && G.mode === 'play' && G.deadT <= 0) autoThink();
 
     if (G.mode === 'title') {
       playSim(dt);
@@ -2359,15 +2652,23 @@
 
   function onKey(e, down) {
     const k = e.key;
-    const space = k === ' ' || k === 'Spacebar' || k === 'Space';
-    if (k === 'ArrowLeft' || k === 'Left' || k === 'a' || k === 'A') {
-      keys.l = down;
+    const code = e.code;
+    const space = k === ' ' || k === 'Spacebar' || k === 'Space' || code === 'Space';
+    if (k === 'a' || k === 'A' || code === 'KeyA') {
+      if (down) {
+        e.preventDefault();
+        if (!e.repeat) toggleAuto();
+      }
+      return;
+    }
+    if (k === 'ArrowLeft' || k === 'Left') {
+      keys.l = down && !autoOn;
       inputSrc = 'key';
       if (down) e.preventDefault();
       return;
     }
     if (k === 'ArrowRight' || k === 'Right' || k === 'd' || k === 'D') {
-      keys.r = down;
+      keys.r = down && !autoOn;
       inputSrc = 'key';
       if (down) e.preventDefault();
       return;
@@ -2386,6 +2687,15 @@
     }
     if (k === 'r' || k === 'R') {
       restart();
+      return;
+    }
+    if (autoOn) {
+      if (k === 's' || k === 'S' || k === 'ArrowDown' || k === 'Shift' || space || k === 'Enter' || k === 'w' || k === 'W' || k === 'ArrowUp') {
+        e.preventDefault();
+      }
+      if (overlayOpen() && (space || k === 'Enter')) {
+        primaryAction();
+      }
       return;
     }
     if (k === 's' || k === 'S' || k === 'ArrowDown' || k === 'Shift' || k === 'ShiftLeft' || k === 'ShiftRight') {
@@ -2420,6 +2730,7 @@
     if (!canvas) return;
     canvas.addEventListener('pointerdown', function (e) {
       audio.ensure();
+      if (autoOn) return;
       e.preventDefault();
       pointer.down = true;
       pointer.hover = true;
@@ -2434,6 +2745,7 @@
     });
     canvas.addEventListener('pointermove', function (e) {
       pointer.x = clamp(pointerWorldX(e), shipMin(), shipMax());
+      if (autoOn) return;
       if (!pointer.down && e.pointerType === 'mouse') pointer.hover = true;
       if (pointer.down || e.pointerType === 'mouse') inputSrc = 'ptr';
     });
@@ -2465,13 +2777,16 @@
     let dt = t - last;
     last = t;
     if (dt > 0.05) dt = 0.05;
-    acc += dt;
+    const scale = (autoOn && G.mode === 'play') ? (AUTO_TIME[autoSpeed] || 1) : 1;
+    acc += dt * scale;
     let n = 0;
-    while (acc >= STEP && n < 5) {
+    const maxSteps = autoOn && autoSpeed >= 4 ? 16 : 5;
+    while (acc >= STEP && n < maxSteps) {
       update(STEP);
       acc -= STEP;
       n += 1;
     }
+    if (acc > STEP * maxSteps) acc = 0;
     draw();
   }
 
@@ -2484,6 +2799,9 @@
   seedStars();
   loadBest();
   initMute();
+  autoSpeed = loadAutoSpeed();
+  syncSpeedUi();
+  syncAutoUi();
   goTitle();
   resize();
   bindPointer();
@@ -2512,8 +2830,15 @@
   }
   if (btnWarp) {
     btnWarp.addEventListener('click', function () {
+      if (autoOn) return;
       audio.ensure();
       tryWarp();
+    });
+  }
+  if (btnAuto) btnAuto.addEventListener('click', toggleAuto);
+  if (speedEl) {
+    speedEl.addEventListener('input', function () {
+      setAutoSpeed(parseInt(speedEl.value, 10));
     });
   }
 
