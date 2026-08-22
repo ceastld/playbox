@@ -26,6 +26,9 @@ var STEP = 1 / 60;
 var TAU = Math.PI * 2;
 var BEST_KEY = 'playbox-kong-climb-best';
 var MUTE_KEY = 'playbox-kong-climb-mute';
+var AUTO_SPEED_KEY = 'playbox-kong-climb-auto-speed';
+var SPEED_LABELS = ['', '慢', '中', '快', '极快'];
+var AUTO_SCALE = [1, 0.52, 0.78, 1, 3.4];
 
 var FLOORS = [
   { x0: 16, x1: 344, yL: 430, yR: 408 },
@@ -182,6 +185,36 @@ function inGoal(x, floor) {
   return floor === 3 && x >= GOAL.x0 && x <= GOAL.x1;
 }
 
+function upLaddersOn(floor) {
+  var a = [], i, L;
+  for (i = 0; i < LADDERS.length; i++) {
+    L = LADDERS[i];
+    if (L.lo === floor && L.kind === 'full') a.push(L);
+  }
+  return a;
+}
+
+function floorWalkRange(i) {
+  var low = floorLowX(i);
+  var high = floorHighX(i);
+  if (rollDir(i) > 0) return { lo: high + 10, hi: low - 12 };
+  return { lo: low + 12, hi: high - 10 };
+}
+
+function loadAutoSpeed() {
+  try {
+    var n = parseInt(localStorage.getItem(AUTO_SPEED_KEY) || '3', 10);
+    if (!isFinite(n) || n < 1 || n > 4) return 3;
+    return n;
+  } catch (e) {
+    return 3;
+  }
+}
+
+function saveAutoSpeed(n) {
+  try { localStorage.setItem(AUTO_SPEED_KEY, String(n)); } catch (e) { /* ignore */ }
+}
+
 function makeHammers() {
   return HAMMER_SPOTS.map(function (h) {
     return { x: h.x, floor: h.floor, taken: false };
@@ -229,7 +262,7 @@ function makeBarrel(x, y, floor, spd) {
 }
 
 function selfCheck() {
-  var h, i, L, s, p;
+  var h, i, L, s, p, r;
 
   if (FLOORS.length !== 4) throw new Error('4 floors');
   if (LIVES !== 3) throw new Error('3 lives');
@@ -282,6 +315,14 @@ function selfCheck() {
     if (L.hi - L.lo !== 1) throw new Error('adjacent floors');
   }
   if (typeof GOAL.x0 !== 'number') throw new Error('goal');
+  if (upLaddersOn(0).length !== 2) throw new Error('F0 two climbable');
+  if (upLaddersOn(1).length !== 2) throw new Error('F1 two climbable');
+  if (upLaddersOn(2).length !== 2) throw new Error('F2 two climbable');
+  if (upLaddersOn(3).length !== 0) throw new Error('F3 no up ladder');
+  if (upLaddersOn(0)[0].kind !== 'full') throw new Error('climb full only');
+  r = floorWalkRange(0);
+  if (r.lo <= FLOORS[0].x0 || r.hi >= FLOORS[0].x1) throw new Error('walk stays on girder');
+  if (loadAutoSpeed() < 1 || loadAutoSpeed() > 4) throw new Error('auto speed range');
 }
 
 selfCheck();
@@ -305,6 +346,9 @@ var btnClassic = document.getElementById('btn-classic');
 var btnRain = document.getElementById('btn-rain');
 var btnMute = document.getElementById('btn-mute');
 var btnRetry = document.getElementById('btn-retry');
+var btnAuto = document.getElementById('btn-auto');
+var speedEl = document.getElementById('speed');
+var speedLab = document.getElementById('speed-lab');
 var btnLeft = document.getElementById('btn-left');
 var btnRight = document.getElementById('btn-right');
 var btnJump = document.getElementById('btn-jump');
@@ -342,6 +386,10 @@ var rings = [];
 var shards = [];
 
 var keys = { l: false, r: false, u: false, d: false };
+var autoOn = false;
+var autoSpeed = loadAutoSpeed();
+var autoTargetL = null;
+var autoTargetX = SPAWN.x;
 var G = {
   mode: 'title',
   kind: 'classic',
@@ -701,9 +749,15 @@ function hudPlay() {
   modeLabel.textContent = G.rain ? '雨桶' : '经典';
   modeLabel.classList.toggle('rain', G.rain);
   if (G.mode === 'play') {
-    hintEl.textContent = G.rain
-      ? '雨桶如注 · 跳过去 · 空格跳 · R 重开'
-      : '跳过木桶 · 爬梯上楼 · 锤子能砸 · 掉下去丢命';
+    if (autoOn) {
+      hintEl.textContent = G.rain
+        ? '自动 · 雨桶 · 爬梯上楼 · A 停下'
+        : '自动托管 · 爬梯上楼 · 跳过木桶 · A 停下';
+    } else {
+      hintEl.textContent = G.rain
+        ? '雨桶如注 · 跳过去 · 空格跳 · R 重开'
+        : '跳过木桶 · 爬梯上楼 · 锤子能砸 · 掉下去丢命';
+    }
   }
   syncHammer();
 }
@@ -721,7 +775,7 @@ function showTitle() {
   panelEl.className = 'panel';
   ovTitle.textContent = '桶山';
   ovLead.textContent = '四层钢梁，桶从顶上滚下来。跳过去最爽，拿锤砸更爽。爬到顶上救人。';
-  ovOps.textContent = '方向键或 WASD · 空格 / 上 跳 · 触屏左 下 跳 右 · R 重开 · M 静音';
+  ovOps.textContent = '方向键或 WASD · 空格 / 上 跳 · A 自动 · 触屏左 下 跳 右 · R 重开 · M 静音';
   ovStart.classList.remove('gone');
   ovEnd.classList.add('gone');
   hintEl.textContent = '跳过木桶 · 爬梯上楼 · 锤子能砸 · 掉下去或撞桶丢命';
@@ -1348,12 +1402,257 @@ function tick(dt) {
   tickBarrels(dt);
 
   if (G.mode === 'play') {
+    if (autoOn) tickAuto();
     tickPlayer(dt);
     collideBarrels();
   }
 
   tickFx(dt);
   if (G.mode === 'play') syncHammer();
+}
+
+/* ---- autoplay ---- */
+function clearAutoKeys() {
+  keys.l = false;
+  keys.r = false;
+  keys.u = false;
+  keys.d = false;
+}
+
+function barrelOnLadder(Ladd) {
+  var i, b;
+  for (i = 0; i < G.barrels.length; i++) {
+    b = G.barrels[i];
+    if (b.dead || b.state !== 'down') continue;
+    if (Math.abs(b.x - Ladd.x) > 12) continue;
+    if (b.destFloor === Ladd.lo) return b;
+  }
+  return null;
+}
+
+function nearestRoller(x, floor, maxDx) {
+  var i, b, dx, best = null, bestD = maxDx;
+  for (i = 0; i < G.barrels.length; i++) {
+    b = G.barrels[i];
+    if (b.dead || b.state !== 'roll' || b.floor !== floor) continue;
+    dx = Math.abs(b.x - x);
+    if (dx < bestD) {
+      bestD = dx;
+      best = b;
+    }
+  }
+  return best;
+}
+
+function autoWalkVx(p) {
+  if (autoTargetX < p.x - 3) return -WALK;
+  if (autoTargetX > p.x + 3) return WALK;
+  return 0;
+}
+
+function approachingBarrel(p) {
+  var i, b, dx, bvx, pvx, rel, best = null, bestD = 1e9;
+  if (p.floor < 0 && p.state !== 'jump') return null;
+  pvx = autoWalkVx(p);
+  for (i = 0; i < G.barrels.length; i++) {
+    b = G.barrels[i];
+    if (b.dead) continue;
+    if (b.state === 'roll' && b.floor === p.floor) {
+      dx = b.x - p.x;
+      if (Math.abs(dx) > 88) continue;
+      bvx = rollDir(b.floor) * b.spd;
+      rel = bvx - pvx;
+      if (Math.abs(dx) > 10 && dx * rel > 0) continue;
+      if (Math.abs(dx) < bestD) {
+        bestD = Math.abs(dx);
+        best = b;
+      }
+    } else if (b.state === 'fall') {
+      dx = Math.abs(b.x - p.x);
+      if (dx < 24 && b.y < p.y + 4 && b.y > p.y - 52 && dx < bestD) {
+        bestD = dx;
+        best = b;
+      }
+    }
+  }
+  return best;
+}
+
+function upperMouthClear(Ladd) {
+  var b = nearestRoller(Ladd.x, Ladd.hi, 58);
+  var dir;
+  if (!b) return true;
+  dir = rollDir(Ladd.hi);
+  if ((b.x - Ladd.x) * dir > 18) return true;
+  return false;
+}
+
+function hammerNear(floor, x, rad) {
+  var i, h;
+  for (i = 0; i < G.hammers.length; i++) {
+    h = G.hammers[i];
+    if (h.taken || h.floor !== floor) continue;
+    if (Math.abs(h.x - x) < rad) return h;
+  }
+  return null;
+}
+
+function pickUpLadder(p) {
+  var list, i, Ladd, dist, score, best = null, bestS = 1e9, drop, flow, prefer;
+  if (p.floor < 0) return autoTargetL;
+  list = upLaddersOn(p.floor);
+  if (!list.length) return null;
+  if (autoTargetL && autoTargetL.lo !== p.floor) autoTargetL = null;
+  drop = p.floor < 3 ? floorLowX(p.floor + 1) : null;
+  flow = rollDir(p.floor);
+  prefer = p.floor === 0 ? 76 : p.floor === 1 ? 254 : p.floor === 2 ? 186 : -1;
+  for (i = 0; i < list.length; i++) {
+    Ladd = list[i];
+    dist = Math.abs(Ladd.x - p.x);
+    score = dist;
+    if (barrelOnLadder(Ladd)) score += 220;
+    if (!upperMouthClear(Ladd)) score += 24;
+    if (drop != null && Math.abs(Ladd.x - drop) < 90) score += 180;
+    if ((Ladd.x - p.x) * flow >= 0) score -= 34;
+    if (Ladd.x === prefer) score -= 70;
+    if (autoTargetL && autoTargetL.x === Ladd.x) score -= 60;
+    if (score < bestS) {
+      bestS = score;
+      best = Ladd;
+    }
+  }
+  return best;
+}
+
+function wantJumpOver(p) {
+  var b, dx, ham, pvx, bvx, rel;
+  if (p.inv > 0.08) return false;
+  if (p.hammer > 0) return false;
+  if (p.state === 'climb' || p.state === 'dead' || p.state === 'win') return false;
+  b = approachingBarrel(p);
+  if (b && b.state === 'roll') {
+    dx = Math.abs(p.x - b.x);
+    pvx = autoWalkVx(p);
+    bvx = rollDir(b.floor) * b.spd;
+    rel = Math.abs(bvx - pvx);
+    if (dx < 14) return true;
+    if (rel > 48) {
+      if (dx < 80 && dx > 16) return true;
+    } else if (dx < 18) {
+      return true;
+    }
+  } else if (b && b.state === 'fall' && Math.abs(p.x - b.x) < 22) {
+    return true;
+  }
+  if (p.grounded && p.floor >= 0) {
+    ham = hammerNear(p.floor, p.x, 20);
+    if (ham && Math.abs(p.x - ham.x) > 4 && (autoTargetX - p.x) * (ham.x - p.x) > 0) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function tickAuto() {
+  var p = G.player;
+  var Ladd, dx, lim, tx, threat, downB, nearTop, s, tdx, smash, away;
+  clearAutoKeys();
+  if (!autoOn || G.mode !== 'play') return;
+  if (p.state === 'dead' || p.state === 'win') return;
+
+  if (p.state === 'climb' && p.climbL) {
+    Ladd = p.climbL;
+    s = ladderSpan(Ladd);
+    downB = barrelOnLadder(Ladd);
+    nearTop = p.y <= s.top + 34;
+    if (downB && downB.y < p.y + 10) {
+      G.jumpBuf = BUFFER;
+      keys.r = Ladd.x < WORLD_W * 0.5;
+      keys.l = !keys.r;
+      return;
+    }
+    if (nearTop && !upperMouthClear(Ladd)) {
+      if (p.y < s.top + 24) keys.d = true;
+      return;
+    }
+    keys.u = true;
+    return;
+  }
+
+  if (p.floor === 3) {
+    if (p.x > GOAL.x1) tx = GOAL.x1 - 4;
+    else if (p.x < GOAL.x0) tx = GOAL.x0 + 4;
+    else tx = p.x;
+    autoTargetX = tx;
+    autoTargetL = null;
+    if (p.x <= GOAL.x1 + 18 && p.x >= GOAL.x0 - 8) {
+      if (p.x > GOAL.x1) keys.l = true;
+      else if (p.x < GOAL.x0) keys.r = true;
+      return;
+    }
+  } else if (p.floor >= 0) {
+    Ladd = pickUpLadder(p);
+    autoTargetL = Ladd;
+    autoTargetX = Ladd ? Ladd.x : p.x;
+  }
+
+  if (p.floor >= 0) {
+    lim = floorWalkRange(p.floor);
+    autoTargetX = clamp(autoTargetX, lim.lo, lim.hi);
+  }
+
+  if (p.hammer > 0.12 && p.floor >= 0) {
+    smash = nearestRoller(p.x, p.floor, 56);
+    if (smash) {
+      if (smash.x < p.x - 5) keys.l = true;
+      else if (smash.x > p.x + 5) keys.r = true;
+      return;
+    }
+  }
+
+  if (p.grounded && p.hammer <= 0.05 && autoTargetL) {
+    dx = p.x - autoTargetL.x;
+    downB = barrelOnLadder(autoTargetL);
+    threat = approachingBarrel(p);
+    tdx = threat ? Math.abs(threat.x - p.x) : 99;
+    if (Math.abs(dx) <= 7.5) {
+      if (downB) {
+        away = dx >= 0 ? 1 : -1;
+        keys.l = away < 0;
+        keys.r = away > 0;
+        if (wantJumpOver(p)) G.jumpBuf = BUFFER;
+        return;
+      }
+      if (tdx <= 52 && p.inv <= 0) {
+        G.jumpBuf = BUFFER;
+        return;
+      }
+      if (upperMouthClear(autoTargetL) || p.inv > 0) {
+        keys.u = true;
+        return;
+      }
+      if (wantJumpOver(p)) G.jumpBuf = BUFFER;
+      return;
+    }
+    if (Math.abs(dx) < 52) {
+      if (downB || !upperMouthClear(autoTargetL) || tdx < 40) {
+        if (wantJumpOver(p)) G.jumpBuf = BUFFER;
+        return;
+      }
+    }
+  }
+
+  dx = autoTargetX - p.x;
+  if (dx < -3) keys.l = true;
+  else if (dx > 3) keys.r = true;
+
+  if (p.floor >= 0) {
+    lim = floorWalkRange(p.floor);
+    if (keys.l && p.x <= lim.lo + 1) keys.l = false;
+    if (keys.r && p.x >= lim.hi - 1) keys.r = false;
+  }
+
+  if (wantJumpOver(p) && (p.grounded || p.coyote > 0)) G.jumpBuf = BUFFER;
 }
 
 /* ---- draw ---- */
@@ -1827,20 +2126,29 @@ function draw() {
   drawFlash();
 }
 
+function autoScale() {
+  if (!autoOn || G.mode !== 'play') return 1;
+  return AUTO_SCALE[autoSpeed] || 1;
+}
+
 function frame(ts) {
-  var dt, steps;
+  var dt, steps, turbo, scale, maxSteps;
   if (!lastTs) lastTs = ts;
   dt = (ts - lastTs) / 1000;
   lastTs = ts;
   if (dt > 0.08) dt = 0.08;
   if (!hidden) {
-    if (G.stop > 0) {
+    turbo = autoOn && autoSpeed >= 4 && G.mode === 'play';
+    if (G.stop > 0 && !turbo) {
       G.stop -= dt;
       tickFx(dt);
     } else {
-      acc += dt;
+      if (turbo) G.stop = 0;
+      scale = autoScale();
+      acc += dt * scale;
       steps = 0;
-      while (acc >= STEP && steps < 5) {
+      maxSteps = turbo ? 16 : 5;
+      while (acc >= STEP && steps < maxSteps) {
         tick(STEP);
         acc -= STEP;
         steps++;
@@ -1852,10 +2160,46 @@ function frame(ts) {
   requestAnimationFrame(frame);
 }
 
+/* ---- autoplay ui ---- */
+function syncAutoUi() {
+  btnAuto.classList.toggle('on', autoOn);
+  btnAuto.setAttribute('aria-pressed', autoOn ? 'true' : 'false');
+  btnAuto.textContent = autoOn ? '停下' : '自动';
+  btnAuto.setAttribute('aria-label', autoOn ? '停止自动' : '自动');
+}
+
+function syncSpeedUi() {
+  speedEl.value = String(autoSpeed);
+  speedLab.textContent = SPEED_LABELS[autoSpeed];
+  speedEl.title = SPEED_LABELS[autoSpeed];
+  speedEl.setAttribute('aria-valuetext', SPEED_LABELS[autoSpeed]);
+}
+
+function toggleAuto() {
+  autoOn = !autoOn;
+  autoTargetL = null;
+  clearAutoKeys();
+  G.jumpBuf = 0;
+  syncAutoUi();
+  if (autoOn) {
+    audio.ensure();
+    if (G.mode === 'title') startRun('classic');
+  }
+  if (G.mode === 'play') hudPlay();
+}
+
+function setAutoSpeed(n) {
+  if (n < 1 || n > 4 || !isFinite(n)) n = 3;
+  autoSpeed = n;
+  saveAutoSpeed(autoSpeed);
+  syncSpeedUi();
+}
+
 /* ---- input ---- */
 function bindPad(el, setter) {
   function down(ev) {
     ev.preventDefault();
+    if (autoOn) return;
     setter(true);
     el.classList.add('held');
     audio.ensure();
@@ -1885,7 +2229,7 @@ bindPad(btnJump, function (v) {
 
 function keyOn(e, down) {
   var k = e.code;
-  if (k === 'ArrowLeft' || k === 'KeyA') { keys.l = down; e.preventDefault(); }
+  if (k === 'ArrowLeft') { keys.l = down; e.preventDefault(); }
   else if (k === 'ArrowRight' || k === 'KeyD') { keys.r = down; e.preventDefault(); }
   else if (k === 'ArrowDown' || k === 'KeyS') { keys.d = down; e.preventDefault(); }
   else if (k === 'ArrowUp' || k === 'KeyW') {
@@ -1898,8 +2242,24 @@ function keyOn(e, down) {
   }
 }
 
+function isAutoKey(e) {
+  return e.code === 'KeyA' || e.key === 'a' || e.key === 'A';
+}
+
 window.addEventListener('keydown', function (e) {
+  if (isAutoKey(e)) {
+    if (e.repeat) return;
+    audio.ensure();
+    toggleAuto();
+    e.preventDefault();
+    return;
+  }
+  if (e.target === speedEl) return;
   if (e.repeat) {
+    if (autoOn) {
+      e.preventDefault();
+      return;
+    }
     keyOn(e, true);
     return;
   }
@@ -1938,15 +2298,35 @@ window.addEventListener('keydown', function (e) {
       return;
     }
   }
+  if (autoOn) {
+    if (
+      e.code === 'ArrowLeft' || e.code === 'ArrowRight' || e.code === 'ArrowUp' ||
+      e.code === 'ArrowDown' || e.code === 'Space' || e.code === 'KeyD' ||
+      e.code === 'KeyS' || e.code === 'KeyW'
+    ) {
+      e.preventDefault();
+    }
+    return;
+  }
   keyOn(e, true);
 });
 
-window.addEventListener('keyup', function (e) { keyOn(e, false); });
+window.addEventListener('keyup', function (e) {
+  if (isAutoKey(e)) {
+    e.preventDefault();
+    return;
+  }
+  if (autoOn) return;
+  keyOn(e, false);
+});
 
 btnMute.addEventListener('click', function () {
   audio.ensure();
   audio.setMuted(!audio.muted);
 });
+btnAuto.addEventListener('click', function () { toggleAuto(); });
+speedEl.addEventListener('input', function () { setAutoSpeed(parseInt(speedEl.value, 10)); });
+speedEl.addEventListener('change', function () { setAutoSpeed(parseInt(speedEl.value, 10)); });
 btnRetry.addEventListener('click', function () {
   audio.ensure();
   retry();
@@ -1983,6 +2363,8 @@ document.addEventListener('visibilitychange', function () {
 
 bestEl.textContent = String(G.bestC);
 renderPips();
+syncAutoUi();
+syncSpeedUi();
 showTitle();
 resize();
 hudPlay();
