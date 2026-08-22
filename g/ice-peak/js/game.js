@@ -1,6 +1,6 @@
 'use strict';
 
-/* 冰山 — Ice Climber remake. No CDN. */
+/* 冰山 — Ice Climber remake. No CDN. Optional autoplay. */
 
 var WORLD_W = 360;
 var VIEW_H = 500;
@@ -32,6 +32,9 @@ var STEP = 1 / 60;
 var TAU = Math.PI * 2;
 var BEST_KEY = 'playbox-ice-peak-best';
 var MUTE_KEY = 'playbox-ice-peak-mute';
+var AUTO_SPEED_KEY = 'playbox-ice-peak-auto-speed';
+var SPEED_LABELS = ['', '慢', '中', '快', '极快'];
+var AUTO_SCALE = [1, 0.52, 0.78, 1, 3.4];
 
 var ICE = 1;
 var STONE = 2;
@@ -349,6 +352,515 @@ function comboMul(n) {
   return 1 + Math.max(0, n - 1) * 0.15;
 }
 
+function loadAutoSpeed() {
+  try {
+    var n = parseInt(localStorage.getItem(AUTO_SPEED_KEY) || '3', 10);
+    if (!isFinite(n) || n < 1 || n > 4) return 3;
+    return n;
+  } catch (e) {
+    return 3;
+  }
+}
+
+function saveAutoSpeed(n) {
+  try { localStorage.setItem(AUTO_SPEED_KEY, String(n)); } catch (e) { /* ignore */ }
+}
+
+function colCenter(c) {
+  return colX(c) + BW * 0.5;
+}
+
+function wrapColDist(a, b) {
+  var d = wrapCol(b - a);
+  if (d > COLS / 2) d -= COLS;
+  return d;
+}
+
+function wrapColAbs(a, b) {
+  return Math.abs(wrapColDist(a, b));
+}
+
+function landDirFor(grid, c, row, face) {
+  var L = cellOf(grid, c - 1, row + 1);
+  var R = cellOf(grid, c + 1, row + 1);
+  if (L && !R) return -1;
+  if (R && !L) return 1;
+  if (L && R) return face >= 0 ? 1 : -1;
+  if (cellOf(grid, c - 2, row + 1)) return -1;
+  if (cellOf(grid, c + 2, row + 1)) return 1;
+  return face >= 0 ? 1 : -1;
+}
+
+function topiAt(enemies, x, row, rad) {
+  var i, e;
+  if (!enemies) return null;
+  for (i = 0; i < enemies.length; i++) {
+    e = enemies[i];
+    if (e.dead || e.kind !== 'topi') continue;
+    if (e.row !== row) continue;
+    if (Math.abs(wrapDx(e.x, x)) < rad) return e;
+  }
+  return null;
+}
+
+function birdNear(enemies, x, y, rad) {
+  var i, e, dx, dy;
+  if (!enemies) return null;
+  for (i = 0; i < enemies.length; i++) {
+    e = enemies[i];
+    if (e.dead || e.kind !== 'bird') continue;
+    dx = wrapDx(e.x, x);
+    dy = e.y - (y + 10);
+    if (dx * dx + dy * dy < rad * rad) return e;
+  }
+  return null;
+}
+
+function nextHoleSteps(grid, col, row, dir, max) {
+  var i, c;
+  for (i = 1; i <= max; i++) {
+    c = wrapCol(col + dir * i);
+    if (cellOf(grid, c, row) === 0) return i;
+  }
+  return 0;
+}
+
+function nearestStandX(grid, clouds, x, row) {
+  var i, c0, c, bestX, best, d, cl, cx, rr;
+  bestX = x;
+  best = 1e9;
+  c0 = colOfX(x);
+  for (rr = row; rr >= Math.max(0, row - 1); rr--) {
+    for (i = 0; i < COLS; i++) {
+      c = wrapCol(c0 + (i % 2 === 0 ? (i / 2) | 0 : -((i + 1) / 2) | 0));
+      if (cellOf(grid, c, rr) === 0) continue;
+      d = Math.abs(wrapDx(colCenter(c), x));
+      if (d < best) {
+        best = d;
+        bestX = colCenter(c);
+      }
+    }
+    if (best < BW) break;
+  }
+  if (clouds) {
+    for (i = 0; i < clouds.length; i++) {
+      cl = clouds[i];
+      if (Math.abs(cl.y - rowStand(row)) > 12 &&
+          Math.abs(cl.y - rowStand(Math.max(0, row - 1))) > 12) continue;
+      cx = cl.x + cl.w * 0.5;
+      d = Math.abs(wrapDx(cx, x));
+      if (d < best) {
+        best = d;
+        bestX = cx;
+      }
+    }
+  }
+  return bestX;
+}
+
+function pickClimbCol(grid, p, sticky, enemies, idle) {
+  var row = Math.max(0, p.row | 0);
+  var pCol = colOfX(p.x);
+  var best = pCol;
+  var bestS = 1e9;
+  var c, s, ceil, floor, dist, i, e, ld, ignoreSticky;
+  ignoreSticky = idle > 1.6;
+  for (c = 0; c < COLS; c++) {
+    floor = cellOf(grid, c, row);
+    ceil = cellOf(grid, c, row + 1);
+    dist = wrapColAbs(pCol, c);
+    s = dist * 7;
+    if (floor === 0) s += 420;
+    if (ceil === STONE) s += 520;
+    else if (ceil === ICE) s += 12;
+    else {
+      ld = landDirFor(grid, c, row, p.face);
+      if (cellOf(grid, c + ld, row + 1) === 0 &&
+          cellOf(grid, c - ld, row + 1) === 0) s += 90;
+      else s -= 48;
+    }
+    if (enemies) {
+      for (i = 0; i < enemies.length; i++) {
+        e = enemies[i];
+        if (e.dead) continue;
+        if (e.kind === 'topi' && e.row === row && Math.abs(wrapDx(e.x, colCenter(c))) < 22) s += 95;
+        if (e.kind === 'bird' && Math.abs(wrapDx(e.x, colCenter(c))) < 20 &&
+            Math.abs(e.y - (rowStand(row) + 14)) < 24) s += 60;
+      }
+    }
+    if (!ignoreSticky && c === sticky) s -= 62;
+    if (s < bestS) {
+      bestS = s;
+      best = c;
+    }
+  }
+  return best;
+}
+
+function autoDecide(st) {
+  var p = st.player;
+  var grid = st.grid;
+  var out = {
+    l: false, r: false, d: false,
+    jump: false, hammer: false,
+    col: st.stickyCol, landDir: st.landDir || 1
+  };
+  var row, col, ceil, tx, dx, dir, threat, bird, ld, cond, landX, steps, other, wind;
+  var aligned, want, aimRow, idle, holeAhead;
+
+  if (!p || p.state === 'dead' || p.state === 'win') return out;
+
+  row = Math.max(0, p.row | 0);
+  col = colOfX(p.x);
+  wind = st.wind || 0;
+  cond = st.condor;
+  idle = st.idle || 0;
+
+  if (st.kind === 'summit' && cond && cond.live && row >= SUMMIT) {
+    dx = wrapDx(cond.x, p.x);
+    if (dx > 4) out.r = true;
+    else if (dx < -4) out.l = true;
+    if (Math.abs(dx) < 22 && (p.grounded || p.coyote > 0)) out.jump = true;
+    if (!p.grounded) {
+      want = dx - wind * 0.12;
+      out.l = want < -3;
+      out.r = want > 3;
+    }
+    out.col = col;
+    return out;
+  }
+
+  out.col = pickClimbCol(grid, p, st.stickyCol, st.enemies, idle);
+  ceil = cellOf(grid, out.col, row + 1);
+  ld = landDirFor(grid, out.col, row, p.face || 1);
+  out.landDir = ld;
+  tx = colCenter(out.col) + (ceil === STONE ? 0 : ld * 6);
+
+  threat = p.inv > 0 ? null : topiAt(st.enemies, p.x, row, 22);
+  bird = p.inv > 0 ? null : birdNear(st.enemies, p.x, p.y, 22);
+
+  if (!p.grounded) {
+    aimRow = Math.max(row, rowOfY(p.y));
+    if (threat || bird) out.hammer = true;
+    if (cellOf(grid, out.col, row + 1) === ICE && Math.abs(wrapDx(colCenter(out.col), p.x)) < 14) {
+      out.hammer = true;
+    }
+    if (p.y < rowStand(row) + ROW_H - 6) {
+      landX = colCenter(out.col);
+    } else {
+      landX = nearestStandX(grid, st.clouds, p.x, Math.max(aimRow, row + 1));
+    }
+    want = wrapDx(landX, p.x) - wind * 0.1;
+    if (want > 3) out.r = true;
+    else if (want < -3) out.l = true;
+    if (p.vy < 0 && Math.abs(want) < 10) out.d = true;
+    return out;
+  }
+
+  if (threat && Math.abs(wrapDx(threat.x, p.x)) < 18) {
+    dx = wrapDx(threat.x, p.x);
+    out.hammer = true;
+    if (dx > 2) out.r = true;
+    else if (dx < -2) out.l = true;
+    if (Math.abs(dx) < 15) out.jump = true;
+    return out;
+  }
+  if (bird && Math.abs(wrapDx(bird.x, p.x)) < 18) {
+    dx = wrapDx(bird.x, p.x);
+    out.hammer = true;
+    if (dx > 3) out.r = true;
+    else if (dx < -3) out.l = true;
+    return out;
+  }
+
+  if (idle > 2.2) {
+    out.jump = true;
+    out.hammer = true;
+    if (cellOf(grid, wrapCol(col + 1), row) !== 0) out.r = true;
+    else if (cellOf(grid, wrapCol(col - 1), row) !== 0) out.l = true;
+    return out;
+  }
+
+  dx = wrapDx(tx, p.x);
+  aligned = Math.abs(dx) <= 7;
+  dir = dx > 0.6 ? 1 : dx < -0.6 ? -1 : (ld || 1);
+
+  if (!aligned) {
+    holeAhead = nextHoleSteps(grid, col, row, dir, 5);
+    steps = holeAhead;
+    other = nextHoleSteps(grid, col, row, -dir, 5);
+    if (steps === 1) {
+      if (cellOf(grid, wrapCol(col + dir * 2), row) !== 0) {
+        out.jump = true;
+        if (dir > 0) out.r = true;
+        else out.l = true;
+      } else if (other === 0 || other > 2) {
+        if (-dir > 0) out.r = true;
+        else out.l = true;
+      } else {
+        out.jump = true;
+        if (dir > 0) out.r = true;
+        else out.l = true;
+      }
+    } else {
+      if (dir > 0) out.r = true;
+      else out.l = true;
+    }
+    return out;
+  }
+
+  if (ceil === ICE) {
+    out.hammer = true;
+    return out;
+  }
+  if (ceil === 0) {
+    out.jump = true;
+    if (ld > 0) out.r = true;
+    else out.l = true;
+    return out;
+  }
+  if (cellOf(grid, wrapCol(col + 1), row + 1) === ICE) {
+    out.r = true;
+    out.jump = true;
+    out.hammer = true;
+  } else if (cellOf(grid, wrapCol(col - 1), row + 1) === ICE) {
+    out.l = true;
+    out.jump = true;
+    out.hammer = true;
+  } else {
+    out.jump = true;
+    out.hammer = true;
+    out.r = true;
+  }
+  return out;
+}
+
+function playAutoClimb(kind, seconds, seed) {
+  var m = makeMountain(kind, seed);
+  var grid = m.grid;
+  var clouds = m.clouds;
+  var p = makePlayer();
+  var cond = makeCondor(kind === 'summit');
+  var keysL = { l: false, r: false, d: false };
+  var jumpBuf = 0;
+  var hamBuf = 0;
+  var autoCol = -1;
+  var autoLand = 1;
+  var idle = 0;
+  var lastRow = 0;
+  var t = 0;
+  var dt = STEP;
+  var smashed = 0;
+  var maxH = 0;
+  var groundH = 0;
+  var jumps = 0;
+  var grabs = 0;
+  var peakY = 0;
+  var clock = 0;
+  var lastSafe = { x: p.x, y: p.y, row: 0 };
+  var d, wish, spd, nx, stand, prevY, head, prevHead, r, c, i, cc, cols, br, ceilHit;
+  var swing = 0;
+  var swingCd = 0;
+  var wind = 0;
+
+  function smash(c0, r0) {
+    if (cellOf(grid, c0, r0) !== ICE) return false;
+    setCell(grid, c0, r0, 0);
+    smashed++;
+    return true;
+  }
+
+  function doHammer() {
+    var col = colOfX(p.x);
+    var row = rowOfY(p.y);
+    var list = [
+      [col, row + 1],
+      [col + p.face, row + 1],
+      [col + p.face, row]
+    ];
+    var i, c0, r0, hb, br0, near;
+    if (!p.grounded) {
+      list.push([col, row + 2]);
+      list.push([col + p.face, row + 2]);
+    }
+    hb = hammerBox(p);
+    for (i = 0; i < list.length; i++) {
+      c0 = wrapCol(list[i][0]);
+      r0 = list[i][1];
+      if (r0 < 0) continue;
+      if (p.grounded && r0 === row && c0 === col) continue;
+      if (cellOf(grid, c0, r0) !== ICE) continue;
+      br0 = brickRect(c0, r0);
+      near = Math.abs(wrapDx(p.x, br0.x + BW * 0.5)) < BW * 1.15;
+      if (!near) continue;
+      if (r0 === row) {
+        if (Math.abs(wrapDx(p.x, br0.x + BW * 0.5)) > BW * 0.92) continue;
+      } else if (!overlap(hb.x, hb.y, hb.w, hb.h, br0.x, br0.y, br0.w, br0.h) &&
+                 Math.abs((p.y + PH) - br0.y) > 18) {
+        continue;
+      }
+      smash(c0, r0);
+    }
+  }
+
+  while (t < seconds) {
+    t += dt;
+    clock += dt;
+    jumpBuf = Math.max(0, jumpBuf - dt);
+    hamBuf = Math.max(0, hamBuf - dt);
+    wind = windAt(kind, maxH, clock);
+
+    if (p.row !== lastRow) {
+      if (p.row > lastRow) idle = 0;
+      lastRow = p.row;
+      autoCol = -1;
+    } else idle += dt;
+
+    d = autoDecide({
+      grid: grid, player: p, enemies: [], clouds: clouds,
+      condor: cond, veggies: [], kind: kind, wind: wind,
+      stickyCol: autoCol, landDir: autoLand, idle: idle
+    });
+    autoCol = d.col;
+    autoLand = d.landDir;
+    keysL.l = d.l;
+    keysL.r = d.r;
+    keysL.d = d.d;
+    if (d.jump) jumpBuf = BUFFER;
+    if (d.hammer) hamBuf = BUFFER;
+
+    if (p.coyote > 0) p.coyote -= dt;
+    if (swing > 0) swing -= dt;
+    if (swingCd > 0) swingCd -= dt;
+    p.swing = swing;
+
+    wish = (keysL.r ? 1 : 0) - (keysL.l ? 1 : 0);
+    if (wish) p.face = wish;
+    spd = p.grounded ? WALK : AIR;
+    p.vx = lerp(p.vx, wish * spd, p.grounded ? 0.28 : 0.14);
+    if (!p.grounded) p.vx += wind * dt;
+    else p.vx += wind * 0.35 * dt;
+
+    if (jumpBuf > 0 && (p.grounded || p.coyote > 0)) {
+      p.vy = JUMP_V;
+      p.grounded = false;
+      p.coyote = 0;
+      jumpBuf = 0;
+      p.cloud = null;
+      jumps++;
+    }
+    if (hamBuf > 0 && swingCd <= 0) {
+      swing = SWING;
+      swingCd = SWING + SWING_CD;
+      hamBuf = 0;
+      p.swing = swing;
+    }
+
+    nx = wrapX(p.x + p.vx * dt);
+    p.x = nx;
+
+    if (p.grounded) {
+      stand = bestStandSim(grid, clouds, p.x, p.y - 6, p.y + 8);
+      if (!stand) {
+        p.grounded = false;
+        p.cloud = null;
+        p.coyote = COYOTE;
+      } else {
+        p.y = stand.y;
+        p.row = stand.row;
+        lastSafe = { x: p.x, y: p.y, row: p.row };
+      }
+    }
+
+    if (!p.grounded) {
+      p.vy -= GRAV * dt;
+      if (keysL.d && p.vy < 0) p.vy -= FAST_FALL * dt;
+      if (p.vy < -MAX_FALL) p.vy = -MAX_FALL;
+      prevY = p.y;
+      p.y += p.vy * dt;
+      if (p.vy > 0) {
+        prevHead = prevY + PH;
+        head = p.y + PH;
+        r = rowOfY(prevY) + 1;
+        cols = [wrapCol(colOfX(p.x) - 1), colOfX(p.x), wrapCol(colOfX(p.x) + 1)];
+        for (i = 0; i < 3; i++) {
+          for (cc = 0; cc < 3; cc++) {
+            c = cols[cc];
+            if (cellOf(grid, c, r + i) === 0) continue;
+            br = brickRect(c, r + i);
+            if (prevHead > br.y + 1 || head < br.y) continue;
+            if (Math.abs(wrapDx(p.x, br.x + BW * 0.5)) > BW * 0.52 + PW * 0.3) continue;
+            ceilHit = cellOf(grid, c, r + i);
+            if (swing > 0 && ceilHit === ICE) smash(c, r + i);
+            else {
+              p.y = br.y - PH - 0.2;
+              p.vy = Math.min(p.vy, 40);
+            }
+          }
+        }
+      } else {
+        stand = bestStandSim(grid, clouds, p.x, p.y - 2, prevY + 2);
+        if (stand && prevY >= stand.y - 1 && p.y <= stand.y + 2) {
+          p.y = stand.y;
+          p.vy = 0;
+          p.grounded = true;
+          p.row = stand.row;
+          p.coyote = COYOTE;
+          lastSafe = { x: p.x, y: p.y, row: p.row };
+        }
+      }
+    }
+
+    if (swing > SWING * 0.15 && swing < SWING * 0.92) doHammer();
+
+    if (cond.live) {
+      cond.x += cond.vx * dt;
+      if (cond.x > PAD + INNER - 28) { cond.x = PAD + INNER - 28; cond.vx = -Math.abs(cond.vx); }
+      if (cond.x < PAD + 28) { cond.x = PAD + 28; cond.vx = Math.abs(cond.vx); }
+      cond.y = rowStand(SUMMIT) + 32 + Math.sin(clock * 1.6) * 6;
+      if (Math.abs(wrapDx(p.x, cond.x)) < 16 && Math.abs((p.y + 12) - cond.y) < 16) {
+        grabs++;
+        break;
+      }
+    }
+
+    if (p.y > peakY) peakY = p.y;
+    if (rowOfY(p.y) > maxH) maxH = Math.max(0, rowOfY(p.y));
+    if (p.grounded && p.row > groundH) groundH = p.row;
+
+    if (p.y < -40) {
+      p.x = lastSafe.x;
+      p.y = lastSafe.y;
+      p.row = lastSafe.row;
+      p.grounded = true;
+      p.vy = 0;
+      p.vx = 0;
+    }
+  }
+
+  return {
+    maxH: maxH, groundH: groundH, smashed: smashed, grabs: grabs, t: t,
+    row: p.row, x: p.x, grounded: p.grounded, jumps: jumps, peakY: peakY
+  };
+}
+
+function bestStandSim(grid, clouds, x, yLo, yHi) {
+  var a = standOnGrid(grid, x, yLo, yHi);
+  var i, cl, best, top, dx;
+  best = a;
+  if (clouds) {
+    for (i = 0; i < clouds.length; i++) {
+      cl = clouds[i];
+      top = cl.y;
+      if (top < yLo - 0.01 || top > yHi + 1) continue;
+      dx = wrapDx(x, cl.x + cl.w * 0.5);
+      if (Math.abs(dx) > cl.w * 0.5 + PW * 0.35) continue;
+      if (!best || top > best.y) best = { y: top, kind: 'cloud', row: rowOfY(cl.y) };
+    }
+  }
+  return best;
+}
+
 function selfCheck() {
   var h, m, row, p, hb, i, ice, holes;
 
@@ -405,6 +917,79 @@ function selfCheck() {
   if (VEG.length < 3) throw new Error('veggies');
   if (makeCondor(true).live !== true) throw new Error('condor');
   if (makeCondor(false).live !== false) throw new Error('no condor endless');
+
+  if (loadAutoSpeed() < 1 || loadAutoSpeed() > 4) throw new Error('auto speed range');
+  if (AUTO_SCALE[3] !== 1 || AUTO_SCALE[4] <= AUTO_SCALE[3]) throw new Error('auto scale');
+  if (AUTO_SCALE[1] >= AUTO_SCALE[2] || AUTO_SCALE[2] >= AUTO_SCALE[3]) throw new Error('auto scale order');
+  if (SPEED_LABELS[3] !== '快' || SPEED_LABELS[4] !== '极快') throw new Error('speed labels');
+
+  (function autoPlayCheck() {
+    var m2, p2, d, d2, st, holeC, i, walked, climb, endRun;
+    m2 = makeMountain('summit', 196);
+    p2 = makePlayer();
+    st = {
+      grid: m2.grid, player: p2, enemies: [], clouds: [],
+      condor: makeCondor(true), veggies: [], kind: 'summit',
+      wind: 0, stickyCol: -1, landDir: 1, idle: 0
+    };
+    d = autoDecide(st);
+    if (!d.hammer) throw new Error('AI must smash ice at spawn');
+    if (d.jump) throw new Error('AI should hammer a hole before jumping');
+    if (d.l && d.r) throw new Error('AI spawn wiggle');
+    st.stickyCol = d.col;
+    d2 = autoDecide(st);
+    if (!d2.hammer || d2.jump) throw new Error('AI spawn must keep smashing the ceiling');
+    if ((d.l ? 1 : 0) !== (d2.l ? 1 : 0) || (d.r ? 1 : 0) !== (d2.r ? 1 : 0)) {
+      throw new Error('AI spawn direction flip');
+    }
+
+    holeC = wrapCol(colOfX(p2.x) + 5);
+    setCell(m2.grid, holeC, 1, 0);
+    st.stickyCol = -1;
+    d = autoDecide(st);
+    if (d.col !== holeC) throw new Error('AI should pick open hole');
+    st.stickyCol = d.col;
+    walked = 0;
+    for (i = 0; i < 4; i++) {
+      d2 = autoDecide(st);
+      if (d2.col !== holeC) throw new Error('AI hole target drift');
+      if (d2.l && d2.r) throw new Error('AI hole wiggle both');
+      if (d2.r) walked++;
+      if (d2.l) throw new Error('AI walked away from nearer hole');
+    }
+    if (walked < 3) throw new Error('AI should walk toward hole');
+
+    p2.row = SUMMIT;
+    p2.y = rowStand(SUMMIT);
+    p2.x = PAD + INNER * 0.25;
+    st.stickyCol = colOfX(p2.x);
+    st.condor.x = PAD + INNER * 0.75;
+    st.condor.y = rowStand(SUMMIT) + 32;
+    d = autoDecide(st);
+    if (!d.r || d.l) throw new Error('AI should chase condor');
+    if (d.jump && Math.abs(wrapDx(st.condor.x, p2.x)) > 40) {
+      /* far chase may skip jump; ok */
+    }
+
+    p2 = makePlayer();
+    st.kind = 'endless';
+    st.condor = makeCondor(false);
+    st.player = p2;
+    st.grid = makeMountain('endless', 7).grid;
+    st.stickyCol = -1;
+    d = autoDecide(st);
+    if (!d.jump && !d.hammer && !d.l && !d.r) throw new Error('AI idle endless');
+
+    climb = playAutoClimb('summit', 55, 196);
+    if (climb.smashed < 6) throw new Error('AI should smash ice, got ' + climb.smashed);
+    if (climb.groundH < 6 && climb.maxH < 6) {
+      throw new Error('AI should climb the peak, h=' + climb.groundH + '/' + climb.maxH);
+    }
+    endRun = playAutoClimb('endless', 22, 7);
+    if (endRun.groundH < 3 && endRun.maxH < 3) {
+      throw new Error('AI endless should climb, h=' + endRun.groundH + '/' + endRun.maxH);
+    }
+  }());
 }
 
 selfCheck();
@@ -428,6 +1013,9 @@ var btnSummit = document.getElementById('btn-summit');
 var btnEndless = document.getElementById('btn-endless');
 var btnMute = document.getElementById('btn-mute');
 var btnRetry = document.getElementById('btn-retry');
+var btnAuto = document.getElementById('btn-auto');
+var speedEl = document.getElementById('speed');
+var speedLab = document.getElementById('speed-lab');
 var btnLeft = document.getElementById('btn-left');
 var btnRight = document.getElementById('btn-right');
 var btnJump = document.getElementById('btn-jump');
@@ -467,6 +1055,12 @@ var snow = [];
 var flashes = [];
 
 var keys = { l: false, r: false, u: false, d: false, h: false };
+var autoOn = false;
+var autoSpeed = loadAutoSpeed();
+var autoCol = -1;
+var autoLandDir = 1;
+var autoIdle = 0;
+var autoLastRow = 0;
 var G = {
   mode: 'title',
   kind: 'summit',
@@ -694,6 +1288,7 @@ loadBest();
 /* ---- fx ---- */
 function hitStop(t) {
   if (reduceMotion()) return;
+  if (autoOn && autoSpeed >= 4) return;
   if (t > G.stop) G.stop = t;
 }
 
@@ -828,9 +1423,15 @@ function hudPlay() {
   modeLabel.textContent = G.kind === 'endless' ? '无尽' : '登顶';
   modeLabel.classList.toggle('endless', G.kind === 'endless');
   if (G.mode === 'play') {
-    hintEl.textContent = G.kind === 'endless'
-      ? '风会越来越急 · 砸冰往上爬 · 掉出画面丢命'
-      : '砸出碎洞往上爬 · 顶上抓神鹰 · 空格挥锤';
+    if (autoOn) {
+      hintEl.textContent = G.kind === 'endless'
+        ? '自动 · 无尽 · 砸冰往上爬 · A 停下'
+        : '自动托管 · 砸洞往上爬 · 顶上抓神鹰 · A 停下';
+    } else {
+      hintEl.textContent = G.kind === 'endless'
+        ? '风会越来越急 · 砸冰往上爬 · 掉出画面丢命'
+        : '砸出碎洞往上爬 · 顶上抓神鹰 · 空格挥锤';
+    }
   }
 }
 
@@ -939,7 +1540,7 @@ function showTitle() {
   panelEl.className = 'panel';
   ovTitle.textContent = '冰山';
   ovLead.textContent = '挥锤砸冰砖，借洞往上爬。顶上神鹰在等。掉出画面或撞怪丢命。';
-  ovOps.textContent = '方向键或 WASD 走跳 · 空格挥锤 · 触屏左 跳 锤 右 · R 重开 · M 静音';
+  ovOps.textContent = '方向键或 WASD 走跳 · 空格挥锤 · A 自动 · 触屏左 跳 锤 右 · R 重开 · M 静音';
   ovStart.classList.remove('gone');
   ovEnd.classList.add('gone');
   hintEl.textContent = '跳起来挥锤砸头顶的冰 · 从碎洞钻上去 · 别掉下去';
@@ -984,6 +1585,10 @@ function startRun(kind) {
   G.why = '';
   G.lock = 0;
   G.taught = false;
+  autoCol = -1;
+  autoLandDir = 1;
+  autoIdle = 0;
+  autoLastRow = 0;
   resetWorld(kind, false);
   overlayEl.classList.add('hidden');
   overlayEl.setAttribute('aria-hidden', 'true');
@@ -1566,6 +2171,7 @@ function tick(dt) {
   tickClouds(dt);
   tickCondor(dt);
   if (G.mode === 'play') {
+    if (autoOn) tickAuto();
     tickPlayer(dt);
     tickEnemies(dt);
     tickVeggies(dt);
@@ -2110,20 +2716,29 @@ function draw() {
   drawFlash();
 }
 
+function autoScale() {
+  if (!autoOn || G.mode !== 'play') return 1;
+  return AUTO_SCALE[autoSpeed] || 1;
+}
+
 function frame(ts) {
-  var dt, steps;
+  var dt, steps, turbo, scale, maxSteps;
   if (!lastTs) lastTs = ts;
   dt = (ts - lastTs) / 1000;
   lastTs = ts;
   if (dt > 0.08) dt = 0.08;
   if (!hidden) {
-    if (G.stop > 0) {
+    turbo = autoOn && autoSpeed >= 4 && G.mode === 'play';
+    if (G.stop > 0 && !turbo) {
       G.stop -= dt;
       tickFx(dt);
     } else {
-      acc += dt;
+      if (turbo) G.stop = 0;
+      scale = autoScale();
+      acc += dt * scale;
       steps = 0;
-      while (acc >= STEP && steps < 5) {
+      maxSteps = turbo ? 16 : 5;
+      while (acc >= STEP && steps < maxSteps) {
         tick(STEP);
         acc -= STEP;
         steps++;
@@ -2135,10 +2750,93 @@ function frame(ts) {
   requestAnimationFrame(frame);
 }
 
+/* ---- autoplay ---- */
+function clearAutoKeys() {
+  keys.l = false;
+  keys.r = false;
+  keys.u = false;
+  keys.d = false;
+  keys.h = false;
+}
+
+function tickAuto() {
+  var p = G.player;
+  var d;
+  clearAutoKeys();
+  if (!autoOn || G.mode !== 'play') return;
+  if (p.state === 'dead' || p.state === 'win') return;
+
+  if (p.row !== autoLastRow) {
+    if (p.row > autoLastRow) autoIdle = 0;
+    autoLastRow = p.row;
+    autoCol = -1;
+  } else {
+    autoIdle += STEP;
+  }
+
+  d = autoDecide({
+    grid: G.grid,
+    player: p,
+    enemies: G.enemies,
+    clouds: G.clouds,
+    condor: G.condor,
+    veggies: G.veggies,
+    kind: G.kind,
+    wind: G.wind,
+    stickyCol: autoCol,
+    landDir: autoLandDir,
+    idle: autoIdle
+  });
+  autoCol = d.col;
+  autoLandDir = d.landDir;
+  keys.l = d.l;
+  keys.r = d.r;
+  keys.d = d.d;
+  if (d.jump) G.jumpBuf = BUFFER;
+  if (d.hammer) G.hamBuf = BUFFER;
+}
+
+function syncAutoUi() {
+  btnAuto.classList.toggle('on', autoOn);
+  btnAuto.setAttribute('aria-pressed', autoOn ? 'true' : 'false');
+  btnAuto.textContent = autoOn ? '停下' : '自动';
+  btnAuto.setAttribute('aria-label', autoOn ? '停止自动' : '自动');
+}
+
+function syncSpeedUi() {
+  speedEl.value = String(autoSpeed);
+  speedLab.textContent = SPEED_LABELS[autoSpeed];
+  speedEl.title = SPEED_LABELS[autoSpeed];
+  speedEl.setAttribute('aria-valuetext', SPEED_LABELS[autoSpeed]);
+}
+
+function toggleAuto() {
+  autoOn = !autoOn;
+  autoCol = -1;
+  autoIdle = 0;
+  clearAutoKeys();
+  G.jumpBuf = 0;
+  G.hamBuf = 0;
+  syncAutoUi();
+  if (autoOn) {
+    audio.ensure();
+    if (G.mode === 'title') startRun('summit');
+  }
+  if (G.mode === 'play') hudPlay();
+}
+
+function setAutoSpeed(n) {
+  if (n < 1 || n > 4 || !isFinite(n)) n = 3;
+  autoSpeed = n;
+  saveAutoSpeed(autoSpeed);
+  syncSpeedUi();
+}
+
 /* ---- input ---- */
 function bindPad(el, setter) {
   function down(ev) {
     ev.preventDefault();
+    if (autoOn) return;
     setter(true);
     el.classList.add('held');
     audio.ensure();
@@ -2171,7 +2869,7 @@ bindPad(btnHammer, function (v) {
 
 function keyOn(e, down) {
   var k = e.code;
-  if (k === 'ArrowLeft' || k === 'KeyA') { keys.l = down; e.preventDefault(); }
+  if (k === 'ArrowLeft') { keys.l = down; e.preventDefault(); }
   else if (k === 'ArrowRight' || k === 'KeyD') { keys.r = down; e.preventDefault(); }
   else if (k === 'ArrowDown' || k === 'KeyS') { keys.d = down; e.preventDefault(); }
   else if (k === 'ArrowUp' || k === 'KeyW') {
@@ -2185,8 +2883,24 @@ function keyOn(e, down) {
   }
 }
 
+function isAutoKey(e) {
+  return e.code === 'KeyA' || e.key === 'a' || e.key === 'A';
+}
+
 window.addEventListener('keydown', function (e) {
+  if (isAutoKey(e)) {
+    if (e.repeat) return;
+    audio.ensure();
+    toggleAuto();
+    e.preventDefault();
+    return;
+  }
+  if (e.target === speedEl) return;
   if (e.repeat) {
+    if (autoOn) {
+      e.preventDefault();
+      return;
+    }
     keyOn(e, true);
     return;
   }
@@ -2225,15 +2939,35 @@ window.addEventListener('keydown', function (e) {
       return;
     }
   }
+  if (autoOn) {
+    if (
+      e.code === 'ArrowLeft' || e.code === 'ArrowRight' || e.code === 'ArrowUp' ||
+      e.code === 'ArrowDown' || e.code === 'Space' || e.code === 'KeyD' ||
+      e.code === 'KeyS' || e.code === 'KeyW'
+    ) {
+      e.preventDefault();
+    }
+    return;
+  }
   keyOn(e, true);
 });
 
-window.addEventListener('keyup', function (e) { keyOn(e, false); });
+window.addEventListener('keyup', function (e) {
+  if (isAutoKey(e)) {
+    e.preventDefault();
+    return;
+  }
+  if (autoOn) return;
+  keyOn(e, false);
+});
 
 btnMute.addEventListener('click', function () {
   audio.ensure();
   audio.setMuted(!audio.muted);
 });
+btnAuto.addEventListener('click', function () { toggleAuto(); });
+speedEl.addEventListener('input', function () { setAutoSpeed(parseInt(speedEl.value, 10)); });
+speedEl.addEventListener('change', function () { setAutoSpeed(parseInt(speedEl.value, 10)); });
 btnRetry.addEventListener('click', function () {
   audio.ensure();
   retry();
@@ -2271,6 +3005,8 @@ document.addEventListener('visibilitychange', function () {
 seedSnow();
 bestEl.textContent = String(G.bestS);
 renderPips();
+syncSpeedUi();
+syncAutoUi();
 showTitle();
 resize();
 hudPlay();
