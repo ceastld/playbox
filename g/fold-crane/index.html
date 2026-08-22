@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#05030c" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>折鹤 · CRANE</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2305030c'/%3E%3Cpath d='M6 18 L16 8 L22 12 L28 10 L20 18 L24 24 L16 22 L10 26 L12 20 Z' fill='%23141022' stroke='%2300f0ff' stroke-width='1.3' stroke-linejoin='round'/%3E%3Cpath d='M16 8 L16 22' stroke='%23ff3db8' stroke-width='1.2'/%3E%3Cpath d='M12 20 L20 18' stroke='%23ffe36b' stroke-width='1'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>折鹤</b>
+        <span>CRANE</span>
+      </div>
+      <div class="status">
+        <div class="fill" id="fill-wrap" title="折成">
+          <em>鹤</em>
+          <div class="fill-track" aria-hidden="true">
+            <i id="fill-bar"></i>
+          </div>
+          <b id="fill-num">0/10</b>
+        </div>
+        <div class="row">
+          <span id="stage-label">第 1 折</span>
+          <span id="fold-label">痕 —</span>
+          <span id="time-label">—</span>
+          <span class="pips" id="pips" aria-label="剩余纸命"></span>
+        </div>
+      </div>
+      <div class="tools">
+        <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
+        <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <canvas id="c" aria-label="按折痕顺序折叠纸鹤"></canvas>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden"></div>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">CRANE</p>
+          <h1 id="ov-title">折鹤</h1>
+          <p class="lead" id="ov-lead">按折痕顺序，把一张纸折成一只鹤。<br />拖过虚线折叠，折错会皱。</p>
+          <p class="ops" id="ov-ops">拖过虚线折叠 · ←→ 选折痕 · 空格折 · M 静音</p>
+          <button type="button" id="ov-btn">开折</button>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">拖过青虚线对折 · 按顺序折完一只鹤</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>

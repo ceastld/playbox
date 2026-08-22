@@ -909,7 +909,7 @@
     "blurb": "石头你离开后会沉。",
     "hue": 198,
     "tag": "涉",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/river-ford/"
   },
   {
@@ -931,7 +931,7 @@
     "blurb": "按折痕顺序折完一只鹤。",
     "hue": 340,
     "tag": "折",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/fold-crane/"
   },
   {
@@ -964,7 +964,7 @@
     "blurb": "沿线撕开藏路。",
     "hue": 30,
     "tag": "撕",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/map-tear/"
   },
   {
@@ -975,7 +975,7 @@
     "blurb": "梭只在开口时穿过。",
     "hue": 285,
     "tag": "织",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/loom-row/"
   },
   {

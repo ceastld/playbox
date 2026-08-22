@@ -794,5 +794,27 @@
     "tag": "火",
     "dir": "g/spark-gap/",
     "url": "./g/spark-gap/"
+  },
+  {
+    "n": 83,
+    "id": "river-ford",
+    "title": "涉水",
+    "subtitle": "FORD",
+    "blurb": "石头你离开后会沉。",
+    "hue": 198,
+    "tag": "涉",
+    "dir": "g/river-ford/",
+    "url": "./g/river-ford/"
+  },
+  {
+    "n": 85,
+    "id": "fold-crane",
+    "title": "折鹤",
+    "subtitle": "CRANE",
+    "blurb": "按折痕顺序折完一只鹤。",
+    "hue": 340,
+    "tag": "折",
+    "dir": "g/fold-crane/",
+    "url": "./g/fold-crane/"
   }
 ]
