@@ -37,6 +37,12 @@
           <button type="button" id="diff-9" aria-pressed="true" title="9×9 · 10 雷">初级</button>
           <button type="button" id="diff-16" aria-pressed="false" title="16×16 · 40 雷">中级</button>
         </div>
+        <label class="speed-ctl" title="速度 慢 / 中 / 快 / 极快">
+          <span>速度</span>
+          <input type="range" id="speed" min="1" max="4" step="1" value="3" aria-label="速度" />
+          <b id="speed-lab">快</b>
+        </label>
+        <button type="button" id="btn-auto" title="A" aria-label="自动" aria-pressed="false">自动</button>
         <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
         <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
       </div>
@@ -62,7 +68,7 @@
         <button type="button" id="mode-open" aria-pressed="true">翻开</button>
         <button type="button" id="mode-flag" aria-pressed="false">插旗</button>
       </div>
-      <p class="hint">点开空格，右键或长按插旗。数字是周围的雷。</p>
+      <p class="hint">点开空格，右键或长按插旗。数字是周围的雷。A 自动。</p>
     </footer>
   </div>
   <script src="js/game.js"></script>
