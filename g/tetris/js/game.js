@@ -1,6 +1,6 @@
 'use strict';
 
-/* Classic Tetris. 10×20 well, 7-bag, SRS kicks, lock delay. */
+/* Classic Tetris. 10×20 well, 7-bag, SRS kicks, lock delay. Optional autoplay. */
 
 var COLS = 10;
 var VISIBLE = 20;
@@ -15,6 +15,8 @@ var SOFT_MS = 33;
 var GRAVITY_FLOOR_MS = 50;
 var LINE_PTS = [0, 100, 300, 500, 800];
 var BEST_KEY = 'playbox-tetris-best';
+var AUTO_SPEED_KEY = 'playbox-tetris-auto-speed';
+var SPEED_LABELS = ['', '慢', '中', '快', '极快'];
 var PIECE_IDS = ['I', 'J', 'L', 'O', 'S', 'T', 'Z'];
 
 /* SRS cells. Origin is the 4×4 (I,O) or 3×3 (others) box. y grows down. */
@@ -267,6 +269,209 @@ function bbox(cells) {
   return { w: maxC - minC + 1, h: maxR - minR + 1, minC: minC, minR: minR, maxC: maxC, maxR: maxR };
 }
 
+/* Autoplay board metrics. Holes = empty cells with a filled cell above. */
+function colHeights(matrix) {
+  var h = [];
+  var c, r, top;
+  for (c = 0; c < COLS; c++) {
+    top = 0;
+    for (r = 0; r < ROWS; r++) {
+      if (matrix[r][c]) {
+        top = ROWS - r;
+        break;
+      }
+    }
+    h.push(top);
+  }
+  return h;
+}
+
+function countHoles(matrix) {
+  var holes = 0;
+  var c, r, seen;
+  for (c = 0; c < COLS; c++) {
+    seen = false;
+    for (r = 0; r < ROWS; r++) {
+      if (matrix[r][c]) seen = true;
+      else if (seen) holes += 1;
+    }
+  }
+  return holes;
+}
+
+function bumpinessOf(h) {
+  var n = 0;
+  var i;
+  for (i = 0; i < h.length - 1; i++) n += Math.abs(h[i] - h[i + 1]);
+  return n;
+}
+
+function sumHeights(h) {
+  var n = 0;
+  var i;
+  for (i = 0; i < h.length; i++) n += h[i];
+  return n;
+}
+
+/* Extra reward on top of the height drop from clearing. 2–4 lines pay more. */
+var LINE_REWARD = [0, 16, 52, 120, 220];
+
+function evalStack(matrix) {
+  var h = colHeights(matrix);
+  return -countHoles(matrix) * 96 - sumHeights(h) * 6 - bumpinessOf(h) * 4;
+}
+
+function evalPlacement(matrix, cleared) {
+  var n = cleared < 0 ? 0 : (cleared > 4 ? 4 : cleared);
+  return evalStack(matrix) + LINE_REWARD[n];
+}
+
+function dropLockClear(matrix, type, x, y, rot) {
+  var gy = ghostY(matrix, { type: type, rot: rot, x: x, y: y });
+  var locked = lockTo(matrix, { type: type, rot: rot, x: x, y: gy });
+  var full = findFullRows(locked);
+  var n = full.length;
+  return { matrix: n ? clearRows(locked, full) : locked, lines: n };
+}
+
+function poseKey(x, y, rot) {
+  return ((y + 2) * 16 + (x + 4)) * 4 + rot;
+}
+
+/*
+ * Legal poses reachable by slide + SRS rotate only (no gravity tucks).
+ * Path actions: -1 left, 1 right, 2 CW, -2 CCW.
+ */
+function legalDrops(matrix, piece) {
+  var type = piece.type;
+  var nodes = [{ x: piece.x, y: piece.y, rot: piece.rot, prev: -1, act: 0 }];
+  var seen = {};
+  var first = {};
+  var qi = 0;
+  var s, hit, k, id;
+  seen[poseKey(piece.x, piece.y, piece.rot)] = 1;
+
+  function push(x, y, rot, prev, act) {
+    if (collides(matrix, type, rot, x, y)) return;
+    k = poseKey(x, y, rot);
+    if (seen[k]) return;
+    seen[k] = 1;
+    nodes.push({ x: x, y: y, rot: rot, prev: prev, act: act });
+  }
+
+  while (qi < nodes.length) {
+    s = nodes[qi];
+    id = (s.x + 8) * 4 + s.rot;
+    if (first[id] === undefined) first[id] = qi;
+    push(s.x - 1, s.y, s.rot, qi, -1);
+    push(s.x + 1, s.y, s.rot, qi, 1);
+    hit = tryRotate(matrix, { type: type, rot: s.rot, x: s.x, y: s.y }, 1);
+    if (hit) push(hit.x, hit.y, hit.rot, qi, 2);
+    hit = tryRotate(matrix, { type: type, rot: s.rot, x: s.x, y: s.y }, -1);
+    if (hit) push(hit.x, hit.y, hit.rot, qi, -2);
+    qi += 1;
+  }
+
+  var out = [];
+  for (id in first) {
+    if (!Object.prototype.hasOwnProperty.call(first, id)) continue;
+    s = nodes[first[id]];
+    out.push({ x: s.x, y: s.y, rot: s.rot, node: first[id], nodes: nodes });
+  }
+  return out;
+}
+
+function reconstructPath(nodes, idx) {
+  var acts = [];
+  while (idx > 0 && nodes[idx].prev >= 0) {
+    acts.push(nodes[idx].act);
+    idx = nodes[idx].prev;
+  }
+  acts.reverse();
+  return acts;
+}
+
+/*
+ * Pick a drop for `piece`. Optional 2-ply with `nextType`.
+ * Tie-break: lower x, then lower rot.
+ */
+function bestPlacement(matrix, piece, nextType) {
+  var opts = legalDrops(matrix, piece);
+  var i, j, m, after, score, spawned, nopts, nm, after2, ns, bestN;
+  var best = null;
+  var bestScore = -1e15;
+  var lines;
+
+  for (i = 0; i < opts.length; i++) {
+    m = opts[i];
+    after = dropLockClear(matrix, piece.type, m.x, m.y, m.rot);
+    lines = after.lines > 4 ? 4 : after.lines;
+    if (nextType) {
+      spawned = spawnPiece(after.matrix, nextType);
+      if (!spawned) {
+        score = evalPlacement(after.matrix, after.lines) - 1000000;
+      } else {
+        nopts = legalDrops(after.matrix, spawned);
+        bestN = -1e15;
+        for (j = 0; j < nopts.length; j++) {
+          nm = nopts[j];
+          after2 = dropLockClear(after.matrix, nextType, nm.x, nm.y, nm.rot);
+          ns = evalPlacement(after2.matrix, after2.lines);
+          if (ns > bestN) bestN = ns;
+        }
+        score = bestN + LINE_REWARD[lines];
+      }
+    } else {
+      score = evalPlacement(after.matrix, after.lines);
+    }
+    if (
+      !best ||
+      score > bestScore ||
+      (score === bestScore && (m.x < best.x || (m.x === best.x && m.rot < best.rot)))
+    ) {
+      bestScore = score;
+      best = m;
+    }
+  }
+  if (!best) return null;
+  best.path = reconstructPath(best.nodes, best.node);
+  best.score = bestScore;
+  return best;
+}
+
+function lcgRand(seed) {
+  var s = seed >>> 0;
+  if (!s) s = 1;
+  return function () {
+    s = (Math.imul(s, 1664525) + 1013904223) >>> 0;
+    return s / 4294967296;
+  };
+}
+
+function playAutoN(n, seed) {
+  var rand = lcgRand(seed);
+  var m = emptyMatrix();
+  var q = [];
+  var lines = 0;
+  var placed = 0;
+  var i, type, p, pick, after;
+  fillBag(q, rand);
+  for (i = 0; i < n; i++) {
+    fillBag(q, rand);
+    type = q.shift();
+    fillBag(q, rand);
+    p = spawnPiece(m, type);
+    if (!p) break;
+    pick = bestPlacement(m, p, q[0]);
+    if (!pick) break;
+    after = dropLockClear(m, type, pick.x, pick.y, pick.rot);
+    m = after.matrix;
+    lines += after.lines;
+    placed += 1;
+  }
+  return { alive: placed, lines: lines, holes: countHoles(m) };
+}
+
 function selfCheck() {
   var id, rot, cells, box, m, p, kicked, bag, i, n, cleared;
 
@@ -374,6 +579,37 @@ function selfCheck() {
   }
   if (spawnPiece(m, 'I')) throw new Error('occupied spawn is game over, no sideways cheat');
   if (spawnPiece(m, 'T')) throw new Error('T spawn occupied must fail');
+
+  m = emptyMatrix();
+  if (countHoles(m) !== 0) throw new Error('empty well has no holes');
+  if (sumHeights(colHeights(m)) !== 0) throw new Error('empty aggregate height');
+  if (bumpinessOf(colHeights(m)) !== 0) throw new Error('empty bumpiness');
+  m[20][3] = 'T';
+  if (countHoles(m) !== 1) throw new Error('empty cell under a mino is a hole');
+  m[21][3] = 'T';
+  if (countHoles(m) !== 0) throw new Error('solid column should not count a hole');
+
+  m = emptyMatrix();
+  p = spawnPiece(m, 'I');
+  var pick = bestPlacement(m, p, null);
+  if (!pick) throw new Error('I must have a placement on empty');
+  if (pick.rot !== 0 && pick.rot !== 2) throw new Error('I should lie flat on an empty well');
+  if (pick.x > 0) throw new Error('tie-break prefers lower x');
+
+  m = emptyMatrix();
+  for (i = 0; i < 9; i++) m[21][i] = 'Z';
+  p = spawnPiece(m, 'I');
+  pick = bestPlacement(m, p, 'O');
+  if (!pick) throw new Error('I must place with a nearly full row');
+  var sim = dropLockClear(m, 'I', pick.x, pick.y, pick.rot);
+  if (sim.lines < 1) throw new Error('I should complete the almost-full row');
+
+  if (typeof document === 'undefined') {
+    var autoRun = playAutoN(40, 2026);
+    if (autoRun.alive < 36) throw new Error('AI should survive dozens of pieces');
+    if (autoRun.lines < 8) throw new Error('AI should clear lines, not only stack');
+    if (autoRun.holes > 14) throw new Error('AI buried too many holes');
+  }
 }
 
 selfCheck();
@@ -389,6 +625,20 @@ function loadBest() {
 
 function saveBest(n) {
   try { localStorage.setItem(BEST_KEY, String(n)); } catch (e) { /* ignore */ }
+}
+
+function loadAutoSpeed() {
+  try {
+    var n = parseInt(localStorage.getItem(AUTO_SPEED_KEY) || '3', 10);
+    if (!isFinite(n) || n < 1 || n > 4) return 3;
+    return n;
+  } catch (e) {
+    return 3;
+  }
+}
+
+function saveAutoSpeed(n) {
+  try { localStorage.setItem(AUTO_SPEED_KEY, String(n)); } catch (e) { /* ignore */ }
 }
 
 if (typeof document === 'undefined') {
@@ -410,6 +660,9 @@ var scoreBox = document.getElementById('score-box');
 var scoreAdd = document.getElementById('score-add');
 var btnMute = document.getElementById('btn-mute');
 var btnRetry = document.getElementById('btn-retry');
+var btnAuto = document.getElementById('btn-auto');
+var speedEl = document.getElementById('speed');
+var speedLab = document.getElementById('speed-lab');
 var padLeft = document.getElementById('pad-left');
 var padRight = document.getElementById('pad-right');
 var padRot = document.getElementById('pad-rot');
@@ -447,6 +700,11 @@ var dasDir = 0;
 var dasMs = 0;
 var lockFlash = null;
 var lockFlashUntil = 0;
+var autoOn = false;
+var autoSpeed = loadAutoSpeed();
+var autoPlan = null;
+var autoMs = 0;
+var autoPlaced = false;
 
 function reduceMotion() {
   return motionQ.matches;
@@ -454,6 +712,10 @@ function reduceMotion() {
 
 function playing() {
   return alive && !overlayOpen && phase === 'play';
+}
+
+function autoTurbo() {
+  return autoOn && autoSpeed >= 4;
 }
 
 function audioCtx() {
@@ -604,7 +866,7 @@ function doRotate(dir) {
 
 function startAre() {
   phase = 'are';
-  phaseMs = reduceMotion() ? 0 : 70;
+  phaseMs = (reduceMotion() || autoTurbo()) ? 0 : 70;
   piece = null;
 }
 
@@ -625,7 +887,7 @@ function finishClear() {
 function lockNow() {
   if (!piece) return;
   persistBest();
-  if (!reduceMotion()) {
+  if (!reduceMotion() && !autoTurbo()) {
     lockFlash = {
       type: piece.type,
       cells: cellsOf(piece.type, piece.rot, piece.x, piece.y)
@@ -644,12 +906,12 @@ function lockNow() {
     pendingRows = full;
     lockFlash = null;
     phase = 'clear';
-    phaseMs = reduceMotion() ? 0 : 180;
-    if (reduceMotion()) finishClear();
+    phaseMs = (reduceMotion() || autoTurbo()) ? 0 : 180;
+    if (phaseMs === 0) finishClear();
   } else {
-    sfx.lock();
+    if (!autoTurbo()) sfx.lock();
     startAre();
-    if (reduceMotion()) spawnNext();
+    if (reduceMotion() || autoTurbo()) spawnNext();
   }
 }
 
@@ -664,7 +926,7 @@ function hardDrop() {
     persistBest();
     updateHud(dist * 2);
   }
-  sfx.drop();
+  if (!autoTurbo()) sfx.drop();
   lockNow();
 }
 
@@ -683,12 +945,14 @@ function spawnNext() {
   lockMs = 0;
   lockResets = 0;
   dropMs = 0;
+  autoPlan = null;
+  autoMs = 0;
   if (bufRot) {
     var rot = bufRot;
     bufRot = 0;
-    doRotate(rot);
+    if (!autoOn) doRotate(rot);
   }
-  if (dasDir) tryMove(dasDir);
+  if (dasDir && !autoOn) tryMove(dasDir);
 }
 
 function newGame() {
@@ -705,6 +969,8 @@ function newGame() {
   dropMs = 0;
   bufRot = 0;
   dasMs = 0;
+  autoPlan = null;
+  autoMs = 0;
   lockFlash = null;
   lockFlashUntil = 0;
   lastTs = performance.now();
@@ -759,11 +1025,151 @@ function tickDas(dt) {
   }
 }
 
+function autoTwist(dir) {
+  var hit = tryRotate(matrix, piece, dir);
+  if (!hit) return false;
+  piece.x = hit.x;
+  piece.y = hit.y;
+  piece.rot = hit.rot;
+  afterControl();
+  return true;
+}
+
+function autoAct(act, audible) {
+  if (act === -1) return tryMove(-1);
+  if (act === 1) return tryMove(1);
+  if (act === 2) return audible ? doRotate(1) : autoTwist(1);
+  if (act === -2) return audible ? doRotate(-1) : autoTwist(-1);
+  return false;
+}
+
+function autoSnapOrPath() {
+  if (!autoPlan || !piece) return;
+  if (!collides(matrix, piece.type, autoPlan.rot, autoPlan.x, autoPlan.y)) {
+    piece.x = autoPlan.x;
+    piece.y = autoPlan.y;
+    piece.rot = autoPlan.rot;
+  } else {
+    var path = autoPlan.path || [];
+    var i;
+    for (i = 0; i < path.length && piece && phase === 'play'; i++) {
+      autoAct(path[i], false);
+    }
+  }
+  hardDrop();
+  autoPlan = null;
+}
+
+function autoStepOnce() {
+  if (!autoPlan || !piece) return;
+  var path = autoPlan.path;
+  var ok;
+  if (path && path.length) {
+    ok = autoAct(path.shift(), true);
+    if (!ok) {
+      hardDrop();
+      autoPlan = null;
+    }
+    return;
+  }
+  if (piece.rot !== autoPlan.rot) {
+    var cw = (autoPlan.rot - piece.rot + 4) % 4;
+    ok = doRotate(cw <= 2 ? 1 : -1);
+    if (!ok) {
+      hardDrop();
+      autoPlan = null;
+    }
+    return;
+  }
+  if (piece.x < autoPlan.x) {
+    if (!tryMove(1)) {
+      hardDrop();
+      autoPlan = null;
+    }
+    return;
+  }
+  if (piece.x > autoPlan.x) {
+    if (!tryMove(-1)) {
+      hardDrop();
+      autoPlan = null;
+    }
+    return;
+  }
+  hardDrop();
+  autoPlan = null;
+}
+
+function tickAuto(dt) {
+  if (!autoOn || !alive || overlayOpen) return;
+  if (phase !== 'play' || !piece) return;
+  if (autoTurbo() && autoPlaced) return;
+  if (!autoPlan || autoPlan.ref !== piece) {
+    autoPlan = bestPlacement(matrix, piece, queue[0]);
+    if (autoPlan) autoPlan.ref = piece;
+    autoMs = 0;
+  }
+  if (!autoPlan) return;
+  if (autoSpeed >= 3) {
+    autoSnapOrPath();
+    autoPlaced = true;
+    return;
+  }
+  autoMs += dt;
+  var interval = autoSpeed <= 1 ? 160 : 58;
+  if (autoMs < interval) return;
+  autoMs -= interval;
+  autoStepOnce();
+}
+
+function syncAutoUi() {
+  btnAuto.classList.toggle('on', autoOn);
+  btnAuto.setAttribute('aria-pressed', autoOn ? 'true' : 'false');
+  btnAuto.textContent = autoOn ? '停下' : '自动';
+  btnAuto.setAttribute('aria-label', autoOn ? '停止自动' : '自动');
+}
+
+function syncSpeedUi() {
+  speedEl.value = String(autoSpeed);
+  speedLab.textContent = SPEED_LABELS[autoSpeed];
+  speedEl.title = SPEED_LABELS[autoSpeed];
+  speedEl.setAttribute('aria-valuetext', SPEED_LABELS[autoSpeed]);
+}
+
+function clearPlayerMotion() {
+  keys.left = false;
+  keys.right = false;
+  keys.down = false;
+  dasDir = 0;
+  dasMs = 0;
+  bufRot = 0;
+}
+
+function toggleAuto() {
+  autoOn = !autoOn;
+  autoPlan = null;
+  autoMs = 0;
+  syncAutoUi();
+  if (autoOn) {
+    clearPlayerMotion();
+    if (!muted) audioCtx();
+  }
+}
+
+function setAutoSpeed(n) {
+  if (n < 1 || n > 4 || !isFinite(n)) n = 3;
+  autoSpeed = n;
+  saveAutoSpeed(autoSpeed);
+  syncSpeedUi();
+}
+
 function tick(dt) {
   if (!alive || overlayOpen) return;
+  if (autoOn) tickAuto(dt);
   if (phase === 'play') {
-    tickDas(dt);
-    tickGravity(dt);
+    if (!autoOn) {
+      tickDas(dt);
+      tickGravity(dt);
+    }
   } else if (phase === 'clear') {
     phaseMs -= dt;
     if (phaseMs <= 0) finishClear();
@@ -1021,6 +1427,7 @@ function frame(now) {
   lastTs = now;
   if (dt > 50) dt = 50;
   if (dt < 0) dt = 0;
+  autoPlaced = false;
   tick(dt);
   render(now);
 }
@@ -1043,7 +1450,7 @@ function endDas(dir) {
 }
 
 function onLeftDown() {
-  if (overlayOpen) return;
+  if (overlayOpen || autoOn) return;
   if (!muted) audioCtx();
   if (keys.left) return;
   keys.left = true;
@@ -1051,7 +1458,7 @@ function onLeftDown() {
 }
 
 function onRightDown() {
-  if (overlayOpen) return;
+  if (overlayOpen || autoOn) return;
   if (!muted) audioCtx();
   if (keys.right) return;
   keys.right = true;
@@ -1107,7 +1514,7 @@ wellEl.addEventListener('contextmenu', function (e) { e.preventDefault(); });
 
 wellEl.addEventListener('pointerdown', function (e) {
   if (e.button !== 0) return;
-  if (overlayOpen) return;
+  if (overlayOpen || autoOn) return;
   if (ptr.id !== null) return;
   if (!muted) audioCtx();
   var p = wellPoint(e);
@@ -1135,6 +1542,7 @@ wellEl.addEventListener('pointerdown', function (e) {
 wellEl.addEventListener('pointermove', function (e) {
   if (ptr.id !== e.pointerId) return;
   e.preventDefault();
+  if (autoOn) return;
   var p = wellPoint(e);
   var dx = p.x - ptr.x0;
   var dy = p.y - ptr.y0;
@@ -1191,7 +1599,7 @@ function endPtr(e) {
   var tap = Math.hypot(dx, dy) < 18 && dt < 280;
   if (keys.left) onLeftUp();
   if (keys.right) onRightUp();
-  if (!ptr.mode && tap) doRotate(1);
+  if (!ptr.mode && tap && !autoOn) doRotate(1);
   ptr.id = null;
   ptr.mode = null;
 }
@@ -1216,6 +1624,12 @@ window.addEventListener('keydown', function (e) {
     newGame();
     return;
   }
+  if (key === 'a' || key === 'A' || code === 'KeyA') {
+    e.preventDefault();
+    if (e.repeat) return;
+    toggleAuto();
+    return;
+  }
   if (overlayOpen) {
     if (key === ' ' || key === 'Enter') {
       e.preventDefault();
@@ -1226,7 +1640,17 @@ window.addEventListener('keydown', function (e) {
     }
     return;
   }
-  if (key === 'ArrowLeft' || code === 'KeyA') {
+  if (autoOn) {
+    if (
+      key === 'ArrowLeft' || key === 'ArrowRight' || key === 'ArrowUp' || key === 'ArrowDown' ||
+      key === ' ' || code === 'Space' || code === 'KeyD' || code === 'KeyS' ||
+      code === 'KeyW' || code === 'KeyX' || code === 'KeyZ'
+    ) {
+      e.preventDefault();
+    }
+    return;
+  }
+  if (key === 'ArrowLeft') {
     e.preventDefault();
     if (e.repeat) return;
     onLeftDown();
@@ -1270,7 +1694,7 @@ window.addEventListener('keydown', function (e) {
 window.addEventListener('keyup', function (e) {
   var key = e.key;
   var code = e.code;
-  if (key === 'ArrowLeft' || code === 'KeyA') onLeftUp();
+  if (key === 'ArrowLeft') onLeftUp();
   if (key === 'ArrowRight' || code === 'KeyD') onRightUp();
   if (key === 'ArrowDown' || code === 'KeyS') keys.down = false;
 });
@@ -1301,17 +1725,23 @@ bindHold(padRight, onRightDown, onRightUp);
 
 padRot.addEventListener('click', function (e) {
   e.preventDefault();
+  if (autoOn) return;
   if (!muted) audioCtx();
   doRotate(1);
 });
 
 padDrop.addEventListener('click', function (e) {
   e.preventDefault();
+  if (autoOn) return;
   if (!muted) audioCtx();
   hardDrop();
 });
 
 btnMute.addEventListener('click', toggleMute);
+btnAuto.addEventListener('click', function () { toggleAuto(); });
+speedEl.addEventListener('input', function () {
+  setAutoSpeed(parseInt(speedEl.value, 10));
+});
 btnRetry.addEventListener('click', function () { newGame(); });
 ovRetry.addEventListener('click', function () { newGame(); });
 
@@ -1337,6 +1767,8 @@ window.addEventListener('resize', function () {
 });
 
 bestEl.textContent = String(best);
+syncAutoUi();
+syncSpeedUi();
 newGame();
 requestAnimationFrame(frame);
 
