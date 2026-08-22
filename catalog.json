@@ -2960,5 +2960,17 @@
     "dir": "g/p-47/",
     "url": "./g/p-47/",
     "kind": "remake"
+  },
+  {
+    "n": 267,
+    "id": "willow",
+    "title": "柳巫",
+    "subtitle": "WILL",
+    "blurb": "剑与魔法闯关，别被怪潮淹没。",
+    "hue": 278,
+    "tag": "复刻",
+    "dir": "g/willow/",
+    "url": "./g/willow/",
+    "kind": "remake"
   }
 ]

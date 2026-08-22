@@ -3099,7 +3099,7 @@
     "blurb": "剑与魔法闯关，别被怪潮淹没。",
     "hue": 278,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/willow/",
     "kind": "remake"
   },
@@ -3149,6 +3149,18 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/section-z/",
+    "kind": "remake"
+  },
+  {
+    "n": 272,
+    "id": "magic-sword",
+    "title": "魔剑",
+    "subtitle": "SWORD",
+    "blurb": "举剑闯塔，把怪物和魔王砍下去。",
+    "hue": 16,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/magic-sword/",
     "kind": "remake"
   }
 ]
