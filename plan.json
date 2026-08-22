@@ -2211,7 +2211,7 @@
     "blurb": "刀下去，别让人从后面捅。",
     "hue": 120,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/green-raid/",
     "kind": "remake"
   },
@@ -2261,6 +2261,18 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/star-force/",
+    "kind": "remake"
+  },
+  {
+    "n": 198,
+    "id": "pooyan",
+    "title": "猪羊",
+    "subtitle": "POO",
+    "blurb": "气球射下来，别让狼摸到。",
+    "hue": 348,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/pooyan/",
     "kind": "remake"
   }
 ]

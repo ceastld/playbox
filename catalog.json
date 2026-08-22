@@ -2072,5 +2072,17 @@
     "dir": "g/wolf-gun/",
     "url": "./g/wolf-gun/",
     "kind": "remake"
+  },
+  {
+    "n": 193,
+    "id": "green-raid",
+    "title": "绿兵",
+    "subtitle": "RAID",
+    "blurb": "刀下去，别让人从后面捅。",
+    "hue": 120,
+    "tag": "复刻",
+    "dir": "g/green-raid/",
+    "url": "./g/green-raid/",
+    "kind": "remake"
   }
 ]
