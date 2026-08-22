@@ -3111,7 +3111,7 @@
     "blurb": "一家四口扫街，把强盗打出春田。",
     "hue": 48,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/simpsons/",
     "kind": "remake"
   },
@@ -3123,7 +3123,7 @@
     "blurb": "西部连射，骑马把赏金匪打下车。",
     "hue": 24,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/sunset-riders/",
     "kind": "remake"
   },
@@ -3135,7 +3135,7 @@
     "blurb": "旋刃滑翔，斩开机甲关卡。",
     "hue": 350,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/strider/",
     "kind": "remake"
   },
@@ -3147,7 +3147,7 @@
     "blurb": "横向射击换区，别被炮台封死。",
     "hue": 210,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/section-z/",
     "kind": "remake"
   },
@@ -3161,6 +3161,54 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/magic-sword/",
+    "kind": "remake"
+  },
+  {
+    "n": 273,
+    "id": "ghosts-goblins",
+    "title": "魔堡",
+    "subtitle": "GHOST",
+    "blurb": "盔甲骑士闯关，被打中就剩内裤。",
+    "hue": 6,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/ghosts-goblins/",
+    "kind": "remake"
+  },
+  {
+    "n": 274,
+    "id": "aliens",
+    "title": "异形",
+    "subtitle": "ALIEN",
+    "blurb": "喷火清巢，别被异形拖进管道。",
+    "hue": 132,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/aliens/",
+    "kind": "remake"
+  },
+  {
+    "n": 275,
+    "id": "cabal",
+    "title": "卡巴",
+    "subtitle": "CABAL",
+    "blurb": "准星扫射，蹲下躲开对面的弹雨。",
+    "hue": 88,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/cabal/",
+    "kind": "remake"
+  },
+  {
+    "n": 276,
+    "id": "capcom-1941",
+    "title": "反击",
+    "subtitle": "1941",
+    "blurb": "海空连射，把编队和舰炮打穿。",
+    "hue": 198,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/capcom-1941/",
     "kind": "remake"
   }
 ]

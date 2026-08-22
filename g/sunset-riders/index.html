@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#120804" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>落日 · SUN</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23120804'/%3E%3Crect x='2' y='2' width='28' height='28' rx='4' fill='%231a0c06' stroke='%23ff7a14' stroke-width='1.4'/%3E%3Ccircle cx='24' cy='10' r='4.2' fill='%23ffe36b'/%3E%3Cpath d='M4 24h24' stroke='%23c45a18' stroke-width='1.4' opacity='.7'/%3E%3Cpath d='M8 24v-6h3v6' fill='%23301808'/%3E%3Cellipse cx='12' cy='16' rx='2.2' ry='3' fill='%2328140a'/%3E%3Ccircle cx='14' cy='14' r='2.6' fill='%23e8b078'/%3E%3Crect x='11.6' y='12.2' width='5.2' height='1.6' rx='.5' fill='%23c45a18'/%3E%3Crect x='12.2' y='16.6' width='4' height='5.2' rx='.6' fill='%23ff3d3d'/%3E%3Crect x='16.4' y='17.4' width='7' height='1.4' rx='.3' fill='%23ffe36b'/%3E%3Cpath d='M20 22h8l-2-4-4 1z' fill='%238a4a22'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>落日</b>
+        <span>SUNSET</span>
+      </div>
+      <div class="status">
+        <div class="scores" aria-live="polite">
+          <div class="score" id="score-box">
+            <em>分数</em>
+            <b id="score">0</b>
+            <span id="score-add" class="score-add" hidden>+0</span>
+          </div>
+          <div class="score best">
+            <em>最高</em>
+            <b id="best">0</b>
+          </div>
+          <div class="score combo" id="combo-box">
+            <em>连击</em>
+            <b id="combo">×1</b>
+          </div>
+        </div>
+        <div class="row">
+          <span id="stage-label">荒镇</span>
+          <span id="tag-label">赏金</span>
+          <span id="gun-label" class="gun">双枪</span>
+          <span id="ride-label" class="ride" hidden>马上</span>
+          <div class="fill" id="hp-wrap" title="体力">
+            <em>血</em>
+            <div class="fill-track" aria-hidden="true"><i id="hp-bar"></i></div>
+          </div>
+          <div class="fill boss" id="boss-wrap" hidden title="头目">
+            <em id="boss-name">金胖子</em>
+            <div class="fill-track" aria-hidden="true"><i id="boss-bar"></i></div>
+          </div>
+          <span class="pips" id="pips" aria-label="剩余性命"></span>
+        </div>
+      </div>
+      <div class="tools">
+        <div class="modes" role="radiogroup" aria-label="模式">
+          <button type="button" id="mode-bounty" aria-pressed="true">赏金</button>
+          <button type="button" id="mode-hail" aria-pressed="false">乱枪</button>
+        </div>
+        <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
+        <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <div class="board-wrap">
+        <canvas id="c" tabindex="0" role="application" aria-label="落日，侧向跑跳拔枪，马上驰骋，打匪炸头目"></canvas>
+      </div>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden"></div>
+      <div id="chain-pop" class="chain-pop hidden" aria-hidden="true">×2</div>
+      <div id="pad" class="pad">
+        <button type="button" id="btn-jump" aria-label="跳跃">跳</button>
+        <button type="button" id="btn-left" aria-label="左">左</button>
+        <button type="button" id="btn-fire" aria-label="开火">射</button>
+        <button type="button" id="btn-right" aria-label="右">右</button>
+        <button type="button" id="btn-duck" aria-label="蹲下">蹲</button>
+      </div>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">SUNSET</p>
+          <h1 id="ov-title">落日</h1>
+          <p class="lead" id="ov-lead">侧向跑跳，八向拔枪。马上驰骋，炸匪、轰头目。<br />中弹扣血，血空丢命。</p>
+          <p class="ops" id="ov-ops">WASD / 方向键 走跳蹲 · 空格开火 · R 重开 · M 静音</p>
+          <div class="ov-actions" id="ov-start">
+            <button type="button" id="btn-bounty">赏金</button>
+            <button type="button" id="btn-hail">乱枪</button>
+          </div>
+          <div class="ov-actions gone" id="ov-end">
+            <button type="button" id="ov-again">再来</button>
+            <button type="button" id="ov-menu">换模式</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">走跳蹲 · 空格八向拔枪 · 上马驰骋 · 中弹扣血</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>
