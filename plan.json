@@ -2835,7 +2835,7 @@
     "blurb": "座舱里对射，把敌舰打出火来。",
     "hue": 16,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/star-fire/",
     "kind": "remake"
   },
@@ -2847,7 +2847,7 @@
     "blurb": "三廊清虫，别让它们扒上门。",
     "hue": 112,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/xenophobe/",
     "kind": "remake"
   },
@@ -2859,7 +2859,7 @@
     "blurb": "砸石头还能合体变大船。",
     "hue": 208,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/blasteroids/",
     "kind": "remake"
   },
@@ -2885,6 +2885,42 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/astro-blaster/",
+    "kind": "remake"
+  },
+  {
+    "n": 250,
+    "id": "rampage",
+    "title": "狂砸",
+    "subtitle": "RAMP",
+    "blurb": "变兽砸楼，躲开火箭和笼子。",
+    "hue": 18,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/rampage/",
+    "kind": "remake"
+  },
+  {
+    "n": 251,
+    "id": "raiden",
+    "title": "雷电",
+    "subtitle": "THUN",
+    "blurb": "纵向弹幕，捡武装别撞弹。",
+    "hue": 200,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/raiden/",
+    "kind": "remake"
+  },
+  {
+    "n": 252,
+    "id": "gun-smoke",
+    "title": "烟枪",
+    "subtitle": "SMOKE",
+    "blurb": "马上连射，清掉拦路的匪。",
+    "hue": 32,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/gun-smoke/",
     "kind": "remake"
   }
 ]

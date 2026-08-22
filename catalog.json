@@ -2696,5 +2696,41 @@
     "dir": "g/black-widow/",
     "url": "./g/black-widow/",
     "kind": "remake"
+  },
+  {
+    "n": 245,
+    "id": "star-fire",
+    "title": "星火",
+    "subtitle": "FIRE",
+    "blurb": "座舱里对射，把敌舰打出火来。",
+    "hue": 16,
+    "tag": "复刻",
+    "dir": "g/star-fire/",
+    "url": "./g/star-fire/",
+    "kind": "remake"
+  },
+  {
+    "n": 246,
+    "id": "xenophobe",
+    "title": "异种",
+    "subtitle": "XENO",
+    "blurb": "三廊清虫，别让它们扒上门。",
+    "hue": 112,
+    "tag": "复刻",
+    "dir": "g/xenophobe/",
+    "url": "./g/xenophobe/",
+    "kind": "remake"
+  },
+  {
+    "n": 247,
+    "id": "blasteroids",
+    "title": "岩变",
+    "subtitle": "BLAST",
+    "blurb": "砸石头还能合体变大船。",
+    "hue": 208,
+    "tag": "复刻",
+    "dir": "g/blasteroids/",
+    "url": "./g/blasteroids/",
+    "kind": "remake"
   }
 ]
