@@ -24,8 +24,11 @@ var STEP = 1 / 60;
 var TAU = Math.PI * 2;
 var BEST_KEY = 'playbox-moon-run-best';
 var MUTE_KEY = 'playbox-moon-run-mute';
+var AUTO_SPEED_KEY = 'playbox-moon-run-auto-speed';
+var SPEED_LABELS = ['', '慢', '中', '快', '极快'];
+var AUTO_SCALE = [1, 0.48, 0.72, 1, 2.6];
 var LETTERS = 'ABCDEF';
-var OPS = '空格 / 上 跳 · Z / 点按 双炮 · 触屏 跳/射 · R 重开 · M 静音';
+var OPS = '空格 / 上 跳 · Z / 点按 双炮 · 触屏 跳/射 · A 自动 · R 重开 · M 静音';
 
 var ICE = [61, 184, 255];
 var CYN = [0, 240, 255];
@@ -80,6 +83,14 @@ function jumpHang(v, g) {
 }
 function jumpDist(speed, v, g) {
   return speed * jumpHang(v, g);
+}
+function hazSpan(h) {
+  if (!h) return 18;
+  if (h.kind === 'hole') return h.w;
+  return h.w || 18;
+}
+function autoJumpLatest(jd, w) {
+  return clamp(jd - w - 16, 18, Math.max(18, jd - 8));
 }
 function comboMul(c) {
   return 1 + Math.min(4, Math.floor(Math.max(0, c - 1) / 3));
@@ -305,12 +316,21 @@ function selfCheck() {
   if (SECTIONS.length !== 6) throw new Error('6 sections');
   if (LETTERS.length !== 6) throw new Error('A-F');
   if (BEST_KEY !== 'playbox-moon-run-best') throw new Error('best key');
+  if (AUTO_SPEED_KEY !== 'playbox-moon-run-auto-speed') throw new Error('auto speed key');
+  if (SPEED_LABELS.length !== 5 || SPEED_LABELS[3] !== '快') throw new Error('speed labels');
+  if (AUTO_SCALE[3] !== 1 || AUTO_SCALE[4] <= AUTO_SCALE[3]) throw new Error('auto scale');
+  if (AUTO_SCALE[1] >= AUTO_SCALE[2] || AUTO_SCALE[2] >= AUTO_SCALE[3]) throw new Error('auto scale order');
   if (DASH_SPD <= CLASSIC_SPD) throw new Error('dash faster');
   h = jumpApex(JUMP_V, GRAV);
   if (h < 48 || h > 64) throw new Error('jump height window');
   d = jumpDist(CLASSIC_SPD, JUMP_V, GRAV);
   if (d < 100) throw new Error('classic jump must clear large hole');
   if (jumpDist(DASH_SPD, JUMP_V, GRAV) <= d) throw new Error('dash jump farther');
+  if (d - autoJumpLatest(d, 56) < 56 + 8) throw new Error('auto jump lands past hole');
+  if (autoJumpLatest(d, 80) < 18) throw new Error('auto jump still attempts wide hole');
+  if (jumpDist(DASH_SPD, JUMP_V, GRAV) - autoJumpLatest(jumpDist(DASH_SPD, JUMP_V, GRAV), 80) < 80 + 8) {
+    throw new Error('dash auto jump lands past hole');
+  }
   if (h < 22 + 10) throw new Error('jump over tall rock');
   if (comboMul(1) !== 1) throw new Error('combo 1');
   if (comboMul(4) !== 2) throw new Error('combo 4');
@@ -355,6 +375,142 @@ function selfCheck() {
   if (i >= cl.haz.length) throw new Error('goal base');
   if (!overlapHole(makeHole(10, 40), 20, 30)) throw new Error('overlap hole');
   if (SHOT_CD > 0.3) throw new Error('shot responsive');
+
+  cl = buildClassic(210);
+  d = jumpDist(CLASSIC_SPD, JUMP_V, GRAV);
+  for (i = 0; i < cl.haz.length; i++) {
+    h = cl.haz[i];
+    if (h.kind !== 'hole') continue;
+    p = h.x - autoJumpLatest(d, h.w);
+    if (supportY([h], p) !== GROUND) throw new Error('auto takeoff not solid');
+    if (supportY([h], p + d) !== GROUND) throw new Error('auto landing in hole');
+  }
+  simAutoDrive(cl, CLASSIC_SPD, 'classic');
+  simAutoDrive(buildDashSim(210), DASH_SPD, 'dash');
+}
+
+function buildDashSim(seed) {
+  var haz = [];
+  var x = 200;
+  var i, spec, r;
+  for (i = 0; i < 10; i++) {
+    spec = dashSpec(x);
+    r = rng((i * 9973 + seed) | 0);
+    stampHaz(haz, spec, x + 20, x + 740, r, i > 1);
+    x += 780;
+  }
+  return { haz: haz, checks: [], endX: x, startX: 80 };
+}
+
+function simCanSmash(r, x, spd) {
+  var collide = (r.x - 16 - x) / Math.max(40, spd);
+  var fireT, travel;
+  if (collide < 0.08) return false;
+  fireT = (Math.max(1, r.hp) - 1) * SHOT_CD;
+  travel = Math.max(0, r.x - (x + 16 + spd * fireT)) / 580;
+  return fireT + travel < collide - 0.05;
+}
+
+function simAutoDrive(cl, spd, tag) {
+  var haz = cl.haz;
+  var x = cl.startX;
+  var y = GROUND;
+  var vy = 0;
+  var grounded = true;
+  var coyote = 0;
+  var jumpHeld = false;
+  var t = 0;
+  var crashes = 0;
+  var jd = jumpDist(spd, JUMP_V, GRAV);
+  var dt = STEP;
+  var i, o, h, d, latest, want, sup, span;
+  while (x < cl.endX && t < 90) {
+    t += dt;
+    for (i = 0; i < haz.length; i++) {
+      o = haz[i];
+      if (o.kind === 'rock' && !o.dead && o.x - x < 36 && simCanSmash(o, o.x - 180, spd)) o.dead = true;
+    }
+    h = null;
+    d = jd + 48;
+    for (i = 0; i < haz.length; i++) {
+      o = haz[i];
+      if (o.dead) continue;
+      if (o.kind === 'hole') {
+        if (o.x - x > -16 && o.x - x < d) {
+          d = o.x - x;
+          h = o;
+        }
+      } else if (o.kind === 'rock') {
+        if (o.x - x > -8 && o.x - x < 36 && !simCanSmash(o, o.x - 180, spd)) {
+          d = o.x - x;
+          h = o;
+        }
+      }
+    }
+    want = false;
+    if (h && (grounded || coyote > 0)) {
+      span = hazSpan(h);
+      latest = h.kind === 'rock'
+        ? clamp(spd * 0.34 - 6, 22, autoJumpLatest(jd, span))
+        : autoJumpLatest(jd, span);
+      if (h.x - x > -8 && h.x - x <= latest + 10) want = true;
+    }
+    if (grounded || coyote > 0) {
+      if (supportY(haz, x) > GROUND + 4) want = true;
+      else if (supportY(haz, x + 22) > GROUND + 4) want = true;
+    }
+    if (want && (grounded || coyote > 0)) {
+      vy = -JUMP_V;
+      grounded = false;
+      coyote = 0;
+      jumpHeld = true;
+    }
+    jumpHeld = !grounded;
+    x += spd * dt;
+    if (grounded) {
+      coyote = COYOTE;
+      vy = 0;
+      sup = supportY(haz, x);
+      if (sup > GROUND + 4) {
+        grounded = false;
+        vy = 30;
+      } else y = GROUND;
+    } else {
+      coyote -= dt;
+      if (!jumpHeld && vy < 0) vy += (CUT_G - GRAV) * dt;
+      vy = Math.min(MAX_FALL, vy + GRAV * dt);
+      y += vy * dt;
+      sup = supportY(haz, x);
+      if (vy >= 0 && y >= sup) {
+        if (sup > GROUND + 4) {
+          y = Math.max(y, sup * 0.02 + GROUND);
+        } else {
+          y = GROUND;
+          vy = 0;
+          grounded = true;
+        }
+      }
+    }
+    if (y > GROUND + 16) {
+      crashes += 1;
+      x += 50;
+      y = GROUND;
+      vy = 0;
+      grounded = true;
+    }
+    for (i = 0; i < haz.length; i++) {
+      o = haz[i];
+      if (o.kind === 'rock' && !o.dead && rockHits(o, x, y)) {
+        crashes += 1;
+        x = o.x + o.w + 24;
+        y = GROUND;
+        vy = 0;
+        grounded = true;
+      }
+    }
+  }
+  if (x < cl.endX - 80) throw new Error('auto sim stalled ' + tag);
+  if (crashes > 4) throw new Error('auto sim crashes ' + crashes + ' ' + tag);
 }
 
 selfCheck();
@@ -380,6 +536,9 @@ var btnClassic = document.getElementById('btn-classic');
 var btnDash = document.getElementById('btn-dash');
 var btnMute = document.getElementById('btn-mute');
 var btnRetry = document.getElementById('btn-retry');
+var btnAuto = document.getElementById('btn-auto');
+var speedEl = document.getElementById('speed');
+var speedLab = document.getElementById('speed-lab');
 var btnJump = document.getElementById('btn-jump');
 var btnShot = document.getElementById('btn-shot');
 var scoreEl = document.getElementById('score');
@@ -416,6 +575,8 @@ var shards = [];
 var stars = [];
 
 var keys = { jump: false, shot: false };
+var autoOn = false;
+var autoSpeed = 3;
 var G = {
   mode: 'title',
   kind: 'classic',
@@ -617,9 +778,24 @@ var audio = {
   }
 };
 
+function loadAutoSpeed() {
+  try {
+    var n = parseInt(localStorage.getItem(AUTO_SPEED_KEY) || '3', 10);
+    if (!isFinite(n) || n < 1 || n > 4) return 3;
+    return n;
+  } catch (e) {
+    return 3;
+  }
+}
+
+function saveAutoSpeed(n) {
+  try { localStorage.setItem(AUTO_SPEED_KEY, String(n)); } catch (e) { /* ignore */ }
+}
+
 try {
   if (localStorage.getItem(MUTE_KEY) === '1') audio.setMuted(true);
 } catch (e) { /* ignore */ }
+autoSpeed = loadAutoSpeed();
 
 function loadBest() {
   try {
@@ -794,9 +970,13 @@ function hudPlay() {
   courseBar.style.transform = 'scaleX(' + courseProg() + ')';
   renderPips();
   if (G.mode === 'play') {
-    hintEl.textContent = G.dash
-      ? '疾驰 · 更快更密 · 空格跳 · Z 双炮 · R 重开'
-      : '跳过陨坑 · 双炮打飞碟和石头 · 炸弹会炸出新坑';
+    if (autoOn) {
+      hintEl.textContent = '托管中 · A 停下 · ' + (G.dash ? '疾驰' : '经典');
+    } else {
+      hintEl.textContent = G.dash
+        ? '疾驰 · 更快更密 · 空格跳 · Z 双炮 · R 重开'
+        : '跳过陨坑 · 双炮打飞碟和石头 · 炸弹会炸出新坑';
+    }
   }
 }
 
@@ -1217,47 +1397,193 @@ function spawnUfo() {
   G.ufos.push(u);
 }
 
-function imminent(dist) {
-  var i, h, d, best, bd;
-  bd = dist;
+function shotsOnRock(r) {
+  var n = 0, i, s;
+  if (!G.shots) return 0;
+  for (i = 0; i < G.shots.length; i++) {
+    s = G.shots[i];
+    if (!s || s.dead || s.kind !== 'gnd') continue;
+    if (s.x < r.x + r.w + 10 && s.x + s.vx * s.life > r.x - 6) n++;
+  }
+  return n;
+}
+
+function shotsBlocking(r) {
+  var extra = 0, i, h;
+  for (i = 0; i < G.haz.length; i++) {
+    h = G.haz[i];
+    if (h.dead || h === r) continue;
+    if (h.kind !== 'plant' && h.kind !== 'rock') continue;
+    if (h.x > G.x - 4 && h.x < r.x) extra += h.kind === 'rock' ? Math.max(1, h.hp) : 1;
+  }
+  return extra;
+}
+
+function canSmashRock(r, spd) {
+  var collide, fireT, arrive, travel, need;
+  if (!r || r.kind !== 'rock' || r.dead) return false;
+  collide = (r.x - 16 - G.x) / Math.max(40, spd);
+  if (collide < 0.08) return false;
+  need = Math.max(1, r.hp) + shotsBlocking(r);
+  fireT = Math.max(0, G.shotCd) + (need - 1) * SHOT_CD;
+  arrive = G.x + 16 + spd * fireT;
+  travel = Math.max(0, r.x - arrive) / 580;
+  return fireT + travel < collide - 0.05;
+}
+
+function bombLandT(b) {
+  var dist = (GROUND - 4) - b.y;
+  var disc;
+  if (dist <= 0) return 0;
+  disc = b.vy * b.vy + 840 * dist;
+  if (disc < 0) return -1;
+  return (-b.vy + Math.sqrt(disc)) / 420;
+}
+
+function pickJumpHaz(jd, spd) {
+  var i, h, d, best, bd, b, tLand, hx;
+  bd = jd + 48;
   best = null;
   for (i = 0; i < G.haz.length; i++) {
     h = G.haz[i];
     if (h.dead) continue;
-    if (h.kind !== 'hole' && h.kind !== 'rock') continue;
-    d = (h.kind === 'hole' ? h.x : h.x) - G.x;
-    if (d > 6 && d < bd) {
+    if (h.kind === 'hole') {
+      d = h.x - G.x;
+      if (d > -12 && d < bd) {
+        bd = d;
+        best = h;
+      }
+    } else if (h.kind === 'rock') {
+      d = h.x - G.x;
+      if (d > -8 && d < 36 && !canSmashRock(h, spd) && !shotsOnRock(h)) {
+        bd = d;
+        best = h;
+      }
+    }
+  }
+  for (i = 0; i < G.bombs.length; i++) {
+    b = G.bombs[i];
+    if (b.dead) continue;
+    if (b.x - G.x > -28 && b.x - G.x < 92 && b.y < GROUND - 8) continue;
+    tLand = bombLandT(b);
+    if (tLand < 0 || tLand > 0.9) continue;
+    if (Math.abs((G.x + spd * tLand) - b.x) > 50) continue;
+    hx = b.x - 24;
+    d = hx - G.x;
+    if (d > 8 && d < bd) {
       bd = d;
-      best = h;
+      best = { kind: 'hole', x: hx, w: 48, dead: false };
     }
   }
   return best;
 }
 
+function wantShotAt(spd) {
+  var i, u, b, h, dx;
+  for (i = 0; i < G.ufos.length; i++) {
+    u = G.ufos[i];
+    if (u.dead) continue;
+    dx = u.x - G.x;
+    if (dx > -30 && dx < (u.kind === 2 ? 230 : 155) && u.y < 180) return true;
+  }
+  for (i = 0; i < G.bombs.length; i++) {
+    b = G.bombs[i];
+    if (b.dead) continue;
+    dx = b.x - G.x;
+    if (dx > -28 && dx < 210 && b.y < GROUND - 2) return true;
+  }
+  for (i = 0; i < G.haz.length; i++) {
+    h = G.haz[i];
+    if (h.dead || h.kind !== 'rock') continue;
+    dx = h.x - G.x;
+    if (dx > -8 && dx < 250) return true;
+  }
+  return false;
+}
+
 function autoPlay() {
   var p = G.player;
-  var spd = scrollSpeed(G.dash, G.clock);
-  var jd = jumpDist(spd, JUMP_V, GRAV);
-  var h, i, u, d, latest;
-  if (p.deadT > 0) return;
-  h = imminent(jd + 40);
-  if (h && p.grounded) {
+  var spd, jd, h, d, latest, span, wantJump, wantShot;
+  if (p.deadT > 0 || G.lock > 0) {
+    keys.jump = false;
+    G.holdShot = false;
+    return;
+  }
+  spd = scrollSpeed(G.dash, G.clock);
+  jd = jumpDist(spd, JUMP_V, GRAV);
+  wantJump = false;
+  h = pickJumpHaz(jd, spd);
+  if (h && (p.grounded || p.coyote > 0)) {
+    span = hazSpan(h);
     d = h.x - G.x;
-    latest = jd - (h.kind === 'hole' ? h.w : 18) - 16;
-    latest = clamp(latest, 24, 130);
-    if (d > 8 && d <= latest) G.jumpBuf = BUFFER;
+    latest = h.kind === 'rock'
+      ? clamp(spd * 0.34 - 6, 22, autoJumpLatest(jd, span))
+      : autoJumpLatest(jd, span);
+    if (d > -8 && d <= latest + 10) wantJump = true;
   }
-  if (G.shotCd <= 0) {
-    for (i = 0; i < G.ufos.length; i++) {
-      u = G.ufos[i];
-      if (!u.dead && u.x > G.x - 10 && u.x < G.x + 280) {
-        fire();
-        return;
-      }
-    }
-    h = imminent(160);
-    if (h && h.kind === 'rock' && h.x - G.x < 150) fire();
+  if (p.grounded || p.coyote > 0) {
+    if (supportY(G.haz, G.x) > GROUND + 4) wantJump = true;
+    else if (supportY(G.haz, G.x + 22) > GROUND + 4) wantJump = true;
   }
+  wantShot = wantShotAt(spd);
+
+  if (wantJump) {
+    G.jumpBuf = BUFFER;
+    keys.jump = true;
+  } else if (!p.grounded) {
+    keys.jump = true;
+  } else {
+    keys.jump = false;
+  }
+
+  G.holdShot = wantShot;
+  if (wantShot) fire();
+}
+
+function autoScale() {
+  if (!autoOn || G.mode !== 'play') return 1;
+  return AUTO_SCALE[autoSpeed] || 1;
+}
+
+function clearAutoInput() {
+  keys.jump = false;
+  keys.shot = false;
+  G.holdShot = false;
+  G.jumpBuf = 0;
+  btnJump.classList.remove('held');
+  btnShot.classList.remove('held');
+}
+
+function syncAutoUi() {
+  btnAuto.classList.toggle('on', autoOn);
+  btnAuto.setAttribute('aria-pressed', autoOn ? 'true' : 'false');
+  btnAuto.textContent = autoOn ? '停下' : '自动';
+  btnAuto.setAttribute('aria-label', autoOn ? '停止自动' : '自动');
+}
+
+function syncSpeedUi() {
+  speedEl.value = String(autoSpeed);
+  speedLab.textContent = SPEED_LABELS[autoSpeed];
+  speedEl.title = SPEED_LABELS[autoSpeed];
+  speedEl.setAttribute('aria-valuetext', SPEED_LABELS[autoSpeed]);
+}
+
+function toggleAuto() {
+  autoOn = !autoOn;
+  clearAutoInput();
+  syncAutoUi();
+  if (autoOn) {
+    audio.ensure();
+    if (G.mode === 'title') startRun('classic');
+  }
+  hudPlay();
+}
+
+function setAutoSpeed(n) {
+  if (n < 1 || n > 4 || !isFinite(n)) n = 3;
+  autoSpeed = n;
+  saveAutoSpeed(autoSpeed);
+  syncSpeedUi();
 }
 
 /* ---- sim ---- */
@@ -1584,7 +1910,7 @@ function tick(dt) {
   var distPts;
   G.clock += dt;
   ensureWorld();
-  if (G.mode === 'title') autoPlay();
+  if (G.mode === 'title' || (autoOn && G.mode === 'play')) autoPlay();
   if (G.holdShot && G.mode === 'play') fire();
   tickPlayer(dt);
   tickClears();
@@ -2170,19 +2496,25 @@ function resize() {
 }
 
 function frame(ts) {
-  var dt;
+  var dt, steps, turbo, maxSteps;
   requestAnimationFrame(frame);
   if (hidden) return;
   if (!lastTs) lastTs = ts;
   dt = (ts - lastTs) / 1000;
   lastTs = ts;
   if (dt > 0.08) dt = 0.08;
-  acc += dt;
-  while (acc >= STEP) {
-    if (G.stop > 0) G.stop -= STEP;
+  turbo = autoOn && autoSpeed >= 4 && G.mode === 'play';
+  if (turbo) G.stop = 0;
+  acc += dt * autoScale();
+  steps = 0;
+  maxSteps = turbo ? 16 : 8;
+  while (acc >= STEP && steps < maxSteps) {
+    if (G.stop > 0 && !turbo) G.stop -= STEP;
     else tick(STEP);
     acc -= STEP;
+    steps++;
   }
+  if (acc > STEP * 4) acc = 0;
   draw();
 }
 
@@ -2191,6 +2523,7 @@ function bindPad(el, on) {
   var hold = function (e) {
     e.preventDefault();
     audio.ensure();
+    if (autoOn) return;
     el.classList.add('held');
     on(true);
   };
@@ -2208,10 +2541,12 @@ function bindPad(el, on) {
 }
 
 bindPad(btnJump, function (v) {
+  if (autoOn) return;
   keys.jump = v;
   if (v) G.jumpBuf = BUFFER;
 });
 bindPad(btnShot, function (v) {
+  if (autoOn) return;
   keys.shot = v;
   G.holdShot = v;
   if (v) fire();
@@ -2235,8 +2570,24 @@ function keyOn(e, down) {
   }
 }
 
+function isAutoKey(e) {
+  return e.code === 'KeyA' || e.key === 'a' || e.key === 'A';
+}
+
 window.addEventListener('keydown', function (e) {
+  if (isAutoKey(e)) {
+    if (e.repeat) return;
+    audio.ensure();
+    toggleAuto();
+    e.preventDefault();
+    return;
+  }
+  if (e.target === speedEl) return;
   if (e.repeat) {
+    if (autoOn) {
+      e.preventDefault();
+      return;
+    }
     if (e.code === 'KeyZ' || e.code === 'KeyJ' || e.code === 'KeyX' ||
         e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') {
       e.preventDefault();
@@ -2278,15 +2629,34 @@ window.addEventListener('keydown', function (e) {
       return;
     }
   }
+  if (autoOn) {
+    if (
+      e.code === 'ArrowUp' || e.code === 'ArrowDown' || e.code === 'Space' ||
+      e.code === 'KeyW' || e.code === 'KeyZ' || e.code === 'KeyJ' || e.code === 'KeyX'
+    ) {
+      e.preventDefault();
+    }
+    return;
+  }
   if (G.mode === 'play') keyOn(e, true);
 });
 
-window.addEventListener('keyup', function (e) { keyOn(e, false); });
+window.addEventListener('keyup', function (e) {
+  if (isAutoKey(e)) {
+    e.preventDefault();
+    return;
+  }
+  if (autoOn) return;
+  keyOn(e, false);
+});
 
 btnMute.addEventListener('click', function () {
   audio.ensure();
   audio.setMuted(!audio.muted);
 });
+btnAuto.addEventListener('click', function () { toggleAuto(); });
+speedEl.addEventListener('input', function () { setAutoSpeed(parseInt(speedEl.value, 10)); });
+speedEl.addEventListener('change', function () { setAutoSpeed(parseInt(speedEl.value, 10)); });
 btnRetry.addEventListener('click', function () {
   audio.ensure();
   retry();
@@ -2312,7 +2682,7 @@ ovModes.addEventListener('click', function () {
 canvas.addEventListener('pointerdown', function (e) {
   audio.ensure();
   canvas.focus({ preventScroll: true });
-  if (G.mode !== 'play') return;
+  if (G.mode !== 'play' || autoOn) return;
   if (e.pointerType === 'touch') return;
   G.holdShot = true;
   fire();
@@ -2336,6 +2706,8 @@ document.addEventListener('visibilitychange', function () {
 
 bestEl.textContent = String(G.bestC);
 renderPips();
+syncAutoUi();
+syncSpeedUi();
 showTitle();
 resize();
 hudPlay();
