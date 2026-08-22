@@ -1743,7 +1743,7 @@
     "blurb": "海边公路飙车，分叉自己选。",
     "hue": 32,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/out-run/",
     "kind": "remake"
   },
@@ -1781,6 +1781,18 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/crystal-run/",
+    "kind": "remake"
+  },
+  {
+    "n": 158,
+    "id": "track-dash",
+    "title": "田赛",
+    "subtitle": "TRACK",
+    "blurb": "连打冲刺，时机跳远投掷。",
+    "hue": 8,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/track-dash/",
     "kind": "remake"
   }
 ]

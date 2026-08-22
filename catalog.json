@@ -1592,5 +1592,17 @@
     "dir": "g/gaunt-hall/",
     "url": "./g/gaunt-hall/",
     "kind": "remake"
+  },
+  {
+    "n": 154,
+    "id": "out-run",
+    "title": "疾驶",
+    "subtitle": "OUTRUN",
+    "blurb": "海边公路飙车，分叉自己选。",
+    "hue": 32,
+    "tag": "复刻",
+    "dir": "g/out-run/",
+    "url": "./g/out-run/",
+    "kind": "remake"
   }
 ]
