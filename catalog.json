@@ -625,5 +625,55 @@
     "hue": 16,
     "tag": "骰",
     "dir": "g/dice-lock/"
+  },
+  {
+    "n": 69,
+    "id": "shadow-clock",
+    "title": "影钟",
+    "subtitle": "SHADOW",
+    "blurb": "转木棍让影子扫过刻度。",
+    "hue": 42,
+    "tag": "影",
+    "dir": "g/shadow-clock/"
+  },
+  {
+    "n": 70,
+    "id": "crumb-trail",
+    "title": "屑径",
+    "subtitle": "CRUMB",
+    "blurb": "撒屑让鸟走出迷宫。",
+    "hue": 25,
+    "tag": "屑",
+    "dir": "g/crumb-trail/"
+  },
+  {
+    "n": 71,
+    "id": "ice-carve",
+    "title": "凿冰",
+    "subtitle": "CARVE",
+    "blurb": "在冰块裂开前凿出通路。",
+    "hue": 190,
+    "tag": "凿",
+    "dir": "g/ice-carve/"
+  },
+  {
+    "n": 72,
+    "id": "moth-lamp",
+    "title": "扑灯",
+    "subtitle": "MOTH",
+    "blurb": "把蛾从火焰旁引到安全灯。",
+    "hue": 50,
+    "tag": "蛾",
+    "dir": "g/moth-lamp/"
+  },
+  {
+    "n": 73,
+    "id": "pulley-two",
+    "title": "滑轮",
+    "subtitle": "PULLEY",
+    "blurb": "两边配重，让两边同时落地。",
+    "hue": 215,
+    "tag": "轮",
+    "dir": "g/pulley-two/"
   }
 ]

@@ -755,7 +755,7 @@
     "blurb": "转木棍让影子扫过刻度。",
     "hue": 42,
     "tag": "影",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/shadow-clock/"
   },
   {
@@ -766,7 +766,7 @@
     "blurb": "撒屑让鸟走出迷宫。",
     "hue": 25,
     "tag": "屑",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/crumb-trail/"
   },
   {
@@ -777,7 +777,7 @@
     "blurb": "在冰块裂开前凿出通路。",
     "hue": 190,
     "tag": "凿",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/ice-carve/"
   },
   {
@@ -788,7 +788,7 @@
     "blurb": "把蛾从火焰旁引到安全灯。",
     "hue": 50,
     "tag": "蛾",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/moth-lamp/"
   },
   {
@@ -799,7 +799,7 @@
     "blurb": "两边配重，让两边同时落地。",
     "hue": 215,
     "tag": "轮",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/pulley-two/"
   },
   {
@@ -810,7 +810,7 @@
     "blurb": "倒到水位线，洒出来重来。",
     "hue": 10,
     "tag": "斟",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/tea-pour/"
   },
   {
@@ -821,7 +821,7 @@
     "blurb": "滑动梳齿解开缠线。",
     "hue": 300,
     "tag": "梳",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/comb-teeth/"
   },
   {
@@ -832,7 +832,7 @@
     "blurb": "放线收线，让风筝停在窗口。",
     "hue": 200,
     "tag": "鸢",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/kite-line/"
   },
   {
@@ -843,7 +843,7 @@
     "blurb": "倾斜木板让珠子掉进洞。",
     "hue": 265,
     "tag": "珠",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/bead-drop/"
   },
   {
@@ -854,7 +854,7 @@
     "blurb": "把房间回声的节奏拍回去。",
     "hue": 320,
     "tag": "拍",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/echo-clap/"
   },
   {

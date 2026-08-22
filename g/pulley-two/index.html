@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#05030c" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>滑轮 · PULLEY</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2305030c'/%3E%3Ccircle cx='10' cy='8' r='4.2' fill='none' stroke='%23ff3db8' stroke-width='1.7'/%3E%3Ccircle cx='22' cy='8' r='4.2' fill='none' stroke='%2300f0ff' stroke-width='1.7'/%3E%3Cpath d='M10 12.2v8.4M22 12.2v5.2' stroke='%23ffe36b' stroke-width='1.4' stroke-linecap='round'/%3E%3Crect x='6.4' y='20.4' width='7.2' height='6.4' rx='1.2' fill='none' stroke='%23ff3db8' stroke-width='1.5'/%3E%3Crect x='18.4' y='17.2' width='7.2' height='6.4' rx='1.2' fill='none' stroke='%2300f0ff' stroke-width='1.5'/%3E%3Cpath d='M8.2 22.6h3.6M20.2 19.4h3.6' stroke='%23ffe36b' stroke-width='1.1' stroke-linecap='round'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>滑轮</b>
+        <span>PULLEY</span>
+      </div>
+      <div class="status">
+        <div class="sync" id="sync-wrap" title="时差">
+          <em>差</em>
+          <div class="sync-track" aria-hidden="true">
+            <u id="sync-band"></u>
+            <i id="mark-l"></i>
+            <i id="mark-r"></i>
+          </div>
+          <b id="sync-num">—</b>
+        </div>
+        <div class="row">
+          <span id="stage-label">第 1 轮</span>
+          <span id="mass-label">配重</span>
+          <span class="pips" id="pips" aria-label="剩余性命"></span>
+        </div>
+      </div>
+      <div class="tools">
+        <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
+        <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <canvas id="c" aria-label="两边配重，同时落地"></canvas>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden"></div>
+      <div id="pad" class="pad">
+        <button type="button" id="btn-lm" aria-label="左边减码">左−</button>
+        <button type="button" id="btn-lp" aria-label="左边加码">左+</button>
+        <button type="button" id="btn-go" aria-label="放下">放</button>
+        <button type="button" id="btn-rp" aria-label="右边加码">右+</button>
+        <button type="button" id="btn-rm" aria-label="右边减码">右−</button>
+      </div>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">PULLEY</p>
+          <h1 id="ov-title">滑轮</h1>
+          <p class="lead" id="ov-lead">两边挂上配重，松开滑轮一起落地。<br />重的落得快，高的那边要更重。</p>
+          <p class="ops" id="ov-ops">A D 加减左右 · 空格放下 · 点箱子配重 · M 静音</p>
+          <button type="button" id="ov-btn">上轮</button>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">重的落得快 · 让两边同时吻上台面</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>
