@@ -73,6 +73,21 @@
       ]
     },
     {
+      name: "断桥",
+      sub: "RIFT",
+      lives: 8,
+      hint: "摔在半空，把深沟填成路",
+      spawn: { x: 78, y: 445 },
+      exit: { x: 792, y: 298 },
+      base: { x: 22, y: 458, w: 108, h: 16 },
+      walls: [
+        { x: 700, y: 328, w: 240, h: 16 }
+      ],
+      spikes: [
+        { x: 150, y: 508, w: 790, h: 32 }
+      ]
+    },
+    {
       name: "裂柱",
       sub: "PILLAR",
       lives: 8,
@@ -101,6 +116,80 @@
       ],
       spikes: [
         { x: 180, y: 508, w: 700, h: 32 }
+      ]
+    },
+    {
+      name: "矮檐",
+      sub: "EAVE",
+      lives: 8,
+      hint: "檐下钻过去，出檐再叠高",
+      spawn: { x: 78, y: 445 },
+      exit: { x: 852, y: 84 },
+      base: { x: 22, y: 458, w: 96, h: 16 },
+      walls: [
+        { x: 250, y: 248, w: 330, h: 18 },
+        { x: 690, y: 118, w: 22, h: 422 },
+        { x: 712, y: 112, w: 132, h: 12 }
+      ],
+      spikes: [
+        { x: 130, y: 508, w: 810, h: 32 }
+      ]
+    },
+    {
+      name: "窗缝",
+      sub: "SLIT",
+      lives: 8,
+      hint: "只开一条窗，叠到窗沿再钻过去",
+      spawn: { x: 78, y: 445 },
+      exit: { x: 820, y: 96 },
+      base: { x: 22, y: 458, w: 92, h: 16 },
+      walls: [
+        { x: 380, y: 20, w: 24, h: 100 },
+        { x: 380, y: 200, w: 24, h: 340 },
+        { x: 404, y: 188, w: 72, h: 12 },
+        { x: 620, y: 136, w: 22, h: 404 },
+        { x: 642, y: 128, w: 150, h: 12 }
+      ],
+      spikes: [
+        { x: 130, y: 508, w: 810, h: 32 }
+      ]
+    },
+    {
+      name: "错齿",
+      sub: "JAG",
+      lives: 8,
+      hint: "柱齿一层比一层高，别落在齿缝里",
+      spawn: { x: 64, y: 445 },
+      exit: { x: 872, y: 78 },
+      base: { x: 22, y: 458, w: 84, h: 16 },
+      walls: [
+        { x: 220, y: 340, w: 20, h: 200 },
+        { x: 400, y: 248, w: 20, h: 292 },
+        { x: 590, y: 168, w: 20, h: 372 },
+        { x: 760, y: 108, w: 18, h: 432 },
+        { x: 778, y: 102, w: 110, h: 12 }
+      ],
+      spikes: [
+        { x: 120, y: 508, w: 820, h: 32 }
+      ]
+    },
+    {
+      name: "绝顶",
+      sub: "PEAK",
+      lives: 8,
+      hint: "门在最高，脚印一颗都不能偏",
+      spawn: { x: 62, y: 445 },
+      exit: { x: 878, y: 80 },
+      base: { x: 22, y: 458, w: 76, h: 16 },
+      walls: [
+        { x: 188, y: 300, w: 20, h: 240 },
+        { x: 372, y: 214, w: 20, h: 326 },
+        { x: 568, y: 142, w: 20, h: 398 },
+        { x: 762, y: 96, w: 20, h: 444 },
+        { x: 782, y: 96, w: 128, h: 12 }
+      ],
+      spikes: [
+        { x: 110, y: 508, w: 830, h: 32 }
       ]
     }
   ];
@@ -438,11 +527,63 @@
     return null;
   }
 
+  let greedyMem = { maxX: -9999, minY: 9999, since: 0, mode: "go", modeT: 0 };
+
+  function resetGreedy() {
+    greedyMem.maxX = -9999;
+    greedyMem.minY = 9999;
+    greedyMem.since = 0;
+    greedyMem.mode = "go";
+    greedyMem.modeT = 0;
+  }
+
   function greedyInput(st) {
     const dx = st.exit.x - st.px;
+    if (st.phase === "play") {
+      const better = st.px > greedyMem.maxX + 6 || st.py < greedyMem.minY - 6;
+      if (better) {
+        if (st.px > greedyMem.maxX) greedyMem.maxX = st.px;
+        if (st.py < greedyMem.minY) greedyMem.minY = st.py;
+        greedyMem.since = 0;
+      } else {
+        greedyMem.since++;
+      }
+    } else {
+      greedyMem.since = 0;
+      greedyMem.maxX = -9999;
+      greedyMem.minY = 9999;
+    }
+
+    if (greedyMem.mode === "go" && greedyMem.since > 160 && !st.won && !st.lost) {
+      greedyMem.mode = "drop";
+      greedyMem.modeT = 0;
+    }
+    if (greedyMem.mode === "drop") {
+      greedyMem.modeT++;
+      if (greedyMem.modeT > 140 || st.phase !== "play") {
+        greedyMem.mode = "go";
+        greedyMem.since = 0;
+      } else {
+        return {
+          left: st.px > st.spawn.x + 6,
+          right: st.px < st.spawn.x - 6,
+          jumpHold: false,
+          jumpTap: false
+        };
+      }
+    }
+
     const nearCeil = st.py < 70;
     const close = Math.abs(dx) < 52 && st.py <= st.exit.y + 24 && st.py >= st.exit.y - 56;
-    const jump = !nearCeil && !close;
+    const pr = playerRect(st);
+    const head = hitsSolid(st, pr.x + 2, pr.y - 36, pr.w - 4, 32);
+    let jump = !nearCeil && !close && !head;
+    if (st.grounded && !head) {
+      const ahead = dx > 0
+        ? hitsSolid(st, pr.x + pr.w, pr.y + 2, 10, pr.h - 4)
+        : hitsSolid(st, pr.x - 10, pr.y + 2, 10, pr.h - 4);
+      if (ahead) jump = true;
+    }
     return {
       left: dx < -10,
       right: dx > 10,
@@ -452,13 +593,14 @@
   }
 
   function simulateStage(index, maxTime) {
+    resetGreedy();
     const st = makeState(index);
     const dt = 1 / 60;
     let t = 0;
     let deaths = 0;
     let echoLands = 0;
     let minY = 9999;
-    const limit = maxTime || 45;
+    const limit = maxTime || 80;
     while (t < limit && !st.won && !st.lost) {
       const wasG = st.grounded;
       const ev = step(st, greedyInput(st), dt);
@@ -515,7 +657,7 @@
 
   if (typeof document === "undefined") {
     validateStages();
-    const results = STAGES.map((_, i) => simulateStage(i, 50));
+    const results = STAGES.map((_, i) => simulateStage(i, 90));
     results.forEach((r) => {
       const mark = r.won ? "OK" : "FAIL";
       console.log(mark, r.name, "t=" + r.t, "deaths=" + r.deaths, "lives=" + r.livesLeft, "echoes=" + r.echoes, "lands=" + r.echoLands, "minY=" + r.minY, "echoX=" + r.maxEchoX, "echoY=" + r.minEchoY, "pos", r.x, r.y);
@@ -739,8 +881,8 @@
       ovTitle.textContent = "叠跳";
       ovLead.textContent = "空中没有平台。跳跃留下残影，摔下去才会凝固成路。叠几条命，走到青色出口。";
       ovOps.textContent = coarse
-        ? "左 / 右移动 · 跳 · 共五关 · M 静音"
-        : "方向键 / WASD 移动 · 上 / W / 空格跳跃 · 点画布也可跳 · M 静音";
+        ? "左 / 右移动 · 跳 · 共十关 · M 静音"
+        : "方向键 / WASD 移动 · 上 / W / 空格跳跃 · 点画布也可跳 · 共十关 · M 静音";
       ovBtn.textContent = "开始";
     } else if (kind === "dead") {
       ovKicker.textContent = "LOST";
@@ -757,8 +899,8 @@
       ovBtn.textContent = "下一关";
     } else if (kind === "win") {
       ovKicker.textContent = "STILL";
-      ovTitle.textContent = "五跳落定";
-      ovLead.textContent = "所有路都是你摔出来的。门开了，山谷里只剩回声。";
+      ovTitle.textContent = "十痕落定";
+      ovLead.textContent = "十扇门都是你摔出来的。脚印叠到最高处，山谷里只剩回声。";
       ovOps.textContent = "";
       ovBtn.textContent = "再来一局";
     }

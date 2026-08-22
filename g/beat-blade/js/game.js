@@ -12,9 +12,14 @@
   const MUTE_KEY = 'beat-blade-mute';
 
   const PHRASES = [
-    { name: '起式', sub: 'OPEN', bpm: 100, pattern: '1110111010101101' },
-    { name: '交错', sub: 'CROSS', bpm: 110, pattern: '1101101110011110' },
-    { name: '收刃', sub: 'CLOSE', bpm: 124, pattern: '1011010111011011' }
+    { name: '听拍', sub: 'PULSE', bpm: 88, win: 0.138, pattern: '1010101010101010' },
+    { name: '连斩', sub: 'CHAIN', bpm: 96, win: 0.126, pattern: '1110111011101110' },
+    { name: '起式', sub: 'OPEN', bpm: 104, win: 0.114, pattern: '1110111010101101' },
+    { name: '交错', sub: 'CROSS', bpm: 112, win: 0.106, pattern: '1101101110011110' },
+    { name: '收刃', sub: 'CLOSE', bpm: 122, win: 0.096, pattern: '1011010111011011' },
+    { name: '密斩', sub: 'DENSE', bpm: 132, win: 0.086, pattern: '1111110111111010' },
+    { name: '空陷', sub: 'TRAP', bpm: 140, win: 0.076, pattern: '1100101101001101' },
+    { name: '终式', sub: 'FINAL', bpm: 152, win: 0.068, pattern: '1101011010011111' }
   ];
 
   const TOTAL = PHRASES.reduce(function (n, p) {
@@ -80,7 +85,9 @@
     countN: 0,
     phrase: 0,
     hintLock: 0,
-    lastHint: ''
+    lastHint: '',
+    phFlash: 0,
+    phFlashName: ''
   };
 
   function clamp(v, a, b) {
@@ -207,6 +214,11 @@
       this.beep(220, 0.16, 'sine', 0.07, 440);
       this.beep(440, 0.2, 'triangle', 0.05, 880);
     },
+    phrase: function (ph) {
+      const f = 330 + (ph % 8) * 42;
+      this.beep(f, 0.14, 'triangle', 0.07, f * 2);
+      this.beep(f * 0.5, 0.18, 'sine', 0.04, f);
+    },
     onPulse: function (p) {
       if (!this.ctx || this.muted) return;
       const accent = p.bar === 0;
@@ -214,8 +226,9 @@
       if (p.type === 'count') return;
       if (p.bar === 0) {
         this.kick();
-        const roots = [110, 146, 164];
-        this.beep(roots[p.ph % 3], 0.22, 'sine', 0.05, roots[p.ph % 3] * 0.5);
+        const roots = [110, 123, 146, 164, 174, 196, 220, 247];
+        const root = roots[p.ph % roots.length];
+        this.beep(root, 0.22, 'sine', 0.05, root * 0.5);
       } else if (p.bar === 2) {
         this.snare();
       }
@@ -244,6 +257,7 @@
       const d = 60 / ph.bpm;
       for (let k = 0; k < ph.pattern.length; k++) {
         const hit = ph.pattern.charAt(k) === '1';
+        const win = ph.win || HIT_WIN;
         const ev = {
           t: t,
           hit: hit,
@@ -251,10 +265,20 @@
           ph: p,
           bar: k % 4,
           state: 'open',
-          dur: d
+          dur: d,
+          win: win,
+          near: Math.min(0.26, win * 2.05)
         };
         notes.push(ev);
-        pulses.push({ t: t, type: hit ? 'hit' : 'rest', n: 0, bar: k % 4, ph: p, fired: false });
+        pulses.push({
+          t: t,
+          type: hit ? 'hit' : 'rest',
+          n: 0,
+          bar: k % 4,
+          ph: p,
+          head: k === 0,
+          fired: false
+        });
         t += d;
         idx += 1;
       }
@@ -393,6 +417,8 @@
     G.phrase = 0;
     G.hintLock = 0;
     G.lastHint = '';
+    G.phFlash = 0;
+    G.phFlashName = '';
     particles.length = 0;
     shards.length = 0;
     floats.length = 0;
@@ -409,7 +435,7 @@
       }
     }
     const ph = PHRASES[phIdx] || PHRASES[0];
-    phraseEl.textContent = ph.name;
+    phraseEl.textContent = phIdx + 1 + '/' + PHRASES.length + ' ' + ph.name;
     comboEl.textContent = String(G.combo);
     beatEl.textContent = G.resolved + '/' + TOTAL;
     const pips = bladesEl.querySelectorAll('i');
@@ -596,15 +622,18 @@
       kickerEl.textContent = 'BEAT BLADE';
       titleEl.textContent = '节拍刃';
       leadEl.innerHTML = '只在拍点出刀。<br />空拍会折刃。';
-      metaEl.textContent = '粉菱必须砍，青色空圈必须收。刃裂三次则负。';
+      metaEl.textContent =
+        '八段一曲，先慢后急。粉菱必须砍，青色空圈必须收。刃裂三次则负。';
       btnMain.textContent = '拔刀';
-      footEl.textContent = '空格 / 点击出刀 · M 静音';
+      footEl.textContent = '空格 / 点击出刀 · M 静音 · 八段';
     } else if (kind === 'win') {
       card.classList.add('win');
       kickerEl.textContent = 'HOLD';
       titleEl.textContent = '刃未折';
-      leadEl.textContent = '这一曲，刃还在。';
+      leadEl.textContent = '八段走完，刃还在。';
       metaEl.textContent =
+        PHRASES.length +
+        ' 段 · ' +
         TOTAL +
         ' 拍 · 连击 ' +
         G.maxCombo +
@@ -619,8 +648,11 @@
       kickerEl.textContent = 'BROKEN';
       titleEl.textContent = '刃已折';
       leadEl.textContent = '空拍吞掉了刃。';
+      const died = PHRASES[G.phrase] || PHRASES[0];
       metaEl.textContent =
-        '收于第 ' +
+        '收于 ' +
+        died.name +
+        ' 第 ' +
         G.resolved +
         ' 拍 · 最高连击 ' +
         G.maxCombo;
@@ -667,10 +699,12 @@
         near = n;
       }
     }
-    if (near && best <= HIT_WIN) {
+    const win = near ? near.win || HIT_WIN : HIT_WIN;
+    const nearW = near ? near.near || NEAR_WIN : NEAR_WIN;
+    if (near && best <= win) {
       if (near.hit) succeed(near, best);
       else fail(near, '空拍');
-    } else if (near && best <= NEAR_WIN) {
+    } else if (near && best <= nearW) {
       fail(near, near.hit ? '失拍' : '空拍');
     } else {
       G.combo = 0;
@@ -689,7 +723,7 @@
     for (let i = 0; i < notes.length; i++) {
       const n = notes[i];
       if (n.state !== 'open') continue;
-      if (G.songT > n.t + HIT_WIN) {
+      if (G.songT > n.t + (n.win || HIT_WIN)) {
         if (n.hit) fail(n, '失拍');
         else succeed(n, 0);
         if (G.ending) return;
@@ -708,6 +742,13 @@
         if (p.type === 'count') {
           G.countN = p.n;
           nextHint();
+        } else if (p.head && !G.ending) {
+          const ph = PHRASES[p.ph];
+          G.phrase = p.ph;
+          G.phFlash = 1.35;
+          G.phFlashName = ph ? ph.name : '';
+          audio.phrase(p.ph);
+          syncHud();
         }
       }
     }
@@ -721,6 +762,7 @@
     if (G.shake > 0) G.shake = Math.max(0, G.shake - dt * 2.4);
     if (G.flash > 0) G.flash = Math.max(0, G.flash - dt * 2.8);
     if (G.judgeT > 0) G.judgeT = Math.max(0, G.judgeT - dt);
+    if (G.phFlash > 0) G.phFlash = Math.max(0, G.phFlash - dt);
     if (G.hintLock > 0) {
       G.hintLock -= dt;
       if (G.hintLock <= 0) {
@@ -798,7 +840,7 @@
 
   function drawVinyl() {
     const { cx, cy, r } = layout;
-    const beatGlow = 0.35 + G.pulse * 0.65;
+    const beatGlow = 0.35 + G.pulse * 0.65 + (G.phFlash > 0.7 ? 0.35 : 0);
 
     ctx.save();
     ctx.translate(cx, cy);
@@ -909,7 +951,7 @@
       if (remain < 0) a = clamp(1 + remain / 0.2, 0, 1);
       if (n.state !== 'open') a *= 0.35;
       const near = 1 - clamp(Math.abs(remain) / LOOKAHEAD, 0, 1);
-      const sc = 0.72 + near * 0.42 + (Math.abs(remain) < HIT_WIN ? 0.12 : 0);
+      const sc = 0.72 + near * 0.42 + (Math.abs(remain) < (n.win || HIT_WIN) ? 0.12 : 0);
       const rad = (n.hit ? 13 : 12) * sc;
 
       ctx.save();
@@ -1074,6 +1116,23 @@
     ctx.restore();
   }
 
+  function drawPhraseBanner() {
+    if (G.phFlash <= 0 || !G.phFlashName || G.mode === 'title') return;
+    const { cx, cy, r } = layout;
+    const a = G.phFlash > 0.45 ? 1 : G.phFlash / 0.45;
+    ctx.save();
+    ctx.globalAlpha = a;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = '900 36px "Segoe UI", "PingFang SC", "Noto Sans SC", sans-serif';
+    ctx.fillStyle = rgba('#ffe36b', 0.88);
+    ctx.fillText(G.phFlashName, cx, cy - r - 52);
+    ctx.font = '700 12px "Segoe UI", "PingFang SC", "Noto Sans SC", sans-serif';
+    ctx.fillStyle = rgba('#00f0ff', 0.75);
+    ctx.fillText(G.phrase + 1 + ' / ' + PHRASES.length, cx, cy - r - 28);
+    ctx.restore();
+  }
+
   function drawFx() {
     for (let i = 0; i < particles.length; i++) {
       const p = particles[i];
@@ -1129,7 +1188,7 @@
     }
     ctx.restore();
 
-    if (G.combo >= 4 && G.mode === 'play' && !G.ending) {
+    if (G.combo >= 4 && G.mode === 'play' && !G.ending && G.phFlash < 0.25) {
       ctx.save();
       ctx.textAlign = 'center';
       ctx.font = '900 34px "Segoe UI", "PingFang SC", sans-serif';
@@ -1188,6 +1247,7 @@
     drawCore();
     drawBlade();
     drawCount();
+    drawPhraseBanner();
     drawFx();
     ctx.restore();
     drawFlash();
