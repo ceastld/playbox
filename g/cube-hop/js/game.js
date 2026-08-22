@@ -26,6 +26,10 @@ var STEP = 1 / 60;
 var TAU = Math.PI * 2;
 var BEST_KEY = 'playbox-cube-hop-best';
 var MUTE_KEY = 'playbox-cube-hop-mute';
+var AUTO_SPEED_KEY = 'playbox-cube-hop-auto-speed';
+var AUTO_SPEED_NAME = ['', '慢', '中', '快', '极快'];
+var AUTO_DELAY = [0, 420, 200, 70, 0];
+var OPP_DIR = [2, 3, 0, 1];
 
 var DIRS = [
   { dr: -1, dc: -1 },
@@ -38,7 +42,7 @@ var KEY_DIR = {
   KeyQ: UL, ArrowLeft: UL,
   KeyW: UR, ArrowUp: UR,
   KeyE: DR, ArrowRight: DR,
-  KeyA: DL, ArrowDown: DL, KeyS: DL
+  KeyS: DL, ArrowDown: DL
 };
 
 var PALS = [
@@ -197,6 +201,201 @@ function pickBallDir(r, c) {
   if (dr.kind === 'cube') return DR;
   return Math.random() < 0.5 ? DL : DR;
 }
+function snakeIndex(r, c) {
+  var f, before = 0;
+  for (f = 0; f < c; f++) before += SIZE - f;
+  if ((c & 1) === 0) return before + (r - c);
+  return before + (SIZE - 1 - r);
+}
+function enemyIdleAt(r, c, coily, balls) {
+  var i, e;
+  if (!valid(r, c)) return false;
+  if (coily && !coily.dead && coily.state !== 'fall' && coily.state !== 'drop' && coily.state !== 'dead') {
+    if (coily.hopT >= 1 && coily.r === r && coily.c === c) return true;
+  }
+  if (balls) {
+    for (i = 0; i < balls.length; i++) {
+      e = balls[i];
+      if (!e || e.dead || e.state === 'fall' || e.state === 'drop' || e.state === 'dead') continue;
+      if (e.hopT >= 1 && e.r === r && e.c === c) return true;
+    }
+  }
+  return false;
+}
+function enemyIncomingAt(r, c, coily, balls) {
+  var i, e;
+  if (!valid(r, c)) return false;
+  if (coily && !coily.dead && coily.hopT < 1 && coily.destKind === 'cube' && coily.r === r && coily.c === c) {
+    return true;
+  }
+  if (balls) {
+    for (i = 0; i < balls.length; i++) {
+      e = balls[i];
+      if (!e || e.dead || e.hopT >= 1 || e.destKind !== 'cube') continue;
+      if (e.r === r && e.c === c) return true;
+    }
+  }
+  return false;
+}
+function ballCouldHopTo(r, c, coily, balls) {
+  var i, e, dl, dr;
+  function check(ent) {
+    if (!ent || ent.dead || ent.hopT < 1) return false;
+    if (ent.state === 'fall' || ent.state === 'drop' || ent.state === 'dead') return false;
+    if (ent.kind === 'coily' && ent.snake) return false;
+    dl = hopDest(ent.r, ent.c, DL, null);
+    dr = hopDest(ent.r, ent.c, DR, null);
+    if (dl.kind === 'cube' && dl.r === r && dl.c === c) return true;
+    if (dr.kind === 'cube' && dr.r === r && dr.c === c) return true;
+    return false;
+  }
+  if (check(coily)) return true;
+  if (balls) {
+    for (i = 0; i < balls.length; i++) {
+      e = balls[i];
+      if (check(e)) return true;
+    }
+  }
+  return false;
+}
+function coilyCell(coily) {
+  if (!coily || coily.dead) return null;
+  if (coily.state === 'fall' || coily.state === 'drop' || coily.state === 'dead') return null;
+  return { r: coily.r, c: coily.c };
+}
+function coilyThreatAt(r, c, coily) {
+  var cell, d;
+  cell = coilyCell(coily);
+  if (!cell || !coily.snake) return 0;
+  d = bfsDist(cell.r, cell.c, r, c);
+  if (d <= 1) return 5;
+  if (d <= 2) return 3;
+  if (d <= 3) return 1;
+  return 0;
+}
+function pickSnakeTarget(r0, c0, tiles, need) {
+  var best = null;
+  var bestIdx = 1e9;
+  var r, c, idx;
+  for (r = 0; r < SIZE; r++) {
+    for (c = 0; c <= r; c++) {
+      if (tiles[r][c] >= need) continue;
+      if (r === r0 && c === c0) continue;
+      idx = snakeIndex(r, c);
+      if (idx < bestIdx) {
+        bestIdx = idx;
+        best = { r: r, c: c };
+      }
+    }
+  }
+  return best;
+}
+function pickAutoHop(r, c, tiles, need, revert, discs, coily, balls, lastDir) {
+  var i, dest, s, best = -1, bestS = -1e12;
+  var nr, nc, lv, d0, d1, cd0, cd1, threat, target, cell;
+  target = pickSnakeTarget(r, c, tiles, need);
+  threat = coilyThreatAt(r, c, coily);
+  d0 = target ? bfsDist(r, c, target.r, target.c) : 0;
+  cell = coilyCell(coily);
+  cd0 = cell && coily.snake ? bfsDist(r, c, cell.r, cell.c) : 99;
+  for (i = 0; i < 4; i++) {
+    dest = hopDest(r, c, i, discs);
+    if (dest.kind === 'fall') continue;
+    if (dest.kind === 'disc') {
+      s = threat >= 3 ? 9000 : threat >= 1 ? 1400 : (target && r >= 5 && d0 >= 4 ? 420 : -60);
+      if (lastDir >= 0 && i === OPP_DIR[lastDir]) s -= 40;
+      if (s > bestS) {
+        bestS = s;
+        best = i;
+      }
+      continue;
+    }
+    nr = dest.r;
+    nc = dest.c;
+    if (enemyIdleAt(nr, nc, coily, balls)) continue;
+    s = 0;
+    if (enemyIncomingAt(nr, nc, coily, balls)) s -= 7000;
+    if (ballCouldHopTo(nr, nc, coily, balls)) s -= 2400;
+    lv = tiles[nr][nc];
+    if (lv < need) {
+      s += 720;
+      if (lv === need - 1) s += 180;
+    } else if (revert) {
+      s -= 880;
+    } else {
+      s -= 28;
+    }
+    if (target) {
+      d1 = bfsDist(nr, nc, target.r, target.c);
+      if (nr === target.r && nc === target.c) s += 960;
+      s += (d0 - d1) * 430;
+      s -= d1 * 8;
+    } else if (tiles[r][c] < need) {
+      s += 200;
+    }
+    if (cell && coily.snake) {
+      cd1 = bfsDist(nr, nc, cell.r, cell.c);
+      if (cd1 === 0) s -= 8000;
+      if (threat >= 1) s += (cd1 - cd0) * 300;
+      if (cd1 <= 1 && threat >= 3) s -= 420;
+    }
+    if (lastDir >= 0 && i === OPP_DIR[lastDir]) s -= 240;
+    if (lv < need) s -= snakeIndex(nr, nc) * 2;
+    if (s > bestS) {
+      bestS = s;
+      best = i;
+    }
+  }
+  if (best < 0) return -1;
+  if (bestS < -5000) return -1;
+  return best;
+}
+function autoClearRound(need, revert) {
+  var tiles = makeTiles();
+  var discs = makeDiscs(1, false);
+  var r = 0;
+  var c = 0;
+  var hops = 0;
+  var lastDir = -1;
+  var flips = 0;
+  var rev = 0;
+  var osc = 0;
+  var landed = 0;
+  var dir, dest, f;
+  while (hops < 240) {
+    if (flippedCount(tiles, need) >= cubeCount()) {
+      return { ok: true, hops: hops, flips: flips, rev: rev, osc: osc, landed: landed };
+    }
+    dir = pickAutoHop(r, c, tiles, need, revert, discs, null, [], lastDir);
+    if (dir < 0) return { ok: false, why: 'stuck', hops: hops, r: r, c: c, flipped: flippedCount(tiles, need) };
+    dest = hopDest(r, c, dir, discs);
+    hops += 1;
+    if (lastDir >= 0 && dir === OPP_DIR[lastDir]) osc += 1;
+    lastDir = dir;
+    if (dest.kind === 'fall') {
+      return { ok: false, why: 'fall', hops: hops, r: r, c: c, dir: dir };
+    }
+    if (dest.kind === 'disc') {
+      discs[dest.id].gone = true;
+      r = 0;
+      c = 0;
+      f = applyFlip(tiles[0][0], need, revert);
+      tiles[0][0] = f.level;
+      if (f.flipped) flips += 1;
+      if (f.revert) rev += 1;
+      landed += 1;
+      continue;
+    }
+    r = dest.r;
+    c = dest.c;
+    landed += 1;
+    f = applyFlip(tiles[r][c], need, revert);
+    tiles[r][c] = f.level;
+    if (f.flipped) flips += 1;
+    if (f.revert) rev += 1;
+  }
+  return { ok: false, why: 'timeout', hops: hops, flipped: flippedCount(tiles, need), osc: osc, rev: rev };
+}
 function playerHopTime() {
   return PLAYER_HOP;
 }
@@ -301,7 +500,7 @@ function makeHopper(kind, r, c) {
 }
 
 function selfCheck() {
-  var n, d, f, tiles, i, dest, dist, spots;
+  var n, d, f, tiles, i, dest, dist, spots, seen, r, c, s;
 
   if (SIZE !== 7) throw new Error('7 rows');
   if (cubeCount() !== 28) throw new Error('28 cubes');
@@ -388,10 +587,78 @@ function selfCheck() {
   for (i = 0; i < 4; i++) {
     if (typeof DIRS[i].dr !== 'number') throw new Error('dirs');
   }
-  if (KEY_DIR.KeyQ !== UL || KEY_DIR.KeyW !== UR || KEY_DIR.KeyE !== DR || KEY_DIR.KeyA !== DL) {
-    throw new Error('QWEA map');
+  if (KEY_DIR.KeyQ !== UL || KEY_DIR.KeyW !== UR || KEY_DIR.KeyE !== DR || KEY_DIR.KeyS !== DL) {
+    throw new Error('QWES map');
   }
+  if (KEY_DIR.KeyA != null) throw new Error('A is auto not hop');
   if (KEY_DIR.ArrowLeft !== UL || KEY_DIR.ArrowUp !== UR) throw new Error('arrows iso');
+
+  seen = {};
+  for (r = 0; r < SIZE; r++) {
+    for (c = 0; c <= r; c++) {
+      i = snakeIndex(r, c);
+      if (i < 0 || i >= 28 || seen[i]) throw new Error('snake idx ' + r + ',' + c);
+      seen[i] = 1;
+    }
+  }
+
+  d = pickAutoHop(0, 0, makeTiles(), 1, false, makeDiscs(1, false), null, [], -1);
+  if (d !== DL && d !== DR) throw new Error('auto from top goes down ' + d);
+  d = pickAutoHop(0, 0, makeTiles(), 1, false, makeDiscs(1, false), null, [], -1);
+  dest = hopDest(0, 0, d, null);
+  if (dest.kind !== 'cube') throw new Error('auto must not fall from top');
+
+  tiles = makeTiles();
+  d = pickAutoHop(3, 1, tiles, 1, false, [], {
+    r: 2, c: 1, hopT: 1, state: 'idle', snake: true, dead: false, destKind: 'cube', kind: 'coily'
+  }, [], -1);
+  dest = hopDest(3, 1, d, null);
+  if (d < 0) throw new Error('auto frozen by coily');
+  if (dest.kind === 'cube' && dest.r === 2 && dest.c === 1) throw new Error('auto hopped onto coily');
+
+  d = pickAutoHop(1, 0, tiles, 1, false, [], null, [{
+    r: 2, c: 0, hopT: 1, state: 'idle', snake: false, dead: false, destKind: 'cube', kind: 'ball'
+  }], -1);
+  dest = hopDest(1, 0, d, null);
+  if (dest.kind === 'cube' && dest.r === 2 && dest.c === 0) throw new Error('auto hopped onto ball');
+
+  spots = makeDiscs(1, true);
+  d = pickAutoHop(spots[0].row, 0, tiles, 1, false, spots, {
+    r: spots[0].row - 1, c: 0, hopT: 1, state: 'idle', snake: true, dead: false, destKind: 'cube', kind: 'coily'
+  }, [], -1);
+  dest = hopDest(spots[0].row, 0, d, spots);
+  if (dest.kind !== 'disc') throw new Error('auto disc escape ' + dest.kind + ' dir=' + d);
+
+  s = autoClearRound(1, false);
+  if (!s.ok) throw new Error('auto clear r1: ' + s.why + ' hops=' + s.hops);
+  if (s.flips < 28) throw new Error('auto r1 flips ' + s.flips);
+  if (s.hops > 90) throw new Error('auto r1 wiggle hops=' + s.hops);
+  if (s.osc > s.hops * 0.55) throw new Error('auto r1 reverse osc=' + s.osc + ' hops=' + s.hops);
+  if (s.landed < 28) throw new Error('auto r1 landed ' + s.landed);
+
+  s = autoClearRound(2, false);
+  if (!s.ok) throw new Error('auto clear r2: ' + s.why + ' hops=' + s.hops + ' flipped=' + s.flipped);
+  if (s.flips < 56) throw new Error('auto r2 flips ' + s.flips);
+  if (s.hops > 180) throw new Error('auto r2 wiggle hops=' + s.hops);
+
+  s = autoClearRound(2, true);
+  if (!s.ok) throw new Error('auto revert: ' + s.why + ' hops=' + s.hops + ' flipped=' + s.flipped);
+  if (s.flips < 56) throw new Error('auto revert flips ' + s.flips);
+  if (s.rev > 24) throw new Error('auto revert too many ' + s.rev);
+}
+
+function loadAutoSpeed() {
+  try {
+    var n = parseInt(localStorage.getItem(AUTO_SPEED_KEY) || '3', 10);
+    if (!isFinite(n) || n < 1 || n > 4) return 3;
+    return n;
+  } catch (err) {
+    return 3;
+  }
+}
+
+function saveAutoSpeed(n) {
+  try { localStorage.setItem(AUTO_SPEED_KEY, String(n)); } catch (err) { /* ignore */ }
 }
 
 selfCheck();
@@ -415,6 +682,9 @@ var btnClassic = document.getElementById('btn-classic');
 var btnChase = document.getElementById('btn-chase');
 var btnMute = document.getElementById('btn-mute');
 var btnRetry = document.getElementById('btn-retry');
+var btnAuto = document.getElementById('btn-auto');
+var speedEl = document.getElementById('speed');
+var speedLab = document.getElementById('speed-lab');
 var btnUl = document.getElementById('btn-ul');
 var btnUr = document.getElementById('btn-ur');
 var btnDl = document.getElementById('btn-dl');
@@ -433,6 +703,9 @@ var toastEl = document.getElementById('toast');
 var hintEl = document.getElementById('hint');
 var motionQ = window.matchMedia('(prefers-reduced-motion: reduce)');
 var coarseQ = window.matchMedia('(pointer: coarse)');
+var autoOn = false;
+var autoSpeed = loadAutoSpeed();
+var autoMs = 0;
 
 var dpr = 1;
 var cssW = 0;
@@ -676,18 +949,22 @@ function currentBest() {
 loadBest();
 
 /* ---- fx ---- */
+function autoTurbo() {
+  return autoOn && autoSpeed >= 4;
+}
+
 function hitStop(t) {
-  if (reduceMotion()) return;
+  if (reduceMotion() || autoTurbo()) return;
   if (t > G.stop) G.stop = t;
 }
 
 function shake(n) {
-  if (reduceMotion()) return;
+  if (reduceMotion() || autoTurbo()) return;
   G.shake = Math.max(G.shake, n);
 }
 
 function kick(n) {
-  if (reduceMotion()) return;
+  if (reduceMotion() || autoTurbo()) return;
   G.kickX = (Math.random() < 0.5 ? -1 : 1) * n * 0.35;
   G.kickY = n * 0.55;
   stageEl.classList.remove('hop');
@@ -850,9 +1127,9 @@ function hudPlay() {
   modeLabel.textContent = G.chase ? '追逃' : '闯关';
   modeLabel.classList.toggle('chase', G.chase);
   if (G.mode === 'play') {
-    hintEl.textContent = G.chase
-      ? '科伊更快 · 球更多 · 飞碟只有一个 · R 重开'
-      : '点相邻块翻色 · 科伊会追 · 飞碟回顶 · 跳下塔掉命';
+    hintEl.textContent = (autoOn ? '托管中 · ' : '') + (G.chase
+      ? '科伊更快 · 球更多 · 飞碟只有一个 · A 自动 · R 重开'
+      : '点相邻块翻色 · 科伊会追 · 飞碟回顶 · A 自动 · 跳下塔掉命');
   }
 }
 
@@ -992,10 +1269,10 @@ function showTitle() {
   panelEl.className = 'panel';
   ovTitle.textContent = '立体跳';
   ovLead.textContent = '跳上相邻方块翻色。科伊来追，飞碟能送回顶。跳下去会掉命。';
-  ovOps.textContent = '点相邻块 · Q W E A / 方向键等距跳 · R 重开 · M 静音';
+  ovOps.textContent = '点相邻块 · Q W E S / 方向键等距跳 · A 自动 · R 重开 · M 静音';
   ovStart.classList.remove('gone');
   ovEnd.classList.add('gone');
-  hintEl.textContent = '点相邻块翻色 · 科伊会追 · 飞碟回顶 · 跳下塔掉命';
+  hintEl.textContent = '点相邻块翻色 · 科伊会追 · 飞碟回顶 · A 自动 · 跳下塔掉命';
   G.round = 1;
   G.chase = false;
   G.tiles = makeTiles();
@@ -1247,7 +1524,7 @@ function tryHop(dir) {
   p.discId = dest.kind === 'disc' ? dest.id : -1;
   p.r = dest.r;
   p.c = dest.c;
-  p.hopT = reduceMotion() ? 1 : 0;
+  p.hopT = reduceMotion() || autoTurbo() ? 1 : 0;
   p.hopDur = playerHopTime();
   p.state = 'hop';
   p.squash = 1.32;
@@ -1263,7 +1540,7 @@ function tryHop(dir) {
   }
   audio.hop(G.combo);
   kick(2.2);
-  if (reduceMotion()) landPlayer();
+  if (reduceMotion() || autoTurbo()) landPlayer();
 }
 
 function occupierAt(r, c) {
@@ -1603,7 +1880,7 @@ function step(dt) {
     return;
   }
 
-  if (G.player.hopT >= 1 && G.pending >= 0 && G.player.state === 'idle') {
+  if (G.player.hopT >= 1 && G.pending >= 0 && G.player.state === 'idle' && !autoOn) {
     tryHop(G.pending);
   }
 
@@ -1625,6 +1902,7 @@ function step(dt) {
   }
 
   checkHits();
+  if (autoOn) tickAuto(dt);
   tickFx(dt);
 }
 
@@ -2091,6 +2369,7 @@ function frame(ts) {
   lastTs = ts;
   if (hidden) return;
   if (dt > 0.05) dt = 0.05;
+  if (autoTurbo() && G.mode === 'play') G.stop = 0;
   if (G.stop > 0) {
     G.stop -= dt;
     if (G.stop < 0) {
@@ -2101,12 +2380,70 @@ function frame(ts) {
       return;
     }
   }
+  if (autoTurbo() && G.mode === 'play') dt *= 3;
   acc += dt;
   while (acc >= STEP) {
     step(STEP);
     acc -= STEP;
   }
   draw();
+}
+
+/* ---- autoplay ---- */
+function playerInDanger() {
+  var p = G.player;
+  if (!p || p.dead || p.hopT < 1) return false;
+  if (p.inv > 0) return false;
+  return enemyIdleAt(p.r, p.c, G.coily, G.balls) || enemyIncomingAt(p.r, p.c, G.coily, G.balls);
+}
+
+function tickAuto(dt) {
+  var p, dir, danger;
+  if (!autoOn || G.mode !== 'play') return;
+  if (G.lock > 0) return;
+  p = G.player;
+  if (!p || p.dead || p.state === 'fall' || p.state === 'ride') return;
+  if (p.hopT < 1 || p.state === 'hop') return;
+  autoMs += dt;
+  danger = playerInDanger();
+  if (autoMs < AUTO_DELAY[autoSpeed] / 1000 && !danger) return;
+  dir = pickAutoHop(p.r, p.c, G.tiles, G.need, doesRevert(G.round, G.chase), G.discs, G.coily, G.balls, p.dir);
+  if (dir < 0) return;
+  autoMs = 0;
+  tryHop(dir);
+}
+
+function syncAutoUi() {
+  btnAuto.classList.toggle('on', autoOn);
+  btnAuto.setAttribute('aria-pressed', autoOn ? 'true' : 'false');
+  btnAuto.textContent = autoOn ? '停下' : '自动';
+  btnAuto.setAttribute('aria-label', autoOn ? '停止自动' : '自动');
+}
+
+function syncSpeedUi() {
+  speedEl.value = String(autoSpeed);
+  speedLab.textContent = AUTO_SPEED_NAME[autoSpeed];
+  speedEl.title = AUTO_SPEED_NAME[autoSpeed];
+  speedEl.setAttribute('aria-valuetext', AUTO_SPEED_NAME[autoSpeed]);
+}
+
+function toggleAuto() {
+  autoOn = !autoOn;
+  autoMs = 0;
+  G.pending = -1;
+  syncAutoUi();
+  if (autoOn) {
+    audio.ensure();
+    if (G.mode === 'title') startRun('classic');
+  }
+  if (G.mode === 'play') hudPlay();
+}
+
+function setAutoSpeed(n) {
+  if (n < 1 || n > 4 || !isFinite(n)) n = 3;
+  autoSpeed = n;
+  saveAutoSpeed(autoSpeed);
+  syncSpeedUi();
 }
 
 /* ---- input ---- */
@@ -2196,7 +2533,7 @@ canvas.addEventListener('pointerdown', function (e) {
   var w;
   audio.ensure();
   canvas.focus({ preventScroll: true });
-  if (G.mode !== 'play') return;
+  if (G.mode !== 'play' || autoOn) return;
   ptr.on = true;
   ptr.id = e.pointerId;
   ptr.x = e.clientX;
@@ -2211,7 +2548,7 @@ canvas.addEventListener('pointerup', function (e) {
   var w, dir;
   if (!ptr.on || (ptr.id !== -1 && e.pointerId !== ptr.id)) return;
   ptr.on = false;
-  if (G.mode !== 'play') return;
+  if (G.mode !== 'play' || autoOn) return;
   dir = swipeDir(e.clientX - ptr.x, e.clientY - ptr.y);
   if (dir >= 0) tryHop(dir);
   else {
@@ -2228,6 +2565,7 @@ function bindPad(el, dir) {
     e.preventDefault();
     audio.ensure();
     el.classList.add('held');
+    if (autoOn) return;
     tryHop(dir);
   });
   el.addEventListener('pointerup', function () { el.classList.remove('held'); });
@@ -2254,6 +2592,12 @@ window.addEventListener('keydown', function (e) {
     e.preventDefault();
     return;
   }
+  if (e.code === 'KeyA' || e.key === 'a' || e.key === 'A') {
+    toggleAuto();
+    e.preventDefault();
+    return;
+  }
+  if (e.target === speedEl) return;
   if (G.mode === 'title') {
     if (e.code === 'Digit1' || e.code === 'Enter' || e.code === 'Space') {
       startRun('classic');
@@ -2280,8 +2624,9 @@ window.addEventListener('keydown', function (e) {
   }
   dir = KEY_DIR[e.code];
   if (dir != null) {
-    tryHop(dir);
     e.preventDefault();
+    if (autoOn) return;
+    tryHop(dir);
   }
 });
 
@@ -2305,6 +2650,15 @@ ovRetry.addEventListener('click', function () {
   audio.ensure();
   startRun(G.kind);
 });
+btnAuto.addEventListener('click', function () {
+  toggleAuto();
+});
+speedEl.addEventListener('input', function () {
+  setAutoSpeed(parseInt(speedEl.value, 10));
+});
+speedEl.addEventListener('change', function () {
+  setAutoSpeed(parseInt(speedEl.value, 10));
+});
 
 window.addEventListener('resize', resize);
 if (window.visualViewport) {
@@ -2320,6 +2674,8 @@ document.addEventListener('visibilitychange', function () {
 
 bestEl.textContent = String(G.bestC);
 renderPips();
+syncAutoUi();
+syncSpeedUi();
 showTitle();
 resize();
 hudPlay();
