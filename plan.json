@@ -1959,7 +1959,7 @@
     "blurb": "巷子里连打，捡武器清场。",
     "hue": 16,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/dual-cut/",
     "kind": "remake"
   },
@@ -1971,7 +1971,7 @@
     "blurb": "打出魂火，变成野兽冲。",
     "hue": 28,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/beast-run/",
     "kind": "remake"
   },
@@ -2009,6 +2009,30 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/mega-run/",
+    "kind": "remake"
+  },
+  {
+    "n": 177,
+    "id": "axe-war",
+    "title": "战斧",
+    "subtitle": "AXE",
+    "blurb": "马上挥斧，清一波再打头目。",
+    "hue": 28,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/axe-war/",
+    "kind": "remake"
+  },
+  {
+    "n": 178,
+    "id": "ghost-run",
+    "title": "魔界",
+    "subtitle": "GHOST",
+    "blurb": "盔甲碎了还要往前冲。",
+    "hue": 318,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/ghost-run/",
     "kind": "remake"
   }
 ]

@@ -1820,5 +1820,29 @@
     "dir": "g/wonder-isle/",
     "url": "./g/wonder-isle/",
     "kind": "remake"
+  },
+  {
+    "n": 172,
+    "id": "dual-cut",
+    "title": "双截",
+    "subtitle": "DRAGON",
+    "blurb": "巷子里连打，捡武器清场。",
+    "hue": 16,
+    "tag": "复刻",
+    "dir": "g/dual-cut/",
+    "url": "./g/dual-cut/",
+    "kind": "remake"
+  },
+  {
+    "n": 173,
+    "id": "beast-run",
+    "title": "兽化",
+    "subtitle": "BEAST",
+    "blurb": "打出魂火，变成野兽冲。",
+    "hue": 28,
+    "tag": "复刻",
+    "dir": "g/beast-run/",
+    "url": "./g/beast-run/",
+    "kind": "remake"
   }
 ]

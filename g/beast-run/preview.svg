@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" fill="#0a0603"/>
+  <rect x="4" y="4" width="56" height="56" rx="8" fill="#140a06" stroke="#ff7a22" stroke-width="1.4"/>
+  <circle cx="48" cy="14" r="6.2" fill="#ffe36b" opacity=".6"/>
+  <path d="M4 48h56" stroke="#ff7a22" stroke-width="2" opacity=".5"/>
+  <rect x="10" y="38" width="7" height="10" rx="1" fill="#2a1810"/>
+  <rect x="10" y="36" width="7" height="3" rx=".6" fill="#6a5040"/>
+  <rect x="38" y="34" width="8" height="14" rx="1" fill="#24140e"/>
+  <path d="M38 34h8l-1-6-6 2z" fill="#3a2418"/>
+  <circle cx="22" cy="26" r="4.6" fill="#e8b070"/>
+  <rect x="18.6" y="30" width="7.2" height="9.4" rx="1.2" fill="#ff7a22"/>
+  <path d="M26 25.2l11-2.2-8 4.4z" fill="#00f0ff"/>
+  <path d="M24 22.2c3.4-4.8 9.2-3.2 11.6 1.2" fill="none" stroke="#ffb060" stroke-width="1.4"/>
+  <circle cx="44" cy="28" r="2.4" fill="#ffe36b"/>
+  <circle cx="44" cy="28" r="1.1" fill="#fff8d8"/>
+  <circle cx="50" cy="32" r="1.8" fill="#ffe36b" opacity=".75"/>
+  <circle cx="38" cy="22" r="1.5" fill="#00f0ff" opacity=".8"/>
+  <path d="M16 42.4c2.4 3.2 6.6 3.6 9.2.6" fill="none" stroke="#ff3d8a" stroke-width="1.1" opacity=".7"/>
+</svg>
