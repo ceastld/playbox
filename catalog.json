@@ -1076,5 +1076,29 @@
     "dir": "g/brick-out/",
     "url": "./g/brick-out/",
     "kind": "remake"
+  },
+  {
+    "n": 107,
+    "id": "hex-mines",
+    "title": "蜂雷",
+    "subtitle": "HEX",
+    "blurb": "六边形扫雷。",
+    "hue": 188,
+    "tag": "复刻",
+    "dir": "g/hex-mines/",
+    "url": "./g/hex-mines/",
+    "kind": "remake"
+  },
+  {
+    "n": 108,
+    "id": "tetra-40",
+    "title": "四十行",
+    "subtitle": "SPRINT",
+    "blurb": "清四十行，比谁快。",
+    "hue": 300,
+    "tag": "复刻",
+    "dir": "g/tetra-40/",
+    "url": "./g/tetra-40/",
+    "kind": "remake"
   }
 ]

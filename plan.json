@@ -1179,7 +1179,7 @@
     "blurb": "六边形扫雷。",
     "hue": 188,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/hex-mines/",
     "kind": "remake"
   },
@@ -1191,7 +1191,7 @@
     "blurb": "清四十行，比谁快。",
     "hue": 300,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/tetra-40/",
     "kind": "remake"
   },
@@ -1242,5 +1242,125 @@
     "kind": "remake",
     "tag": "复刻",
     "dir": "g/rev-disc/"
+  },
+  {
+    "n": 113,
+    "id": "four-line",
+    "title": "四连",
+    "subtitle": "CONNECT",
+    "blurb": "四子连线，挡住对手。",
+    "hue": 14,
+    "tag": "复刻",
+    "status": "queued",
+    "dir": "g/four-line/",
+    "kind": "remake"
+  },
+  {
+    "n": 114,
+    "id": "frog-hop",
+    "title": "蛙路",
+    "subtitle": "FROG",
+    "blurb": "过马路过河，别被撞。",
+    "hue": 130,
+    "tag": "复刻",
+    "status": "queued",
+    "dir": "g/frog-hop/",
+    "kind": "remake"
+  },
+  {
+    "n": 115,
+    "id": "star-raid",
+    "title": "星袭",
+    "subtitle": "RAID",
+    "blurb": "底下开火，打掉整波。",
+    "hue": 265,
+    "tag": "复刻",
+    "status": "queued",
+    "dir": "g/star-raid/",
+    "kind": "remake"
+  },
+  {
+    "n": 116,
+    "id": "gem-three",
+    "title": "三消",
+    "subtitle": "MATCH",
+    "blurb": "三个一样就消。",
+    "hue": 48,
+    "tag": "复刻",
+    "status": "queued",
+    "dir": "g/gem-three/",
+    "kind": "remake"
+  },
+  {
+    "n": 117,
+    "id": "slide-15",
+    "title": "十五",
+    "subtitle": "SLIDE",
+    "blurb": "滑块还原，空格挪位。",
+    "hue": 210,
+    "tag": "复刻",
+    "status": "queued",
+    "dir": "g/slide-15/",
+    "kind": "remake"
+  },
+  {
+    "n": 118,
+    "id": "fruit-cut",
+    "title": "斩果",
+    "subtitle": "SLASH",
+    "blurb": "一刀切开，果汁四溅。",
+    "hue": 350,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/fruit-cut/",
+    "kind": "remake"
+  },
+  {
+    "n": 119,
+    "id": "horde-bite",
+    "title": "噬潮",
+    "subtitle": "HORDE",
+    "blurb": "一群涌上来，你边闪边打。",
+    "hue": 338,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/horde-bite/",
+    "kind": "remake"
+  },
+  {
+    "n": 120,
+    "id": "pin-ball",
+    "title": "弹珠",
+    "subtitle": "PIN",
+    "blurb": "弹板一磕，连撞爆炸。",
+    "hue": 22,
+    "tag": "复刻",
+    "status": "queued",
+    "dir": "g/pin-ball/",
+    "kind": "remake"
+  },
+  {
+    "n": 121,
+    "id": "stack-crash",
+    "title": "叠崩",
+    "subtitle": "STACK",
+    "blurb": "叠上去，切齐才爽。",
+    "hue": 55,
+    "tag": "复刻",
+    "status": "queued",
+    "dir": "g/stack-crash/",
+    "kind": "remake"
+  },
+  {
+    "n": 122,
+    "id": "chain-boom",
+    "title": "连环",
+    "subtitle": "CHAIN",
+    "blurb": "点一个，炸一串。",
+    "hue": 280,
+    "tag": "复刻",
+    "status": "queued",
+    "dir": "g/chain-boom/",
+    "kind": "remake"
   }
 ]
