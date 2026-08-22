@@ -1503,7 +1503,7 @@
     "blurb": "沿着管壁开火，别让它们爬上来。",
     "hue": 275,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/tempest-tube/",
     "kind": "remake"
   },
@@ -1539,7 +1539,7 @@
     "blurb": "接上管子，让水通过。",
     "hue": 168,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/pipe-flow/",
     "kind": "remake"
   },
@@ -1577,6 +1577,30 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/lode-dig/",
+    "kind": "remake"
+  },
+  {
+    "n": 141,
+    "id": "cube-hop",
+    "title": "立体跳",
+    "subtitle": "QBERT",
+    "blurb": "在金字塔上跳，把格子全翻完。",
+    "hue": 28,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/cube-hop/",
+    "kind": "remake"
+  },
+  {
+    "n": 142,
+    "id": "ice-peak",
+    "title": "冰山",
+    "subtitle": "ICE",
+    "blurb": "敲冰块往上爬，别掉下去。",
+    "hue": 196,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/ice-peak/",
     "kind": "remake"
   }
 ]
