@@ -18,6 +18,14 @@ var FROG_HW = 0.32;
 var SWIPE_MIN = 24;
 var BEST_KEY = 'playbox-frog-hop-best';
 var MUTE_KEY = 'playbox-frog-hop-mute';
+var AUTO_SPEED_KEY = 'playbox-frog-hop-auto-speed';
+var AUTO_SPEED_NAME = ['', '慢', '中', '快', '极快'];
+var AUTO_DELAY = [0, 420, 200, 70, 0];
+var AUTO_HOP = 0.092;
+var AUTO_DT = 1 / 60;
+var AUTO_WAITS = [0, 0.05, 0.1, 0.16, 0.22, 0.3, 0.4, 0.52, 0.66, 0.82, 1.0, 1.22, 1.48];
+var AUTO_DIRS = [0, 3, 1, 2];
+var LOOK_WAITS = [0, 0.08, 0.18, 0.32, 0.5, 0.78, 1.1];
 var TAU = Math.PI * 2;
 var DIVE = { up: 2.65, sink: 0.72, down: 1.12, rise: 0.72 };
 var DIVE_FAST = { up: 1.85, sink: 0.56, down: 1.38, rise: 0.56 };
@@ -31,7 +39,7 @@ var PALS = [
 ];
 var KEY_DIR = {
   ArrowLeft: 3, ArrowRight: 1, ArrowUp: 0, ArrowDown: 2,
-  KeyA: 3, KeyD: 1, KeyW: 0, KeyS: 2
+  KeyD: 1, KeyW: 0, KeyS: 2
 };
 var DIR_XY = [
   { dx: 0, dy: -1 },
@@ -239,6 +247,259 @@ function hazardAt(x, y, lanes, clock) {
   return null;
 }
 
+function simWait(x, y, clock, lanes, dur) {
+  var row = frogRow(y);
+  var nx = x;
+  var left, step, ride, hz;
+  if (dur <= 0) return { dead: null, x: x, y: y, clock: clock };
+  if (isSafeRow(row) || row === HOME_ROW) {
+    return { dead: null, x: x, y: y, clock: clock + dur };
+  }
+  left = dur;
+  while (left > 1e-8) {
+    step = left > AUTO_DT ? AUTO_DT : left;
+    clock += step;
+    left -= step;
+    if (isRiver(row)) {
+      ride = findRide(nx, row, lanes, clock);
+      if (ride) nx += ride.lane.dir * ride.lane.speed * step;
+    }
+    if (carriedOff(nx)) return { dead: 'edge', x: nx, y: y, clock: clock };
+    if (isRoad(row)) {
+      if (carHit(nx, y, lanes, clock)) return { dead: 'car', x: nx, y: y, clock: clock };
+    } else {
+      hz = hazardAt(nx, y, lanes, clock);
+      if (hz) return { dead: hz, x: nx, y: y, clock: clock };
+    }
+  }
+  return { dead: null, x: nx, y: y, clock: clock };
+}
+
+function simHop(x, y, dir, clock, homes, lanes) {
+  var d = DIR_XY[dir];
+  var dest, nx, ny, hz, t, step, row, ride;
+  dest = hopTarget(x, y, d.dx, d.dy, homes);
+  if (!dest) return null;
+  nx = dest.x;
+  ny = dest.y;
+  if (dest.home >= 0) {
+    return { dead: null, x: nx, y: ny, clock: clock, home: dest.home };
+  }
+  hz = hazardAt(nx, ny, lanes, clock);
+  if (hz) return { dead: hz, x: nx, y: ny, clock: clock, home: -1 };
+  t = 0;
+  row = frogRow(ny);
+  while (t < AUTO_HOP - 1e-8) {
+    step = AUTO_HOP - t > AUTO_DT ? AUTO_DT : AUTO_HOP - t;
+    clock += step;
+    t += step;
+    if (isRiver(row)) {
+      ride = findRide(nx, row, lanes, clock);
+      if (ride) nx += ride.lane.dir * ride.lane.speed * step;
+    }
+    if (carriedOff(nx)) return { dead: 'edge', x: nx, y: ny, clock: clock, home: -1 };
+    if (isRoad(row) && carHit(nx, ny, lanes, clock)) {
+      return { dead: 'car', x: nx, y: ny, clock: clock, home: -1 };
+    }
+  }
+  hz = hazardAt(nx, ny, lanes, clock);
+  if (hz) return { dead: hz, x: nx, y: ny, clock: clock, home: -1 };
+  return { dead: null, x: nx, y: ny, clock: clock, home: -1 };
+}
+
+function survivalTime(x, y, clock, lanes, limit) {
+  var st, t = 0, slice;
+  if (limit == null) limit = 0.6;
+  if (isSafeRow(frogRow(y)) || frogRow(y) === HOME_ROW) return limit;
+  while (t < limit - 1e-8) {
+    slice = limit - t > 0.05 ? 0.05 : limit - t;
+    st = simWait(x, y, clock, lanes, slice);
+    t += slice;
+    if (st.dead) return t;
+    x = st.x;
+    y = st.y;
+    clock = st.clock;
+  }
+  return limit;
+}
+
+function nearestEmptyHomeX(x, homes, fly) {
+  var i, cx, d, best = 6.5, bestD = 99;
+  for (i = 0; i < HOME_COLS.length; i++) {
+    if (homes[i]) continue;
+    cx = HOME_COLS[i] + 0.5;
+    d = Math.abs(x - cx);
+    if (fly === i) d -= 0.9;
+    if (d < bestD) {
+      bestD = d;
+      best = cx;
+    }
+  }
+  return best;
+}
+
+function landingOk(st, homes, lanes, hold) {
+  var surv, i, w, mid, hop, di, dir;
+  if (!st || st.dead) return false;
+  if (st.home >= 0) return true;
+  surv = survivalTime(st.x, st.y, st.clock, lanes, 0.55);
+  if (surv >= Math.min(0.24, hold + 0.06)) return true;
+  for (i = 0; i < LOOK_WAITS.length; i++) {
+    w = LOOK_WAITS[i];
+    if (w > 0.5) break;
+    mid = w ? simWait(st.x, st.y, st.clock, lanes, w) : { dead: null, x: st.x, y: st.y, clock: st.clock };
+    if (mid.dead) return false;
+    for (di = 0; di < 3; di++) {
+      dir = AUTO_DIRS[di];
+      hop = simHop(mid.x, mid.y, dir, mid.clock, homes, lanes);
+      if (hop && !hop.dead) return true;
+    }
+  }
+  return surv >= 0.12;
+}
+
+function soonestUp(x, y, clock, homes, lanes, maxWait, hold) {
+  var i, w, held, hop;
+  for (i = 0; i < AUTO_WAITS.length; i++) {
+    w = AUTO_WAITS[i];
+    if (w > maxWait) break;
+    held = w ? simWait(x, y, clock, lanes, w) : { dead: null, x: x, y: y, clock: clock };
+    if (held.dead) return null;
+    hop = simHop(held.x, held.y, 0, held.clock, homes, lanes);
+    if (hop && !hop.dead && landingOk(hop, homes, lanes, hold)) {
+      return { dir: 0, wait: w, st: hop };
+    }
+  }
+  return null;
+}
+
+function scoreLanding(x, y, clock, homes, lanes, fly, dir, wait, hold) {
+  var row = frogRow(y);
+  var target = nearestEmptyHomeX(x, homes, fly);
+  var survive = survivalTime(x, y, clock, lanes, Math.max(0.7, hold + 0.2));
+  var s = (START_ROW - row) * 560;
+  s -= Math.abs(x - target) * (row <= 4 ? 48 : (row <= 8 ? 16 : 8));
+  s += Math.min(survive, 0.7) * 110;
+  s -= wait * 10;
+  if (dir === 0) s += 140;
+  if (dir === 2) s -= 420;
+  if (dir === 1 || dir === 3) s -= 24;
+  if (isRiver(row)) {
+    if (x < 0.65 || x > COLS - 0.65) s -= 1200;
+    else if (x < 1.35 || x > COLS - 1.35) s -= 220;
+  }
+  if (isSafeRow(row)) s += 50;
+  if (survive < hold) s -= 700 + (hold - survive) * 800;
+  if (survive < 0.16) s -= 400;
+  return s;
+}
+
+function pickAutoHop(x, y, clock, homes, lanes, fly, hold) {
+  var row = frogRow(y);
+  var danger, wi, di, dir, w, held, st, s, best, bestS, up, chain, k, cx, cy, cc, nxt;
+  if (hold == null) hold = 0.12;
+  danger = !isSafeRow(row) && survivalTime(x, y, clock, lanes, 0.18) < 0.16;
+
+  up = soonestUp(x, y, clock, homes, lanes, danger ? 0.08 : 1.48, hold);
+  if (up) return { dir: 0, wait: up.wait };
+
+  bestS = -1e12;
+  best = null;
+  for (wi = 0; wi < AUTO_WAITS.length; wi++) {
+    w = AUTO_WAITS[wi];
+    if (danger && w > 0.1) break;
+    held = w ? simWait(x, y, clock, lanes, w) : { dead: null, x: x, y: y, clock: clock };
+    if (held.dead) break;
+    for (di = 0; di < AUTO_DIRS.length; di++) {
+      dir = AUTO_DIRS[di];
+      if (dir === 0) continue;
+      if (dir === 2 && !danger && (row >= MEDIAN_ROW || row <= 2)) continue;
+      st = simHop(held.x, held.y, dir, held.clock, homes, lanes);
+      if (!st || st.dead) continue;
+      if (st.home >= 0) {
+        s = 60000 + (fly === st.home ? 800 : 0) - w * 25;
+      } else {
+        s = scoreLanding(st.x, st.y, st.clock, homes, lanes, fly, dir, w, hold);
+        nxt = soonestUp(st.x, st.y, st.clock, homes, lanes, 1.35, hold);
+        if (nxt) {
+          s += 900 - nxt.wait * 40;
+          if (nxt.st.home >= 0) s += 8000 + (fly === nxt.st.home ? 400 : 0);
+          else {
+            chain = 1;
+            cx = nxt.st.x;
+            cy = nxt.st.y;
+            cc = nxt.st.clock;
+            for (k = 0; k < 2; k++) {
+              nxt = soonestUp(cx, cy, cc, homes, lanes, 1.1, hold);
+              if (!nxt) break;
+              chain += 1;
+              if (nxt.st.home >= 0) {
+                chain += 5;
+                break;
+              }
+              cx = nxt.st.x;
+              cy = nxt.st.y;
+              cc = nxt.st.clock;
+            }
+            s += chain * 280;
+          }
+        } else {
+          s -= 180;
+        }
+      }
+      if (s > bestS) {
+        bestS = s;
+        best = { dir: dir, wait: w };
+      }
+    }
+  }
+  return best;
+}
+
+function autoPlayToHome(round, clock0, homes0) {
+  var homes = homes0 || emptyHomes();
+  var lanes = buildLanes(round || 1);
+  var x = 6.5;
+  var y = START_ROW + 0.5;
+  var clock = clock0 || 0;
+  var hops = 0;
+  var guard = 0;
+  var side = 0;
+  var fwd = 0;
+  var plan, held, st;
+  while (hops < 48 && guard < 280) {
+    guard += 1;
+    plan = pickAutoHop(x, y, clock, homes, lanes, -1, 0.12);
+    if (!plan) {
+      held = simWait(x, y, clock, lanes, 0.06);
+      if (held.dead) return { ok: false, why: held.dead, hops: hops, y: y };
+      x = held.x;
+      y = held.y;
+      clock = held.clock;
+      continue;
+    }
+    if (plan.wait > 0) {
+      held = simWait(x, y, clock, lanes, plan.wait);
+      if (held.dead) return { ok: false, why: held.dead, hops: hops, y: y, dir: plan.dir };
+      x = held.x;
+      y = held.y;
+      clock = held.clock;
+    }
+    st = simHop(x, y, plan.dir, clock, homes, lanes);
+    if (!st || st.dead) return { ok: false, why: st && st.dead, hops: hops, dir: plan.dir, y: y };
+    hops += 1;
+    if (plan.dir === 0) fwd += 1;
+    else if (plan.dir === 1 || plan.dir === 3) side += 1;
+    x = st.x;
+    y = st.y;
+    clock = st.clock;
+    if (st.home >= 0) {
+      return { ok: true, hops: hops, home: st.home, fwd: fwd, side: side, clock: clock };
+    }
+  }
+  return { ok: false, why: 'timeout', hops: hops, y: y, fwd: fwd, side: side };
+}
+
 function buildLanes(round) {
   var m = roundMul(round);
   var dive = diveSpec(round);
@@ -432,6 +693,46 @@ function selfCheck() {
   homes = emptyHomes();
   for (i = 0; i < 5; i++) homes[i] = true;
   if (!homesFilled(homes)) throw new Error('five homes clear round');
+
+  lanes = buildLanes(1);
+  homes = emptyHomes();
+  t = simHop(6.5, 10.5, 0, 0, homes, lanes);
+  if (!t || !t.dead) throw new Error('auto sim hop into car at t0');
+  if (simHop(6.5, 10.5, 2, 0, homes, lanes)) throw new Error('auto sim cannot hop off start');
+  t = pickAutoHop(6.5, 10.5, 0, homes, lanes, -1, 0.12);
+  if (!t) throw new Error('auto plans from start');
+  if (t.dir === 0 && t.wait < 0.05) throw new Error('auto must not hop into first car');
+  s = autoPlayToHome(1, 0);
+  if (!s.ok) throw new Error('auto must cross round1: ' + s.why + ' hops=' + s.hops + ' y=' + s.y);
+  if (s.fwd < 8) throw new Error('auto must hop forward not wiggle fwd=' + s.fwd);
+  if (s.side > s.fwd) throw new Error('auto wiggled side=' + s.side + ' fwd=' + s.fwd);
+  s = autoPlayToHome(1, 2.4);
+  if (!s.ok) throw new Error('auto must cross later clock: ' + s.why);
+  s = autoPlayToHome(3, 0.8);
+  if (!s.ok) throw new Error('auto must cross round3: ' + s.why + ' hops=' + s.hops);
+  homes = emptyHomes();
+  for (i = 0; i < 5; i++) {
+    s = autoPlayToHome(1, 0.35 * i, homes);
+    if (!s.ok) throw new Error('auto fill home ' + i + ': ' + s.why + ' y=' + s.y);
+    if (homes[s.home]) throw new Error('auto reused occupied home');
+    homes[s.home] = true;
+    if (s.fwd < 8) throw new Error('auto fill wiggle fwd=' + s.fwd);
+  }
+  if (!homesFilled(homes)) throw new Error('auto did not fill five homes');
+}
+
+function loadAutoSpeed() {
+  try {
+    var n = parseInt(localStorage.getItem(AUTO_SPEED_KEY) || '3', 10);
+    if (!isFinite(n) || n < 1 || n > 4) return 3;
+    return n;
+  } catch (e) {
+    return 3;
+  }
+}
+
+function saveAutoSpeed(n) {
+  try { localStorage.setItem(AUTO_SPEED_KEY, String(n)); } catch (e) { /* ignore */ }
 }
 
 selfCheck();
@@ -455,6 +756,9 @@ var btnClassic = document.getElementById('btn-classic');
 var btnNight = document.getElementById('btn-night');
 var btnMute = document.getElementById('btn-mute');
 var btnRetry = document.getElementById('btn-retry');
+var btnAuto = document.getElementById('btn-auto');
+var speedEl = document.getElementById('speed');
+var speedLab = document.getElementById('speed-lab');
 var scoreEl = document.getElementById('score');
 var roundEl = document.getElementById('round');
 var bestEl = document.getElementById('best');
@@ -468,6 +772,10 @@ var pipsEl = document.getElementById('pips');
 var toastEl = document.getElementById('toast');
 var hintEl = document.getElementById('hint');
 var motionQ = window.matchMedia('(prefers-reduced-motion: reduce)');
+var autoOn = false;
+var autoSpeed = loadAutoSpeed();
+var autoPlan = null;
+var autoMs = 0;
 
 var dpr = 1;
 var cssW = 0;
@@ -824,9 +1132,9 @@ function hudPlay() {
   syncTimeBar();
   modeLabel.textContent = G.night ? '夜路' : '经典';
   modeLabel.classList.toggle('night', G.night);
-  hintEl.textContent = G.night
-    ? '夜路只剩车灯 · 方向键或滑动 · R 重开'
-    : '方向键或滑动 · 车撞即死 · 水要踩木 · 龟会沉';
+  hintEl.textContent = (autoOn ? '托管中 · ' : '') + (G.night
+    ? '夜路只剩车灯 · A 自动 · R 重开'
+    : '方向键或滑动 · A 自动 · 水要踩木 · 龟会沉');
 }
 
 function showTitle() {
@@ -836,10 +1144,10 @@ function showTitle() {
   panelEl.className = 'panel';
   ovTitle.textContent = '蛙路';
   ovLead.textContent = '过马路过河，别被撞。填满五个家。';
-  ovOps.textContent = '方向键或滑动起跳 · 点一下向前 · R 重开 · M 静音';
+  ovOps.textContent = '方向键或滑动起跳 · 点一下向前 · A 自动 · R 重开 · M 静音';
   ovStart.classList.remove('gone');
   ovEnd.classList.add('gone');
-  hintEl.textContent = '方向键或滑动 · 车撞即死 · 水要踩木 · 龟会沉';
+  hintEl.textContent = '方向键或滑动 · A 自动 · 车撞即死 · 水要踩木 · 龟会沉';
 }
 
 function showOver() {
@@ -851,7 +1159,7 @@ function showOver() {
   ovTitle.textContent = '命尽';
   ovLead.textContent = '第 ' + G.round + ' 轮 · ' + G.score + ' 分 · 连跳最高 ×' + G.maxCombo +
     (G.why ? ' · ' + whyText(G.why) : '');
-  ovOps.textContent = 'R 或「再来」重开 · 顶栏重开随时可用';
+  ovOps.textContent = 'R 或「再来」重开 · A 自动 · 顶栏重开随时可用';
   ovStart.classList.add('gone');
   ovEnd.classList.remove('gone');
   ovRetry.focus();
@@ -901,6 +1209,8 @@ function startRun(kind) {
   G.flyCd = rand(6, 11);
   G.tickWarn = 0;
   G.why = '';
+  autoPlan = null;
+  autoMs = 0;
   resetFx();
   overlayEl.classList.add('hidden');
   overlayEl.setAttribute('aria-hidden', 'true');
@@ -1108,6 +1418,8 @@ function respawnOrOver() {
   G.pending = -1;
   G.lock = 0;
   G.tickWarn = 0;
+  autoPlan = null;
+  autoMs = 0;
   syncTimeBar();
 }
 
@@ -1208,6 +1520,7 @@ function stepWorld(dt) {
   hz = hazardAt(f.x, f.y, G.lanes, G.clock);
   if (hz) kill(hz);
   stepFly(dt);
+  if (autoOn) tickAuto(dt);
 }
 
 function stepFx(dt) {
@@ -1776,15 +2089,79 @@ function draw() {
   c.restore();
 }
 
+/* ---- autoplay ---- */
+function holdForSpeed() {
+  return 0.1 + AUTO_DELAY[autoSpeed] / 1000;
+}
+
+function tickAuto(dt) {
+  var plan, check, surv;
+  if (!autoOn || G.mode !== 'play') return;
+  if (G.lock > 0 || G.frog.dead) return;
+  if (G.frog.hopT < 1) return;
+  autoMs += dt;
+  surv = survivalTime(G.frog.x, G.frog.y, G.clock, G.lanes, 0.16);
+  if (autoMs < AUTO_DELAY[autoSpeed] / 1000 && surv >= 0.16) return;
+  if (!autoPlan) {
+    plan = pickAutoHop(G.frog.x, G.frog.y, G.clock, G.homes, G.lanes, G.fly, holdForSpeed());
+    if (!plan) return;
+    autoPlan = { dir: plan.dir, at: G.clock + plan.wait };
+  }
+  if (G.clock + 1e-4 < autoPlan.at && surv >= 0.14) return;
+  check = simHop(G.frog.x, G.frog.y, autoPlan.dir, G.clock, G.homes, G.lanes);
+  if (!check || check.dead) {
+    autoPlan = null;
+    return;
+  }
+  tryHop(autoPlan.dir);
+  autoPlan = null;
+  autoMs = 0;
+}
+
+function syncAutoUi() {
+  btnAuto.classList.toggle('on', autoOn);
+  btnAuto.setAttribute('aria-pressed', autoOn ? 'true' : 'false');
+  btnAuto.textContent = autoOn ? '停下' : '自动';
+  btnAuto.setAttribute('aria-label', autoOn ? '停止自动' : '自动');
+}
+
+function syncSpeedUi() {
+  speedEl.value = String(autoSpeed);
+  speedLab.textContent = AUTO_SPEED_NAME[autoSpeed];
+  speedEl.title = AUTO_SPEED_NAME[autoSpeed];
+  speedEl.setAttribute('aria-valuetext', AUTO_SPEED_NAME[autoSpeed]);
+}
+
+function toggleAuto() {
+  autoOn = !autoOn;
+  autoPlan = null;
+  autoMs = 0;
+  G.pending = -1;
+  syncAutoUi();
+  if (autoOn) {
+    audio.ensure();
+    if (G.mode === 'title') startRun('classic');
+  }
+  if (G.mode === 'play' || G.mode === 'deadwait') hudPlay();
+}
+
+function setAutoSpeed(n) {
+  if (n < 1 || n > 4 || !isFinite(n)) n = 3;
+  autoSpeed = n;
+  saveAutoSpeed(autoSpeed);
+  syncSpeedUi();
+}
+
 /* ---- input ---- */
 var swipe = { on: false, x: 0, y: 0, id: 0 };
 
 function playingInput() {
-  return G.mode === 'play' && G.lock <= 0 && !G.frog.dead;
+  return G.mode === 'play' && G.lock <= 0 && !G.frog.dead && !autoOn;
 }
 
 function onDir(dir) {
   audio.ensure();
+  if (autoOn) return;
   if (G.mode === 'title') return;
   if (G.mode === 'over') return;
   tryHop(dir);
@@ -1808,6 +2185,13 @@ function onKey(e) {
     restart();
     return;
   }
+  if (e.code === 'KeyA' || e.key === 'a' || e.key === 'A') {
+    if (e.repeat) return;
+    e.preventDefault();
+    toggleAuto();
+    return;
+  }
+  if (e.target === speedEl) return;
   if (G.mode === 'title') {
     if (e.code === 'Enter' || e.code === 'Space' || e.code === 'Digit1') {
       e.preventDefault();
@@ -1828,6 +2212,7 @@ function onKey(e) {
   dir = KEY_DIR[e.code];
   if (dir == null) return;
   e.preventDefault();
+  if (autoOn) return;
   onDir(dir);
 }
 
@@ -1902,6 +2287,8 @@ function boot() {
   G.best = loadBest();
   bestEl.textContent = String(G.best);
   audio.setMuted(loadMute());
+  syncAutoUi();
+  syncSpeedUi();
   renderPips();
   hudPlay();
   showTitle();
@@ -1914,10 +2301,13 @@ function boot() {
   canvas.addEventListener('pointercancel', onPtrCancel);
   canvas.addEventListener('contextmenu', function (e) { e.preventDefault(); });
   btnMute.addEventListener('click', function () { audio.setMuted(!audio.muted); });
+  btnAuto.addEventListener('click', function () { toggleAuto(); });
   btnRetry.addEventListener('click', function () { restart(); });
   ovRetry.addEventListener('click', function () { restart(); });
   btnClassic.addEventListener('click', function () { startRun('classic'); });
   btnNight.addEventListener('click', function () { startRun('night'); });
+  speedEl.addEventListener('input', function () { setAutoSpeed(parseInt(speedEl.value, 10)); });
+  speedEl.addEventListener('change', function () { setAutoSpeed(parseInt(speedEl.value, 10)); });
   document.addEventListener('visibilitychange', function () {
     hidden = document.hidden;
     if (!hidden) lastTs = 0;
