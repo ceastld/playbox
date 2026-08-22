@@ -638,6 +638,7 @@ var score = 0;
 var best = loadBest();
 var wonThisRun = false;
 var overlayMode = null; /* 'win' | 'lose' | null */
+var lostPeek = false;
 var sprites = [];
 var nextId = 1;
 var sliding = false;
@@ -739,8 +740,13 @@ function overlayOpen() {
   return overlayMode !== null;
 }
 
+function inputBlocked() {
+  return overlayMode !== null || lostPeek;
+}
+
 function hideOverlay() {
   overlayMode = null;
+  lostPeek = false;
   overlayEl.classList.add('hidden');
   overlayEl.setAttribute('aria-hidden', 'true');
   boardEl.focus({ preventScroll: true });
@@ -892,7 +898,7 @@ function finishTravel(now) {
   }
   if (!canMove(grid)) {
     queued = null;
-    showOverlay('lose', '没有空位了', '没有能合并的格子了。');
+    showOverlay('lose', '没有空位了', '点空白处可看棋盘。');
     sfx.lose();
     return;
   }
@@ -910,7 +916,7 @@ function finishTravel(now) {
 
 function tryMove(dir) {
   if (!DIRS[dir]) return;
-  if (overlayOpen()) return;
+  if (inputBlocked()) return;
   if (sliding) {
     if (!autoOn) queued = dir;
     return;
@@ -1020,7 +1026,7 @@ function swipeFrom(dx, dy) {
 }
 
 boardEl.addEventListener('touchstart', function (e) {
-  if (overlayOpen()) return;
+  if (inputBlocked()) return;
   var t = e.changedTouches[0];
   if (!t) return;
   tracking = true;
@@ -1047,7 +1053,7 @@ boardEl.addEventListener('touchcancel', function () {
 boardEl.addEventListener('pointerdown', function (e) {
   if (e.pointerType === 'touch') return;
   if (e.button !== 0) return;
-  if (overlayOpen()) return;
+  if (inputBlocked()) return;
   pointerTracking = true;
   pointerX = e.clientX;
   pointerY = e.clientY;
@@ -1085,7 +1091,7 @@ window.addEventListener('keydown', function (e) {
     return;
   }
   if (e.target === speedEl) return;
-  if (overlayOpen() || autoOn) {
+  if (inputBlocked() || autoOn) {
     if (key === 'ArrowLeft' || key === 'ArrowRight' || key === 'ArrowUp' || key === 'ArrowDown' ||
         key === 'w' || key === 'W' || key === 's' || key === 'S' || key === 'd' || key === 'D') {
       e.preventDefault();
@@ -1121,19 +1127,19 @@ function clearAutoTimer() {
 function scheduleAuto() {
   clearAutoTimer();
   if (!autoOn) return;
-  if (overlayOpen()) return;
+  if (inputBlocked()) return;
   autoTid = setTimeout(autoStep, AUTO_DELAY[autoSpeed]);
 }
 
 function autoStep() {
   autoTid = 0;
   if (!autoOn) return;
-  if (overlayOpen()) return;
+  if (inputBlocked()) return;
   if (sliding) return;
   var dir = pickAiMove(grid);
   if (!dir) return;
   tryMove(dir);
-  if (autoOn && !sliding && !overlayOpen()) scheduleAuto();
+  if (autoOn && !sliding && !inputBlocked()) scheduleAuto();
 }
 
 function syncAutoBtn() {
@@ -1181,6 +1187,26 @@ btnMute.addEventListener('click', toggleMute);
 btnAuto.addEventListener('click', toggleAuto);
 btnRetry.addEventListener('click', function () { newGame(); });
 ovRetry.addEventListener('click', function () { newGame(); });
+overlayEl.addEventListener('click', function (e) {
+  if (e.target !== overlayEl) return;
+  if (overlayMode === 'win') {
+    wonThisRun = true;
+    hideOverlay();
+    if (!canMove(grid)) {
+      lostPeek = true;
+      showOverlay('lose', '没有空位了', '点空白处可看棋盘。');
+      sfx.lose();
+      return;
+    }
+    if (autoOn) scheduleAuto();
+    return;
+  }
+  if (overlayMode === 'lose') {
+    lostPeek = true;
+    hideOverlay();
+  }
+});
+panelEl.addEventListener('click', function (e) { e.stopPropagation(); });
 speedEl.addEventListener('input', onSpeedInput);
 speedEl.addEventListener('change', onSpeedInput);
 ovContinue.addEventListener('click', function () {
@@ -1188,7 +1214,7 @@ ovContinue.addEventListener('click', function () {
   wonThisRun = true;
   hideOverlay();
   if (!canMove(grid)) {
-    showOverlay('lose', '没有空位了', '没有能合并的格子了。');
+    showOverlay('lose', '没有空位了', '点空白处可看棋盘。');
     sfx.lose();
     return;
   }
