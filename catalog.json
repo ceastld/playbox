@@ -3128,5 +3128,53 @@
     "dir": "g/excitebike/",
     "url": "./g/excitebike/",
     "kind": "remake"
+  },
+  {
+    "n": 279,
+    "id": "bionic",
+    "title": "仿生",
+    "subtitle": "BION",
+    "blurb": "甩臂钩墙，把机兵从平台上拽下来。",
+    "hue": 118,
+    "tag": "复刻",
+    "dir": "g/bionic/",
+    "url": "./g/bionic/",
+    "kind": "remake"
+  },
+  {
+    "n": 282,
+    "id": "splatterhouse",
+    "title": "血屋",
+    "subtitle": "SPLAT",
+    "blurb": "戴面具挥斩，把怪物打出汁来。",
+    "hue": 0,
+    "tag": "复刻",
+    "dir": "g/splatterhouse/",
+    "url": "./g/splatterhouse/",
+    "kind": "remake"
+  },
+  {
+    "n": 283,
+    "id": "ninja-spirit",
+    "title": "忍魂",
+    "subtitle": "SPIR",
+    "blurb": "化身三忍，把关卡里的妖切开。",
+    "hue": 348,
+    "tag": "复刻",
+    "dir": "g/ninja-spirit/",
+    "url": "./g/ninja-spirit/",
+    "kind": "remake"
+  },
+  {
+    "n": 284,
+    "id": "toki",
+    "title": "猿人",
+    "subtitle": "TOKI",
+    "blurb": "吐火跳跃，把女友从巫师手里救回。",
+    "hue": 32,
+    "tag": "复刻",
+    "dir": "g/toki/",
+    "url": "./g/toki/",
+    "kind": "remake"
   }
 ]

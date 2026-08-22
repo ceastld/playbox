@@ -3243,7 +3243,7 @@
     "blurb": "甩臂钩墙，把机兵从平台上拽下来。",
     "hue": 118,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/bionic/",
     "kind": "remake"
   },
@@ -3279,7 +3279,7 @@
     "blurb": "戴面具挥斩，把怪物打出汁来。",
     "hue": 0,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/splatterhouse/",
     "kind": "remake"
   },
@@ -3291,7 +3291,7 @@
     "blurb": "化身三忍，把关卡里的妖切开。",
     "hue": 348,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/ninja-spirit/",
     "kind": "remake"
   },
@@ -3303,7 +3303,7 @@
     "blurb": "吐火跳跃，把女友从巫师手里救回。",
     "hue": 32,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/toki/",
     "kind": "remake"
   },
@@ -3317,6 +3317,54 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/kiwi/",
+    "kind": "remake"
+  },
+  {
+    "n": 286,
+    "id": "cyber-nator",
+    "title": "机甲",
+    "subtitle": "CYBR",
+    "blurb": "驾驶机甲扫射，把地面炮台打穿。",
+    "hue": 168,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/cyber-nator/",
+    "kind": "remake"
+  },
+  {
+    "n": 287,
+    "id": "netherworld",
+    "title": "冥界",
+    "subtitle": "NETH",
+    "blurb": "恶魔吐火，把宝石从石像里打出来。",
+    "hue": 286,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/netherworld/",
+    "kind": "remake"
+  },
+  {
+    "n": 288,
+    "id": "twin-hawk",
+    "title": "双鹰",
+    "subtitle": "HAWK",
+    "blurb": "俯冲轰炸，把坦克编队炸开。",
+    "hue": 142,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/twin-hawk/",
+    "kind": "remake"
+  },
+  {
+    "n": 289,
+    "id": "rolling-thunder",
+    "title": "滚雷",
+    "subtitle": "ROLL",
+    "blurb": "贴墙射击，躲进门里换弹。",
+    "hue": 8,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/rolling-thunder/",
     "kind": "remake"
   }
 ]
