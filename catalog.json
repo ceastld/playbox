@@ -2096,5 +2096,17 @@
     "dir": "g/star-force/",
     "url": "./g/star-force/",
     "kind": "remake"
+  },
+  {
+    "n": 195,
+    "id": "alex-leap",
+    "title": "仙境",
+    "subtitle": "ALEX",
+    "blurb": "拳打石头，摸出道具。",
+    "hue": 44,
+    "tag": "复刻",
+    "dir": "g/alex-leap/",
+    "url": "./g/alex-leap/",
+    "kind": "remake"
   }
 ]

@@ -2235,7 +2235,7 @@
     "blurb": "拳打石头，摸出道具。",
     "hue": 44,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/alex-leap/",
     "kind": "remake"
   },
@@ -2285,6 +2285,18 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/mr-do/",
+    "kind": "remake"
+  },
+  {
+    "n": 200,
+    "id": "pengo-push",
+    "title": "推冰",
+    "subtitle": "PENGO",
+    "blurb": "推冰块砸蜜蜂。",
+    "hue": 188,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/pengo-push/",
     "kind": "remake"
   }
 ]
