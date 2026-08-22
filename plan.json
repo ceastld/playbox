@@ -1407,7 +1407,7 @@
     "blurb": "拧着打，碎成小块。",
     "hue": 24,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/rock-spin/",
     "kind": "remake"
   },
@@ -1419,7 +1419,7 @@
     "blurb": "甩进去，空心最爽。",
     "hue": 18,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/dunk-rim/",
     "kind": "remake"
   },
@@ -1457,6 +1457,30 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/qix-cut/",
+    "kind": "remake"
+  },
+  {
+    "n": 131,
+    "id": "kaboom-catch",
+    "title": "接弹",
+    "subtitle": "KABOOM",
+    "blurb": "接住炸弹，别让它落地。",
+    "hue": 8,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/kaboom-catch/",
+    "kind": "remake"
+  },
+  {
+    "n": 132,
+    "id": "dot-munch",
+    "title": "豆径",
+    "subtitle": "PAC",
+    "blurb": "吃光豆子，躲鬼。",
+    "hue": 48,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/dot-munch/",
     "kind": "remake"
   }
 ]

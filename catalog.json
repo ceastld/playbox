@@ -1268,5 +1268,29 @@
     "dir": "g/bubble-shot/",
     "url": "./g/bubble-shot/",
     "kind": "remake"
+  },
+  {
+    "n": 126,
+    "id": "rock-spin",
+    "title": "岩旋",
+    "subtitle": "ROCKS",
+    "blurb": "拧着打，碎成小块。",
+    "hue": 24,
+    "tag": "复刻",
+    "dir": "g/rock-spin/",
+    "url": "./g/rock-spin/",
+    "kind": "remake"
+  },
+  {
+    "n": 127,
+    "id": "dunk-rim",
+    "title": "灌筐",
+    "subtitle": "DUNK",
+    "blurb": "甩进去，空心最爽。",
+    "hue": 18,
+    "tag": "复刻",
+    "dir": "g/dunk-rim/",
+    "url": "./g/dunk-rim/",
+    "kind": "remake"
   }
 ]
