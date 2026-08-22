@@ -29,8 +29,11 @@
   const SWIPE = 22;
   const BEST_KEY = 'playbox-chackn-pop-best';
   const MUTE_KEY = 'playbox-chackn-pop-mute';
+  const AUTO_SPEED_KEY = 'playbox-chackn-pop-auto-speed';
+  const SPEED_LABELS = ['', '慢', '中', '快', '极快'];
+  const AUTO_SCALE = [1, 0.52, 0.78, 1, 3.4];
   const LETTERS = 'EXTEND';
-  const OPS = '方向键 / WASD 走跳 · 空格丢弹 · R 重开 · M 静音';
+  const OPS = '方向键走跳 · WASD 上右下 · 空格丢弹 · A 自动 · R 重开 · M 静音';
 
   const MAG = [255, 61, 184];
   const CYN = [0, 240, 255];
@@ -297,6 +300,8 @@
     }
     const jumpH = (JUMP_V * JUMP_V) / (2 * GRAV);
     if (jumpH < 3.2 || jumpH > 4.4) throw new Error('jump height ' + jumpH);
+    if (SPEED_LABELS.length !== 5 || SPEED_LABELS[3] !== '快') throw new Error('auto speed labels');
+    if (AUTO_SCALE[3] !== 1 || AUTO_SCALE[4] < 2) throw new Error('auto scale');
     if (Math.floor(5.05 + 0.02) !== 5) throw new Error('land snap');
     const g = new Uint8Array(COLS * ROWS);
     for (let r = 0; r < ROWS; r++) {
@@ -353,6 +358,9 @@
   const ovMenu = el('ov-menu');
   const btnMute = el('btn-mute');
   const btnRetry = el('btn-retry');
+  const btnAuto = el('btn-auto');
+  const speedEl = el('speed');
+  const speedLab = el('speed-lab');
   const modeSave = el('mode-save');
   const modeChase = el('mode-chase');
   const scoreEl = el('score');
@@ -433,6 +441,21 @@
     need: 0,
     saved: 0
   };
+
+  let autoOn = false;
+  let autoSpeed = 3;
+  let autoFleeT = 0;
+  let autoFleeC = -1;
+  let autoBombT = 0;
+  let autoStuck = 0;
+  let autoLastX = 0;
+  let autoLastY = 0;
+  let autoWinWait = 0;
+  let autoHoldJump = false;
+  let autoStamp = 1;
+  let autoNav = null;
+  let autoNavStamp = 0;
+  let autoDropLock = 0;
 
   const audio = {
     ctx: null,
@@ -593,6 +616,22 @@
     } catch (err) { /* ignore */ }
   }
 
+  function loadAutoSpeed() {
+    try {
+      const n = parseInt(localStorage.getItem(AUTO_SPEED_KEY) || '3', 10);
+      if (!isFinite(n) || n < 1 || n > 4) return 3;
+      return n;
+    } catch (err) {
+      return 3;
+    }
+  }
+
+  function saveAutoSpeed(n) {
+    try {
+      localStorage.setItem(AUTO_SPEED_KEY, String(n));
+    } catch (err) { /* ignore */ }
+  }
+
   function addScore(n, x, y) {
     if (n <= 0) return;
     if (G.mode !== 'play' && G.mode !== 'win') return;
@@ -749,7 +788,7 @@
         if (ovLead) ovLead.textContent = st.name + ' 的心都回来了。下一关卵更密。';
         if (ovAgain) ovAgain.textContent = '下一关';
       }
-      if (ovOps) ovOps.textContent = 'R 重开 · 空格下一关';
+      if (ovOps) ovOps.textContent = 'R 重开 · 空格下一关 · A 自动';
       if (ovMenu) ovMenu.textContent = '换模式';
     } else {
       if (ovKicker) ovKicker.textContent = 'DOWN';
@@ -770,8 +809,14 @@
 
   function hitStop(ms) {
     if (REDUCE) return;
+    if (autoOn && autoSpeed >= 4) return;
     const t = clamp(ms / 1000, 0.03, 0.08);
     G.stop = Math.max(G.stop, t);
+  }
+
+  function bumpAutoNav() {
+    autoStamp += 1;
+    autoNav = null;
   }
 
   function emit(n, spec) {
@@ -875,6 +920,10 @@
     }
     if (a.x < 1.2) a.x = 1.2;
     if (a.x > COLS - 1.2) a.x = COLS - 1.2;
+    if (a.y < 1.08) {
+      a.y = 1.08;
+      if (a.vy < 0) a.vy = 0;
+    }
     if (a.y > ROWS - 0.05) {
       a.y = ROWS - 1;
       a.vy = 0;
@@ -1008,6 +1057,14 @@
     G.stop = 0;
     G.combo = 1;
     G.comboT = 0;
+    autoFleeT = 0;
+    autoFleeC = -1;
+    autoBombT = 0;
+    autoStuck = 0;
+    autoHoldJump = false;
+    autoDropLock = 0;
+    autoWinWait = 0;
+    bumpAutoNav();
   }
 
   function bumpCombo() {
@@ -1054,6 +1111,7 @@
       }
     }
     G.smokes.push({ c: col, t: SMOKE_T });
+    bumpAutoNav();
     audio.boom();
     if (!REDUCE) G.shake = Math.max(G.shake, 9 + freed * 2);
     G.flash = 0.22;
@@ -1261,7 +1319,7 @@
     hideOverlay();
     const st = STAGES[0];
     toast(st.name);
-    setHint(st.hint);
+    playHint();
     audio.start();
     syncHud();
   }
@@ -1274,7 +1332,7 @@
       hideOverlay();
       const st = STAGES[G.stage];
       toast(st.name);
-      setHint(st.hint);
+      playHint();
       audio.start();
       syncHud();
       return;
@@ -1296,7 +1354,7 @@
     G.got = [0, 0, 0, 0, 0, 0];
     buildStage(0, true);
     showOverlay('title');
-    setHint('走跳 · 空格丢弹炸开一列 · 心弹出再接住 · 字母凑齐 EXTEND');
+    playHint();
     syncHud();
   }
 
@@ -1310,11 +1368,699 @@
   }
 
   function wishX() {
+    if (autoOn) {
+      let ax = 0;
+      if (keys.l) ax -= 1;
+      if (keys.r) ax += 1;
+      return ax;
+    }
     if (ptr.down && ptr.dragging && ptr.dir !== 0) return ptr.dir;
     let x = 0;
     if (keys.l) x -= 1;
     if (keys.r) x += 1;
     return x;
+  }
+
+  function hypot2(dx, dy) {
+    return dx * dx + dy * dy;
+  }
+
+  function canStandAt(c, r) {
+    return inb(c, r) && solid(c, r) && !solid(c, r - 1);
+  }
+
+  function fallLand(c, fromR) {
+    if (!inb(c, 0)) return -1;
+    const start = fromR < 1 ? 1 : fromR;
+    for (let r = start; r < ROWS; r++) {
+      if (solid(c, r)) return r;
+    }
+    return -1;
+  }
+
+  function standCell() {
+    const p = G.player;
+    const c = clamp(Math.floor(p.x), 1, COLS - 2);
+    if (p.on) {
+      let r = Math.floor(p.y + 0.02);
+      if (r < 1) r = 1;
+      if (canStandAt(c, r)) return { c: c, r: r };
+      if (canStandAt(c, r + 1)) return { c: c, r: r + 1 };
+      if (canStandAt(c, r - 1)) return { c: c, r: r - 1 };
+    }
+    const land = fallLand(c, Math.max(1, Math.floor(p.y)));
+    return { c: c, r: land > 0 ? land : ROWS - 1 };
+  }
+
+  function autoCanJump(c0, r0, c1, r1) {
+    if (r1 >= r0 || r0 - r1 > 4 || r0 - r1 < 2) return false;
+    if (Math.abs(c1 - c0) > 2 || c1 === c0) return false;
+    if (!canStandAt(c1, r1)) return false;
+    if (solid(c0, r1)) return false;
+    const a = { x: c0 + 0.5, y: r0, vx: 0, vy: JUMP_V, on: false };
+    const tx = c1 + 0.5;
+    for (let i = 0; i < 90; i++) {
+      const above = a.y <= r1 + 0.06;
+      let dir = 0;
+      if (above || a.vy >= 0) dir = tx > a.x + 0.08 ? 1 : tx < a.x - 0.08 ? -1 : 0;
+      a.vx = dir * WALK;
+      moveActor(a, STEP, PW, PH);
+      if (a.on && i > 5) {
+        const sc = clamp(Math.floor(a.x), 1, COLS - 2);
+        const sr = Math.floor(a.y + 0.02);
+        return sc === c1 && (sr === r1 || Math.abs(a.y - r1) < 0.28);
+      }
+    }
+    return false;
+  }
+
+  function ensureAutoGraph() {
+    if (autoNav && autoNavStamp === autoStamp) return autoNav;
+    const ok = new Uint8Array(COLS * ROWS);
+    const adj = new Array(COLS * ROWS);
+    for (let r = 1; r < ROWS; r++) {
+      for (let c = 1; c < COLS - 1; c++) {
+        if (canStandAt(c, r)) ok[idx(c, r)] = 1;
+      }
+    }
+    for (let r = 1; r < ROWS; r++) {
+      for (let c = 1; c < COLS - 1; c++) {
+        if (!ok[idx(c, r)]) continue;
+        const list = [];
+        for (let s = -1; s <= 1; s += 2) {
+          const nc = c + s;
+          if (nc < 1 || nc > COLS - 2) continue;
+          if (solid(nc, r - 1) && !canStandAt(nc, r)) continue;
+          if (canStandAt(nc, r)) list.push({ c: nc, r: r, act: 0 });
+          else {
+            const land = fallLand(nc, r);
+            if (land > r && canStandAt(nc, land)) list.push({ c: nc, r: land, act: 2 });
+          }
+        }
+        for (let s = -2; s <= 2; s += 4) {
+          const nc = c + s;
+          const mid = c + (s >> 1);
+          if (canStandAt(nc, r) && !solid(mid, r) && !solid(mid, r - 1)) {
+            list.push({ c: nc, r: r, act: 1 });
+          }
+        }
+        for (let nc = c - 2; nc <= c + 2; nc++) {
+          if (nc === c || nc < 1 || nc > COLS - 2) continue;
+          for (let nr = r - 2; nr >= r - 4 && nr >= 2; nr--) {
+            if (!ok[idx(nc, nr)]) continue;
+            if (solid(c, nr)) continue;
+            if (autoCanJump(c, r, nc, nr)) list.push({ c: nc, r: nr, act: 1 });
+          }
+        }
+        adj[idx(c, r)] = list;
+      }
+    }
+    autoNav = { ok: ok, adj: adj };
+    autoNavStamp = autoStamp;
+    return autoNav;
+  }
+
+  function autoFirstStep(gc, gr) {
+    const g = ensureAutoGraph();
+    const here = standCell();
+    if (here.c === gc && here.r === gr) return null;
+    const start = idx(here.c, here.r);
+    const goal = idx(gc, gr);
+    if (!g.ok[start] || !g.ok[goal]) return null;
+    const seen = new Int16Array(COLS * ROWS);
+    const first = new Int16Array(COLS * ROWS);
+    const fact = new Uint8Array(COLS * ROWS);
+    for (let i = 0; i < seen.length; i++) {
+      seen[i] = -1;
+      first[i] = -1;
+    }
+    const q = [start];
+    seen[start] = start;
+    let qi = 0;
+    while (qi < q.length) {
+      const k = q[qi++];
+      const list = g.adj[k];
+      if (!list) continue;
+      for (let i = 0; i < list.length; i++) {
+        const nb = list[i];
+        const nk = idx(nb.c, nb.r);
+        if (seen[nk] >= 0) continue;
+        seen[nk] = k;
+        if (k === start) {
+          first[nk] = nk;
+          fact[nk] = nb.act;
+        } else {
+          first[nk] = first[k];
+          fact[nk] = fact[k];
+        }
+        if (nk === goal) {
+          const f = first[nk];
+          return { c: f % COLS, r: (f / COLS) | 0, act: fact[nk] };
+        }
+        q.push(nk);
+      }
+    }
+    return null;
+  }
+
+  function simBombCol(px, py, fc, onGround) {
+    let x = px + fc * 0.28;
+    let y = py - PH * 0.45;
+    let vx = fc * (onGround ? 1.35 : 0.7);
+    let vy = 0.4;
+    if (x < 1.15) x = 1.15;
+    if (x > COLS - 1.15) x = COLS - 1.15;
+    for (let i = 0; i < 160; i++) {
+      vy += GRAV * STEP;
+      if (vy > MAX_FALL) vy = MAX_FALL;
+      x += vx * STEP;
+      if (x < 1.15) {
+        x = 1.15;
+        vx *= -0.3;
+      }
+      if (x > COLS - 1.15) {
+        x = COLS - 1.15;
+        vx *= -0.3;
+      }
+      if (overlapSolid(x - 0.16, y - 0.22, x + 0.16, y - 0.04)) {
+        if (vx > 0) x = Math.floor(x + 0.16) - 0.17;
+        else x = Math.floor(x - 0.16) + 1.17;
+        vx *= -0.25;
+      }
+      y += vy * STEP;
+      if (overlapSolid(x - 0.12, y - 0.04, x + 0.12, y + 0.05)) {
+        return clamp(Math.floor(x), 1, COLS - 2);
+      }
+      if (y > ROWS) return clamp(Math.floor(x), 1, COLS - 2);
+    }
+    return clamp(Math.floor(x), 1, COLS - 2);
+  }
+
+  function columnLoot(c) {
+    let cages = 0;
+    let eggs = 0;
+    let dirt = 0;
+    let mons = 0;
+    let top = 99;
+    for (let r = 1; r < ROWS - 2; r++) {
+      const t = tile(c, r);
+      if (t === CAGE) {
+        cages += 1;
+        if (r < top) top = r;
+      } else if (t === EGG) {
+        eggs += 1;
+        if (r < top) top = r;
+      } else if (t === DIRT) dirt += 1;
+    }
+    for (let i = 0; i < G.mons.length; i++) {
+      const m = G.mons[i];
+      if (!m.dead && Math.floor(m.x) === c) mons += 1;
+    }
+    return { c: c, cages: cages, eggs: eggs, dirt: dirt, mons: mons, top: top };
+  }
+
+  function bombLiveCount() {
+    let n = 0;
+    for (let i = 0; i < G.bombs.length; i++) if (!G.bombs[i].dead) n += 1;
+    return n;
+  }
+
+  function bombAimedAt(col) {
+    for (let i = 0; i < G.bombs.length; i++) {
+      const b = G.bombs[i];
+      if (b.dead) continue;
+      if (b.fuse >= 0) {
+        if (Math.floor(b.x) === col) return true;
+      } else if (Math.abs(b.x - (col + 0.5)) < 1.4) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  function smokeCol(c) {
+    for (let i = 0; i < G.smokes.length; i++) {
+      if (G.smokes[i].c === c && G.smokes[i].t > 0.05) return true;
+    }
+    return false;
+  }
+
+  function autoSteer(tx, holdFloor) {
+    const p = G.player;
+    let dx = tx - p.x;
+    const probe = p.x + (dx < 0 ? -0.35 : 0.35);
+    const nc = Math.floor(probe);
+    if (smokeCol(nc) && !smokeCol(Math.floor(p.x))) dx = -dx;
+    if (G.invuln <= 0) {
+      for (let i = 0; i < G.mons.length; i++) {
+        const m = G.mons[i];
+        if (m.dead || m.hatch > 0) continue;
+        if (Math.abs(m.y - p.y) > 1.1) continue;
+        const md = m.x - p.x;
+        if (Math.abs(md) < 1.05 && dx * md > 0) dx = -dx;
+      }
+    }
+    if (holdFloor && p.on) {
+      const here = standCell();
+      const nextC = dx < 0 ? Math.floor(p.x - 0.3) : Math.floor(p.x + 0.3);
+      if (nextC !== here.c && !canStandAt(nextC, here.r)) dx = 0;
+    }
+    if (dx < -0.08) keys.l = true;
+    else if (dx > 0.08) keys.r = true;
+  }
+
+  function autoHoleToward(fromC, fromR, upR) {
+    let best = -1;
+    let bd = 99;
+    for (let c = 1; c < COLS - 1; c++) {
+      if (solid(c, fromR - 1) && !canStandAt(c, fromR)) continue;
+      if (solid(c, upR)) continue;
+      if (!canStandAt(c, fromR) && c !== fromC) continue;
+      const d = Math.abs(c - fromC);
+      if (d < bd) {
+        bd = d;
+        best = c;
+      }
+    }
+    return best;
+  }
+
+  function autoGo(gc, gr, gx) {
+    const p = G.player;
+    const here = standCell();
+    const step = autoFirstStep(gc, gr);
+    const tx = gx != null ? gx : (step ? step.c + 0.5 : gc + 0.5);
+    if (!p.on) {
+      if (autoHoldJump && p.vy < 0) keys.jumpHold = true;
+      const land = step && step.act === 1 ? step : { c: gc, r: gr };
+      if (land.r + 0.2 < p.y) {
+        const ahead = land.c + 0.5 > p.x ? Math.floor(p.x + 0.42) : Math.floor(p.x - 0.42);
+        if (p.y > land.r + 0.12 && solid(ahead, Math.floor(p.y - 0.15))) {
+          return 'air';
+        }
+      }
+      autoSteer(step ? step.c + 0.5 : tx);
+      return 'air';
+    }
+    autoHoldJump = false;
+    if (step) {
+      if (step.act === 1) {
+        autoHoldJump = true;
+        keys.jumpHold = true;
+        jumpBuf = BUFFER;
+        tryJump();
+      }
+      const nx = (here.c === gc && here.r === gr) ? tx : step.c + 0.5;
+      autoSteer(nx, step.act === 0);
+      return 'path';
+    }
+    autoSteer(tx);
+    if (here.c === gc && Math.abs(here.r - gr) <= 1) return 'here';
+    if (gr + 0.2 < here.r) {
+      const hole = autoHoleToward(here.c, here.r, gr);
+      if (hole >= 0 && hole !== here.c) {
+        autoSteer(hole + 0.5);
+      } else if (hole === here.c && !solid(here.c, gr)) {
+        autoHoldJump = true;
+        keys.jumpHold = true;
+        jumpBuf = BUFFER;
+        tryJump();
+      }
+    }
+    return 'greedy';
+  }
+
+  function autoStanceFor(tc) {
+    const here = standCell();
+    let best = null;
+    let bestS = 1e9;
+    for (let r = 1; r < ROWS; r++) {
+      for (let c = 1; c < COLS - 1; c++) {
+        if (c === tc) continue;
+        if (Math.abs(c - tc) > 3) continue;
+        if (!canStandAt(c, r)) continue;
+        const fc = tc > c ? 1 : -1;
+        const px = c + 0.5 + fc * 0.22;
+        const hit = simBombCol(px, r, fc, true);
+        if (hit !== tc) continue;
+        const dist = Math.abs(c - here.c) + Math.abs(r - here.r) * 2.5;
+        const score = dist + (r > here.r ? 0.4 : 0);
+        if (score < bestS) {
+          bestS = score;
+          best = { c: c, r: r, face: fc, x: px };
+        }
+      }
+    }
+    return best;
+  }
+
+  function autoPickBomb() {
+    const here = standCell();
+    let bestCol = null;
+    let bestS = -1e9;
+    for (let c = 1; c < COLS - 1; c++) {
+      const loot = columnLoot(c);
+      if (!loot.cages && !loot.eggs && !loot.mons) continue;
+      if (bombAimedAt(c) || smokeCol(c)) continue;
+      const score = loot.cages * 12 + loot.eggs * 3 + loot.mons * 2 - Math.abs(c - here.c) * 0.35;
+      if (score > bestS) {
+        bestS = score;
+        bestCol = loot;
+      }
+    }
+    if (!bestCol) return null;
+    const st = autoStanceFor(bestCol.c);
+    if (!st) return { col: bestCol.c, stance: null };
+    return { col: bestCol.c, stance: st };
+  }
+
+  function nearestHeart() {
+    let best = null;
+    let bd = 1e9;
+    const p = G.player;
+    for (let i = 0; i < G.hearts.length; i++) {
+      const h = G.hearts[i];
+      const d = hypot2(h.x - p.x, h.y - p.y);
+      if (d < bd) {
+        bd = d;
+        best = h;
+      }
+    }
+    return best;
+  }
+
+  function nearestLetter() {
+    let best = null;
+    let bd = 1e9;
+    const p = G.player;
+    for (let i = 0; i < G.letters.length; i++) {
+      const L = G.letters[i];
+      const d = hypot2(L.x - p.x, L.y - p.y);
+      if (d < bd) {
+        bd = d;
+        best = L;
+      }
+    }
+    return best;
+  }
+
+  function autoMonThreat() {
+    const p = G.player;
+    let best = null;
+    let bd = 1e9;
+    for (let i = 0; i < G.mons.length; i++) {
+      const m = G.mons[i];
+      if (m.dead || m.hatch > 0) continue;
+      const dx = m.x - p.x;
+      const dy = m.y - p.y;
+      if (Math.abs(dy) > 1.2) continue;
+      const d = Math.abs(dx);
+      if (d < 2.35 && d < bd) {
+        bd = d;
+        best = m;
+      }
+    }
+    return best;
+  }
+
+  function blastSoon() {
+    const pc = Math.floor(G.player.x);
+    for (let i = 0; i < G.bombs.length; i++) {
+      const b = G.bombs[i];
+      if (b.dead) continue;
+      if (b.fuse >= 0 && b.fuse < 0.22 && Math.floor(b.x) === pc) return Math.floor(b.x);
+    }
+    if (smokeCol(pc)) return pc;
+    return -1;
+  }
+
+  function autoFleeFrom(col) {
+    const here = standCell();
+    let dir = here.c <= col ? -1 : 1;
+    let dest = clamp(here.c + dir * 2, 1, COLS - 2);
+    if (solid(dest, here.r - 1) && !canStandAt(dest, here.r)) {
+      dir = -dir;
+      dest = clamp(here.c + dir * 2, 1, COLS - 2);
+    }
+    autoGo(dest, here.r, dest + 0.5 + dir * 0.2);
+    if (G.player.on && here.r >= 5) {
+      autoHoldJump = true;
+      keys.jumpHold = true;
+      jumpBuf = BUFFER;
+      tryJump();
+    }
+  }
+
+  function autoChasePickup(x, y) {
+    const p = G.player;
+    const c = clamp(Math.floor(x), 1, COLS - 2);
+    const land = fallLand(c, Math.max(1, Math.floor(y)));
+    const r = land > 0 ? land : standCell().r;
+    const here = standCell();
+    if (Math.abs(x - p.x) < 0.85 && Math.abs(y - (p.y - PH * 0.45)) < 1.1) {
+      autoSteer(x);
+      return;
+    }
+    autoGo(c, r, x);
+    if (here.r === r && Math.abs(here.c - c) <= 1) autoSteer(x);
+  }
+
+  function clearAutoKeys() {
+    keys.l = false;
+    keys.r = false;
+    keys.u = false;
+    keys.d = false;
+    keys.jumpHold = false;
+  }
+
+  function autoScale() {
+    if (!autoOn) return 1;
+    if (G.mode === 'title' || G.mode === 'lose') return 1;
+    if (G.mode === 'win' && overlayOpen()) return 1;
+    return AUTO_SCALE[autoSpeed] || 1;
+  }
+
+  function playHint() {
+    if (autoOn && G.mode === 'play') {
+      setHint('自动托管 · 走跳丢弹救人 · A 停下');
+      return;
+    }
+    if (G.mode === 'play') {
+      const st = STAGES[G.stage] || STAGES[0];
+      setHint(st.hint);
+      return;
+    }
+    if (G.mode === 'title') {
+      setHint('走跳 · 空格丢弹炸开一列 · 心弹出再接住 · A 自动 · 字母凑齐 EXTEND');
+    }
+  }
+
+  function syncAutoUi() {
+    if (!btnAuto) return;
+    btnAuto.classList.toggle('on', autoOn);
+    btnAuto.setAttribute('aria-pressed', autoOn ? 'true' : 'false');
+    btnAuto.textContent = autoOn ? '停下' : '自动';
+    btnAuto.setAttribute('aria-label', autoOn ? '停止自动' : '自动');
+  }
+
+  function syncSpeedUi() {
+    if (speedEl) speedEl.value = String(autoSpeed);
+    if (speedLab) speedLab.textContent = SPEED_LABELS[autoSpeed];
+    if (speedEl) {
+      speedEl.title = SPEED_LABELS[autoSpeed];
+      speedEl.setAttribute('aria-valuetext', SPEED_LABELS[autoSpeed]);
+    }
+  }
+
+  function setAutoSpeed(n) {
+    if (n < 1 || n > 4 || !isFinite(n)) n = 3;
+    autoSpeed = n;
+    saveAutoSpeed(autoSpeed);
+    syncSpeedUi();
+  }
+
+  function toggleAuto() {
+    autoOn = !autoOn;
+    clearAutoKeys();
+    jumpBuf = 0;
+    autoHoldJump = false;
+    autoFleeT = 0;
+    autoWinWait = 0;
+    autoStuck = 0;
+    ptr.down = false;
+    ptr.dragging = false;
+    ptr.dir = 0;
+    syncAutoUi();
+    if (autoOn) {
+      audio.ensure();
+      if (G.mode === 'title') startKind(G.kind || 'save', false);
+    }
+    playHint();
+  }
+
+  function isAutoKey(e) {
+    return e.code === 'KeyA' || e.key === 'a' || e.key === 'A';
+  }
+
+  function tickAuto(dt) {
+    clearAutoKeys();
+    jumpBuf = 0;
+    if (!autoOn) return;
+    if (overlayOpen()) {
+      if (G.mode === 'win' && G.stage < STAGES.length - 1) {
+        autoWinWait += dt;
+        if (autoWinWait > 0.55) {
+          autoWinWait = 0;
+          overlayPrimary();
+        }
+      } else {
+        autoWinWait = 0;
+      }
+      return;
+    }
+    autoWinWait = 0;
+    if (G.mode !== 'play' || G.dead) return;
+
+    if (autoFleeT > 0) autoFleeT -= dt;
+    if (autoBombT > 0) autoBombT -= dt;
+    if (autoDropLock > 0) autoDropLock -= dt;
+
+    const p = G.player;
+    if (!p.on && p.vy > 0.4) autoHoldJump = false;
+    if (Math.abs(p.x - autoLastX) < 0.05) autoStuck += dt;
+    else autoStuck = 0;
+    autoLastX = p.x;
+    autoLastY = p.y;
+
+    const boom = blastSoon();
+    if (boom >= 0) {
+      autoFleeFrom(boom);
+      return;
+    }
+    if (autoFleeT > 0 && autoFleeC >= 0) {
+      autoFleeFrom(autoFleeC);
+      return;
+    }
+
+    const threat = autoMonThreat();
+    if (threat && G.invuln <= 0 && Math.abs(threat.x - p.x) < 1.18) {
+      const away = threat.x >= p.x ? -1 : 1;
+      autoSteer(p.x + away * 1.6);
+      if (p.on) {
+        autoHoldJump = true;
+        keys.jumpHold = true;
+        jumpBuf = BUFFER;
+        tryJump();
+      }
+      if (autoBombT <= 0 && bombLiveCount() < BOMB_MAX) {
+        const fc = threat.x >= p.x ? 1 : -1;
+        const hit = simBombCol(p.x, p.y, fc, p.on);
+        if (hit === Math.floor(threat.x) && hit !== Math.floor(p.x)) {
+          face = fc;
+          dropBomb();
+          autoBombT = 0.28;
+          autoFleeC = hit;
+          autoFleeT = 0.5;
+        }
+      }
+      return;
+    }
+
+    const heart = nearestHeart();
+    if (heart) {
+      const hd = hypot2(heart.x - p.x, heart.y - p.y);
+      if (cageCount() === 0 || hd < 20 || G.hearts.length >= Math.max(1, cageCount())) {
+        autoChasePickup(heart.x, heart.y);
+        return;
+      }
+    }
+
+    const job = autoPickBomb();
+    if (job && job.stance) {
+      const st = job.stance;
+      const here = standCell();
+      if (here.c === st.c && here.r === st.r && p.on && here.c !== job.col) {
+        face = st.face;
+        const hitNow = simBombCol(p.x, p.y, face, true);
+        if (hitNow === job.col && autoBombT <= 0 && autoDropLock <= 0 && bombLiveCount() < BOMB_MAX && !bombAimedAt(job.col)) {
+          dropBomb();
+          autoBombT = 0.22;
+          autoDropLock = 0.18;
+          autoFleeC = job.col;
+          autoFleeT = 0.52;
+          autoFleeFrom(job.col);
+        } else {
+          autoSteer(st.x, true);
+        }
+        return;
+      }
+      autoGo(st.c, st.r, st.x);
+      if (here.c === st.c && here.r === st.r) face = st.face;
+      if (autoStuck > 1.05) {
+        const fc = st.c >= here.c ? 1 : -1;
+        if (p.on && autoBombT <= 0 && bombLiveCount() < BOMB_MAX) {
+          face = here.c === job.col ? (here.c > 8 ? -1 : 1) : fc;
+          const hit = simBombCol(p.x, p.y, face, true);
+          const loot = columnLoot(hit);
+          if (hit !== here.c && (loot.dirt || loot.cages || loot.eggs)) {
+            dropBomb();
+            autoBombT = 0.24;
+            autoFleeC = hit;
+            autoFleeT = 0.5;
+            autoStuck = 0;
+            return;
+          }
+        }
+        if (p.on && here.r >= 5 && !solid(here.c, here.r - 3)) {
+          autoHoldJump = true;
+          keys.jumpHold = true;
+          jumpBuf = BUFFER;
+          tryJump();
+        } else {
+          autoSteer(p.x + (here.c > 8 ? -1.4 : 1.4));
+        }
+        autoStuck = 0;
+      }
+      return;
+    }
+
+    if (heart) {
+      autoChasePickup(heart.x, heart.y);
+      return;
+    }
+
+    const letter = nearestLetter();
+    if (letter) {
+      autoChasePickup(letter.x, letter.y);
+      return;
+    }
+
+    if (job && !job.stance) {
+      const here = standCell();
+      const dir = job.col >= here.c ? 1 : -1;
+      autoSteer(p.x + dir * 1.2);
+      if (p.on && Math.abs(Math.floor(p.x) - job.col) <= 2 && autoBombT <= 0 && bombLiveCount() < BOMB_MAX) {
+        face = dir;
+        const hit = simBombCol(p.x, p.y, face, true);
+        if (hit === job.col || columnLoot(hit).cages || columnLoot(hit).eggs) {
+          dropBomb();
+          autoBombT = 0.24;
+          autoFleeC = hit;
+          autoFleeT = 0.5;
+        }
+      }
+      return;
+    }
+
+    if (autoStuck > 0.9) {
+      autoHoldJump = true;
+      keys.jumpHold = true;
+      jumpBuf = BUFFER;
+      tryJump();
+      keys.r = Math.sin(G.clock * 3) > 0;
+      keys.l = !keys.r;
+      autoStuck = 0;
+    }
   }
 
   function tryJump() {
@@ -1573,6 +2319,7 @@
     if (G.stop > 0) {
       G.stop -= dt;
       updateParticles(dt);
+      if (autoOn && overlayOpen() && G.mode === 'win') tickAuto(dt);
       return;
     }
 
@@ -1582,6 +2329,7 @@
     }
 
     if (G.mode === 'win') {
+      if (autoOn && overlayOpen()) tickAuto(dt);
       if (G.clearT > 0) {
         G.clearT -= dt;
         updateHearts(dt);
@@ -1612,6 +2360,7 @@
 
     G.stageT += dt;
     if (G.invuln > 0) G.invuln = Math.max(0, G.invuln - dt);
+    if (autoOn) tickAuto(dt);
 
     if (G.dead) {
       G.deadT -= dt;
@@ -2002,14 +2751,17 @@
   }
 
   bindHold(padBtns.left, function () {
+    if (autoOn) return;
     keys.l = true;
     face = -1;
   }, function () { keys.l = false; });
   bindHold(padBtns.right, function () {
+    if (autoOn) return;
     keys.r = true;
     face = 1;
   }, function () { keys.r = false; });
   bindHold(padBtns.jump, function () {
+    if (autoOn) return;
     keys.u = true;
     keys.jumpHold = true;
     jumpBuf = BUFFER;
@@ -2019,23 +2771,25 @@
     keys.jumpHold = false;
   });
   bindHold(padBtns.bomb, function () {
+    if (autoOn) return;
     if (!overlayOpen()) dropBomb();
   }, function () {});
 
   function onDir(e, down) {
     const k = e.key;
-    if (k === 'ArrowLeft' || k === 'a' || k === 'A') {
+    const code = e.code;
+    if (k === 'ArrowLeft') {
       e.preventDefault();
       keys.l = down;
       if (down) face = -1;
-    } else if (k === 'ArrowRight' || k === 'd' || k === 'D') {
+    } else if (k === 'ArrowRight' || k === 'd' || k === 'D' || code === 'KeyD') {
       e.preventDefault();
       keys.r = down;
       if (down) face = 1;
-    } else if (k === 'ArrowDown' || k === 's' || k === 'S') {
+    } else if (k === 'ArrowDown' || k === 's' || k === 'S' || code === 'KeyS') {
       e.preventDefault();
       keys.d = down;
-    } else if (k === 'ArrowUp' || k === 'w' || k === 'W') {
+    } else if (k === 'ArrowUp' || k === 'w' || k === 'W' || code === 'KeyW') {
       e.preventDefault();
       keys.u = down;
       keys.jumpHold = down;
@@ -2047,9 +2801,15 @@
   }
 
   window.addEventListener('keydown', function (e) {
+    if (e.altKey || e.ctrlKey || e.metaKey) return;
+    if (isAutoKey(e)) {
+      e.preventDefault();
+      if (!e.repeat) toggleAuto();
+      return;
+    }
+    if (speedEl && e.target === speedEl) return;
     audio.ensure();
     const k = e.key;
-    if (e.altKey || e.ctrlKey || e.metaKey) return;
     if (k === 'r' || k === 'R') {
       e.preventDefault();
       if (!e.repeat) retry();
@@ -2070,6 +2830,15 @@
       }
       return;
     }
+    if (autoOn) {
+      if (
+        k === 'ArrowLeft' || k === 'ArrowRight' || k === 'ArrowUp' || k === 'ArrowDown' ||
+        k === ' ' || k === 'w' || k === 'W' || k === 's' || k === 'S' || k === 'd' || k === 'D'
+      ) {
+        e.preventDefault();
+      }
+      return;
+    }
     if (k === ' ') {
       e.preventDefault();
       if (!e.repeat) dropBomb();
@@ -2079,11 +2848,16 @@
   });
 
   window.addEventListener('keyup', function (e) {
+    if (isAutoKey(e)) {
+      e.preventDefault();
+      return;
+    }
+    if (autoOn) return;
     onDir(e, false);
   });
 
   canvas.addEventListener('pointerdown', function (e) {
-    if (overlayOpen()) return;
+    if (overlayOpen() || autoOn) return;
     audio.ensure();
     canvas.focus();
     ptr.down = true;
@@ -2099,6 +2873,7 @@
   });
 
   canvas.addEventListener('pointermove', function (e) {
+    if (autoOn) return;
     if (!ptr.down || e.pointerId !== ptr.id) return;
     ptr.x = e.clientX;
     ptr.y = e.clientY;
@@ -2151,6 +2926,19 @@
     btnRetry.addEventListener('click', function () {
       audio.ensure();
       retry();
+    });
+  }
+  if (btnAuto) {
+    btnAuto.addEventListener('click', function () {
+      toggleAuto();
+    });
+  }
+  if (speedEl) {
+    speedEl.addEventListener('input', function () {
+      setAutoSpeed(parseInt(speedEl.value, 10));
+    });
+    speedEl.addEventListener('change', function () {
+      setAutoSpeed(parseInt(speedEl.value, 10));
     });
   }
   if (btnSave) {
@@ -2220,6 +3008,9 @@
   } catch (err) { /* ignore */ }
 
   loadBest();
+  autoSpeed = loadAutoSpeed();
+  syncAutoUi();
+  syncSpeedUi();
   bootTitle();
   resize();
 
@@ -2234,14 +3025,18 @@
     }
     let dt = now - last;
     last = now;
-    if (dt > 0.05) dt = 0.05;
-    acc += dt;
+    if (dt > 0.08) dt = 0.08;
+    const turbo = autoOn && autoSpeed >= 4 && G.mode === 'play';
+    if (turbo) G.stop = 0;
+    acc += dt * autoScale();
     let steps = 0;
-    while (acc >= STEP && steps < 5) {
+    const maxSteps = turbo ? 16 : 5;
+    while (acc >= STEP && steps < maxSteps) {
       update(STEP);
       acc -= STEP;
       steps += 1;
     }
+    if (acc > STEP * 4) acc = 0;
     draw();
   }
   requestAnimationFrame(frame);

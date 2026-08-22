@@ -50,6 +50,12 @@
           <button type="button" id="mode-save" aria-pressed="true">救人</button>
           <button type="button" id="mode-chase" aria-pressed="false">追击</button>
         </div>
+        <label class="speed-ctl" title="速度 慢 / 中 / 快 / 极快">
+          <span>速度</span>
+          <input type="range" id="speed" min="1" max="4" step="1" value="3" aria-label="速度" />
+          <b id="speed-lab">快</b>
+        </label>
+        <button type="button" id="btn-auto" title="A" aria-label="自动" aria-pressed="false">自动</button>
         <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
         <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
       </div>
@@ -73,7 +79,7 @@
           <p class="kicker" id="ov-kicker">CHACK</p>
           <h1 id="ov-title">企鹅</h1>
           <p class="lead" id="ov-lead">丢炸弹砸开土柱，救出笼子里的心。<br />别挨怪，也别被自己的烟呛到。</p>
-          <p class="ops" id="ov-ops">方向键 / WASD 走跳 · 空格丢弹 · R 重开 · M 静音</p>
+          <p class="ops" id="ov-ops">方向键 / WASD 走跳 · 空格丢弹 · A 自动 · R 重开 · M 静音</p>
           <div class="ov-actions" id="ov-start">
             <button type="button" id="btn-save">救人</button>
             <button type="button" id="btn-chase">追击</button>
@@ -86,7 +92,7 @@
       </div>
     </div>
 
-    <footer class="hint" id="hint">走跳 · 空格丢弹炸开一列 · 心弹出再接住 · 字母凑齐 EXTEND</footer>
+    <footer class="hint" id="hint">走跳 · 空格丢弹炸开一列 · 心弹出再接住 · A 自动 · 字母凑齐 EXTEND</footer>
   </div>
   <script src="js/game.js"></script>
 </body>
