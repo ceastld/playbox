@@ -237,8 +237,9 @@ button:focus-visible {
 .card.lose { border-color: rgba(255, 61, 184, 0.6); }
 
 @media (max-width: 640px) {
-  .brand strong { font-size: 18px; letter-spacing: 0.16em; }
-  .read b { font-size: 18px; }
-  .readouts { gap: 10px; }
+  .brand { min-width: 56px; }
+  .brand strong { font-size: 16px; letter-spacing: 0.16em; }
+  .read b { font-size: 16px; }
+  .readouts { gap: 8px; }
   .hint { font-size: 12px; letter-spacing: 0.08em; }
 }

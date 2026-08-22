@@ -15,11 +15,279 @@
   const INPUT_LOCK = 0.22;
   const MUTE_KEY = 'playbox-seed-cut-mute';
 
+  const STAGES = [
+    {
+      name: '启蒙',
+      hint: '点空地播种，熟了再收',
+      goal: 4,
+      season: 58,
+      tSprout: 1.05,
+      tRipe: 2.7,
+      tVine: 6.8,
+      spreadEvery: 5.2,
+      spreadWind: 1.0,
+      spreadFloor: 3.2,
+      spreadCrop: 0.02,
+      grace: 1.6,
+      haste: 0.012,
+      mean: false,
+      px: 2,
+      py: 2,
+      tiles: [
+        [1, 1, 'sprout', 2.0],
+        [4, 0, 'vine', 8]
+      ]
+    },
+    {
+      name: '熟透',
+      hint: '粉弧走满会成藤，熟了快收',
+      goal: 5,
+      season: 52,
+      tSprout: 1.05,
+      tRipe: 2.5,
+      tVine: 5.8,
+      spreadEvery: 3.8,
+      spreadWind: 0.9,
+      spreadFloor: 2.4,
+      spreadCrop: 0.028,
+      grace: 1.4,
+      haste: 0.018,
+      mean: false,
+      px: 2,
+      py: 2,
+      tiles: [
+        [2, 1, 'ripe', 5.0],
+        [1, 3, 'sprout', 1.6],
+        [4, 3, 'vine', 8]
+      ]
+    },
+    {
+      name: '开剪',
+      hint: '脚下是藤，空格剪开',
+      goal: 6,
+      season: 50,
+      tSprout: 1.05,
+      tRipe: 2.5,
+      tVine: 5.4,
+      spreadEvery: 3.2,
+      spreadWind: 0.82,
+      spreadFloor: 2.1,
+      spreadCrop: 0.032,
+      grace: 1.25,
+      haste: 0.022,
+      mean: false,
+      px: 2,
+      py: 1,
+      tiles: [
+        [2, 1, 'vine', 8],
+        [3, 1, 'vine', 8],
+        [1, 2, 'sprout', 1.8]
+      ]
+    },
+    {
+      name: '入缝',
+      hint: '入门只剩上下两缝',
+      goal: 7,
+      season: 46,
+      tSprout: 1.02,
+      tRipe: 2.45,
+      tVine: 5.2,
+      spreadEvery: 2.8,
+      spreadWind: 0.78,
+      spreadFloor: 1.9,
+      spreadCrop: 0.036,
+      grace: 1.16,
+      haste: 0.026,
+      mean: false,
+      px: 2,
+      py: 0,
+      tiles: [
+        [0, 1, 'vine', 8],
+        [0, 2, 'vine', 8],
+        [1, 1, 'vine', 8],
+        [1, 2, 'vine', 8],
+        [3, 0, 'sprout', 2.0]
+      ]
+    },
+    {
+      name: '仓口',
+      hint: '仓口只剩一条缝',
+      goal: 8,
+      season: 44,
+      tSprout: 1.0,
+      tRipe: 2.4,
+      tVine: 5.0,
+      spreadEvery: 2.5,
+      spreadWind: 0.74,
+      spreadFloor: 1.7,
+      spreadCrop: 0.04,
+      grace: 1.08,
+      haste: 0.03,
+      mean: true,
+      px: 3,
+      py: 3,
+      tiles: [
+        [4, 0, 'vine', 8],
+        [4, 1, 'vine', 8],
+        [4, 2, 'vine', 8],
+        [3, 0, 'vine', 8],
+        [3, 1, 'vine', 8],
+        [2, 3, 'sprout', 2.1],
+        [1, 3, 'seed', 0.2]
+      ]
+    },
+    {
+      name: '夹道',
+      hint: '夹缝里收，别贪种堵路',
+      goal: 8,
+      season: 40,
+      tSprout: 0.98,
+      tRipe: 2.3,
+      tVine: 4.7,
+      spreadEvery: 2.25,
+      spreadWind: 0.7,
+      spreadFloor: 1.55,
+      spreadCrop: 0.042,
+      grace: 1.0,
+      haste: 0.032,
+      mean: true,
+      px: 0,
+      py: 2,
+      tiles: [
+        [1, 0, 'vine', 8],
+        [1, 1, 'vine', 8],
+        [3, 1, 'vine', 8],
+        [3, 2, 'vine', 8],
+        [3, 3, 'vine', 8],
+        [2, 0, 'sprout', 1.9]
+      ]
+    },
+    {
+      name: '双源',
+      hint: '四角蔓延，边收边剪',
+      goal: 10,
+      season: 38,
+      tSprout: 0.96,
+      tRipe: 2.25,
+      tVine: 4.4,
+      spreadEvery: 2.05,
+      spreadWind: 0.66,
+      spreadFloor: 1.4,
+      spreadCrop: 0.05,
+      grace: 0.96,
+      haste: 0.036,
+      mean: true,
+      px: 2,
+      py: 2,
+      tiles: [
+        [0, 0, 'vine', 8],
+        [1, 0, 'vine', 8],
+        [0, 3, 'vine', 8],
+        [4, 0, 'vine', 8],
+        [4, 3, 'vine', 8],
+        [3, 3, 'vine', 8],
+        [2, 1, 'sprout', 2.0],
+        [1, 2, 'ripe', 3.0]
+      ]
+    },
+    {
+      name: '急熟',
+      hint: '窗口极短，熟了立刻收',
+      goal: 10,
+      season: 36,
+      tSprout: 0.94,
+      tRipe: 2.15,
+      tVine: 3.9,
+      spreadEvery: 1.95,
+      spreadWind: 0.62,
+      spreadFloor: 1.28,
+      spreadCrop: 0.05,
+      grace: 0.9,
+      haste: 0.038,
+      mean: true,
+      px: 2,
+      py: 3,
+      tiles: [
+        [0, 1, 'vine', 8],
+        [2, 1, 'vine', 8],
+        [4, 1, 'vine', 8],
+        [1, 2, 'vine', 8],
+        [3, 2, 'vine', 8],
+        [1, 0, 'sprout', 1.8],
+        [3, 0, 'sprout', 1.5],
+        [1, 3, 'ripe', 2.4]
+      ]
+    },
+    {
+      name: '围城',
+      hint: '粮道一线，优先保路',
+      goal: 11,
+      season: 34,
+      tSprout: 0.92,
+      tRipe: 2.1,
+      tVine: 3.8,
+      spreadEvery: 1.8,
+      spreadWind: 0.58,
+      spreadFloor: 1.2,
+      spreadCrop: 0.052,
+      grace: 0.82,
+      haste: 0.04,
+      mean: true,
+      px: 2,
+      py: 2,
+      tiles: [
+        [1, 0, 'vine', 8],
+        [3, 0, 'vine', 8],
+        [3, 1, 'vine', 8],
+        [4, 1, 'vine', 8],
+        [0, 2, 'vine', 8],
+        [1, 2, 'vine', 8],
+        [0, 3, 'vine', 8],
+        [1, 3, 'vine', 8],
+        [2, 3, 'vine', 8],
+        [3, 3, 'sprout', 2.0]
+      ]
+    },
+    {
+      name: '末季',
+      hint: '末季无闲，剪慢一步就堵死',
+      goal: 12,
+      season: 30,
+      tSprout: 0.9,
+      tRipe: 2.05,
+      tVine: 3.65,
+      spreadEvery: 1.55,
+      spreadWind: 0.52,
+      spreadFloor: 1.05,
+      spreadCrop: 0.055,
+      grace: 0.72,
+      haste: 0.045,
+      mean: true,
+      px: 3,
+      py: 3,
+      tiles: [
+        [1, 0, 'vine', 8],
+        [3, 0, 'vine', 8],
+        [4, 0, 'vine', 8],
+        [3, 1, 'vine', 8],
+        [4, 1, 'vine', 8],
+        [0, 2, 'vine', 8],
+        [1, 2, 'vine', 8],
+        [4, 2, 'vine', 8],
+        [0, 3, 'vine', 8],
+        [1, 3, 'vine', 8],
+        [2, 3, 'vine', 8],
+        [3, 3, 'ripe', 3.0]
+      ]
+    }
+  ];
+
   const canvas = document.getElementById('view');
   const ctx = canvas.getContext('2d', { alpha: false });
   const hud = document.getElementById('hud');
   const hintEl = document.getElementById('hint');
   const cropEl = document.getElementById('crop');
+  const fieldEl = document.getElementById('field');
   const pathHud = document.getElementById('path');
   const timeEl = document.getElementById('time');
   const pathRead = pathHud.parentElement;
@@ -212,7 +480,22 @@
     autoAct: false,
     paused: false,
     result: '',
-    ripePing: 0
+    ripePing: 0,
+    stage: 0,
+    goal: GOAL,
+    season: SEASON,
+    tSprout: T_SPROUT,
+    tRipe: T_RIPE,
+    tVine: T_VINE,
+    spreadEvery: SPREAD_EVERY,
+    spreadWind: SPREAD_WIND,
+    spreadFloor: 1.55,
+    spreadCrop: 0.045,
+    graceMax: GRACE,
+    hasteCrop: 0.028,
+    mean: false,
+    stageName: '',
+    stageHint: ''
   };
 
   function clamp(v, a, b) {
@@ -536,13 +819,16 @@
       }
     }
     if (kind === 'play') {
-      const a = tile(1, 1);
-      a.k = 'sprout';
-      a.age = 1.72;
-      const v = tile(4, 0);
-      v.k = 'vine';
-      v.age = 8;
-      v.born = 1;
+      const pack = STAGES[G.stage] || STAGES[0];
+      const list = pack.tiles || [];
+      for (let i = 0; i < list.length; i++) {
+        const d = list[i];
+        const c = tile(d[0], d[1]);
+        if (!c) continue;
+        c.k = d[2];
+        c.age = d[3];
+        if (c.k === 'vine') c.born = 1;
+      }
     } else {
       const demo = [
         [0, 1, 'seed', 0.4],
@@ -565,21 +851,40 @@
     }
   }
 
+  function loadStage() {
+    const s = STAGES[clamp(G.stage, 0, STAGES.length - 1)];
+    G.goal = s.goal;
+    G.season = s.season;
+    G.tSprout = s.tSprout;
+    G.tRipe = s.tRipe;
+    G.tVine = s.tVine;
+    G.spreadEvery = s.spreadEvery;
+    G.spreadWind = s.spreadWind;
+    G.spreadFloor = s.spreadFloor;
+    G.spreadCrop = s.spreadCrop;
+    G.graceMax = s.grace;
+    G.hasteCrop = s.haste;
+    G.mean = !!s.mean;
+    G.stageName = s.name;
+    G.stageHint = s.hint;
+    G.px = s.px;
+    G.py = s.py;
+    G.fx = s.px;
+    G.fy = s.py;
+  }
+
   function resetRun() {
+    loadStage();
     G.t = 0;
-    G.remain = SEASON;
+    G.remain = G.season;
     G.crop = 0;
     G.cuts = 0;
     G.planted = 0;
-    G.px = 2;
-    G.py = 2;
-    G.fx = 2;
-    G.fy = 2;
     G.moveT = 0;
     G.face = 0;
     G.snip = 0;
     G.lock = INPUT_LOCK;
-    G.spreadT = SPREAD_EVERY;
+    G.spreadT = G.spreadEvery;
     G.spreadAim = null;
     G.grace = 0;
     G.shake = 0;
@@ -595,6 +900,8 @@
     const info = cargoPath();
     G.pathOk = info.ok;
     G.route = info.route;
+    const fp = cellCenter(G.px, G.py);
+    popup(fp.x, fp.y - 12, G.stageName, '#00f0ff');
     keys.u = keys.d = keys.l = keys.r = false;
     ptr.down = false;
     ptr.id = null;
@@ -604,26 +911,46 @@
     panel.classList.remove('hidden');
     card.classList.remove('win', 'lose');
     if (kind === 'title') {
-      kickerEl.textContent = 'SEED';
+      kickerEl.textContent = 'SEED · 十田';
       titleEl.textContent = '剪苗';
       leadEl.innerHTML = '点土播种，熟了收割。<br />别让藤蔓堵住通往粮仓的路。';
-      metaEl.textContent = '收满 12 颗。通路被堵或时节耗尽则败。';
+      metaEl.textContent = '十田苗床，一田比一田紧。通路被堵或时节耗尽则败。';
       btnMain.textContent = '下田';
       footEl.textContent = '方向键走动 · 空格动作 · M 静音';
-    } else if (kind === 'win') {
+    } else if (kind === 'stagewin') {
       card.classList.add('win');
-      kickerEl.textContent = 'FULL BARN';
+      const nxt = STAGES[G.stage + 1];
+      kickerEl.textContent = '第 ' + (G.stage + 1) + ' 田 · ' + G.stageName;
       titleEl.textContent = '满仓';
-      leadEl.textContent = '熟果入仓，粮道还亮着。';
+      leadEl.innerHTML =
+        '熟果入仓，粮道还亮着。<br />下一田：' + (nxt ? nxt.name : '');
       metaEl.textContent =
         '收成 ' +
         G.crop +
+        '/' +
+        G.goal +
         ' · 用时 ' +
         G.t.toFixed(1) +
         ' 秒 · 剪藤 ' +
         G.cuts;
-      btnMain.textContent = '再来一局';
-      footEl.textContent = '空格 / 回车 · R 重开';
+      btnMain.textContent = '下一田';
+      footEl.textContent = '空格 / 回车继续 · R 重开本田';
+    } else if (kind === 'win') {
+      card.classList.add('win');
+      kickerEl.textContent = '十田全收';
+      titleEl.textContent = '通关';
+      leadEl.textContent = '十季都过了，粮仓再也堵不住。';
+      metaEl.textContent =
+        '收成 ' +
+        G.crop +
+        '/' +
+        G.goal +
+        ' · 用时 ' +
+        G.t.toFixed(1) +
+        ' 秒 · 剪藤 ' +
+        G.cuts;
+      btnMain.textContent = '再种一轮';
+      footEl.textContent = '空格 / 回车 · R 重开末田';
     } else {
       card.classList.add('lose');
       const blocked = G.result === 'block';
@@ -633,27 +960,46 @@
         ? '藤蔓封死了通往粮仓的路。'
         : '时节尽了，熟果还没收满。';
       metaEl.textContent =
-        '收成 ' + G.crop + '/' + GOAL + ' · 存活 ' + G.t.toFixed(1) + ' 秒 · 剪藤 ' + G.cuts;
+        '第 ' +
+        (G.stage + 1) +
+        ' 田 · 收成 ' +
+        G.crop +
+        '/' +
+        G.goal +
+        ' · 存活 ' +
+        G.t.toFixed(1) +
+        ' 秒 · 剪藤 ' +
+        G.cuts;
       btnMain.textContent = '再来一局';
-      footEl.textContent = '空格 / 回车 · R 重开';
+      footEl.textContent = '空格 / 回车 · R 重开本田';
     }
   }
 
-  function startPlay() {
+  function startPlay(how) {
     audio.ensure();
     audio.pulse('start');
+    if (how === 'next') G.stage++;
+    else if (how === 'fresh') G.stage = 0;
+    if (G.stage < 0) G.stage = 0;
+    if (G.stage >= STAGES.length) G.stage = STAGES.length - 1;
     resetRun();
     G.mode = 'play';
     panel.classList.add('hidden');
     hud.classList.remove('hidden');
-    hintEl.textContent = '点土播种 · 熟了收割 · 藤蔓要剪';
+    hintEl.textContent = '第' + (G.stage + 1) + '田 ' + G.stageName + ' · ' + G.stageHint;
     hintEl.className = 'hint';
     syncHud();
   }
 
+  function beginFromPanel() {
+    if (G.mode === 'stagewin') startPlay('next');
+    else if (G.mode === 'lose') startPlay('retry');
+    else startPlay('fresh');
+  }
+
   function endGame(win, why) {
     if (G.mode !== 'play') return;
-    G.mode = win ? 'win' : 'lose';
+    G.mode = win ? (G.stage >= STAGES.length - 1 ? 'win' : 'stagewin') : 'lose';
     G.result = why;
     G.walkQ = [];
     G.autoAct = false;
@@ -714,7 +1060,7 @@
   function becomeVine(c, fromSpread) {
     if (!c || c.k === 'vine') return;
     c.k = 'vine';
-    c.age = T_VINE;
+    c.age = G.tVine;
     c.born = 0;
     c.shake = 1;
     const p = cellCenter(c.x, c.y);
@@ -747,16 +1093,28 @@
       vines[n] = vines[j];
       vines[j] = tmp;
     }
+    const routeSet = {};
+    if (G.mean && G.route) {
+      for (let i = 0; i < G.route.length; i++) {
+        routeSet[G.route[i].x + ',' + G.route[i].y] = 1;
+      }
+    }
+    const ranked = [];
+    const rest = [];
     for (let i = 0; i < vines.length; i++) {
       const v = vines[i];
-      const nbs = neighbors(v.x, v.y).filter(function (c) {
-        return c && (c.k === 'empty' || c.k === 'seed' || c.k === 'sprout');
-      });
-      if (!nbs.length) continue;
-      const t = nbs[(Math.random() * nbs.length) | 0];
-      return { fx: v.x, fy: v.y, tx: t.x, ty: t.y };
+      const nbs = neighbors(v.x, v.y);
+      for (let n = 0; n < nbs.length; n++) {
+        const c = nbs[n];
+        if (!c || (c.k !== 'empty' && c.k !== 'seed' && c.k !== 'sprout')) continue;
+        const item = { fx: v.x, fy: v.y, tx: c.x, ty: c.y };
+        if (G.mean && routeSet[c.x + ',' + c.y]) ranked.push(item);
+        else rest.push(item);
+      }
     }
-    return null;
+    const pool = ranked.length ? ranked : rest;
+    if (!pool.length) return null;
+    return pool[(Math.random() * pool.length) | 0];
   }
 
   function heldDir() {
@@ -831,7 +1189,7 @@
       popup(p.x, p.y - 10, '+1', '#ffe36b');
       G.flash = 0.28;
       G.flashC = 'gold';
-      if (G.crop >= GOAL) {
+      if (G.crop >= G.goal) {
         endGame(true, 'full');
         return;
       }
@@ -905,7 +1263,7 @@
   function updatePlay(dt) {
     G.lock = Math.max(0, G.lock - dt);
     G.t += dt;
-    G.remain = Math.max(0, SEASON - G.t);
+    G.remain = Math.max(0, G.season - G.t);
     G.snip = Math.max(0, G.snip - dt * 4.2);
 
     if (G.moveT > 0) {
@@ -932,7 +1290,7 @@
       }
     }
 
-    const haste = 1 + G.crop * 0.028;
+    const haste = 1 + G.crop * G.hasteCrop;
     let newRipe = 0;
     for (let i = 0; i < tiles.length; i++) {
       const c = tiles[i];
@@ -941,11 +1299,11 @@
       if (c.k === 'seed' || c.k === 'sprout' || c.k === 'ripe') {
         const was = c.k;
         c.age += dt * haste;
-        if (c.age >= T_VINE) becomeVine(c, false);
-        else if (c.age >= T_RIPE) {
+        if (c.age >= G.tVine) becomeVine(c, false);
+        else if (c.age >= G.tRipe) {
           c.k = 'ripe';
           if (was !== 'ripe') newRipe++;
-        } else if (c.age >= T_SPROUT) c.k = 'sprout';
+        } else if (c.age >= G.tSprout) c.k = 'sprout';
       }
     }
     if (newRipe) {
@@ -955,7 +1313,7 @@
     G.ripePing = Math.max(0, G.ripePing - dt * 2);
 
     G.spreadT -= dt;
-    if (G.spreadT < SPREAD_WIND && !G.spreadAim) G.spreadAim = pickSpread();
+    if (G.spreadT < G.spreadWind && !G.spreadAim) G.spreadAim = pickSpread();
     if (G.spreadAim) {
       const src = tile(G.spreadAim.fx, G.spreadAim.fy);
       const dst = tile(G.spreadAim.tx, G.spreadAim.ty);
@@ -971,7 +1329,7 @@
         }
       }
       G.spreadAim = null;
-      G.spreadT = Math.max(1.55, SPREAD_EVERY - G.crop * 0.045);
+      G.spreadT = Math.max(G.spreadFloor, G.spreadEvery - G.crop * G.spreadCrop);
     }
 
     const info = cargoPath();
@@ -984,7 +1342,7 @@
         audio.pulse('warn');
         G.shake = Math.max(G.shake, 2.4);
       }
-      if (G.grace >= GRACE) {
+      if (G.grace >= G.graceMax) {
         endGame(false, 'block');
         return;
       }
@@ -1057,21 +1415,22 @@
   }
 
   function syncHud() {
-    cropEl.textContent = G.crop + '/' + GOAL;
+    fieldEl.textContent = G.stage + 1 + '/' + STAGES.length;
+    cropEl.textContent = G.crop + '/' + G.goal;
     timeEl.textContent = G.remain.toFixed(1);
     const vines = countKind('vine');
     cropRead.classList.remove('warn', 'danger');
-    if (G.crop >= GOAL - 2 && G.crop < GOAL) cropRead.classList.add('warn');
+    if (G.crop >= G.goal - 2 && G.crop < G.goal) cropRead.classList.add('warn');
 
     timeRead.classList.remove('warn', 'danger');
-    if (G.remain < 8) timeRead.classList.add('danger');
-    else if (G.remain < 16) timeRead.classList.add('warn');
+    if (G.remain < G.season * 0.16) timeRead.classList.add('danger');
+    else if (G.remain < G.season * 0.32) timeRead.classList.add('warn');
 
     pathRead.classList.remove('warn', 'danger');
     if (!G.pathOk) {
       pathHud.textContent = '堵';
       pathRead.classList.add('danger');
-    } else if (vines >= 4) {
+    } else if (vines >= (G.mean ? 2 : 3)) {
       pathHud.textContent = '危';
       pathRead.classList.add('warn');
     } else {
@@ -1080,10 +1439,13 @@
 
     const here = tile(G.px, G.py);
     const ripeN = countKind('ripe');
-    if (!G.pathOk) {
+    if (G.t < 2.4) {
+      hintEl.textContent = '第' + (G.stage + 1) + '田 ' + G.stageName + ' · ' + G.stageHint;
+      hintEl.className = 'hint';
+    } else if (!G.pathOk) {
       hintEl.textContent = '通路堵住 · 快剪开粮道';
       hintEl.className = 'hint warn';
-    } else if (G.remain < 8) {
+    } else if (G.remain < G.season * 0.16) {
       hintEl.textContent = '时节将尽';
       hintEl.className = 'hint warn';
     } else if (here && here.k === 'ripe') {
@@ -1102,7 +1464,7 @@
       hintEl.textContent = '有熟果 · 去收';
       hintEl.className = 'hint ripe';
     } else {
-      hintEl.textContent = '点土播种 · 熟了收割 · 藤蔓要剪';
+      hintEl.textContent = G.stageHint || '点土播种 · 熟了收割 · 藤蔓要剪';
       hintEl.className = 'hint';
     }
   }
@@ -1216,8 +1578,8 @@
     ctx.lineTo(x, y - h * 0.22);
     ctx.lineTo(x + w * 0.3, y - h * 0.02);
     ctx.stroke();
-    const fill = G.mode === 'play' || G.mode === 'win' ? G.crop : 5;
-    const n = Math.min(GOAL, fill);
+    const fill = G.mode === 'play' || G.mode === 'win' || G.mode === 'stagewin' ? G.crop : 5;
+    const n = Math.min(G.goal || GOAL, fill);
     for (let i = 0; i < n; i++) {
       const row = (i / 4) | 0;
       const col = i % 4;
@@ -1270,8 +1632,10 @@
     ctx.beginPath();
     ctx.arc(cx, cy, r, 0, Math.PI * 2);
     ctx.stroke();
+    const ripeAt = G.mode === 'title' ? T_RIPE : G.tRipe;
+    const vineAt = G.mode === 'title' ? T_VINE : G.tVine;
     if (c.k === 'ripe') {
-      const u = clamp((c.age - T_RIPE) / (T_VINE - T_RIPE), 0, 1);
+      const u = clamp((c.age - ripeAt) / (vineAt - ripeAt), 0, 1);
       ctx.strokeStyle = '#ff3db8';
       ctx.shadowColor = '#ff3db8';
       ctx.shadowBlur = 8;
@@ -1279,7 +1643,7 @@
       ctx.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * u);
       ctx.stroke();
     } else {
-      const u = clamp(c.age / T_RIPE, 0, 1);
+      const u = clamp(c.age / ripeAt, 0, 1);
       ctx.strokeStyle = '#00f0ff';
       ctx.shadowColor = '#00f0ff';
       ctx.shadowBlur = 8;
@@ -1467,10 +1831,10 @@
   }
 
   function drawSpreadAim() {
-    if (!G.spreadAim || G.spreadT > SPREAD_WIND) return;
+    if (!G.spreadAim || G.spreadT > G.spreadWind) return;
     const a = cellCenter(G.spreadAim.fx, G.spreadAim.fy);
     const b = cellCenter(G.spreadAim.tx, G.spreadAim.ty);
-    const u = clamp(1 - G.spreadT / SPREAD_WIND, 0, 1);
+    const u = clamp(1 - G.spreadT / G.spreadWind, 0, 1);
     const x = mix(a.x, b.x, u);
     const y = mix(a.y, b.y, u);
     ctx.save();
@@ -1639,7 +2003,7 @@
     if (isUi(e.target)) return;
     audio.ensure();
     if (G.mode !== 'play') {
-      startPlay();
+      beginFromPanel();
       e.preventDefault();
       return;
     }
@@ -1690,9 +2054,9 @@
       return;
     }
     if (k === 'r' || k === 'R') {
-      if (G.mode === 'play' || G.mode === 'win' || G.mode === 'lose') {
+      if (G.mode === 'play' || G.mode === 'win' || G.mode === 'lose' || G.mode === 'stagewin') {
         audio.ensure();
-        startPlay();
+        startPlay('retry');
         e.preventDefault();
       }
       return;
@@ -1721,8 +2085,8 @@
     if (k === ' ' || k === 'Enter') {
       e.preventDefault();
       if (e.repeat) return;
-      if (G.mode === 'title' || G.mode === 'win' || G.mode === 'lose') {
-        startPlay();
+      if (G.mode === 'title' || G.mode === 'win' || G.mode === 'lose' || G.mode === 'stagewin') {
+        beginFromPanel();
         return;
       }
       if (G.mode === 'play') {
@@ -1740,12 +2104,12 @@
   btnMain.addEventListener('click', function (e) {
     e.stopPropagation();
     audio.ensure();
-    startPlay();
+    beginFromPanel();
   });
   btnRetry.addEventListener('click', function (e) {
     e.stopPropagation();
     audio.ensure();
-    startPlay();
+    startPlay('retry');
   });
   btnMute.addEventListener('click', function (e) {
     e.stopPropagation();

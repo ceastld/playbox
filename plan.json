@@ -106,7 +106,7 @@
     "blurb": "播种、等待、收割，别让藤蔓堵路。",
     "hue": 110,
     "tag": "养",
-    "status": "hardening",
+    "status": "shipped",
     "dir": "g/seed-cut/"
   },
   {
@@ -139,7 +139,7 @@
     "blurb": "两发子弹共享传送，用一门送另一门。",
     "hue": 300,
     "tag": "传",
-    "status": "shipped",
+    "status": "hardening",
     "dir": "g/two-port/"
   },
   {
