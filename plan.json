@@ -700,7 +700,7 @@
     "blurb": "擦出刚够看见出口的一块。",
     "hue": 170,
     "tag": "雾",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/fog-wipe/"
   },
   {
@@ -711,7 +711,7 @@
     "blurb": "压弹簧到高度，松手弹到平台。",
     "hue": 140,
     "tag": "弹",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/coil-spring/"
   },
   {
@@ -722,7 +722,7 @@
     "blurb": "按重量把鸟分到不同树枝。",
     "hue": 95,
     "tag": "栖",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/bird-perch/"
   },
   {
@@ -744,7 +744,7 @@
     "blurb": "按顺序开阀，压力到红就炸。",
     "hue": 8,
     "tag": "汽",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/steam-valve/"
   },
   {
@@ -755,7 +755,7 @@
     "blurb": "转木棍让影子扫过刻度。",
     "hue": 42,
     "tag": "影",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/shadow-clock/"
   },
   {
@@ -766,7 +766,7 @@
     "blurb": "撒屑让鸟走出迷宫。",
     "hue": 25,
     "tag": "屑",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/crumb-trail/"
   },
   {
@@ -777,7 +777,7 @@
     "blurb": "在冰块裂开前凿出通路。",
     "hue": 190,
     "tag": "凿",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/ice-carve/"
   },
   {
@@ -788,7 +788,7 @@
     "blurb": "把蛾从火焰旁引到安全灯。",
     "hue": 50,
     "tag": "蛾",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/moth-lamp/"
   },
   {

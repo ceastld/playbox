@@ -575,5 +575,45 @@
     "hue": 350,
     "tag": "印",
     "dir": "g/stamp-align/"
+  },
+  {
+    "n": 64,
+    "id": "fog-wipe",
+    "title": "擦雾",
+    "subtitle": "WIPE",
+    "blurb": "擦出刚够看见出口的一块。",
+    "hue": 170,
+    "tag": "雾",
+    "dir": "g/fog-wipe/"
+  },
+  {
+    "n": 65,
+    "id": "coil-spring",
+    "title": "压簧",
+    "subtitle": "SPRING",
+    "blurb": "压弹簧到高度，松手弹到平台。",
+    "hue": 140,
+    "tag": "弹",
+    "dir": "g/coil-spring/"
+  },
+  {
+    "n": 66,
+    "id": "bird-perch",
+    "title": "栖枝",
+    "subtitle": "PERCH",
+    "blurb": "按重量把鸟分到不同树枝。",
+    "hue": 95,
+    "tag": "栖",
+    "dir": "g/bird-perch/"
+  },
+  {
+    "n": 68,
+    "id": "steam-valve",
+    "title": "汽阀",
+    "subtitle": "VALVE",
+    "blurb": "按顺序开阀，压力到红就炸。",
+    "hue": 8,
+    "tag": "汽",
+    "dir": "g/steam-valve/"
   }
 ]
