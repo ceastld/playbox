@@ -2043,7 +2043,7 @@
     "blurb": "救人开车，一路打到关底。",
     "hue": 72,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/slug-run/",
     "kind": "remake"
   },
@@ -2055,7 +2055,7 @@
     "blurb": "彩虹当梯子，往上蹦。",
     "hue": 196,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/rain-isle/",
     "kind": "remake"
   },
@@ -2067,7 +2067,7 @@
     "blurb": "编队来袭，抓住单机再打。",
     "hue": 168,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/gal-raid/",
     "kind": "remake"
   },
@@ -2079,7 +2079,7 @@
     "blurb": "一层一层往上打，别让人抓住。",
     "hue": 12,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/kung-leap/",
     "kind": "remake"
   },
@@ -2093,6 +2093,54 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/bubble-twin/",
+    "kind": "remake"
+  },
+  {
+    "n": 184,
+    "id": "invader",
+    "title": "侵星",
+    "subtitle": "INV",
+    "blurb": "盾牌后面打外星人。",
+    "hue": 132,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/invader/",
+    "kind": "remake"
+  },
+  {
+    "n": 185,
+    "id": "twin-bee",
+    "title": "双蜂",
+    "subtitle": "BEE",
+    "blurb": "竖版打飞机，捡铃铛换武装。",
+    "hue": 52,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/twin-bee/",
+    "kind": "remake"
+  },
+  {
+    "n": 186,
+    "id": "duck-hunt",
+    "title": "猎鸭",
+    "subtitle": "DUCK",
+    "blurb": "枪口跟着飞鸟走。",
+    "hue": 24,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/duck-hunt/",
+    "kind": "remake"
+  },
+  {
+    "n": 187,
+    "id": "street-fist",
+    "title": "街霸",
+    "subtitle": "FIST",
+    "blurb": "出招打一套，再看血条。",
+    "hue": 8,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/street-fist/",
     "kind": "remake"
   }
 ]

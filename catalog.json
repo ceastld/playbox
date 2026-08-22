@@ -1904,5 +1904,53 @@
     "dir": "g/ghost-run/",
     "url": "./g/ghost-run/",
     "kind": "remake"
+  },
+  {
+    "n": 179,
+    "id": "slug-run",
+    "title": "合金",
+    "subtitle": "SLUG",
+    "blurb": "救人开车，一路打到关底。",
+    "hue": 72,
+    "tag": "复刻",
+    "dir": "g/slug-run/",
+    "url": "./g/slug-run/",
+    "kind": "remake"
+  },
+  {
+    "n": 180,
+    "id": "rain-isle",
+    "title": "虹岛",
+    "subtitle": "RAIN",
+    "blurb": "彩虹当梯子，往上蹦。",
+    "hue": 196,
+    "tag": "复刻",
+    "dir": "g/rain-isle/",
+    "url": "./g/rain-isle/",
+    "kind": "remake"
+  },
+  {
+    "n": 181,
+    "id": "gal-raid",
+    "title": "虫袭",
+    "subtitle": "GAL",
+    "blurb": "编队来袭，抓住单机再打。",
+    "hue": 168,
+    "tag": "复刻",
+    "dir": "g/gal-raid/",
+    "url": "./g/gal-raid/",
+    "kind": "remake"
+  },
+  {
+    "n": 182,
+    "id": "kung-leap",
+    "title": "功夫",
+    "subtitle": "KUNG",
+    "blurb": "一层一层往上打，别让人抓住。",
+    "hue": 12,
+    "tag": "复刻",
+    "dir": "g/kung-leap/",
+    "url": "./g/kung-leap/",
+    "kind": "remake"
   }
 ]
