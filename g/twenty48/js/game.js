@@ -7,7 +7,24 @@ var POP_MS = 130;
 var SPAWN_MS = 140;
 var SWIPE_MIN = 24;
 var BEST_KEY = 'playbox-twenty48-best';
+var AUTO_SPEED_KEY = 'playbox-twenty48-auto-speed';
+var AUTO_DELAY = [0, 420, 200, 70, 0];
+var AUTO_SPEED_NAME = ['', '慢', '中', '快', '极快'];
 var DIRS = { left: 1, right: 1, up: 1, down: 1 };
+/* AI tie-break if heuristic scores match: up, left, down, right. Corner: top-left. */
+var AI_DIRS = ['up', 'left', 'down', 'right'];
+var SNAKE_H = [
+  [15, 14, 13, 12],
+  [8, 9, 10, 11],
+  [7, 6, 5, 4],
+  [0, 1, 2, 3]
+];
+var SNAKE_V = [
+  [15, 8, 7, 0],
+  [14, 9, 6, 1],
+  [13, 10, 5, 2],
+  [12, 11, 4, 3]
+];
 
 function emptyGrid() {
   var g = [];
@@ -167,6 +184,162 @@ function maxTile(grid) {
   return m;
 }
 
+function findMax(grid) {
+  var m = 0, rr = 0, cc = 0, r, c, v;
+  for (r = 0; r < SIZE; r++) {
+    for (c = 0; c < SIZE; c++) {
+      v = grid[r][c];
+      if (v > m) {
+        m = v;
+        rr = r;
+        cc = c;
+      }
+    }
+  }
+  return { v: m, r: rr, c: cc };
+}
+
+function log2v(v) {
+  return Math.log(v) / Math.LN2;
+}
+
+/**
+ * Classic 2048 heuristic: empty cells (strong), snake/mono toward top-left,
+ * smoothness (neighbor log diffs), max-in-corner. Lower is worse.
+ */
+function evalGrid(grid) {
+  var empty = 0;
+  var max = 0;
+  var maxR = 0;
+  var maxC = 0;
+  var snakeH = 0;
+  var snakeV = 0;
+  var smooth = 0;
+  var rowDec = 0;
+  var rowInc = 0;
+  var colDec = 0;
+  var colInc = 0;
+  var r, c, v, n, a, b, la, lb;
+
+  for (r = 0; r < SIZE; r++) {
+    for (c = 0; c < SIZE; c++) {
+      v = grid[r][c];
+      if (v === 0) {
+        empty += 1;
+        continue;
+      }
+      if (v > max) {
+        max = v;
+        maxR = r;
+        maxC = c;
+      }
+      snakeH += v * SNAKE_H[r][c];
+      snakeV += v * SNAKE_V[r][c];
+      if (c + 1 < SIZE) {
+        n = grid[r][c + 1];
+        if (n) smooth -= Math.abs(log2v(v) - log2v(n));
+      }
+      if (r + 1 < SIZE) {
+        n = grid[r + 1][c];
+        if (n) smooth -= Math.abs(log2v(v) - log2v(n));
+      }
+    }
+  }
+
+  if (max === 0) return 0;
+  if (empty === 0 && !canMove(grid)) return -1e12;
+
+  for (r = 0; r < SIZE; r++) {
+    for (c = 0; c < 3; c++) {
+      a = grid[r][c];
+      b = grid[r][c + 1];
+      la = a ? log2v(a) : 0;
+      lb = b ? log2v(b) : 0;
+      if (la > lb) rowDec += lb - la;
+      else rowInc += la - lb;
+    }
+  }
+  for (c = 0; c < SIZE; c++) {
+    for (r = 0; r < 3; r++) {
+      a = grid[r][c];
+      b = grid[r + 1][c];
+      la = a ? log2v(a) : 0;
+      lb = b ? log2v(b) : 0;
+      if (la > lb) colDec += lb - la;
+      else colInc += la - lb;
+    }
+  }
+
+  var snake = snakeH > snakeV ? snakeH : snakeV;
+  var mono = (rowDec > rowInc ? rowDec : rowInc) + (colDec > colInc ? colDec : colInc);
+  var corner = 0;
+  if (maxR === 0 && maxC === 0) corner = max * 2.8;
+  else if ((maxR === 0 || maxR === 3) && (maxC === 0 || maxC === 3)) corner = max * 0.15;
+
+  return snake + empty * 5200 + empty * empty * 40 + smooth * 420 + mono * 380 + corner;
+}
+
+function evalAfterMove(before, result) {
+  var h = evalGrid(result.grid);
+  var a = findMax(before);
+  var b = findMax(result.grid);
+  if (a.v && a.r === b.r && a.c === b.c) h += 360;
+  return h;
+}
+
+function bestEval(grid) {
+  var best = -1e15;
+  var found = false;
+  var i, res, s;
+  for (i = 0; i < 4; i++) {
+    res = moveBoard(grid, AI_DIRS[i]);
+    if (!res.changed) continue;
+    found = true;
+    s = evalGrid(res.grid);
+    if (s > best) best = s;
+  }
+  return found ? best : evalGrid(grid);
+}
+
+function expectimaxSpawn(grid) {
+  var cells = emptyCells(grid);
+  var n = cells.length;
+  if (!n) return evalGrid(grid);
+  var total = 0;
+  var i, p;
+  var deep = n <= 8;
+  for (i = 0; i < n; i++) {
+    p = cells[i];
+    grid[p.r][p.c] = 2;
+    total += 0.9 * (deep ? bestEval(grid) : evalGrid(grid));
+    grid[p.r][p.c] = 4;
+    total += 0.1 * (deep ? bestEval(grid) : evalGrid(grid));
+    grid[p.r][p.c] = 0;
+  }
+  return total / n;
+}
+
+function pickAiMove(grid) {
+  /* 2-ply expectimax on every legal move (≤4): spawn 2/4 at 90/10, then heuristic.
+     Tie-break: up, left, down, right (AI_DIRS order). */
+  var bestDir = null;
+  var bestExp = -Infinity;
+  var best1 = -Infinity;
+  var i, res, one, exp;
+  for (i = 0; i < 4; i++) {
+    res = moveBoard(grid, AI_DIRS[i]);
+    if (!res.changed) continue;
+    one = evalAfterMove(grid, res);
+    exp = expectimaxSpawn(res.grid);
+    if (bestDir === null || exp > bestExp || (exp === bestExp && one > best1)) {
+      bestDir = AI_DIRS[i];
+      bestExp = exp;
+      best1 = one;
+    }
+  }
+  return bestDir;
+}
+
 function eqArr(a, b) {
   if (a.length !== b.length) return false;
   for (var i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
@@ -206,6 +379,28 @@ function selfCheck() {
   console.assert(pair.score === 4 && pair.grid[0][0] === 4, 'merge score 4');
   var rr = moveBoard([[0, 0, 2, 2], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]], 'right');
   console.assert(rr.grid[0][3] === 4 && rr.grid[0][2] === 0 && rr.changed, 'board right');
+
+  var onlyRight = [[4, 2, 0, 0], [8, 4, 0, 0], [16, 8, 0, 0], [32, 16, 0, 0]];
+  console.assert(pickAiMove(onlyRight) === 'right', 'only legal move');
+  console.assert(!moveBoard(onlyRight, 'left').changed, 'only-right: left noop');
+  console.assert(!moveBoard(onlyRight, 'up').changed, 'only-right: up noop');
+  console.assert(!moveBoard(onlyRight, 'down').changed, 'only-right: down noop');
+
+  var openBoard = [[2, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]];
+  var packedBoard = [[2, 4, 8, 16], [32, 64, 128, 256], [2, 4, 8, 16], [32, 64, 128, 0]];
+  console.assert(evalGrid(openBoard) > evalGrid(packedBoard), 'empty cells preferred');
+
+  var inCorner = [[1024, 4, 2, 0], [8, 2, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]];
+  var inCenter = [[2, 4, 0, 0], [8, 1024, 2, 0], [0, 2, 0, 0], [0, 0, 0, 0]];
+  console.assert(evalGrid(inCorner) > evalGrid(inCenter), 'max tile prefers corner');
+
+  var stuckAi = [[2, 4, 2, 4], [4, 2, 4, 2], [2, 4, 2, 4], [4, 2, 4, 2]];
+  console.assert(pickAiMove(stuckAi) === null, 'no move when stuck');
+
+  var early = [[2, 0, 0, 2], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]];
+  var first = pickAiMove(early);
+  console.assert(first === 'up' || first === 'left' || first === 'down' || first === 'right', 'early move legal');
+  console.assert(moveBoard(early, first).changed, 'early pick is not a noop');
 }
 
 selfCheck();
@@ -246,6 +441,18 @@ function loadBest() {
 
 function saveBest(n) {
   try { localStorage.setItem(BEST_KEY, String(n)); } catch (e) { /* ignore */ }
+}
+
+function loadAutoSpeed() {
+  try {
+    var n = parseInt(localStorage.getItem(AUTO_SPEED_KEY) || '3', 10);
+    if (n >= 1 && n <= 4) return n;
+  } catch (e) { /* ignore */ }
+  return 3;
+}
+
+function saveAutoSpeed(n) {
+  try { localStorage.setItem(AUTO_SPEED_KEY, String(n)); } catch (e) { /* ignore */ }
 }
 
 /* ---- audio (Web Audio, no files) ---- */
@@ -315,6 +522,9 @@ var scoreBox = document.getElementById('score-box');
 var scoreAdd = document.getElementById('score-add');
 var btnMute = document.getElementById('btn-mute');
 var btnRetry = document.getElementById('btn-retry');
+var btnAuto = document.getElementById('btn-auto');
+var speedEl = document.getElementById('speed');
+var speedLab = document.getElementById('speed-lab');
 var motionQ = window.matchMedia('(prefers-reduced-motion: reduce)');
 
 var grid = emptyGrid();
@@ -329,6 +539,9 @@ var animStart = 0;
 var queued = null;
 var metrics = { cell: 80, gap: 10 };
 var lastLayoutW = 0;
+var autoOn = false;
+var autoSpeed = loadAutoSpeed();
+var autoTid = 0;
 
 for (var ci = 0; ci < 16; ci++) {
   var cell = document.createElement('div');
@@ -338,6 +551,10 @@ for (var ci = 0; ci < 16; ci++) {
 
 function reduceMotion() {
   return motionQ.matches;
+}
+
+function snapMoves() {
+  return reduceMotion() || (autoOn && autoSpeed >= 4);
 }
 
 function measure() {
@@ -388,7 +605,7 @@ function createSprite(r, c, value, opts) {
     fromY: p.y,
     toX: p.x,
     toY: p.y,
-    scale: opts.spawn && !reduceMotion() ? 0.4 : 1,
+    scale: opts.spawn && !snapMoves() ? 0.4 : 1,
     spawning: !!opts.spawn,
     spawnStart: opts.spawn ? performance.now() : 0,
     merging: false,
@@ -455,6 +672,7 @@ function updateScoreUI(gained) {
 }
 
 function newGame() {
+  clearAutoTimer();
   grid = emptyGrid();
   score = 0;
   wonThisRun = false;
@@ -476,6 +694,7 @@ function newGame() {
   updateScoreUI(0);
   boardEl.classList.remove('noop');
   boardEl.focus({ preventScroll: true });
+  if (autoOn) scheduleAuto();
 }
 
 function beginTravel(traces) {
@@ -555,15 +774,25 @@ function finishTravel(now) {
   sliding = false;
 
   if (!wonThisRun && maxTile(grid) >= 2048) {
-    queued = null;
-    showOverlay('win', '你到了 2048', '还可以继续合成 4096。');
-    sfx.win();
-    return;
+    if (autoOn) {
+      wonThisRun = true;
+      sfx.win();
+    } else {
+      queued = null;
+      showOverlay('win', '你到了 2048', '还可以继续合成 4096。');
+      sfx.win();
+      return;
+    }
   }
   if (!canMove(grid)) {
     queued = null;
     showOverlay('lose', '没有空位了', '没有能合并的格子了。');
     sfx.lose();
+    return;
+  }
+  if (autoOn) {
+    queued = null;
+    scheduleAuto();
     return;
   }
   if (queued && DIRS[queued]) {
@@ -577,14 +806,14 @@ function tryMove(dir) {
   if (!DIRS[dir]) return;
   if (overlayOpen()) return;
   if (sliding) {
-    queued = dir;
+    if (!autoOn) queued = dir;
     return;
   }
   var result = moveBoard(grid, dir);
   if (!result.changed) {
     boardEl.classList.remove('noop');
     void boardEl.offsetWidth;
-    if (!reduceMotion()) boardEl.classList.add('noop');
+    if (!snapMoves()) boardEl.classList.add('noop');
     return;
   }
   grid = result.grid;
@@ -601,7 +830,7 @@ function tryMove(dir) {
   beginTravel(result.traces);
   sliding = true;
   animStart = performance.now();
-  if (reduceMotion()) finishTravel(animStart);
+  if (snapMoves()) finishTravel(animStart);
 }
 
 function frame(now) {
@@ -614,22 +843,27 @@ function frame(now) {
   if (!sliding && !sprites.length) return;
 
   var i, s, t;
-  if (sliding && !reduceMotion()) {
-    t = Math.min(1, (now - animStart) / SLIDE_MS);
-    var e = easeOutCubic(t);
-    for (i = 0; i < sprites.length; i++) {
-      s = sprites[i];
-      if (s.spawning) continue;
-      s.x = s.fromX + (s.toX - s.fromX) * e;
-      s.y = s.fromY + (s.toY - s.fromY) * e;
+  if (sliding) {
+    if (snapMoves()) {
+      finishTravel(now);
+    } else {
+      t = Math.min(1, (now - animStart) / SLIDE_MS);
+      var e = easeOutCubic(t);
+      for (i = 0; i < sprites.length; i++) {
+        s = sprites[i];
+        if (s.spawning) continue;
+        s.x = s.fromX + (s.toX - s.fromX) * e;
+        s.y = s.fromY + (s.toY - s.fromY) * e;
+      }
+      if (t >= 1) finishTravel(now);
     }
-    if (t >= 1) finishTravel(now);
   }
 
   for (i = 0; i < sprites.length; i++) {
     s = sprites[i];
     if (s.merging) {
       t = Math.min(1, (now - s.mergeStart) / POP_MS);
+      if (snapMoves()) t = 1;
       s.scale = mergeScale(t);
       if (t >= 1) {
         s.merging = false;
@@ -637,7 +871,7 @@ function frame(now) {
       }
     } else if (s.spawning) {
       t = Math.min(1, (now - s.spawnStart) / SPAWN_MS);
-      if (reduceMotion()) t = 1;
+      if (snapMoves()) t = 1;
       s.scale = 0.4 + 0.6 * easeOutCubic(t);
       if (t >= 1) {
         s.spawning = false;
@@ -673,6 +907,7 @@ var pointerY = 0;
 var pointerTracking = false;
 
 function swipeFrom(dx, dy) {
+  if (autoOn) return;
   if (Math.max(Math.abs(dx), Math.abs(dy)) < SWIPE_MIN) return;
   if (Math.abs(dx) > Math.abs(dy)) tryMove(dx > 0 ? 'right' : 'left');
   else tryMove(dy > 0 ? 'down' : 'up');
@@ -732,20 +967,33 @@ window.addEventListener('keydown', function (e) {
     toggleMute();
     return;
   }
-  if (overlayOpen()) return;
+  if (key === 'a' || key === 'A' || code === 'KeyA') {
+    if (e.repeat) return;
+    e.preventDefault();
+    toggleAuto();
+    return;
+  }
+  if (key === 'r' || key === 'R' || code === 'KeyR') {
+    e.preventDefault();
+    newGame();
+    return;
+  }
+  if (e.target === speedEl) return;
+  if (overlayOpen() || autoOn) {
+    if (key === 'ArrowLeft' || key === 'ArrowRight' || key === 'ArrowUp' || key === 'ArrowDown' ||
+        key === 'w' || key === 'W' || key === 's' || key === 'S' || key === 'd' || key === 'D') {
+      e.preventDefault();
+    }
+    return;
+  }
   var dir = null;
-  if (key === 'ArrowLeft' || code === 'KeyA') dir = 'left';
+  if (key === 'ArrowLeft') dir = 'left';
   else if (key === 'ArrowRight' || code === 'KeyD') dir = 'right';
   else if (key === 'ArrowUp' || code === 'KeyW') dir = 'up';
   else if (key === 'ArrowDown' || code === 'KeyS') dir = 'down';
   if (dir) {
     e.preventDefault();
     tryMove(dir);
-    return;
-  }
-  if (key === 'r' || key === 'R' || code === 'KeyR') {
-    e.preventDefault();
-    newGame();
   }
 });
 
@@ -757,13 +1005,78 @@ function toggleMute() {
   if (!muted) audioCtx();
 }
 
+function clearAutoTimer() {
+  if (autoTid) {
+    clearTimeout(autoTid);
+    autoTid = 0;
+  }
+}
+
+function scheduleAuto() {
+  clearAutoTimer();
+  if (!autoOn) return;
+  if (overlayOpen()) return;
+  autoTid = setTimeout(autoStep, AUTO_DELAY[autoSpeed]);
+}
+
+function autoStep() {
+  autoTid = 0;
+  if (!autoOn) return;
+  if (overlayOpen()) return;
+  if (sliding) return;
+  var dir = pickAiMove(grid);
+  if (!dir) return;
+  tryMove(dir);
+  if (autoOn && !sliding && !overlayOpen()) scheduleAuto();
+}
+
+function syncAutoBtn() {
+  btnAuto.classList.toggle('on', autoOn);
+  btnAuto.setAttribute('aria-pressed', autoOn ? 'true' : 'false');
+  btnAuto.textContent = autoOn ? '停下' : '自动';
+  btnAuto.setAttribute('aria-label', autoOn ? '停止自动' : '自动');
+}
+
+function toggleAuto() {
+  autoOn = !autoOn;
+  queued = null;
+  syncAutoBtn();
+  if (!autoOn) {
+    clearAutoTimer();
+    return;
+  }
+  if (overlayMode === 'win') {
+    wonThisRun = true;
+    hideOverlay();
+  }
+  if (!overlayOpen() && !sliding) scheduleAuto();
+}
+
+function syncSpeedUI() {
+  speedEl.value = String(autoSpeed);
+  speedLab.textContent = AUTO_SPEED_NAME[autoSpeed];
+  speedEl.title = AUTO_SPEED_NAME[autoSpeed];
+  speedEl.setAttribute('aria-valuetext', AUTO_SPEED_NAME[autoSpeed]);
+}
+
+function onSpeedInput() {
+  var n = parseInt(speedEl.value, 10);
+  if (!(n >= 1 && n <= 4)) n = 3;
+  autoSpeed = n;
+  saveAutoSpeed(n);
+  syncSpeedUI();
+}
+
 document.getElementById('stage').addEventListener('pointerdown', function () {
   if (!overlayOpen()) boardEl.focus({ preventScroll: true });
 });
 
 btnMute.addEventListener('click', toggleMute);
+btnAuto.addEventListener('click', toggleAuto);
 btnRetry.addEventListener('click', function () { newGame(); });
 ovRetry.addEventListener('click', function () { newGame(); });
+speedEl.addEventListener('input', onSpeedInput);
+speedEl.addEventListener('change', onSpeedInput);
 ovContinue.addEventListener('click', function () {
   if (overlayMode !== 'win') return;
   wonThisRun = true;
@@ -771,7 +1084,9 @@ ovContinue.addEventListener('click', function () {
   if (!canMove(grid)) {
     showOverlay('lose', '没有空位了', '没有能合并的格子了。');
     sfx.lose();
+    return;
   }
+  if (autoOn) scheduleAuto();
 });
 
 boardEl.addEventListener('animationend', function () {
@@ -782,6 +1097,8 @@ window.addEventListener('resize', relayout);
 if (motionQ.addEventListener) motionQ.addEventListener('change', relayout);
 
 bestEl.textContent = String(best);
+syncSpeedUI();
+syncAutoBtn();
 newGame();
 requestAnimationFrame(frame);
 
