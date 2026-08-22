@@ -19,6 +19,10 @@ var SWIPE_MIN = 22;
 var TAU = Math.PI * 2;
 var BEST_KEY = 'playbox-lode-dig-best';
 var MUTE_KEY = 'playbox-lode-dig-mute';
+var AUTO_SPEED_KEY = 'playbox-lode-dig-auto-speed';
+var SPEED_LABELS = ['', '慢', '中', '快', '极快'];
+var AUTO_SCALE = [1, 0.52, 0.78, 1, 3.4];
+var STEP = 1 / 60;
 
 var DIR = [
   { x: 1, y: 0 },
@@ -30,7 +34,7 @@ var OPP = [2, 3, 0, 1];
 var KEY_DIR = {
   ArrowRight: 0, KeyD: 0,
   ArrowDown: 1, KeyS: 1,
-  ArrowLeft: 2, KeyA: 2,
+  ArrowLeft: 2,
   ArrowUp: 3, KeyW: 3
 };
 
@@ -202,6 +206,9 @@ var ovRetry = document.getElementById('ov-retry');
 var ovModes = document.getElementById('ov-modes');
 var btnMute = document.getElementById('btn-mute');
 var btnRetry = document.getElementById('btn-retry');
+var btnAuto = document.getElementById('btn-auto');
+var speedEl = document.getElementById('speed');
+var speedLab = document.getElementById('speed-lab');
 var scoreEl = document.getElementById('score');
 var scoreBox = document.getElementById('score-box');
 var scoreAdd = document.getElementById('score-add');
@@ -225,6 +232,7 @@ var particles = [];
 var pops = [];
 var rings = [];
 var lastTs = 0;
+var acc = 0;
 var toastTok = 0;
 var dirStamp = 0;
 var dirHeld = [0, 0, 0, 0];
@@ -232,6 +240,14 @@ var pumpHeld = false;
 var padHeld = { 0: false, 1: false, 2: false, 3: false, pump: false };
 var swipe = { on: false, id: 0, x: 0, y: 0, moved: false };
 var hud = { score: -1, best: -1, round: -1, combo: -1, lives: -1, pump: -1 };
+var autoOn = false;
+var autoSpeed = 3;
+var autoMon = null;
+var autoHold = -1;
+var autoHoldUntil = 0;
+var autoIdle = 0;
+var autoLastC = -1;
+var autoLastR = -1;
 
 var G = {
   phase: 'title',
@@ -801,6 +817,9 @@ function loadRound() {
   G.rumble = 0;
   last = lastMon();
   if (last) last.flee = liveMons() === 1;
+  autoMon = null;
+  autoIdle = 0;
+  autoHold = -1;
 }
 
 /* ---- player / pump ---- */
@@ -1359,6 +1378,462 @@ function tickFx(dt) {
   }
 }
 
+/* ---- autoplay ---- */
+function autoScale() {
+  if (!autoOn) return 1;
+  if (G.phase === 'title' || G.phase === 'over' || G.phase === 'win') return 1;
+  return AUTO_SCALE[autoSpeed] || 1;
+}
+
+function clearAutoInput() {
+  dirHeld[0] = 0;
+  dirHeld[1] = 0;
+  dirHeld[2] = 0;
+  dirHeld[3] = 0;
+  pumpHeld = false;
+}
+
+function autoHere() {
+  var p = G.player;
+  if (p.moving && p.t > 0.45) return { c: p.mc, r: p.mr };
+  return { c: p.c, r: p.r };
+}
+
+function autoRockHazard(c, r) {
+  var i, k;
+  for (i = 0; i < G.rocks.length; i++) {
+    k = G.rocks[i];
+    if (k.state === 'dead') continue;
+    if (k.c !== c) continue;
+    if (k.state === 'fall') {
+      if (r + 0.15 >= k.y && r <= k.y + 7) return 2;
+    } else if (k.state === 'wobble') {
+      if (r >= k.r && r <= k.r + 6) return 2;
+    }
+  }
+  return 0;
+}
+
+function autoEnemyNear(c, r) {
+  var i, m, d, best = 0;
+  if (G.player && G.player.inv > 0.18) return 0;
+  for (i = 0; i < G.mons.length; i++) {
+    m = G.mons[i];
+    if (m.state !== 'ok' || m.ghost || m.fill > 0.38) continue;
+    if (m === (G.player && G.player._target)) continue;
+    d = hypot(c - m.x, r - m.y);
+    if (d < 0.72) best = Math.max(best, 2);
+    else if (d < 1.42) best = Math.max(best, 1);
+  }
+  return best;
+}
+
+function autoFireAt(c, r) {
+  var i, m, cells, k, dist, range;
+  for (i = 0; i < G.mons.length; i++) {
+    m = G.mons[i];
+    if (m.state !== 'ok' || m.kind !== 'fygar' || m.ghost) continue;
+    if (m.fire > 0) {
+      cells = fygarFireCells(m);
+      for (k = 0; k < cells.length; k++) {
+        if (cells[k].c === c && cells[k].r === r) return 2;
+      }
+    } else if (Math.round(m.y) === r) {
+      dist = c - Math.round(m.x);
+      range = G.round >= 5 ? 4 : 3;
+      if (dist !== 0 && Math.abs(dist) <= range &&
+          clearLine(Math.round(m.x), Math.round(m.y), c, r)) {
+        return 1;
+      }
+    }
+  }
+  return 0;
+}
+
+function autoStepCost(nc, nr, d, fromC, fromR) {
+  var cost, near, fire, rock;
+  if (!inB(nc, nr)) return 9999;
+  if (settledRockAt(nc, nr)) return 9999;
+  rock = autoRockHazard(nc, nr);
+  if (rock) return 900;
+  cost = isDirt(nc, nr) ? 2.35 : 1;
+  if (d === OPP[G.player.dir] && fromC === G.player.c && fromR === G.player.r) cost += 0.55;
+  near = autoEnemyNear(nc, nr);
+  if (near === 2) cost += G.player.inv > 0 ? 6 : 280;
+  else if (near === 1) cost += G.player.inv > 0 ? 1 : 7.5;
+  fire = autoFireAt(nc, nr);
+  if (fire === 2) cost += 320;
+  else if (fire === 1) cost += 16;
+  if (nr === 0 && fromR > 0) cost += 0.35;
+  return cost;
+}
+
+function autoPathDir(gc, gr) {
+  var inf = 1e9;
+  var n = COLS * ROWS;
+  var dist = [];
+  var first = [];
+  var i, c, r, d, nc, nr, k, nk, nd, cost, sc, sr, start, q, qi;
+  var p = G.player;
+  for (i = 0; i < n; i++) {
+    dist[i] = inf;
+    first[i] = -1;
+  }
+  sc = p.c;
+  sr = p.r;
+  if (p.moving && p.t > 0.45) {
+    sc = p.mc;
+    sr = p.mr;
+  }
+  if (sc === gc && sr === gr) return -1;
+  start = sr * COLS + sc;
+  dist[start] = 0;
+  q = [start];
+  qi = 0;
+  while (qi < q.length) {
+    k = q[qi++];
+    c = k % COLS;
+    r = (k / COLS) | 0;
+    for (d = 0; d < 4; d++) {
+      nc = c + DIR[d].x;
+      nr = r + DIR[d].y;
+      if (!inB(nc, nr)) continue;
+      cost = autoStepCost(nc, nr, d, c, r);
+      if (cost >= 800) continue;
+      nk = nr * COLS + nc;
+      nd = dist[k] + cost;
+      if (nd + 0.001 < dist[nk]) {
+        dist[nk] = nd;
+        first[nk] = k === start ? d : first[k];
+        q.push(nk);
+      }
+    }
+  }
+  k = gr * COLS + gc;
+  if (dist[k] >= inf / 2) return -1;
+  return first[k];
+}
+
+function autoPumpFrom(c, r) {
+  var i, m, mc, mr, dc, dr, dist, face, best = null, bestDist = 99;
+  for (i = 0; i < G.mons.length; i++) {
+    m = G.mons[i];
+    if (m.state !== 'ok' || m.ghost) continue;
+    mc = Math.round(m.x);
+    mr = Math.round(m.y);
+    dc = mc - c;
+    dr = mr - r;
+    if (dc !== 0 && dr !== 0) continue;
+    dist = Math.abs(dc) + Math.abs(dr);
+    if (dist < 1 || dist > HOSE_MAX) continue;
+    if (!clearLine(c, r, mc, mr)) continue;
+    face = dc > 0 ? 0 : dc < 0 ? 2 : dr > 0 ? 1 : 3;
+    if (dist < bestDist || (dist === bestDist && m.fill > (best ? best.mon.fill : 0))) {
+      bestDist = dist;
+      best = { dir: face, dist: dist, mon: m };
+    }
+  }
+  return best;
+}
+
+function autoStation(m) {
+  var mc = Math.round(m.x);
+  var mr = Math.round(m.y);
+  var here = autoHere();
+  var best = null;
+  var bestS = 1e9;
+  var dist, d, c, r, s, k, blocked, cc, rr, near;
+  for (dist = 2; dist <= HOSE_MAX; dist++) {
+    for (d = 0; d < 4; d++) {
+      c = mc - DIR[d].x * dist;
+      r = mr - DIR[d].y * dist;
+      if (!inB(c, r) || settledRockAt(c, r)) continue;
+      if (autoRockHazard(c, r)) continue;
+      blocked = 0;
+      for (k = 1; k <= dist; k++) {
+        cc = c + DIR[d].x * k;
+        rr = r + DIR[d].y * k;
+        if (settledRockAt(cc, rr)) { blocked = 99; break; }
+        if (isDirt(cc, rr)) blocked += 1;
+      }
+      if (blocked > 3) continue;
+      near = autoEnemyNear(c, r);
+      s = hypot(c - here.c, r - here.r) + blocked * 1.55 + (dist === 2 ? 0.08 : dist * 0.12);
+      if (near === 2) s += 28;
+      else if (near === 1) s += 6;
+      if (autoFireAt(c, r) === 2) s += 40;
+      if (s < bestS) {
+        bestS = s;
+        best = { c: c, r: r, face: d, dist: dist };
+      }
+    }
+  }
+  return best;
+}
+
+function autoPickMon() {
+  var i, m, st, s, best = null, bestS = 1e9;
+  var here = autoHere();
+  for (i = 0; i < G.mons.length; i++) {
+    m = G.mons[i];
+    if (m.state !== 'ok' || m.ghost) continue;
+    st = autoStation(m);
+    s = hypot(m.x - here.c, m.y - here.r);
+    if (st) s = hypot(st.c - here.c, st.r - here.r) * 0.72 + s * 0.28;
+    if (m.flee) s -= 2;
+    if (m.kind === 'fygar') s -= 0.35;
+    if (m.fill > 0.2) s -= 1.2;
+    if (s < bestS) { bestS = s; best = m; }
+  }
+  return best;
+}
+
+function autoGetMon() {
+  if (autoMon && autoMon.state === 'ok' && !autoMon.ghost) return autoMon;
+  autoMon = autoPickMon();
+  return autoMon;
+}
+
+function autoRockJob() {
+  var i, k, j, m, sr, prey, r, blocked;
+  for (i = 0; i < G.rocks.length; i++) {
+    k = G.rocks[i];
+    if (k.state !== 'idle') continue;
+    sr = k.r + 1;
+    if (sr >= ROWS) continue;
+    if (settledRockAt(k.c, sr)) continue;
+    prey = false;
+    for (j = 0; j < G.mons.length; j++) {
+      m = G.mons[j];
+      if (m.state !== 'ok' || m.ghost) continue;
+      if (Math.round(m.x) !== k.c) continue;
+      if (m.y < k.r + 0.55) continue;
+      blocked = false;
+      for (r = sr + 1; r <= Math.round(m.y); r++) {
+        if (settledRockAt(k.c, r)) { blocked = true; break; }
+        if (r < Math.round(m.y) && isDirt(k.c, r)) { blocked = true; break; }
+      }
+      if (!blocked) { prey = true; break; }
+    }
+    if (!prey) continue;
+    if (autoRockHazard(k.c, sr) && !isDirt(k.c, sr)) continue;
+    return { c: k.c, r: sr };
+  }
+  return null;
+}
+
+function autoSideStep(here, avoidC, avoidR) {
+  var d, nc, nr, best = -1, score, bestS = -999, near;
+  for (d = 0; d < 4; d++) {
+    nc = here.c + DIR[d].x;
+    nr = here.r + DIR[d].y;
+    if (!playerCan(nc, nr)) continue;
+    if (nc === avoidC && nr === avoidR) continue;
+    score = 0;
+    if (autoRockHazard(nc, nr)) score -= 80;
+    near = autoEnemyNear(nc, nr);
+    if (near === 2) score -= 50;
+    else if (near === 1) score -= 10;
+    if (autoFireAt(nc, nr) === 2) score -= 60;
+    if (!isDirt(nc, nr)) score += 3;
+    if (DIR[d].y === 0) score += 2;
+    if (d === G.player.dir) score += 0.4;
+    if (score > bestS) { bestS = score; best = d; }
+  }
+  return best;
+}
+
+function autoMustFlee(here) {
+  var shot;
+  if (autoRockHazard(here.c, here.r)) return true;
+  if (autoFireAt(here.c, here.r) === 2) return true;
+  if (G.player.inv > 0.12) return false;
+  shot = autoPumpFrom(here.c, here.r);
+  if (autoEnemyNear(here.c, here.r) >= 1 && !shot) return true;
+  if (autoFireAt(here.c, here.r) === 1 && !shot) return true;
+  return false;
+}
+
+function autoApplyDir(d) {
+  if (d < 0) return;
+  if (G.clock < autoHoldUntil && autoHold >= 0 && autoHold !== d && d === OPP[autoHold]) {
+    if (playerCan(autoHere().c + DIR[autoHold].x, autoHere().r + DIR[autoHold].y)) {
+      d = autoHold;
+    }
+  }
+  autoHold = d;
+  autoHoldUntil = G.clock + 0.32;
+  pressDir(d);
+}
+
+function tickAuto() {
+  var here, shot, mon, st, rock, veg, d, nc, nr, threat;
+  clearAutoInput();
+  if (!autoOn || G.phase !== 'play' || !G.player) return;
+
+  here = autoHere();
+  if (here.c === autoLastC && here.r === autoLastR) autoIdle += 1;
+  else {
+    autoIdle = 0;
+    autoLastC = here.c;
+    autoLastR = here.r;
+  }
+
+  if (G.player._target && G.player._target.state === 'ok' && G.player._target.fill > 0.02) {
+    pumpHeld = true;
+    return;
+  }
+
+  if (autoMustFlee(here)) {
+    d = autoSideStep(here, -1, -1);
+    if (d >= 0) autoApplyDir(d);
+    return;
+  }
+
+  shot = autoPumpFrom(here.c, here.r);
+  if (shot) {
+    if (G.player.dir === shot.dir) {
+      pumpHeld = true;
+      autoMon = shot.mon;
+      return;
+    }
+    nc = here.c + DIR[shot.dir].x;
+    nr = here.r + DIR[shot.dir].y;
+    if (shot.dist >= 2 && playerCan(nc, nr) && autoEnemyNear(nc, nr) < 2) {
+      autoApplyDir(shot.dir);
+      return;
+    }
+    d = autoSideStep(here, nc, nr);
+    if (d >= 0) autoApplyDir(d);
+    return;
+  }
+
+  rock = autoRockJob();
+  if (rock) {
+    if (here.c === rock.c && here.r === rock.r) {
+      d = autoSideStep(here, rock.c, rock.r + 1);
+      if (d >= 0) autoApplyDir(d);
+      return;
+    }
+    d = autoPathDir(rock.c, rock.r);
+    if (d >= 0) {
+      autoApplyDir(d);
+      return;
+    }
+  }
+
+  veg = G.veg;
+  threat = autoEnemyNear(here.c, here.r);
+  if (veg && veg.t > 1.8 && threat < 1) {
+    mon = autoGetMon();
+    if (!mon || hypot(veg.c - here.c, veg.r - here.r) < hypot(mon.x - here.c, mon.y - here.r) * 0.55 + 2.2) {
+      if (here.c !== veg.c || here.r !== veg.r) {
+        d = autoPathDir(veg.c, veg.r);
+        if (d >= 0) {
+          autoApplyDir(d);
+          return;
+        }
+      }
+    }
+  }
+
+  mon = autoGetMon();
+  if (mon) {
+    st = autoStation(mon);
+    if (st) {
+      if (here.c === st.c && here.r === st.r) {
+        if (G.player.dir === st.face) {
+          pumpHeld = true;
+          return;
+        }
+        nc = here.c + DIR[st.face].x;
+        nr = here.r + DIR[st.face].y;
+        if (playerCan(nc, nr) && autoEnemyNear(nc, nr) < 2) {
+          autoApplyDir(st.face);
+          return;
+        }
+      } else {
+        d = autoPathDir(st.c, st.r);
+        if (d >= 0) {
+          autoApplyDir(d);
+          return;
+        }
+      }
+    }
+    d = autoPathDir(Math.round(mon.x), Math.round(mon.y));
+    if (d >= 0) {
+      nc = here.c + DIR[d].x;
+      nr = here.r + DIR[d].y;
+      if (autoEnemyNear(nc, nr) === 2 && G.player.inv <= 0) {
+        d = autoSideStep(here, Math.round(mon.x), Math.round(mon.y));
+      }
+      if (d >= 0) {
+        autoApplyDir(d);
+        return;
+      }
+    }
+  }
+
+  if (autoIdle > 24) {
+    d = autoSideStep(here, -1, -1);
+    if (d >= 0) autoApplyDir(d);
+    autoIdle = 0;
+    autoMon = null;
+  }
+}
+
+function syncAutoUi() {
+  btnAuto.classList.toggle('on', autoOn);
+  btnAuto.setAttribute('aria-pressed', autoOn ? 'true' : 'false');
+  btnAuto.textContent = autoOn ? '停下' : '自动';
+  btnAuto.setAttribute('aria-label', autoOn ? '停止自动' : '自动');
+}
+
+function syncSpeedUi() {
+  speedEl.value = String(autoSpeed);
+  speedLab.textContent = SPEED_LABELS[autoSpeed];
+  speedEl.title = SPEED_LABELS[autoSpeed];
+  speedEl.setAttribute('aria-valuetext', SPEED_LABELS[autoSpeed]);
+}
+
+function playHint() {
+  if (autoOn && G.phase !== 'title') {
+    hintEl.textContent = G.kind === 'endless'
+      ? '自动 · 无尽 · 挖土泵怪砸岩 · A 停下'
+      : '自动托管 · 挖土、泵怪、砸岩过关 · A 停下';
+  } else if (G.kind === 'endless' && G.phase !== 'title') {
+    hintEl.textContent = '无尽会更快更挤 · 空格按住泵爆 · A 自动 · R 重开 · M 静音';
+  } else {
+    hintEl.textContent = '挖隧道 · 空格按住把怪泵爆 · 掏空岩石脚下会砸下来 · A 自动';
+  }
+}
+
+function toggleAuto() {
+  autoOn = !autoOn;
+  clearAutoInput();
+  autoMon = null;
+  autoHold = -1;
+  autoHoldUntil = 0;
+  autoIdle = 0;
+  syncAutoUi();
+  if (autoOn) {
+    audio.ensure();
+    if (G.phase === 'title') startGame('rooms');
+  }
+  playHint();
+}
+
+function setAutoSpeed(n) {
+  if (n < 1 || n > 4 || !isFinite(n)) n = 3;
+  autoSpeed = n;
+  saveAutoSpeed(autoSpeed);
+  syncSpeedUi();
+}
+
+function isAutoKey(e) {
+  return e.code === 'KeyA' || e.key === 'a' || e.key === 'A';
+}
+
 function tick(dt) {
   G.clock += dt;
   tickFx(dt);
@@ -1393,6 +1868,7 @@ function tick(dt) {
     return;
   }
   if (G.phase === 'play') {
+    if (autoOn) tickAuto();
     tickPlayer(dt);
     tickPump(dt);
     tickMons(dt);
@@ -1925,7 +2401,7 @@ function showTitle() {
   ovKicker.textContent = 'DIG';
   ovTitle.textContent = '矿掘';
   ovLead.textContent = '挖开土层，把地下怪物泵到爆。泵才是爽点。';
-  ovOps.textContent = '方向键或 WASD 挖 · 空格按住泵 · 触屏滑向 + 泵 · R 重开 · M 静音';
+  ovOps.textContent = '方向键或 W S D 挖 · 空格按住泵 · A 自动 · 触屏滑向 + 泵 · R 重开 · M 静音';
   ovStart.classList.remove('gone');
   ovEnd.classList.add('gone');
 }
@@ -1978,9 +2454,7 @@ function startGame(kind) {
   G.ready = READY_SEC;
   hideOverlay();
   audio.start();
-  hintEl.textContent = G.kind === 'endless'
-    ? '无尽会更快更挤 · 空格按住泵爆 · R 重开 · M 静音'
-    : '挖隧道 · 空格按住把怪泵爆 · 掏空岩石脚下会砸下来';
+  playHint();
   paintHud(true);
   canvas.focus();
 }
@@ -2006,6 +2480,7 @@ function backToModes() {
   G.player = makePlayer();
   showTitle();
   paintHud(true);
+  playHint();
 }
 
 /* ---- input ---- */
@@ -2017,6 +2492,14 @@ function releaseDir(d) { dirHeld[d] = 0; }
 
 function onKeyDown(e) {
   var d = KEY_DIR[e.code];
+  if (isAutoKey(e)) {
+    if (e.repeat) return;
+    audio.ensure();
+    toggleAuto();
+    e.preventDefault();
+    return;
+  }
+  if (e.target === speedEl) return;
   audio.ensure();
   if (e.code === 'KeyR') {
     e.preventDefault();
@@ -2028,6 +2511,35 @@ function onKeyDown(e) {
     if (!e.repeat) audio.setMuted(!audio.muted);
     return;
   }
+  if (G.phase === 'title') {
+    if (e.code === 'Enter' || e.code === 'Digit1' || e.code === 'Numpad1' || e.code === 'Space') {
+      e.preventDefault();
+      if (!e.repeat) startGame('rooms');
+      return;
+    }
+    if (e.code === 'Digit2' || e.code === 'Numpad2') {
+      e.preventDefault();
+      if (!e.repeat) startGame('endless');
+      return;
+    }
+  }
+  if (G.phase === 'over' || G.phase === 'win') {
+    if (e.code === 'Enter' || e.code === 'Digit1' || e.code === 'Numpad1' || e.code === 'Space') {
+      e.preventDefault();
+      if (!e.repeat) startGame(G.kind);
+      return;
+    }
+  }
+  if (autoOn) {
+    if (
+      e.code === 'ArrowLeft' || e.code === 'ArrowRight' || e.code === 'ArrowUp' ||
+      e.code === 'ArrowDown' || e.code === 'Space' || e.code === 'KeyD' ||
+      e.code === 'KeyS' || e.code === 'KeyW'
+    ) {
+      e.preventDefault();
+    }
+    return;
+  }
   if (d != null) {
     e.preventDefault();
     pressDir(d);
@@ -2035,39 +2547,18 @@ function onKeyDown(e) {
   }
   if (e.code === 'Space') {
     e.preventDefault();
-    if (e.repeat) {
-      if (G.phase !== 'title' && G.phase !== 'over' && G.phase !== 'win') pumpHeld = true;
-      return;
-    }
-    if (G.phase === 'title') {
-      startGame('rooms');
-      return;
-    }
-    if (G.phase === 'over' || G.phase === 'win') {
-      startGame(G.kind);
-      return;
-    }
-    pumpHeld = true;
-    return;
-  }
-  if (e.code === 'Enter' || e.code === 'Digit1' || e.code === 'Numpad1') {
-    if (e.repeat) return;
-    if (G.phase === 'title') {
-      e.preventDefault();
-      startGame('rooms');
-    } else if (G.phase === 'over' || G.phase === 'win') {
-      e.preventDefault();
-      startGame(G.kind);
-    }
-  }
-  if ((e.code === 'Digit2' || e.code === 'Numpad2') && G.phase === 'title') {
-    e.preventDefault();
-    if (!e.repeat) startGame('endless');
+    if (G.phase !== 'title' && G.phase !== 'over' && G.phase !== 'win') pumpHeld = true;
   }
 }
 
 function onKeyUp(e) {
-  var d = KEY_DIR[e.code];
+  var d;
+  if (isAutoKey(e)) {
+    e.preventDefault();
+    return;
+  }
+  if (autoOn) return;
+  d = KEY_DIR[e.code];
   if (d != null) releaseDir(d);
   if (e.code === 'Space') pumpHeld = false;
 }
@@ -2076,6 +2567,7 @@ function bindPad(btn, d, isPump) {
   function down(ev) {
     ev.preventDefault();
     audio.ensure();
+    if (autoOn) return;
     btn.classList.add('held');
     if (isPump) {
       pumpHeld = true;
@@ -2110,6 +2602,7 @@ function swipeDir(dx, dy) {
 
 function onPointerDown(e) {
   audio.ensure();
+  if (autoOn) return;
   swipe.on = true;
   swipe.id = e.pointerId;
   swipe.x = e.clientX;
@@ -2121,6 +2614,7 @@ function onPointerDown(e) {
 
 function onPointerMove(e) {
   var d;
+  if (autoOn) return;
   if (!swipe.on || e.pointerId !== swipe.id) return;
   d = swipeDir(e.clientX - swipe.x, e.clientY - swipe.y);
   if (d >= 0) {
@@ -2145,16 +2639,26 @@ function onPointerUp(e) {
 }
 
 function frame(ts) {
-  var dt;
+  var dt, steps, turbo, maxSteps;
   if (!lastTs) lastTs = ts;
   dt = (ts - lastTs) / 1000;
   lastTs = ts;
-  if (dt > 0.05) dt = 0.05;
+  if (dt > 0.08) dt = 0.08;
   if (document.hidden) {
     requestAnimationFrame(frame);
     return;
   }
-  tick(dt);
+  turbo = autoOn && autoSpeed >= 4 && G.phase === 'play';
+  if (turbo) G.stop = 0;
+  acc += dt * autoScale();
+  steps = 0;
+  maxSteps = turbo ? 16 : 8;
+  while (acc >= STEP && steps < maxSteps) {
+    tick(STEP);
+    acc -= STEP;
+    steps++;
+  }
+  if (acc > STEP * 4) acc = 0;
   render();
   paintHud(false);
   requestAnimationFrame(frame);
@@ -2174,6 +2678,20 @@ function loadMute() {
   try { return localStorage.getItem(MUTE_KEY) === '1'; } catch (e) { return false; }
 }
 
+function loadAutoSpeed() {
+  try {
+    var n = parseInt(localStorage.getItem(AUTO_SPEED_KEY) || '3', 10);
+    if (!isFinite(n) || n < 1 || n > 4) return 3;
+    return n;
+  } catch (e) {
+    return 3;
+  }
+}
+
+function saveAutoSpeed(n) {
+  try { localStorage.setItem(AUTO_SPEED_KEY, String(n)); } catch (e) { /* ignore */ }
+}
+
 function bind() {
   window.addEventListener('keydown', onKeyDown);
   window.addEventListener('keyup', onKeyUp);
@@ -2187,6 +2705,9 @@ function bind() {
     audio.setMuted(!audio.muted);
   });
   btnRetry.addEventListener('click', restart);
+  btnAuto.addEventListener('click', function () { toggleAuto(); });
+  speedEl.addEventListener('input', function () { setAutoSpeed(parseInt(speedEl.value, 10)); });
+  speedEl.addEventListener('change', function () { setAutoSpeed(parseInt(speedEl.value, 10)); });
   btnRooms.addEventListener('click', function () { startGame('rooms'); });
   btnEndless.addEventListener('click', function () { startGame('endless'); });
   ovRetry.addEventListener('click', function () { startGame(G.kind); });
@@ -2225,11 +2746,14 @@ function boot() {
   }
   G.bests = loadBest();
   audio.setMuted(loadMute());
+  autoSpeed = loadAutoSpeed();
   loadRound();
   G.phase = 'title';
   G.player = makePlayer();
   showTitle();
   paintHud(true);
+  syncAutoUi();
+  syncSpeedUi();
   resize();
   bind();
   requestAnimationFrame(frame);
