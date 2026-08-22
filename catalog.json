@@ -2432,5 +2432,17 @@
     "dir": "g/crazy-climb/",
     "url": "./g/crazy-climb/",
     "kind": "remake"
+  },
+  {
+    "n": 223,
+    "id": "alibaba",
+    "title": "宝洞",
+    "subtitle": "ALI",
+    "blurb": "迷宫里抢金币，别让守卫堵住门。",
+    "hue": 44,
+    "tag": "复刻",
+    "dir": "g/alibaba/",
+    "url": "./g/alibaba/",
+    "kind": "remake"
   }
 ]

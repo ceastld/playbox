@@ -2571,7 +2571,7 @@
     "blurb": "迷宫里抢金币，别让守卫堵住门。",
     "hue": 44,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/alibaba/",
     "kind": "remake"
   },
@@ -2621,6 +2621,18 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/ikaruga/",
+    "kind": "remake"
+  },
+  {
+    "n": 228,
+    "id": "millipede",
+    "title": "千足",
+    "subtitle": "MILL",
+    "blurb": "蘑菇林里打虫，蜘蛛一落就砸。",
+    "hue": 118,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/millipede/",
     "kind": "remake"
   }
 ]
