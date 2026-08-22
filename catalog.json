@@ -1172,5 +1172,17 @@
     "dir": "g/pin-ball/",
     "url": "./g/pin-ball/",
     "kind": "remake"
+  },
+  {
+    "n": 115,
+    "id": "star-raid",
+    "title": "星袭",
+    "subtitle": "RAID",
+    "blurb": "底下开火，打掉整波。",
+    "hue": 265,
+    "tag": "复刻",
+    "dir": "g/star-raid/",
+    "url": "./g/star-raid/",
+    "kind": "remake"
   }
 ]

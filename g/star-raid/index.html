@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#05030c" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>星袭 · RAID</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2305030c'/%3E%3Cpath d='M8 10h2v2H8zm14 0h2v2h-2zM10 12h12v2H10zm-2 2h2v2H8zm14 0h2v2h-2zM6 14h2v4H6zm18 0h2v4h-2zM8 16h16v4H8zm2 4h2v2h-2zm12 0h2v2h-2zM12 22h2v2h-2zm6 0h2v2h-2z' fill='%239b5cff'/%3E%3Crect x='13' y='26' width='6' height='3' rx='.6' fill='%2300f0ff'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>星袭</b>
+        <span>RAID</span>
+      </div>
+      <div class="status">
+        <div class="scores" aria-live="polite">
+          <div class="score" id="score-box">
+            <em>分数</em>
+            <b id="score">0</b>
+            <span id="score-add" class="score-add" hidden>+0</span>
+          </div>
+          <div class="score best">
+            <em>最高</em>
+            <b id="best">0</b>
+          </div>
+        </div>
+        <div class="row">
+          <span id="stage-label">第 1 波</span>
+          <span id="tag-label">CLASSIC</span>
+          <span id="combo-label" class="combo" hidden>连击</span>
+          <span class="pips" id="pips" aria-label="剩余生命"></span>
+        </div>
+      </div>
+      <div class="tools">
+        <label class="speed-ctl" title="速度 慢 / 中 / 快 / 极快">
+          <span>速度</span>
+          <input type="range" id="speed" min="1" max="4" step="1" value="3" aria-label="速度" />
+          <b id="speed-lab">快</b>
+        </label>
+        <button type="button" id="btn-auto" title="A" aria-label="自动" aria-pressed="false">自动</button>
+        <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
+        <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <canvas id="c" tabindex="0" role="application" aria-label="星袭游戏区，底部飞船开火打外星人"></canvas>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden"></div>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">RAID</p>
+          <h1 id="ov-title">星袭</h1>
+          <p class="lead" id="ov-lead">底下开火，打掉整波。</p>
+          <p class="ops" id="ov-ops">← → 移动 · 空格 / 点按开火 · A 自动 · M 静音</p>
+          <div class="ov-actions">
+            <button type="button" id="btn-classic">经典</button>
+            <button type="button" id="btn-storm">弹幕</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">← → 移动 · 空格开火 · A 自动 · 外星人落地即负</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>

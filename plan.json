@@ -1275,7 +1275,7 @@
     "blurb": "底下开火，打掉整波。",
     "hue": 265,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/star-raid/",
     "kind": "remake"
   },
@@ -1361,6 +1361,18 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/chain-boom/",
+    "kind": "remake"
+  },
+  {
+    "n": 123,
+    "id": "bubble-shot",
+    "title": "泡弹",
+    "subtitle": "BUBBLE",
+    "blurb": "对上颜色就爆串。",
+    "hue": 195,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/bubble-shot/",
     "kind": "remake"
   }
 ]
