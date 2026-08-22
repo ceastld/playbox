@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#05030c" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>鸵踢 · JOUST</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2305030c'/%3E%3Crect x='3' y='26' width='26' height='4' fill='%23ff4a18'/%3E%3Crect x='6' y='10' width='8' height='2' fill='%23ffb030'/%3E%3Crect x='18' y='16' width='10' height='2' fill='%23ffb030'/%3E%3Cpath d='M11 20c3-1 5-4 6-7 1 2 2 4 5 5' stroke='%23ffe36b' stroke-width='1.4' fill='none'/%3E%3Cellipse cx='10' cy='21' rx='4.2' ry='2.6' fill='%23ff9a28'/%3E%3Ccircle cx='17' cy='12.2' r='1.5' fill='%2300f0ff'/%3E%3Cpath d='M17 12.2h6' stroke='%2300f0ff' stroke-width='1.1' stroke-linecap='round'/%3E%3Cellipse cx='23' cy='17.4' rx='3.4' ry='2.1' fill='%23ff3db8'/%3E%3Ccircle cx='14' cy='24.2' r='1.4' fill='%23ffe36b'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>鸵踢</b>
+        <span>JOUST</span>
+      </div>
+      <div class="status">
+        <div class="scores" aria-live="polite">
+          <div class="score" id="score-box">
+            <em id="lab-1">分数</em>
+            <b id="score">0</b>
+            <span id="score-add" class="score-add" hidden>+0</span>
+          </div>
+          <div class="score two-only" id="score2-box" hidden>
+            <em>其二</em>
+            <b id="score2">0</b>
+          </div>
+          <div class="score">
+            <em>波</em>
+            <b id="wave">1</b>
+          </div>
+          <div class="score best">
+            <em>最高</em>
+            <b id="best">0</b>
+          </div>
+          <div class="score combo" id="combo-box">
+            <em>连踢</em>
+            <b id="combo">×1</b>
+          </div>
+        </div>
+        <div class="row">
+          <span id="mode-label">经典</span>
+          <span id="tag-label">JOUST</span>
+          <span class="pips" id="pips" aria-label="玩家一性命"></span>
+          <span class="pips pips-two" id="pips2" hidden aria-label="玩家二性命"></span>
+        </div>
+      </div>
+      <div class="tools">
+        <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
+        <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <canvas id="c" tabindex="0" role="application" aria-label="鸵踢洞窟，扇翅飞行，从上方撞击对手"></canvas>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden"></div>
+      <div id="pad" class="pad">
+        <button type="button" id="btn-left" aria-label="向左">左</button>
+        <button type="button" id="btn-flap" aria-label="扇翅">扇</button>
+        <button type="button" id="btn-right" aria-label="向右">右</button>
+      </div>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">JOUST</p>
+          <h1 id="ov-title">鸵踢</h1>
+          <p class="lead" id="ov-lead">洞窟里扇翅对撞。从更高处撞上去，对方变蛋，捡蛋才算赢。</p>
+          <p class="ops" id="ov-ops">← → 移动 · 空格 / 点按扇翅 · 双人 WASD + F · R 重开 · M 静音</p>
+          <div class="ov-actions" id="ov-start">
+            <button type="button" id="btn-classic">经典</button>
+            <button type="button" id="btn-two">双人同机</button>
+          </div>
+          <div class="ov-actions gone" id="ov-end">
+            <button type="button" id="ov-retry">再来</button>
+            <button type="button" id="ov-menu">换模式</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">从上面撞才算赢 · 同高弹开 · 更低你就完蛋 · 蛋要捡</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>

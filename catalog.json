@@ -1352,5 +1352,29 @@
     "dir": "g/kaboom-catch/",
     "url": "./g/kaboom-catch/",
     "kind": "remake"
+  },
+  {
+    "n": 133,
+    "id": "kong-climb",
+    "title": "桶山",
+    "subtitle": "KONG",
+    "blurb": "躲桶上楼，救出。",
+    "hue": 16,
+    "tag": "复刻",
+    "dir": "g/kong-climb/",
+    "url": "./g/kong-climb/",
+    "kind": "remake"
+  },
+  {
+    "n": 136,
+    "id": "joust-kick",
+    "title": "鸵踢",
+    "subtitle": "JOUST",
+    "blurb": "飞起来，从上面撞。",
+    "hue": 36,
+    "tag": "复刻",
+    "dir": "g/joust-kick/",
+    "url": "./g/joust-kick/",
+    "kind": "remake"
   }
 ]
