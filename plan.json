@@ -3219,7 +3219,7 @@
     "blurb": "滚雪球把怪挤爆，别被顶下来。",
     "hue": 200,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/snow-bros/",
     "kind": "remake"
   },
@@ -3269,6 +3269,18 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/excitebike/",
+    "kind": "remake"
+  },
+  {
+    "n": 282,
+    "id": "splatterhouse",
+    "title": "血屋",
+    "subtitle": "SPLAT",
+    "blurb": "戴面具挥斩，把怪物打出汁来。",
+    "hue": 0,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/splatterhouse/",
     "kind": "remake"
   }
 ]
