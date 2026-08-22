@@ -1160,5 +1160,17 @@
     "dir": "g/stack-crash/",
     "url": "./g/stack-crash/",
     "kind": "remake"
+  },
+  {
+    "n": 120,
+    "id": "pin-ball",
+    "title": "弹珠",
+    "subtitle": "PIN",
+    "blurb": "弹板一磕，连撞爆炸。",
+    "hue": 22,
+    "tag": "复刻",
+    "dir": "g/pin-ball/",
+    "url": "./g/pin-ball/",
+    "kind": "remake"
   }
 ]

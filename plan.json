@@ -1287,7 +1287,7 @@
     "blurb": "三个一样就消。",
     "hue": 48,
     "tag": "复刻",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/gem-three/",
     "kind": "remake"
   },
@@ -1335,7 +1335,7 @@
     "blurb": "弹板一磕，连撞爆炸。",
     "hue": 22,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/pin-ball/",
     "kind": "remake"
   },
