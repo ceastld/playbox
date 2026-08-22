@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#05030c" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>2048·五 · FIVE</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2305030c'/%3E%3Crect x='3' y='3' width='26' height='26' rx='4' fill='%230c0814' stroke='%23ff8c28' stroke-width='1.2'/%3E%3Crect x='5.5' y='5.5' width='4' height='4' rx='.8' fill='%232c2218'/%3E%3Crect x='10.5' y='5.5' width='4' height='4' rx='.8' fill='%237a4512'/%3E%3Crect x='15.5' y='5.5' width='4' height='4' rx='.8' fill='%23d4620a'/%3E%3Crect x='20.5' y='5.5' width='4' height='4' rx='.8' fill='%23ffe36b'/%3E%3Crect x='25.5' y='5.5' width='4' height='4' rx='.8' fill='%2300f0ff'/%3E%3Crect x='5.5' y='10.5' width='4' height='4' rx='.8' fill='%23a85a10'/%3E%3Crect x='20.5' y='20.5' width='4' height='4' rx='.8' fill='%23ff3db8'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body class="mode-classic">
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>2048·五</b>
+        <span>FIVE</span>
+      </div>
+      <div class="scores" aria-live="polite">
+        <div class="score" id="score-box">
+          <em>分数</em>
+          <b id="score">0</b>
+          <span id="score-add" class="score-add" hidden>+0</span>
+        </div>
+        <div class="score best">
+          <em>最高</em>
+          <b id="best">0</b>
+        </div>
+        <div class="score time" id="time-box" hidden>
+          <em>剩余</em>
+          <b id="time">1:30</b>
+        </div>
+      </div>
+      <div class="tools">
+        <div class="modes" role="radiogroup" aria-label="模式">
+          <button type="button" id="mode-classic" aria-pressed="true" title="经典 5×5">经典 5×5</button>
+          <button type="button" id="mode-timed" aria-pressed="false" title="限时 90 秒冲分">限时 90秒</button>
+        </div>
+        <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
+        <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <div class="board-wrap">
+        <div class="board" id="board" tabindex="0" role="application" aria-label="2048 五乘五棋盘">
+          <div class="grid-bg" id="grid-bg" aria-hidden="true"></div>
+          <div class="tiles" id="tiles"></div>
+          <div class="mark" aria-hidden="true">5×5</div>
+        </div>
+      </div>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="overlay" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="ov-title" aria-hidden="true">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">FIVE</p>
+          <h1 id="ov-title">2048·五</h1>
+          <p class="lead" id="ov-lead"></p>
+          <div class="ov-actions">
+            <button type="button" id="ov-continue">继续</button>
+            <button type="button" id="ov-retry">重开</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">滑动格子，相同数字合并。五乘五，合到 8192。</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>

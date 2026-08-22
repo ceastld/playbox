@@ -1146,5 +1146,101 @@
     "status": "shipped",
     "dir": "g/tetris/",
     "kind": "remake"
+  },
+  {
+    "n": 105,
+    "id": "five48",
+    "title": "2048·五",
+    "subtitle": "FIVE",
+    "blurb": "五乘五，合到 8192。",
+    "hue": 28,
+    "tag": "复刻",
+    "status": "shipped",
+    "dir": "g/five48/",
+    "kind": "remake"
+  },
+  {
+    "n": 106,
+    "id": "snake-gate",
+    "title": "门蛇",
+    "subtitle": "GATES",
+    "blurb": "钻门换边，撞墙仍死。",
+    "hue": 150,
+    "tag": "复刻",
+    "status": "shipped",
+    "dir": "g/snake-gate/",
+    "kind": "remake"
+  },
+  {
+    "n": 107,
+    "id": "hex-mines",
+    "title": "蜂雷",
+    "subtitle": "HEX",
+    "blurb": "六边形扫雷。",
+    "hue": 188,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/hex-mines/",
+    "kind": "remake"
+  },
+  {
+    "n": 108,
+    "id": "tetra-40",
+    "title": "四十行",
+    "subtitle": "SPRINT",
+    "blurb": "清四十行，比谁快。",
+    "hue": 300,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/tetra-40/",
+    "kind": "remake"
+  },
+  {
+    "n": 109,
+    "id": "brick-out",
+    "title": "破砖",
+    "subtitle": "BREAK",
+    "blurb": "弹球打砖，别漏下去。",
+    "hue": 8,
+    "tag": "复刻",
+    "status": "shipped",
+    "dir": "g/brick-out/",
+    "kind": "remake"
+  },
+  {
+    "id": "soko-box",
+    "n": 110,
+    "title": "箱迷",
+    "subtitle": "SOKO",
+    "blurb": "推箱入位，不能拉。",
+    "hue": 42,
+    "status": "writing",
+    "kind": "remake",
+    "tag": "复刻",
+    "dir": "g/soko-box/"
+  },
+  {
+    "id": "wall-pong",
+    "n": 111,
+    "title": "墙乒",
+    "subtitle": "PONG",
+    "blurb": "挡球回击，先到十一。",
+    "hue": 200,
+    "status": "writing",
+    "kind": "remake",
+    "tag": "复刻",
+    "dir": "g/wall-pong/"
+  },
+  {
+    "id": "rev-disc",
+    "n": 112,
+    "title": "翻碟",
+    "subtitle": "OTHELLO",
+    "blurb": "夹住就翻，占满为止。",
+    "hue": 120,
+    "status": "writing",
+    "kind": "remake",
+    "tag": "复刻",
+    "dir": "g/rev-disc/"
   }
 ]

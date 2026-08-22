@@ -1040,5 +1040,41 @@
     "dir": "g/tetris/",
     "url": "./g/tetris/",
     "kind": "remake"
+  },
+  {
+    "n": 105,
+    "id": "five48",
+    "title": "2048·五",
+    "subtitle": "FIVE",
+    "blurb": "五乘五，合到 8192。",
+    "hue": 28,
+    "tag": "复刻",
+    "dir": "g/five48/",
+    "url": "./g/five48/",
+    "kind": "remake"
+  },
+  {
+    "n": 106,
+    "id": "snake-gate",
+    "title": "门蛇",
+    "subtitle": "GATES",
+    "blurb": "钻门换边，撞墙仍死。",
+    "hue": 150,
+    "tag": "复刻",
+    "dir": "g/snake-gate/",
+    "url": "./g/snake-gate/",
+    "kind": "remake"
+  },
+  {
+    "n": 109,
+    "id": "brick-out",
+    "title": "破砖",
+    "subtitle": "BREAK",
+    "blurb": "弹球打砖，别漏下去。",
+    "hue": 8,
+    "tag": "复刻",
+    "dir": "g/brick-out/",
+    "url": "./g/brick-out/",
+    "kind": "remake"
   }
 ]

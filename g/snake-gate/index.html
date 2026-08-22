@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#05030c" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>门蛇 · GATES</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2305030c'/%3E%3Crect x='4' y='4' width='24' height='24' rx='4' fill='%23081414' stroke='%2300f0ff' stroke-width='1.4'/%3E%3Ccircle cx='10' cy='11' r='4' fill='none' stroke='%23ff3db8' stroke-width='1.6'/%3E%3Ccircle cx='22' cy='21' r='4' fill='none' stroke='%23ff3db8' stroke-width='1.6'/%3E%3Cpath d='M8 22h5c2 0 2-4 4-4h3' stroke='%233dffb0' stroke-width='2.6' fill='none' stroke-linecap='round'/%3E%3Ccircle cx='22' cy='11' r='2.2' fill='%23ffe36b'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>门蛇</b>
+        <span>GATES</span>
+      </div>
+      <div class="scores">
+        <div class="score" id="score-box">
+          <em>分数</em>
+          <b id="score">0</b>
+          <span id="score-add" class="score-add" hidden>+0</span>
+        </div>
+        <div class="score best">
+          <em>最高</em>
+          <b id="best">0</b>
+        </div>
+        <div class="score gate" id="gate-box" hidden>
+          <em>换门</em>
+          <b id="gate-num">5</b>
+        </div>
+      </div>
+      <div class="tools">
+        <button type="button" id="btn-mode" title="切换模式并重开" aria-label="模式 经典">经典</button>
+        <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
+        <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <div class="board-wrap">
+        <div class="board" id="board">
+          <canvas id="c" tabindex="0" role="application" aria-label="门蛇棋盘，钻同色门传送，撞墙即死"></canvas>
+        </div>
+      </div>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden" role="status"></div>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel title" id="panel">
+          <p class="kicker" id="ov-kicker">GATES</p>
+          <h1 id="ov-title">门蛇</h1>
+          <p class="lead" id="ov-lead">钻门换边，撞墙仍死。<br>同色霓虹门成对，钻进去从另一扇出来，朝向不变。<br>出口被身子占着就死。</p>
+          <p class="ops" id="ov-ops">方向键 / WASD 或滑动转弯 · R 重开 · M 静音</p>
+          <div class="ov-actions">
+            <button type="button" id="ov-classic" title="门钉在原位">经典</button>
+            <button type="button" id="ov-chaos" title="每吃五颗，门会换位">乱门</button>
+            <button type="button" id="ov-retry" hidden>重开</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">钻进同色门，从另一扇出来。墙是实心的，不会穿到对侧。</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>
