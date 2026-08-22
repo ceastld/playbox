@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#06140e" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>救升 · CHOP</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2306140e'/%3E%3Cpath d='M2 24 L8 18 L16 22 L24 16 L30 22 V30 H2Z' fill='%230a2418'/%3E%3Cpath d='M2 24 L8 18 L16 22 L24 16 L30 22' fill='none' stroke='%232dff88' stroke-width='1.2'/%3E%3Crect x='22' y='20' width='6' height='4' fill='%231a3020' stroke='%235cffb0' stroke-width='.7'/%3E%3Cpath d='M6 14 H26 M16 12 V16' stroke='%2300e8ff' stroke-width='1.1'/%3E%3Cpath d='M8 16 L16 13 L22 16 L20 19 H12Z' fill='%232dff88'/%3E%3Cpath d='M20 16 L26 18 L24 19 L20 18Z' fill='%235cffb0'/%3E%3Ccircle cx='10' cy='25' r='1.1' fill='%23ffe36b'/%3E%3Ccircle cx='13' cy='25.4' r='1' fill='%23ffe36b'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>救升</b>
+        <span>CHOP</span>
+      </div>
+      <div class="status">
+        <div class="scores" aria-live="polite">
+          <div class="score" id="score-box">
+            <em>分数</em>
+            <b id="score">0</b>
+            <span id="score-add" class="score-add" hidden>+0</span>
+          </div>
+          <div class="score best">
+            <em>最高</em>
+            <b id="best">0</b>
+          </div>
+          <div class="score cargo" id="cargo-box">
+            <em>舱</em>
+            <b id="cargo">0/8</b>
+          </div>
+        </div>
+        <div class="row">
+          <span id="stage-label">边哨</span>
+          <span id="tag-label">救人</span>
+          <span id="save-label">救 0</span>
+          <span id="lost-label">亡 0</span>
+          <span id="combo-label" class="combo" hidden>连击</span>
+          <span class="pips" id="pips" aria-label="剩余直升机"></span>
+        </div>
+      </div>
+      <div class="tools">
+        <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
+        <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <canvas id="c" tabindex="0" role="application" aria-label="救升，侧视直升机，降落救人，送回基地"></canvas>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden"></div>
+      <div id="pads" class="pads" aria-hidden="true">
+        <div class="pad-cluster left">
+          <button type="button" class="pad" id="pad-left" aria-label="左">◀</button>
+          <div class="pad-stack">
+            <button type="button" class="pad" id="pad-up" aria-label="升">▲</button>
+            <button type="button" class="pad" id="pad-down" aria-label="降">▼</button>
+          </div>
+          <button type="button" class="pad" id="pad-right" aria-label="右">▶</button>
+        </div>
+        <div class="pad-cluster right">
+          <button type="button" class="pad fire" id="pad-fire" aria-label="开火">射</button>
+        </div>
+      </div>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">CHOP</p>
+          <h1 id="ov-title">救升</h1>
+          <p class="lead" id="ov-lead">降落救人，送回基地。舱位有限，坦克会碾人。别当成河袭——这是侧视救援，不是河道突围。</p>
+          <p class="ops" id="ov-ops">方向 / WASD 飞 · 空格开火 · R 重开 · M 静音</p>
+          <div class="ov-actions" id="ov-start">
+            <button type="button" id="btn-rescue">救人</button>
+            <button type="button" id="btn-flak">火网</button>
+          </div>
+          <div class="ov-actions gone" id="ov-end">
+            <button type="button" id="ov-retry">再飞</button>
+            <button type="button" id="ov-modes">换模式</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">方向飞 · 空格开火 · 降落接人 · 送回基地</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>

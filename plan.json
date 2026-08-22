@@ -2895,7 +2895,7 @@
     "blurb": "变兽砸楼，躲开火箭和笼子。",
     "hue": 18,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/rampage/",
     "kind": "remake"
   },
@@ -2907,7 +2907,7 @@
     "blurb": "纵向弹幕，捡武装别撞弹。",
     "hue": 200,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/raiden/",
     "kind": "remake"
   },
@@ -2919,7 +2919,7 @@
     "blurb": "马上连射，清掉拦路的匪。",
     "hue": 32,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/gun-smoke/",
     "kind": "remake"
   },
@@ -2931,7 +2931,7 @@
     "blurb": "飞盘鞭抽，跳过峡谷打守卫。",
     "hue": 48,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/rygar/",
     "kind": "remake"
   },
@@ -2943,8 +2943,68 @@
     "blurb": "直升机救人，别被坦克打下来。",
     "hue": 140,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/choplifter/",
+    "kind": "remake"
+  },
+  {
+    "n": 255,
+    "id": "flying-shark",
+    "title": "飞鲨",
+    "subtitle": "SHARK",
+    "blurb": "武装直升机清海，躲开对空火网。",
+    "hue": 168,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/flying-shark/",
+    "kind": "remake"
+  },
+  {
+    "n": 256,
+    "id": "venture",
+    "title": "秘窟",
+    "subtitle": "VENT",
+    "blurb": "进房间捡宝，别被怪物堵住门。",
+    "hue": 36,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/venture/",
+    "kind": "remake"
+  },
+  {
+    "n": 257,
+    "id": "tmnt",
+    "title": "神龟",
+    "subtitle": "TMNT",
+    "blurb": "四龟连斩，把脚兵和头目打下车。",
+    "hue": 122,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/tmnt/",
+    "kind": "remake"
+  },
+  {
+    "n": 258,
+    "id": "twin-cobra",
+    "title": "双蛇",
+    "subtitle": "COBRA",
+    "blurb": "双机扫射地面，捡武装换弹种。",
+    "hue": 152,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/twin-cobra/",
+    "kind": "remake"
+  },
+  {
+    "n": 259,
+    "id": "ice-climber",
+    "title": "冰锤",
+    "subtitle": "ICE",
+    "blurb": "砸冰往上爬，躲开独眼云。",
+    "hue": 196,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/ice-climber/",
     "kind": "remake"
   }
 ]

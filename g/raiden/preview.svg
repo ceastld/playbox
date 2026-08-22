@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" fill="#031018"/>
+  <rect x="5" y="5" width="54" height="54" rx="9" fill="#041c28" stroke="#00e8ff" stroke-width="1.3"/>
+  <path d="M10 12l4 10M18 8l3 14M28 10l2 12M40 9l-1 13M50 12l-4 11" stroke="#00e8ff" stroke-width=".6" opacity=".35"/>
+  <path d="M8 22c7-4 12 3 18-1 6-4 10 2 16-1 6-3 10 2 14 0" fill="none" stroke="#7a6cff" stroke-width=".7" opacity=".4"/>
+  <g fill="#ff3db8">
+    <circle cx="18" cy="20" r="1.3"/>
+    <circle cx="28" cy="16" r="1.1"/>
+    <circle cx="38" cy="22" r="1.2"/>
+    <circle cx="46" cy="18" r="1"/>
+    <circle cx="22" cy="28" r="1.1"/>
+    <circle cx="34" cy="26" r="1.3"/>
+    <circle cx="44" cy="30" r="1"/>
+  </g>
+  <path d="M14 18l4-9 1.4 4.2 4.2-1.2-3.2 8z" fill="#ffe36b" opacity=".85"/>
+  <path d="M16 4h2v10h-2zM30 6h1.6v8H30z" fill="#00e8ff" opacity=".7"/>
+  <rect x="12" y="34" width="8" height="16" rx="1" fill="#0a3040"/>
+  <rect x="44" y="36" width="8" height="14" rx="1" fill="#0a3040"/>
+  <rect x="12.8" y="36" width="2" height="3" fill="#00e8ff" opacity=".5"/>
+  <rect x="46" y="38" width="2" height="3" fill="#00e8ff" opacity=".5"/>
+  <path d="M32 40l3.2 10h-2.2l-1 2.6-1-2.6h-2.2z" fill="#00e8ff"/>
+  <path d="M27 49h10v2.4H27z" fill="#5cefff"/>
+  <rect x="31.1" y="44" width="1.8" height="7" fill="#e8fbff"/>
+  <rect x="24" y="50" width="4" height="2.2" fill="#7a6cff"/>
+  <rect x="36" y="50" width="4" height="2.2" fill="#7a6cff"/>
+  <circle cx="22" cy="46" r="3.2" fill="#ffe36b"/>
+  <text x="22" y="47.4" text-anchor="middle" font-size="3.8" font-family="sans-serif" font-weight="700" fill="#2a1a00">散</text>
+</svg>
