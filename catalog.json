@@ -1100,5 +1100,29 @@
     "dir": "g/tetra-40/",
     "url": "./g/tetra-40/",
     "kind": "remake"
+  },
+  {
+    "n": 110,
+    "id": "soko-box",
+    "title": "箱迷",
+    "subtitle": "SOKO",
+    "blurb": "推箱入位，不能拉。",
+    "hue": 42,
+    "tag": "复刻",
+    "dir": "g/soko-box/",
+    "url": "./g/soko-box/",
+    "kind": "remake"
+  },
+  {
+    "n": 111,
+    "id": "wall-pong",
+    "title": "墙乒",
+    "subtitle": "PONG",
+    "blurb": "挡球回击，先到十一。",
+    "hue": 200,
+    "tag": "复刻",
+    "dir": "g/wall-pong/",
+    "url": "./g/wall-pong/",
+    "kind": "remake"
   }
 ]

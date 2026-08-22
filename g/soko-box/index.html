@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#05030c" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>箱迷 · SOKO</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2305030c'/%3E%3Crect x='4' y='4' width='24' height='24' rx='4' fill='%23140e08' stroke='%23ffe36b' stroke-width='1.3'/%3E%3Crect x='7' y='18' width='7' height='7' rx='1.2' fill='%23e8a020'/%3E%3Crect x='18' y='18' width='7' height='7' rx='1.2' fill='%23ffe36b'/%3E%3Ccircle cx='11.5' cy='12' r='2.4' fill='%2300f0ff'/%3E%3Ccircle cx='21.5' cy='21.5' r='1.6' fill='none' stroke='%2300f0ff' stroke-width='1.1'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>箱迷</b>
+        <span>SOKO</span>
+      </div>
+      <div class="status">
+        <span id="stage-label">关卡 1 / 12</span>
+        <div class="row">
+          <span id="crate-label">入位 0 / 1</span>
+          <span id="step-label">0 步</span>
+        </div>
+        <div class="pips" id="level-pips" aria-label="关卡进度"></div>
+      </div>
+      <div class="tools">
+        <div class="modes" role="radiogroup" aria-label="模式">
+          <button type="button" id="mode-camp" aria-pressed="true">关卡</button>
+          <button type="button" id="mode-daily" aria-pressed="false">每日</button>
+        </div>
+        <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
+        <button type="button" id="btn-undo" title="U" aria-label="撤销">撤</button>
+        <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <div class="board-wrap">
+        <canvas id="c" tabindex="0" role="application" aria-label="箱迷棋盘，推箱入位不能拉"></canvas>
+      </div>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden"></div>
+      <div id="pad" class="pad">
+        <button type="button" id="btn-up" aria-label="上">上</button>
+        <button type="button" id="btn-left" aria-label="左">左</button>
+        <button type="button" id="btn-right" aria-label="右">右</button>
+        <button type="button" id="btn-down" aria-label="下">下</button>
+      </div>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">SOKO</p>
+          <h1 id="ov-title">箱迷</h1>
+          <p class="lead" id="ov-lead">推箱入位，不能拉。<br />一次只推一箱，撞墙或顶两箱都走不动。</p>
+          <p class="ops" id="ov-ops">方向键 / WASD · 滑动 · U 撤销 · R 重开 · M 静音</p>
+          <div class="ov-actions">
+            <button type="button" id="ov-btn">开推</button>
+            <button type="button" id="ov-alt" hidden>重开</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">推箱入位 · 不能拉 · U 撤销 · R 重开</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>

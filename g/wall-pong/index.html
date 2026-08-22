@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#05030c" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>墙乒 · PONG</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2305030c'/%3E%3Crect x='3.5' y='5' width='25' height='22' rx='2.4' fill='%23071018' stroke='%2300d4ff' stroke-width='1.3'/%3E%3Crect x='6.2' y='11' width='2.1' height='8.4' rx='.7' fill='%2300f0ff'/%3E%3Crect x='23.7' y='13.2' width='2.1' height='8.4' rx='.7' fill='%23ff3db8'/%3E%3Ccircle cx='16.6' cy='16.4' r='1.55' fill='%23e8ffff'/%3E%3Cpath d='M16 7.2v17.6' stroke='%2300f0ff' stroke-width='.7' stroke-dasharray='1.6 1.6' opacity='.55'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>墙乒</b>
+        <span>PONG</span>
+      </div>
+      <div class="status">
+        <div class="scores" aria-live="polite">
+          <div class="score you" id="score-l-box">
+            <em id="lab-l">你</em>
+            <b id="score-l">0</b>
+          </div>
+          <div class="score them" id="score-r-box">
+            <em id="lab-r">对方</em>
+            <b id="score-r">0</b>
+          </div>
+          <div class="score best">
+            <em>胜</em>
+            <b id="best">0</b>
+          </div>
+        </div>
+        <div class="row">
+          <span id="mode-label">墙乒</span>
+          <span id="tag-label">PONG</span>
+        </div>
+      </div>
+      <div class="tools">
+        <div class="diff" id="diff" role="radiogroup" aria-label="难度">
+          <button type="button" data-diff="0" aria-pressed="false" title="简单">简</button>
+          <button type="button" data-diff="1" aria-pressed="true" title="中等">中</button>
+          <button type="button" data-diff="2" aria-pressed="false" title="困难">难</button>
+        </div>
+        <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
+        <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <canvas id="c" tabindex="0" role="application" aria-label="墙乒球场，左右挡板回击"></canvas>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden"></div>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">PONG</p>
+          <h1 id="ov-title">墙乒</h1>
+          <p class="lead" id="ov-lead">挡球回击，先到十一。</p>
+          <p class="ops" id="ov-ops">W/S 或 ↑/↓ 移动 · 拖动挡板 · 双人分两侧</p>
+          <div class="ov-actions" id="ov-start">
+            <button type="button" id="btn-ai">对墙</button>
+            <button type="button" id="btn-two">双人同机</button>
+            <button type="button" id="btn-wall">迷墙</button>
+          </div>
+          <div class="ov-diff" id="ov-diff" role="radiogroup" aria-label="对战难度">
+            <button type="button" data-diff="0" aria-pressed="false">简</button>
+            <button type="button" data-diff="1" aria-pressed="true">中</button>
+            <button type="button" data-diff="2" aria-pressed="false">难</button>
+          </div>
+          <div class="ov-actions gone" id="ov-end">
+            <button type="button" id="btn-again">再来</button>
+            <button type="button" id="btn-menu">换模式</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">W/S 或方向键移动 · 拖动挡板 · 先到十一须赢两分</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>

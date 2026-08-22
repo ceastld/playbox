@@ -1214,7 +1214,7 @@
     "subtitle": "SOKO",
     "blurb": "推箱入位，不能拉。",
     "hue": 42,
-    "status": "writing",
+    "status": "shipped",
     "kind": "remake",
     "tag": "复刻",
     "dir": "g/soko-box/"
@@ -1226,7 +1226,7 @@
     "subtitle": "PONG",
     "blurb": "挡球回击，先到十一。",
     "hue": 200,
-    "status": "writing",
+    "status": "shipped",
     "kind": "remake",
     "tag": "复刻",
     "dir": "g/wall-pong/"
@@ -1335,7 +1335,7 @@
     "blurb": "弹板一磕，连撞爆炸。",
     "hue": 22,
     "tag": "复刻",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/pin-ball/",
     "kind": "remake"
   },
@@ -1347,7 +1347,7 @@
     "blurb": "叠上去，切齐才爽。",
     "hue": 55,
     "tag": "复刻",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/stack-crash/",
     "kind": "remake"
   },
