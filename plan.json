@@ -3603,7 +3603,7 @@
     "blurb": "弹幕对撞，把机甲核心打穿。",
     "hue": 16,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/batsugun/",
     "kind": "remake"
   },
@@ -3653,6 +3653,18 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/esprade/",
+    "kind": "remake"
+  },
+  {
+    "n": 314,
+    "id": "guwange",
+    "title": "弓眼",
+    "subtitle": "GUWA",
+    "blurb": "纵版射魂，把怨灵弹幕打散。",
+    "hue": 332,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/guwange/",
     "kind": "remake"
   }
 ]

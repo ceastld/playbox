@@ -3464,5 +3464,17 @@
     "dir": "g/r-type2/",
     "url": "./g/r-type2/",
     "kind": "remake"
+  },
+  {
+    "n": 309,
+    "id": "batsugun",
+    "title": "战枪",
+    "subtitle": "BATS",
+    "blurb": "弹幕对撞，把机甲核心打穿。",
+    "hue": 16,
+    "tag": "复刻",
+    "dir": "g/batsugun/",
+    "url": "./g/batsugun/",
+    "kind": "remake"
   }
 ]
