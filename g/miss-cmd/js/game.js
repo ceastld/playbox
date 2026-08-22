@@ -13,7 +13,10 @@
   const BAT_X = [40, 240, 440];
   const BEST_KEY = 'playbox-miss-cmd-best';
   const MUTE_KEY = 'playbox-miss-cmd-mute';
-  const OPS = '点按瞄准开火 · ← → ↑ ↓ 准星 · 空格发射 · 1 2 3 选炮 · R 重开';
+  const AUTO_SPEED_KEY = 'playbox-miss-cmd-auto-speed';
+  const AUTO_SPEED_NAME = ['', '慢', '中', '快', '极快'];
+  const AUTO_INTERVAL = [0, 0.2, 0.09, 0.032, 0];
+  const OPS = '点按瞄准开火 · ← → ↑ ↓ 准星 · 空格发射 · 1 2 3 选炮 · A 自动 · R 重开';
   const REDUCE = typeof window !== 'undefined' && window.matchMedia
     ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
     : false;
@@ -38,6 +41,9 @@
   const btnMeteor = document.getElementById('btn-meteor');
   const btnMute = document.getElementById('btn-mute');
   const btnRetry = document.getElementById('btn-retry');
+  const btnAuto = document.getElementById('btn-auto');
+  const speedEl = document.getElementById('speed');
+  const speedLab = document.getElementById('speed-lab');
   const scoreEl = document.getElementById('score');
   const bestEl = document.getElementById('best');
   const scoreBox = document.getElementById('score-box');
@@ -106,6 +112,10 @@
     aim: { x: VW * 0.5, y: 280 },
     bonus: null
   };
+
+  let autoOn = false;
+  let autoSpeed = 3;
+  let autoMs = 0;
 
   function clamp(n, a, b) {
     return n < a ? a : n > b ? b : n;
@@ -305,6 +315,20 @@
     } catch (err) { /* ignore */ }
   }
 
+  function loadAutoSpeed() {
+    try {
+      const n = parseInt(localStorage.getItem(AUTO_SPEED_KEY) || '3', 10);
+      if (!isFinite(n) || n < 1 || n > 4) return 3;
+      return n;
+    } catch (err) {
+      return 3;
+    }
+  }
+
+  function saveAutoSpeed(n) {
+    try { localStorage.setItem(AUTO_SPEED_KEY, String(n)); } catch (err) { /* ignore */ }
+  }
+
   function addScore(n) {
     if ((G.mode !== 'play' && G.mode !== 'bonus') || n <= 0) return;
     G.score += n;
@@ -430,9 +454,10 @@
     if (G.mode === 'title') setHint(OPS, '');
     else if (G.mode === 'lose') setHint('R 重开 · 六城全毁即负', 'warn');
     else if (G.mode === 'bonus') setHint('余弹与守城结算中', 'hot');
+    else if (autoOn && G.mode === 'play') setHint('托管中 · A 停下', 'hot');
     else if (citiesAlive() === 1) setHint('最后一座城 · 别漏', 'warn');
     else if (ammo <= 4 && G.mode === 'play') setHint('弹药告急 · 瞄准再打', 'warn');
-    else setHint('点按开火 · 火球吞弹 · R 重开', '');
+    else setHint('点按开火 · 火球吞弹 · A 自动 · R 重开', '');
     syncPips();
   }
 
@@ -757,6 +782,254 @@
 
   function firePointer() {
     fireAt(G.aim.x, G.aim.y, -1);
+  }
+
+  function batSpeed(i) {
+    return i === 1 ? 580 : 440;
+  }
+
+  function blastRAt(growT, fadeT, maxR, t) {
+    if (t < 0) return 0;
+    if (t <= growT) {
+      const k = t / Math.max(0.0001, growT);
+      return maxR * (1 - Math.pow(1 - k, 3));
+    }
+    const k = (t - growT) / Math.max(0.0001, fadeT);
+    if (k >= 1) return 0;
+    return maxR * Math.max(0, 1 - k * k);
+  }
+
+  function missileAt(m, t) {
+    return { x: m.x + m.vx * t, y: m.y + m.vy * t };
+  }
+
+  function etaImpact(m) {
+    const sp = hypot(m.vx, m.vy) || 1;
+    const tT = hypot(m.tx - m.x, m.ty - m.y) / sp;
+    let tG = 99;
+    if (m.vy > 6) tG = (GROUND - 8 - m.y) / m.vy;
+    return Math.max(0, Math.min(tT, tG));
+  }
+
+  function etaSplit(m) {
+    if (m.child || m.didSplit) return 99;
+    if (m.kind !== 'split' && m.kind !== 'smart') return 99;
+    if (m.vy <= 4) return 99;
+    return Math.max(0, (m.splitY - m.y) / m.vy);
+  }
+
+  function cityTargeted(m) {
+    if (m.tgtKind !== 'city') return false;
+    const c = G.cities[m.tgtId];
+    return !!(c && c.alive);
+  }
+
+  function batTargeted(m) {
+    if (m.tgtKind !== 'bat') return false;
+    const b = G.bats[m.tgtId];
+    return !!(b && b.alive);
+  }
+
+  function pathCovered(m) {
+    const impact = etaImpact(m);
+    const horizon = Math.min(impact, 1.4);
+    const step = 0.04;
+    const smart = m.kind === 'smart';
+    for (let t = 0; t <= horizon; t += step) {
+      const px = m.x + m.vx * t;
+      const py = m.y + m.vy * t;
+      for (let i = 0; i < G.blasts.length; i++) {
+        const e = G.blasts[i];
+        const r = blastRAt(e.growT, e.fadeT, e.maxR, e.t + t);
+        const pad = smart ? -6 : 4;
+        if (r > 3 && hypot(px - e.x, py - e.y) <= r + pad) return true;
+      }
+      for (let i = 0; i < G.abms.length; i++) {
+        const a = G.abms[i];
+        const flight = hypot(a.tx - a.x, a.ty - a.y) / Math.max(1, a.speed);
+        if (t + 0.02 < flight) continue;
+        const r = blastRAt(0.22, 0.7, 44, t - flight);
+        const pad = smart ? 0 : 8;
+        if (r > 4 && hypot(px - a.tx, py - a.ty) <= r + pad) return true;
+      }
+    }
+    return false;
+  }
+
+  function interceptShot(m, batIndex) {
+    const b = G.bats[batIndex];
+    if (!b || !b.alive || b.ammo <= 0) return null;
+    const bx = b.x;
+    const by = b.peak;
+    const asp = batSpeed(batIndex);
+    const smart = m.kind === 'smart';
+    const extra = smart ? 0.06 : 0.11;
+    const impact = etaImpact(m);
+    const split = etaSplit(m);
+    let tDet = hypot(m.x - bx, m.y - by) / asp;
+    for (let i = 0; i < 8; i++) {
+      const p = missileAt(m, tDet + extra);
+      tDet = hypot(p.x - bx, p.y - by) / asp;
+    }
+    let meet = tDet + extra;
+    if (split < 20) {
+      if (tDet >= split - 0.04) return null;
+      if (meet > split - 0.05) meet = Math.max(tDet + 0.02, split - 0.08);
+    }
+    if (!(meet > 0.05) || tDet > impact - 0.05) return null;
+    let px = m.x + m.vx * meet;
+    let py = m.y + m.vy * meet;
+    if (py > GROUND - 20 || py < 18) return null;
+    px = clamp(px, 10, VW - 10);
+    py = clamp(py, 16, GROUND - 18);
+    const flight = hypot(px - bx, py - by) / asp;
+    if (flight > impact - 0.05) return null;
+    if (split < 20 && flight > split - 0.03) return null;
+    if (py >= GROUND - 16) return null;
+    return { x: px, y: py, t: flight, meet: meet, bat: batIndex };
+  }
+
+  function threatScore(m) {
+    const impact = etaImpact(m);
+    const split = etaSplit(m);
+    let s = 0;
+    if (cityTargeted(m)) s += 140 + Math.max(0, 50 - impact * 22);
+    else if (batTargeted(m)) s += 32;
+    else s += 6;
+    if (split < 2.5) s += 55;
+    if (m.kind === 'smart') s += 16;
+    if (impact < 0.55) s += 90;
+    else if (impact < 0.9) s += 36;
+    if (m.y > 500) s += 42;
+    return s;
+  }
+
+  function pickAutoShot() {
+    const list = G.missiles;
+    if (!list.length) return null;
+    const ammo = ammoLeft();
+    const open = [];
+    let cityNeed = 0;
+    for (let i = 0; i < list.length; i++) {
+      const m = list[i];
+      if (pathCovered(m)) continue;
+      if (cityTargeted(m)) cityNeed += 1;
+      open.push(m);
+    }
+    if (!open.length) return null;
+    const tight = ammo <= cityNeed + 1 || ammo <= 4;
+    const last = ammo <= cityNeed;
+    open.sort(function (a, b) { return threatScore(b) - threatScore(a); });
+    const minY = autoSpeed <= 1 ? 228 : autoSpeed <= 2 ? 168 : 108;
+    const maxLead = autoSpeed <= 1 ? 0.78 : autoSpeed <= 2 ? 1.02 : 1.32;
+
+    for (let i = 0; i < open.length; i++) {
+      const m = open[i];
+      const city = cityTargeted(m);
+      const bat = batTargeted(m);
+      if (last && !city) continue;
+      if (tight && !city && !bat) continue;
+      if (tight && bat && cityNeed >= ammo) continue;
+      const impact = etaImpact(m);
+      const split = etaSplit(m);
+      const urgent = impact < 0.85 || m.y > 468 || split < 2.2;
+      if (!urgent && m.y < minY) continue;
+
+      let best = null;
+      for (let bi = 0; bi < G.bats.length; bi++) {
+        const shot = interceptShot(m, bi);
+        if (!shot) continue;
+        if (!urgent && shot.t > maxLead) continue;
+        if (!best || shot.t < best.t - 0.035 || (Math.abs(shot.t - best.t) < 0.035 && bi === 1)) {
+          best = shot;
+        }
+      }
+      if (!best && urgent && city) {
+        const lead = Math.min(0.22, Math.max(0.08, impact * 0.35));
+        const px = clamp(m.x + m.vx * lead, 10, VW - 10);
+        const py = clamp(m.y + m.vy * lead, 16, GROUND - 18);
+        const ni = nearestBattery(px, py);
+        if (ni >= 0) best = { x: px, y: py, t: lead, meet: lead, bat: ni };
+      }
+      if (!best) continue;
+
+      let ax = best.x;
+      let ay = best.y;
+      let n = 1;
+      const meet = best.meet || (best.t + 0.1);
+      for (let j = 0; j < open.length; j++) {
+        if (open[j] === m) continue;
+        const p = missileAt(open[j], meet);
+        if (hypot(p.x - best.x, p.y - best.y) < 30) {
+          ax += p.x;
+          ay += p.y;
+          n += 1;
+        }
+      }
+      if (n > 1) {
+        best.x = clamp(ax / n, 10, VW - 10);
+        best.y = clamp(ay / n, 16, GROUND - 18);
+      }
+      return best;
+    }
+    return null;
+  }
+
+  function tickAuto(dt) {
+    if (!autoOn) return;
+    if (G.mode !== 'play' || G.dying > 0 || G.ready > 0) return;
+    if (overlayOpen() || G.stop > 0) return;
+    if (G.fireCd > 0) return;
+    autoMs += dt;
+    const interval = AUTO_INTERVAL[autoSpeed] || 0;
+    if (autoMs < interval) return;
+    if (ammoLeft() <= 0) return;
+    const flying = autoSpeed >= 4 ? 6 : autoSpeed >= 3 ? 4 : 2;
+    if (G.abms.length >= flying) return;
+    const shot = pickAutoShot();
+    if (!shot) return;
+    autoMs = 0;
+    G.aim.x = shot.x;
+    G.aim.y = shot.y;
+    fireAt(shot.x, shot.y, shot.bat);
+  }
+
+  function syncAutoBtn() {
+    if (!btnAuto) return;
+    btnAuto.classList.toggle('on', autoOn);
+    btnAuto.setAttribute('aria-pressed', autoOn ? 'true' : 'false');
+    btnAuto.textContent = autoOn ? '停下' : '自动';
+    btnAuto.setAttribute('aria-label', autoOn ? '停止自动' : '自动');
+  }
+
+  function syncSpeedUI() {
+    if (!speedEl || !speedLab) return;
+    speedEl.value = String(autoSpeed);
+    speedLab.textContent = AUTO_SPEED_NAME[autoSpeed];
+    speedEl.title = AUTO_SPEED_NAME[autoSpeed];
+    speedEl.setAttribute('aria-valuetext', AUTO_SPEED_NAME[autoSpeed]);
+  }
+
+  function setAutoSpeed(n) {
+    n = parseInt(n, 10);
+    if (!isFinite(n) || n < 1 || n > 4) n = 3;
+    autoSpeed = n;
+    saveAutoSpeed(autoSpeed);
+    syncSpeedUI();
+  }
+
+  function toggleAuto() {
+    autoOn = !autoOn;
+    autoMs = 0;
+    keys.l = false;
+    keys.r = false;
+    keys.u = false;
+    keys.d = false;
+    syncAutoBtn();
+    syncHud();
+    if (!autoOn) return;
+    audio.ensure();
+    if (G.mode === 'title') startGame('classic');
   }
 
   function bumpCombo() {
@@ -1125,6 +1398,7 @@
   }
 
   function updateAim(dt) {
+    if (autoOn) return;
     const spd = 340;
     if (keys.l) G.aim.x -= spd * dt;
     if (keys.r) G.aim.x += spd * dt;
@@ -1288,6 +1562,7 @@
     } else if (waveClear()) {
       beginBonus();
     }
+    tickAuto(dt);
   }
 
   function drawBg() {
@@ -1685,7 +1960,14 @@
 
   function onKey(e, down) {
     const k = e.key;
-    if (k === 'ArrowLeft' || k === 'Left' || k === 'a' || k === 'A') keys.l = down;
+    if (k === 'a' || k === 'A' || e.code === 'KeyA') {
+      if (down) {
+        e.preventDefault();
+        if (!e.repeat) toggleAuto();
+      }
+      return;
+    }
+    if (k === 'ArrowLeft' || k === 'Left') keys.l = down;
     if (k === 'ArrowRight' || k === 'Right' || k === 'd' || k === 'D') keys.r = down;
     if (k === 'ArrowUp' || k === 'Up' || k === 'w' || k === 'W') keys.u = down;
     if (k === 'ArrowDown' || k === 'Down' || k === 's' || k === 'S') keys.d = down;
@@ -1708,6 +1990,7 @@
         if (k === '2') startGame('meteor');
         return;
       }
+      if (autoOn) return;
       if (G.mode === 'play') fireAt(G.aim.x, G.aim.y, k.charCodeAt(0) - 49);
       return;
     }
@@ -1717,6 +2000,7 @@
         primaryAction();
         return;
       }
+      if (autoOn) return;
       if (G.mode === 'play') firePointer();
     }
   }
@@ -1734,7 +2018,7 @@
       pointer.y = p.y;
       G.aim.x = clamp(p.x, 8, VW - 8);
       G.aim.y = clamp(p.y, 12, GROUND - 8);
-      if (G.mode === 'play') firePointer();
+      if (G.mode === 'play' && !autoOn) firePointer();
       if (canvas.setPointerCapture) {
         try { canvas.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
       }
@@ -1792,6 +2076,9 @@
   seedStars();
   loadBest();
   initMute();
+  autoSpeed = loadAutoSpeed();
+  syncSpeedUI();
+  syncAutoBtn();
   goTitle();
   resize();
   bindPointer();
@@ -1809,6 +2096,10 @@
   if (btnRetry) btnRetry.addEventListener('click', function () {
     audio.ensure();
     restart();
+  });
+  if (btnAuto) btnAuto.addEventListener('click', function () { toggleAuto(); });
+  if (speedEl) speedEl.addEventListener('input', function () {
+    setAutoSpeed(speedEl.value);
   });
   if (btnClassic) btnClassic.addEventListener('click', function () {
     audio.ensure();
