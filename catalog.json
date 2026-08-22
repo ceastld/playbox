@@ -2168,5 +2168,41 @@
     "dir": "g/pengo-push/",
     "url": "./g/pengo-push/",
     "kind": "remake"
+  },
+  {
+    "n": 201,
+    "id": "balloon-kid",
+    "title": "气斗",
+    "subtitle": "BALLOON",
+    "blurb": "拍气球升空，把人拍下来。",
+    "hue": 204,
+    "tag": "复刻",
+    "dir": "g/balloon-kid/",
+    "url": "./g/balloon-kid/",
+    "kind": "remake"
+  },
+  {
+    "n": 202,
+    "id": "ninja-gaid",
+    "title": "影忍",
+    "subtitle": "GAIDEN",
+    "blurb": "墙上一跳，手里的剑不能停。",
+    "hue": 0,
+    "tag": "复刻",
+    "dir": "g/ninja-gaid/",
+    "url": "./g/ninja-gaid/",
+    "kind": "remake"
+  },
+  {
+    "n": 203,
+    "id": "bomb-jack",
+    "title": "炸跳",
+    "subtitle": "JACK",
+    "blurb": "炸弹全收完再走。",
+    "hue": 50,
+    "tag": "复刻",
+    "dir": "g/bomb-jack/",
+    "url": "./g/bomb-jack/",
+    "kind": "remake"
   }
 ]

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#0c0402" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>影忍 · GAIDEN</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230c0402'/%3E%3Crect x='2' y='2' width='28' height='28' rx='4' fill='%23140808' stroke='%23ff2e0a' stroke-width='1.4'/%3E%3Cpath d='M4 24h24' stroke='%23ff2e0a' stroke-width='1.2' opacity='.5'/%3E%3Ccircle cx='12' cy='12' r='3.2' fill='%23e8b090'/%3E%3Crect x='9.6' y='15' width='5.2' height='7.4' rx='.8' fill='%23ff2e0a'/%3E%3Crect x='9.4' y='17.6' width='5.6' height='1.4' fill='%23ffe36b'/%3E%3Cpath d='M15 16l9-2-5 4z' fill='%2300f0ff'/%3E%3Crect x='9.8' y='22.2' width='2' height='3' fill='%23ff2e0a'/%3E%3Crect x='12.6' y='22.2' width='2' height='3' fill='%23ff2e0a'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>影忍</b>
+        <span>GAIDEN</span>
+      </div>
+      <div class="status">
+        <div class="scores" aria-live="polite">
+          <div class="score" id="score-box">
+            <em>分数</em>
+            <b id="score">0</b>
+            <span id="score-add" class="score-add" hidden>+0</span>
+          </div>
+          <div class="score best">
+            <em>最高</em>
+            <b id="best">0</b>
+          </div>
+          <div class="score hp" id="hp-box">
+            <em>生命</em>
+            <b id="hp">16</b>
+            <span class="hp-track" aria-hidden="true"><i id="hp-fill"></i></span>
+          </div>
+          <div class="score combo" id="combo-box">
+            <em>连击</em>
+            <b id="combo">×1</b>
+          </div>
+        </div>
+        <div class="row">
+          <span id="stage-label">巷口</span>
+          <span id="tag-label">夜城</span>
+          <span id="nin-label" class="ninpo">忍 20</span>
+          <span id="sub-label" class="subw">手里剑</span>
+          <span class="pips" id="pips" aria-label="剩余性命"></span>
+        </div>
+      </div>
+      <div class="tools">
+        <div class="modes" role="radiogroup" aria-label="模式">
+          <button type="button" id="mode-city" aria-pressed="true">夜城</button>
+          <button type="button" id="mode-blood" aria-pressed="false">血战</button>
+        </div>
+        <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
+        <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <div class="board-wrap">
+        <canvas id="c" tabindex="0" role="application" aria-label="影忍，侧向走跳，贴墙蹬墙，挥刀与忍术"></canvas>
+      </div>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden"></div>
+      <div id="chain-pop" class="chain-pop hidden" aria-hidden="true">×2</div>
+      <div id="pad" class="pad">
+        <button type="button" id="btn-jump" aria-label="跳跃或蹬墙">跳</button>
+        <button type="button" id="btn-left" aria-label="左">左</button>
+        <button type="button" id="btn-slash" aria-label="挥刀">斩</button>
+        <button type="button" id="btn-right" aria-label="右">右</button>
+        <button type="button" id="btn-sub" aria-label="忍术">忍</button>
+      </div>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">GAIDEN</p>
+          <h1 id="ov-title">影忍</h1>
+          <p class="lead" id="ov-lead">夜城走跳斩杀。贴墙滑落，再蹬出去。<br />Z 挥刀，C 忍术耗忍。关底有头目。</p>
+          <p class="ops" id="ov-ops">方向键 / WASD 走跳 · Z 斩 · C 忍术 · R 重开 · M 静音</p>
+          <div class="ov-actions" id="ov-start">
+            <button type="button" id="btn-city">夜城</button>
+            <button type="button" id="btn-blood">血战</button>
+          </div>
+          <div class="ov-actions gone" id="ov-end">
+            <button type="button" id="ov-again">再来</button>
+            <button type="button" id="ov-menu">换模式</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">走跳贴墙 · Z 斩 · C 忍术耗忍 · 生命归零丢命</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>

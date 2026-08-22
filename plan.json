@@ -2307,7 +2307,7 @@
     "blurb": "拍气球升空，把人拍下来。",
     "hue": 204,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/balloon-kid/",
     "kind": "remake"
   },
@@ -2319,7 +2319,7 @@
     "blurb": "墙上一跳，手里的剑不能停。",
     "hue": 0,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/ninja-gaid/",
     "kind": "remake"
   },
@@ -2331,7 +2331,7 @@
     "blurb": "炸弹全收完再走。",
     "hue": 50,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/bomb-jack/",
     "kind": "remake"
   },
@@ -2357,6 +2357,42 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/circus-jump/",
+    "kind": "remake"
+  },
+  {
+    "n": 206,
+    "id": "jungle-king",
+    "title": "丛林",
+    "subtitle": "JUNGLE",
+    "blurb": "藤蔓荡过去，鳄鱼别咬着。",
+    "hue": 92,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/jungle-king/",
+    "kind": "remake"
+  },
+  {
+    "n": 207,
+    "id": "kangaroo",
+    "title": "袋鼠",
+    "subtitle": "ROO",
+    "blurb": "拳打猴子，把孩子救下来。",
+    "hue": 28,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/kangaroo/",
+    "kind": "remake"
+  },
+  {
+    "n": 208,
+    "id": "gyruss",
+    "title": "环轨",
+    "subtitle": "GYRUSS",
+    "blurb": "围着圆圈打，往里冲。",
+    "hue": 260,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/gyruss/",
     "kind": "remake"
   }
 ]
