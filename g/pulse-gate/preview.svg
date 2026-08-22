@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" fill="#05030c"/>
+  <circle cx="32" cy="32" r="26" fill="#0a0614"/>
+  <circle cx="32" cy="32" r="22" fill="none" stroke="#00f0ff" stroke-width="1.4" opacity=".85"/>
+  <path d="M32 10.2c3.2 0 6.4.4 8.8 1.6-2.6 2.2-5.6 3.4-8.8 3.4s-6.2-1.2-8.8-3.4C25.6 10.6 28.8 10.2 32 10.2z" fill="#0d0818" stroke="#ff3db8" stroke-width="1.1"/>
+  <path d="M53.8 32c0 3.2-.4 6.4-1.6 8.8-2.2-2.6-3.4-5.6-3.4-8.8s1.2-6.2 3.4-8.8c1.2 2.4 1.6 5.6 1.6 8.8z" fill="#0a1218" stroke="#00f0ff" stroke-width="1"/>
+  <path d="M32 53.8c-3.2 0-6.4-.4-8.8-1.6 2.6-2.2 5.6-3.4 8.8-3.4s6.2 1.2 8.8 3.4C38.4 53.4 35.2 53.8 32 53.8z" fill="#0d0818" stroke="#ff3db8" stroke-width="1" opacity=".7"/>
+  <path d="M10.2 32c0-3.2.4-6.4 1.6-8.8 2.2 2.6 3.4 5.6 3.4 8.8s-1.2 6.2-3.4 8.8C10.6 38.4 10.2 35.2 10.2 32z" fill="#0a1218" stroke="#00f0ff" stroke-width="1" opacity=".7"/>
+  <circle cx="32" cy="32" r="11" fill="none" stroke="#ff3db8" stroke-width="1.3"/>
+  <circle cx="32" cy="32" r="5.6" fill="#12081c" stroke="#00f0ff" stroke-width="1.1"/>
+  <circle cx="32" cy="32" r="2.2" fill="#ff3db8"/>
+  <circle cx="32" cy="10" r="3.1" fill="#ffe36b"/>
+  <circle cx="32" cy="10" r="1.2" fill="#fff8d2"/>
+  <path d="M18 22.5c2.4-1.2 4.6.4 7.2 2.2 2.2 1.5 4.4-1.6 6.8-2.6" fill="none" stroke="#ff3db8" stroke-width="1.3" stroke-linecap="round" opacity=".55"/>
+</svg>

@@ -882,5 +882,27 @@
     "tag": "灰",
     "dir": "g/ash-write/",
     "url": "./g/ash-write/"
+  },
+  {
+    "n": 91,
+    "id": "cage-key",
+    "title": "笼钥",
+    "subtitle": "CAGE",
+    "blurb": "先转笼子再插对的钥匙。",
+    "hue": 45,
+    "tag": "钥",
+    "dir": "g/cage-key/",
+    "url": "./g/cage-key/"
+  },
+  {
+    "n": 92,
+    "id": "pulse-gate",
+    "title": "脉门",
+    "subtitle": "PULSE",
+    "blurb": "跟着你敲的脉搏开门。",
+    "hue": 335,
+    "tag": "脉",
+    "dir": "g/pulse-gate/",
+    "url": "./g/pulse-gate/"
   }
 ]

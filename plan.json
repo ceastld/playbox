@@ -997,7 +997,7 @@
     "blurb": "先转笼子再插对的钥匙。",
     "hue": 45,
     "tag": "钥",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/cage-key/"
   },
   {
@@ -1008,7 +1008,7 @@
     "blurb": "跟着你敲的脉搏开门。",
     "hue": 335,
     "tag": "脉",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/pulse-gate/"
   },
   {
@@ -1052,7 +1052,7 @@
     "blurb": "按孔吹出目标短句。",
     "hue": 270,
     "tag": "笛",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/flute-hole/"
   },
   {
@@ -1063,7 +1063,7 @@
     "blurb": "结霜长成指定花纹。",
     "hue": 185,
     "tag": "霜",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/frost-bloom/"
   },
   {
