@@ -2871,7 +2871,7 @@
     "blurb": "四向开火钻隧道，别撞能量墙。",
     "hue": 28,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/vanguard/",
     "kind": "remake"
   },
@@ -2883,7 +2883,7 @@
     "blurb": "连射编队，打光燃料就完了。",
     "hue": 24,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/astro-blaster/",
     "kind": "remake"
   },
@@ -2921,6 +2921,30 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/gun-smoke/",
+    "kind": "remake"
+  },
+  {
+    "n": 253,
+    "id": "rygar",
+    "title": "莱加",
+    "subtitle": "RYGA",
+    "blurb": "飞盘鞭抽，跳过峡谷打守卫。",
+    "hue": 48,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/rygar/",
+    "kind": "remake"
+  },
+  {
+    "n": 254,
+    "id": "choplifter",
+    "title": "救升",
+    "subtitle": "CHOP",
+    "blurb": "直升机救人，别被坦克打下来。",
+    "hue": 140,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/choplifter/",
     "kind": "remake"
   }
 ]
