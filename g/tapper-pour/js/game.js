@@ -26,6 +26,9 @@ var STEP = 1 / 60;
 var TAU = Math.PI * 2;
 var BEST_KEY = 'playbox-tapper-pour-best';
 var MUTE_KEY = 'playbox-tapper-pour-mute';
+var AUTO_SPEED_KEY = 'playbox-tapper-pour-auto-speed';
+var SPEED_LABELS = ['', '慢', '中', '快', '极快'];
+var TAP_IDLE_X = TAP_ZONE + 22;
 
 var RGB_BEER = [240, 160, 32];
 var RGB_FOAM = [255, 244, 210];
@@ -97,6 +100,292 @@ function hopBar(bar, dir) {
 }
 function comboMul(combo) {
   return Math.max(1, combo | 0);
+}
+
+function loadAutoSpeed() {
+  try {
+    var n = parseInt(localStorage.getItem(AUTO_SPEED_KEY) || '3', 10);
+    if (!isFinite(n) || n < 1 || n > 4) return 3;
+    return n;
+  } catch (e) {
+    return 3;
+  }
+}
+
+function saveAutoSpeed(n) {
+  try { localStorage.setItem(AUTO_SPEED_KEY, String(n)); } catch (e) { /* ignore */ }
+}
+
+function emptySmashEta(m) {
+  if (!m || m.dead || m.full) return 1e9;
+  return (MUG_RIGHT - m.x) / Math.max(12, Math.abs(m.vx) || 1);
+}
+
+function customerRushEta(c) {
+  if (!c || c.thirst <= 0 || c.dir < 0) return 1e9;
+  var wait = c.drink > 0 ? c.drink : 0;
+  return wait + (TAP_MISS - c.x) / Math.max(8, c.spd || 1);
+}
+
+function openThirstOn(bar, customers) {
+  var n = 0, i, c;
+  for (i = 0; i < customers.length; i++) {
+    c = customers[i];
+    if (c.bar === bar && c.thirst > 0 && c.dir > 0 && c.drink <= 0) n++;
+  }
+  return n;
+}
+
+function fullMugsBar(bar, mugs) {
+  var n = 0, i, m;
+  for (i = 0; i < mugs.length; i++) {
+    m = mugs[i];
+    if (!m.dead && m.full && m.bar === bar) n++;
+  }
+  return n;
+}
+
+function travelTime(p, bar, x) {
+  var hops = Math.abs((p.bar | 0) - (bar | 0));
+  var walk = Math.abs(p.x - x) / WALK;
+  return hops * (HOP_T + 0.04) + walk;
+}
+
+function catchAimX(p, m) {
+  var hops = Math.abs(m.bar - p.bar);
+  var t0 = hops * HOP_T;
+  var mx = m.x + Math.max(0, m.vx) * t0;
+  var px = p.x;
+  var t, aim;
+  if (Math.abs(px - mx) <= CATCH_R * 0.55) {
+    return clamp(px, BAR_LEFT + 8, BAR_RIGHT - 6);
+  }
+  if (px > mx) {
+    t = (px - mx) / Math.max(40, WALK + Math.max(0, m.vx));
+    aim = mx + Math.max(0, m.vx) * t;
+  } else {
+    t = (mx - px) / Math.max(40, WALK);
+    aim = mx + Math.max(0, m.vx) * Math.max(0, t);
+  }
+  return clamp(aim, BAR_LEFT + 8, BAR_RIGHT - 6);
+}
+
+function pickAutoJob(p, mugs, customers, tips, party, round) {
+  var best = null;
+  var bestS = -1e9;
+  var i, m, c, t, s, eta, trav, x, bar;
+  var demand, fulls, rightmost, rush;
+  var emptySpd;
+
+  round = round || 1;
+  emptySpd = mugSpeed(false, round, party);
+
+  function consider(job, score) {
+    if (job.bar === p.bar) score += 340;
+    if (score > bestS) {
+      bestS = score;
+      best = job;
+    }
+  }
+
+  for (i = 0; i < mugs.length; i++) {
+    m = mugs[i];
+    if (m.dead || m.full) continue;
+    eta = emptySmashEta(m);
+    x = catchAimX(p, m);
+    trav = travelTime(p, m.bar, x);
+    s = 7600 + m.x * 3.4 - eta * 1500;
+    if (eta < 0.55) s += 6400;
+    else if (eta < 1.05) s += 2800;
+    if (eta + 0.06 < trav) s -= 4200;
+    else if (eta < trav + 0.22) s += 2000;
+    consider({ kind: 'catch', bar: m.bar, x: x }, s);
+  }
+
+  for (i = 0; i < customers.length; i++) {
+    c = customers[i];
+    if (c.drink <= 0) continue;
+    m = {
+      x: c.x + 10,
+      bar: c.bar,
+      full: false,
+      vx: emptySpd,
+      dead: false
+    };
+    eta = c.drink + emptySmashEta(m);
+    x = catchAimX(p, m);
+    trav = travelTime(p, c.bar, x) + c.drink;
+    s = 5200 + c.x * 2.2 - eta * 1100;
+    if (c.drink < 0.18 && c.bar === p.bar) s += 1600;
+    consider({ kind: 'catch', bar: c.bar, x: x }, s);
+  }
+
+  for (bar = 0; bar < BARS; bar++) {
+    demand = openThirstOn(bar, customers);
+    fulls = fullMugsBar(bar, mugs);
+    if (demand <= fulls) continue;
+    if (fulls >= maxFull(party)) continue;
+    rightmost = null;
+    rush = 1e9;
+    for (i = 0; i < customers.length; i++) {
+      c = customers[i];
+      if (c.bar !== bar || c.thirst <= 0 || c.dir < 0 || c.drink > 0) continue;
+      eta = customerRushEta(c);
+      if (!rightmost || c.x > rightmost.x) rightmost = c;
+      if (eta < rush) rush = eta;
+    }
+    if (!rightmost) continue;
+    trav = travelTime(p, bar, TAP_IDLE_X);
+    s = 5400 + rightmost.x * 6.4 - rush * 240;
+    if (rightmost.x > 260) s += 900;
+    if (rightmost.x > 330) s += 2200;
+    if (rightmost.x > 380) s += 3400;
+    if (rush < 1.7) s += 3200;
+    if (rush < 0.95) s += 4800;
+    if (rush + 0.04 < trav) s -= 600;
+    consider({ kind: 'pour', bar: bar, x: TAP_IDLE_X }, s);
+  }
+
+  if (best && bestS >= 1200) return best;
+
+  if (tips) {
+    for (i = 0; i < tips.length; i++) {
+      t = tips[i];
+      if (t.taken) continue;
+      if (t.bar !== p.bar) continue;
+      if (Math.abs(t.x - p.x) > 36) continue;
+      s = 700 - Math.abs(t.x - p.x) * 0.5;
+      consider({ kind: 'tip', bar: t.bar, x: t.x }, s);
+    }
+  }
+
+  if (best) return best;
+  return { kind: 'idle', bar: p.bar, x: TAP_IDLE_X };
+}
+
+function simAutoWave(round, party, seconds) {
+  var p = { x: TAP_IDLE_X, bar: 1, hopT: 0, pourCd: 0, state: 'walk' };
+  var queue = makeWave(round, party);
+  var customers = [];
+  var mugs = [];
+  var t = 0;
+  var poured = 0;
+  var served = 0;
+  var caught = 0;
+  var rushed = false;
+  var spilled = false;
+  var smashed = false;
+  var i, j, q, c, m, o, job, dead, nOn, cap, spd, ahead, best, bestX;
+  cap = party ? 4 : 3;
+  while (t < seconds) {
+    for (i = 0; i < queue.length; i++) queue[i].delay -= STEP;
+    i = 0;
+    while (i < queue.length) {
+      q = queue[i];
+      if (q.delay > 0) { i++; continue; }
+      nOn = 0;
+      for (j = 0; j < customers.length; j++) {
+        if (customers[j].bar === q.bar && customers[j].thirst > 0) nOn++;
+      }
+      if (nOn >= cap) { i++; continue; }
+      queue.splice(i, 1);
+      customers.push(makeCust(q, round, party));
+    }
+    job = pickAutoJob(p, mugs, customers, [], party, round);
+    if (job && job.bar !== p.bar && p.hopT <= 0) {
+      p.bar += job.bar > p.bar ? 1 : -1;
+      p.hopT = HOP_T;
+    }
+    if (p.hopT > 0) p.hopT -= STEP;
+    if (p.pourCd > 0) p.pourCd -= STEP;
+    if (job) {
+      dead = 8;
+      if (p.x < job.x - dead) p.x += WALK * STEP;
+      else if (p.x > job.x + dead) p.x -= WALK * STEP;
+      p.x = clamp(p.x, BAR_LEFT + 8, BAR_RIGHT - 6);
+      if (
+        job.kind === 'pour' &&
+        job.bar === p.bar &&
+        inTapZone(p.x) &&
+        p.hopT <= 0 &&
+        p.pourCd <= 0 &&
+        openThirstOn(p.bar, customers) > fullMugsBar(p.bar, mugs) &&
+        fullMugsBar(p.bar, mugs) < maxFull(party)
+      ) {
+        mugs.push(makeMug(p.x - 14, p.bar, true, mugSpeed(true, round, party)));
+        p.pourCd = POUR_CD;
+        poured += 1;
+      }
+    }
+    for (i = customers.length - 1; i >= 0; i--) {
+      c = customers[i];
+      if (c.drink > 0) {
+        c.drink -= STEP;
+        if (c.drink <= 0) {
+          c.drink = 0;
+          mugs.push(makeMug(c.x + 10, c.bar, false, mugSpeed(false, round, party)));
+          if (c.thirst <= 0) {
+            c.dir = -1;
+            c.face = -1;
+          }
+        }
+      } else {
+        spd = c.spd * (c.dir < 0 ? 1.32 : 1);
+        ahead = null;
+        for (j = 0; j < customers.length; j++) {
+          o = customers[j];
+          if (o === c || o.bar !== c.bar) continue;
+          if (c.dir > 0 && o.x > c.x && (!ahead || o.x < ahead.x)) ahead = o;
+          if (c.dir < 0 && o.x < c.x && (!ahead || o.x > ahead.x)) ahead = o;
+        }
+        if (ahead && Math.abs(ahead.x - c.x) < GAP) {
+          if (c.dir > 0 && ahead.x > c.x) {
+            spd = ahead.drink > 0 ? 0 : Math.min(spd, ahead.spd * 0.4);
+          }
+          if (c.dir < 0 && ahead.x < c.x) spd = Math.min(spd, ahead.spd);
+        }
+        c.x += c.dir * spd * STEP;
+      }
+      if (customerRushes(c.thirst, c.x)) rushed = true;
+      if (c.dir < 0 && c.x < BAR_LEFT - 14) customers.splice(i, 1);
+    }
+    for (i = mugs.length - 1; i >= 0; i--) {
+      m = mugs[i];
+      m.x += m.vx * STEP;
+      best = null;
+      bestX = -1e9;
+      for (j = 0; j < customers.length; j++) {
+        c = customers[j];
+        if (mugHitsCust(m.x, m.bar, m.full, c.x, c.bar, c.drink, c.thirst, c.dir)) {
+          if (c.x > bestX) { best = c; bestX = c.x; }
+        }
+      }
+      if (best) {
+        m.dead = true;
+        best.drink = DRINK_T;
+        best.thirst -= 1;
+        served += 1;
+      } else if (canCatch(p.x, p.bar, m.x, m.bar, m.full)) {
+        m.dead = true;
+        caught += 1;
+      }
+      if (mugFallsLeft(m.full, m.x)) { spilled = true; m.dead = true; }
+      if (mugFallsRight(m.full, m.x)) { smashed = true; m.dead = true; }
+      if (m.dead) mugs.splice(i, 1);
+    }
+    if (!queue.length && !customers.length && !mugs.length) break;
+    t += STEP;
+  }
+  return {
+    t: t,
+    poured: poured,
+    served: served,
+    caught: caught,
+    rushed: rushed,
+    spilled: spilled,
+    smashed: smashed,
+    done: !queue.length && !customers.length && !mugs.length
+  };
 }
 
 function makeWave(round, party) {
@@ -204,6 +493,8 @@ function selfCheck() {
   if (hopBar(1, -1) !== 0 || hopBar(1, 1) !== 2) throw new Error('hop step');
   if (comboMul(0) !== 1 || comboMul(4) !== 4) throw new Error('combo mul');
   if (waveGap(1, true) >= waveGap(1, false)) throw new Error('party denser');
+  if (SPEED_LABELS[3] !== '快' || SPEED_LABELS[4] !== '极快') throw new Error('speed labels');
+  if (TAP_IDLE_X < TAP_ZONE) throw new Error('idle in tap zone');
 
   w = makeWave(1, false);
   if (w.length !== 4) throw new Error('wave len');
@@ -251,6 +542,281 @@ function selfCheck() {
     if (!rushed) throw new Error('customer should reach tap');
     if (t < 8) throw new Error('round1 walk too fast');
   })();
+
+  if (emptySmashEta({ x: 450, full: false, vx: 176, dead: false }) > 0.05) {
+    throw new Error('empty eta at smash');
+  }
+  if (emptySmashEta({ x: 200, full: true, vx: -158, dead: false }) < 1e8) {
+    throw new Error('full mug not empty eta');
+  }
+  if (openThirstOn(1, [
+    { bar: 1, thirst: 1, dir: 1, drink: 0 },
+    { bar: 1, thirst: 1, dir: 1, drink: 0.2 },
+    { bar: 0, thirst: 2, dir: 1, drink: 0 }
+  ]) !== 1) throw new Error('open thirst skips drinking');
+  if (fullMugsBar(2, [
+    { bar: 2, full: true, dead: false },
+    { bar: 2, full: false, dead: false },
+    { bar: 1, full: true, dead: false }
+  ]) !== 1) throw new Error('full mugs bar');
+
+  (function testPickCatchBeatsFarCust() {
+    var p = { x: TAP_IDLE_X, bar: 1 };
+    var mugs = [{ x: 390, bar: 0, full: false, vx: 176, dead: false }];
+    var customers = [{ x: 90, bar: 2, thirst: 1, dir: 1, drink: 0, spd: 27 }];
+    var job = pickAutoJob(p, mugs, customers, [], false, 1);
+    if (!job || job.kind !== 'catch' || job.bar !== 0) throw new Error('catch urgent empty');
+  })();
+
+  (function testPickPourSameBar() {
+    var p = { x: TAP_IDLE_X, bar: 1 };
+    var customers = [{ x: 240, bar: 1, thirst: 1, dir: 1, drink: 0, spd: 27 }];
+    var job = pickAutoJob(p, [], customers, [], false, 1);
+    if (!job || job.kind !== 'pour' || job.bar !== 1) throw new Error('pour thirsty same bar');
+  })();
+
+  (function testPickCoveredNoPour() {
+    var p = { x: TAP_IDLE_X, bar: 0 };
+    var mugs = [{ x: 300, bar: 0, full: true, vx: -158, dead: false }];
+    var customers = [{ x: 120, bar: 0, thirst: 1, dir: 1, drink: 0, spd: 27 }];
+    var job = pickAutoJob(p, mugs, customers, [], false, 1);
+    if (job && job.kind === 'pour') throw new Error('covered customer no extra pour');
+  })();
+
+  (function testPickRushOverFarEmpty() {
+    var p = { x: TAP_IDLE_X, bar: 1 };
+    var mugs = [{ x: 80, bar: 3, full: false, vx: 176, dead: false }];
+    var customers = [{ x: 400, bar: 1, thirst: 1, dir: 1, drink: 0, spd: 27 }];
+    var job = pickAutoJob(p, mugs, customers, [], false, 1);
+    if (!job || job.kind !== 'pour' || job.bar !== 1) throw new Error('rush pour over far empty');
+  })();
+
+  (function simAutoServeAndCatch() {
+    var p = {
+      x: TAP_IDLE_X,
+      bar: 0,
+      hopT: 0,
+      pourCd: 0,
+      state: 'walk'
+    };
+    var customers = [{
+      x: 130,
+      bar: 0,
+      thirst: 1,
+      dir: 1,
+      drink: 0,
+      spd: custSpeed(1, false, 0),
+      type: 0
+    }];
+    var mugs = [];
+    var t = 0;
+    var poured = false;
+    var served = false;
+    var caught = false;
+    var rushed = false;
+    var spilled = false;
+    var smashed = false;
+    var i, job, m, c, dead;
+    while (t < 14) {
+      job = pickAutoJob(p, mugs, customers, [], false, 1);
+      if (job && job.bar !== p.bar && p.hopT <= 0) {
+        p.bar += job.bar > p.bar ? 1 : -1;
+        p.hopT = HOP_T;
+      }
+      if (p.hopT > 0) p.hopT -= STEP;
+      if (p.pourCd > 0) p.pourCd -= STEP;
+      if (job && job.bar === p.bar) {
+        dead = 8;
+        if (p.x < job.x - dead) p.x += WALK * STEP;
+        else if (p.x > job.x + dead) p.x -= WALK * STEP;
+        p.x = clamp(p.x, BAR_LEFT + 8, BAR_RIGHT - 6);
+        if (
+          job.kind === 'pour' &&
+          inTapZone(p.x) &&
+          p.hopT <= 0 &&
+          p.pourCd <= 0 &&
+          openThirstOn(p.bar, customers) > fullMugsBar(p.bar, mugs) &&
+          fullMugsBar(p.bar, mugs) < maxFull(false)
+        ) {
+          mugs.push(makeMug(p.x - 14, p.bar, true, mugSpeed(true, 1, false)));
+          p.pourCd = POUR_CD;
+          poured = true;
+        }
+      }
+      c = customers[0];
+      if (c) {
+        if (c.drink > 0) {
+          c.drink -= STEP;
+          if (c.drink <= 0) {
+            c.drink = 0;
+            mugs.push(makeMug(c.x + 10, c.bar, false, mugSpeed(false, 1, false)));
+            if (c.thirst <= 0) c.dir = -1;
+          }
+        } else {
+          c.x += c.dir * c.spd * STEP;
+        }
+        if (customerRushes(c.thirst, c.x)) rushed = true;
+      }
+      for (i = mugs.length - 1; i >= 0; i--) {
+        m = mugs[i];
+        m.x += m.vx * STEP;
+        if (c && mugHitsCust(m.x, m.bar, m.full, c.x, c.bar, c.drink, c.thirst, c.dir)) {
+          m.dead = true;
+          c.drink = DRINK_T;
+          c.thirst -= 1;
+          served = true;
+        }
+        if (canCatch(p.x, p.bar, m.x, m.bar, m.full)) {
+          m.dead = true;
+          caught = true;
+        }
+        if (mugFallsLeft(m.full, m.x)) { spilled = true; m.dead = true; }
+        if (mugFallsRight(m.full, m.x)) { smashed = true; m.dead = true; }
+        if (m.dead) mugs.splice(i, 1);
+      }
+      if (c && c.dir < 0 && c.x < BAR_LEFT - 14) customers.pop();
+      if (served && caught && !customers.length && !mugs.length) break;
+      t += STEP;
+    }
+    if (!poured) throw new Error('AI should pour');
+    if (!served) throw new Error('AI mug should serve');
+    if (!caught) throw new Error('AI should catch empty');
+    if (rushed) throw new Error('AI customer rushed');
+    if (spilled) throw new Error('AI full mug spilled');
+    if (smashed) throw new Error('AI empty smashed');
+  })();
+
+  (function simAutoTwoBars() {
+    var p = { x: TAP_IDLE_X, bar: 1, hopT: 0, pourCd: 0, state: 'walk' };
+    var customers = [
+      { x: 160, bar: 0, thirst: 1, dir: 1, drink: 0, spd: custSpeed(1, false, 0), type: 0 },
+      { x: 140, bar: 2, thirst: 1, dir: 1, drink: 0, spd: custSpeed(1, false, 1), type: 1 }
+    ];
+    var mugs = [];
+    var t = 0;
+    var poured = 0;
+    var served = 0;
+    var caught = 0;
+    var rushed = false;
+    var spilled = false;
+    var smashed = false;
+    var i, job, m, c, dead, servedNow;
+    while (t < 18) {
+      job = pickAutoJob(p, mugs, customers, [], false, 1);
+      if (job && job.bar !== p.bar && p.hopT <= 0) {
+        p.bar += job.bar > p.bar ? 1 : -1;
+        p.hopT = HOP_T;
+      }
+      if (p.hopT > 0) p.hopT -= STEP;
+      if (p.pourCd > 0) p.pourCd -= STEP;
+      if (job && job.bar === p.bar) {
+        dead = 8;
+        if (p.x < job.x - dead) p.x += WALK * STEP;
+        else if (p.x > job.x + dead) p.x -= WALK * STEP;
+        p.x = clamp(p.x, BAR_LEFT + 8, BAR_RIGHT - 6);
+        if (
+          job.kind === 'pour' &&
+          inTapZone(p.x) &&
+          p.hopT <= 0 &&
+          p.pourCd <= 0 &&
+          openThirstOn(p.bar, customers) > fullMugsBar(p.bar, mugs) &&
+          fullMugsBar(p.bar, mugs) < maxFull(false)
+        ) {
+          mugs.push(makeMug(p.x - 14, p.bar, true, mugSpeed(true, 1, false)));
+          p.pourCd = POUR_CD;
+          poured += 1;
+        }
+      }
+      for (i = customers.length - 1; i >= 0; i--) {
+        c = customers[i];
+        if (c.drink > 0) {
+          c.drink -= STEP;
+          if (c.drink <= 0) {
+            c.drink = 0;
+            mugs.push(makeMug(c.x + 10, c.bar, false, mugSpeed(false, 1, false)));
+            if (c.thirst <= 0) c.dir = -1;
+          }
+        } else {
+          c.x += c.dir * c.spd * STEP;
+        }
+        if (customerRushes(c.thirst, c.x)) rushed = true;
+        if (c.dir < 0 && c.x < BAR_LEFT - 14) customers.splice(i, 1);
+      }
+      for (i = mugs.length - 1; i >= 0; i--) {
+        m = mugs[i];
+        m.x += m.vx * STEP;
+        servedNow = false;
+        for (var j = 0; j < customers.length; j++) {
+          c = customers[j];
+          if (mugHitsCust(m.x, m.bar, m.full, c.x, c.bar, c.drink, c.thirst, c.dir)) {
+            m.dead = true;
+            c.drink = DRINK_T;
+            c.thirst -= 1;
+            served += 1;
+            servedNow = true;
+            break;
+          }
+        }
+        if (!servedNow && canCatch(p.x, p.bar, m.x, m.bar, m.full)) {
+          m.dead = true;
+          caught += 1;
+        }
+        if (mugFallsLeft(m.full, m.x)) { spilled = true; m.dead = true; }
+        if (mugFallsRight(m.full, m.x)) { smashed = true; m.dead = true; }
+        if (m.dead) mugs.splice(i, 1);
+      }
+      if (served >= 2 && caught >= 2 && !customers.length && !mugs.length) break;
+      t += STEP;
+    }
+    if (poured < 2) throw new Error('AI two-bar pour');
+    if (served < 2) throw new Error('AI two-bar serve');
+    if (caught < 2) throw new Error('AI two-bar catch');
+    if (rushed) throw new Error('AI two-bar rush');
+    if (spilled) throw new Error('AI two-bar spill');
+    if (smashed) throw new Error('AI two-bar smash');
+  })();
+
+  if (typeof document === 'undefined') {
+    (function simClassicWave() {
+      var r = simAutoWave(1, false, 22);
+      if (r.poured < 4) throw new Error('classic wave pour');
+      if (r.served < 4) throw new Error('classic wave serve');
+      if (r.caught < 4) throw new Error('classic wave catch');
+      if (r.rushed) throw new Error('classic wave rush');
+      if (r.spilled) throw new Error('classic wave spill');
+      if (r.smashed) throw new Error('classic wave smash');
+      if (!r.done) throw new Error('classic wave clear');
+    })();
+
+    (function simPartyWave() {
+      var r = simAutoWave(1, true, 22);
+      if (r.poured < 6) throw new Error('party wave pour');
+      if (r.served < 6) throw new Error('party wave serve');
+      if (r.caught < 6) throw new Error('party wave catch');
+      if (r.rushed) throw new Error('party wave rush');
+      if (r.spilled) throw new Error('party wave spill');
+      if (r.smashed) throw new Error('party wave smash');
+      if (!r.done) throw new Error('party wave clear');
+    })();
+
+    (function simClassicRound2() {
+      var r = simAutoWave(2, false, 28);
+      if (r.rushed || r.spilled || r.smashed) throw new Error('classic r2 miss');
+      if (!r.done) throw new Error('classic r2 clear');
+      if (r.caught < 6) throw new Error('classic r2 catch');
+    })();
+
+    (function simPartyRound2() {
+      var r = simAutoWave(2, true, 32);
+      if (r.poured < 8) throw new Error('party r2 pour');
+      if (r.served < 8) throw new Error('party r2 serve');
+      if (r.caught < 8) throw new Error('party r2 catch');
+      if (r.rushed) throw new Error('party r2 rush');
+      if (r.spilled) throw new Error('party r2 spill');
+      if (r.smashed) throw new Error('party r2 smash');
+      if (!r.done) throw new Error('party r2 clear');
+    })();
+  }
 }
 
 selfCheck();
@@ -274,6 +840,9 @@ var btnClassic = document.getElementById('btn-classic');
 var btnParty = document.getElementById('btn-party');
 var btnMute = document.getElementById('btn-mute');
 var btnRetry = document.getElementById('btn-retry');
+var btnAuto = document.getElementById('btn-auto');
+var speedEl = document.getElementById('speed');
+var speedLab = document.getElementById('speed-lab');
 var btnLeft = document.getElementById('btn-left');
 var btnRight = document.getElementById('btn-right');
 var btnUp = document.getElementById('btn-up');
@@ -317,6 +886,10 @@ var keys = { l: false, r: false, u: false, d: false };
 var holdU = 0;
 var holdD = 0;
 var ptr = { down: false, x: 0, y: 0, pour: false, target: -1 };
+var autoOn = false;
+var autoSpeed = loadAutoSpeed();
+var autoMs = 0;
+var autoJob = null;
 
 var G = {
   mode: 'title',
@@ -524,8 +1097,21 @@ function currentBest() {
 loadBest();
 
 /* ---- fx ---- */
+function autoTurbo() {
+  return autoOn && autoSpeed >= 4;
+}
+
+function autoWalk() {
+  if (!autoOn) return WALK;
+  if (autoSpeed <= 1) return WALK * 0.62;
+  if (autoSpeed === 2) return WALK * 0.82;
+  if (autoSpeed >= 4) return WALK * 1.72;
+  return WALK;
+}
+
 function hitStop(t) {
   if (reduceMotion()) return;
+  if (autoTurbo()) return;
   if (t > G.stop) G.stop = t;
 }
 
@@ -696,9 +1282,15 @@ function hudPlay() {
   waveLabel.textContent = G.mode === 'play' ? ('客 ' + remainingGuests()) : '开台';
   renderPips();
   if (G.mode === 'play') {
-    hintEl.textContent = G.party
-      ? '狂欢飞杯 · 空格斟 · 接住空杯 · R 重开'
-      : '空格斟酒 · 接住空杯 · 客人别摸到龙头';
+    if (autoOn) {
+      hintEl.textContent = G.party
+        ? '自动狂欢 · A 停下 · 速度可调'
+        : '自动斟酒 · A 停下 · 速度可调';
+    } else {
+      hintEl.textContent = G.party
+        ? '狂欢飞杯 · 空格斟 · 接住空杯 · A 自动 · R 重开'
+        : '空格斟酒 · 接住空杯 · 客人别摸到龙头 · A 自动';
+    }
   }
 }
 
@@ -711,10 +1303,10 @@ function showTitle() {
   panelEl.className = 'panel';
   ovTitle.textContent = '酒保';
   ovLead.textContent = '四条吧台，把酒滑给客人。空杯飞回来，接住才算。客人摸到龙头就砸了。';
-  ovOps.textContent = '方向键或 WASD 换台滑步 · 空格斟酒 · 触屏方向+斟 · R 重开 · M 静音';
+  ovOps.textContent = '方向键或 WASD 换台滑步 · 空格斟酒 · 触屏方向+斟 · A 自动 · R 重开 · M 静音';
   ovStart.classList.remove('gone');
   ovEnd.classList.add('gone');
-  hintEl.textContent = '空格斟酒 · 接住空杯 · 客人别摸到龙头';
+  hintEl.textContent = '空格斟酒 · 接住空杯 · 客人别摸到龙头 · A 自动';
   G.round = 1;
   G.lives = LIVES;
   G.score = 0;
@@ -732,7 +1324,7 @@ function showOver() {
   ovTitle.textContent = '打烊了';
   ovLead.textContent = '第 ' + G.round + ' 巡 · ' + G.score + ' 分 · 连击最高 ×' + G.maxCombo +
     (G.why ? ' · ' + whyText(G.why) : '');
-  ovOps.textContent = 'R 或「再来」重开 · 顶栏重开随时可用';
+  ovOps.textContent = 'R 或「再来」重开 · 顶栏重开随时可用 · A 自动';
   ovStart.classList.add('gone');
   ovEnd.classList.remove('gone');
   audio.over();
@@ -776,6 +1368,8 @@ function resetLevel(attract) {
   ptr.target = -1;
   ptr.pour = false;
   ptr.down = false;
+  autoJob = null;
+  autoMs = 0;
   if (!attract) {
     resetFx();
     G.combo = 0;
@@ -908,7 +1502,7 @@ function hop(dir) {
   p.hopFrom = playerY();
   p.hopTo = barY(nb);
   p.bar = nb;
-  p.hopT = HOP_T;
+  p.hopT = autoTurbo() ? 0.045 : HOP_T;
   p.squash = 0.68;
   audio.hop();
   hitStop(0.028);
@@ -1080,45 +1674,124 @@ function collectTip(t) {
 }
 
 /* ---- sim ---- */
-function thinkAI() {
+function applyAutoJob(job, act) {
   var p = G.player;
-  var urgent = null;
-  var urg = -1e9;
-  var i, m, c, s, needPour;
-
+  var dead, eta, m, i;
   keys.l = false;
   keys.r = false;
+  if (!job || p.state === 'dead' || G.lock > 0) return;
+  dead = autoSpeed <= 1 ? 12 : autoSpeed <= 2 ? 9 : 7;
 
-  for (i = 0; i < G.mugs.length; i++) {
-    m = G.mugs[i];
-    if (m.dead || m.full) continue;
-    s = 520 + m.x * 2.2;
-    if (s > urg) { urg = s; urgent = { kind: 'mug', bar: m.bar, x: m.x }; }
-  }
-  for (i = 0; i < G.customers.length; i++) {
-    c = G.customers[i];
-    if (c.thirst <= 0) continue;
-    s = c.x * 1.55 + (c.drink > 0 ? -90 : 0);
-    if (s > urg) { urg = s; urgent = { kind: 'cust', bar: c.bar, x: c.x }; }
+  if (act) {
+    if (job.bar < p.bar && p.hopT <= 0) G.hopUpBuf = 0.08;
+    else if (job.bar > p.bar && p.hopT <= 0) G.hopDownBuf = 0.08;
   }
 
-  if (!urgent) {
-    if (p.x < TAP_ZONE + 10) keys.r = true;
-    else if (p.x > TAP_ZONE + 28) keys.l = true;
-    return;
+  if (p.x < job.x - dead) keys.r = true;
+  else if (p.x > job.x + dead) keys.l = true;
+
+  if (job.bar !== p.bar) return;
+
+  if (
+    act &&
+    job.kind === 'pour' &&
+    inTapZone(p.x) &&
+    p.hopT <= 0 &&
+    p.pourCd <= 0 &&
+    openThirstOn(p.bar, G.customers) > fullMugsOn(p.bar) &&
+    fullMugsOn(p.bar) < maxFull(G.party)
+  ) {
+    G.pourBuf = 0.06;
   }
-  if (urgent.bar < p.bar && p.hopT <= 0) G.hopUpBuf = 0.06;
-  else if (urgent.bar > p.bar && p.hopT <= 0) G.hopDownBuf = 0.06;
-  else if (urgent.bar === p.bar) {
-    if (urgent.kind === 'mug') {
-      if (p.x < urgent.x - 6) keys.r = true;
-      else if (p.x > urgent.x + 12) keys.l = true;
-    } else {
-      if (p.x < TAP_ZONE + 4) keys.r = true;
-      needPour = thirstyOn(p.bar) > fullMugsOn(p.bar);
-      if (needPour && inTapZone(p.x) && p.pourCd <= 0 && p.hopT <= 0) G.pourBuf = 0.05;
+
+  if (autoTurbo() && job.kind === 'catch' && p.hopT <= 0) {
+    eta = 1e9;
+    for (i = 0; i < G.mugs.length; i++) {
+      m = G.mugs[i];
+      if (m.dead || m.full || m.bar !== p.bar) continue;
+      eta = Math.min(eta, emptySmashEta(m));
+    }
+    if (eta < 0.32 || Math.abs(p.x - job.x) > 28) {
+      p.x = lerp(p.x, job.x, eta < 0.18 ? 1 : 0.42);
+      p.x = clamp(p.x, BAR_LEFT + 8, BAR_RIGHT - 6);
+      keys.l = false;
+      keys.r = false;
     }
   }
+}
+
+function thinkAI() {
+  autoJob = pickAutoJob(G.player, G.mugs, G.customers, G.tips, G.party, G.round);
+  applyAutoJob(autoJob, true);
+}
+
+function tickAuto(dt) {
+  var interval, act;
+  if (!autoOn || G.mode !== 'play') return;
+  if (G.lock > 0 || G.clearT > 0) return;
+  if (G.player.state === 'dead') return;
+  ptr.down = false;
+  ptr.target = -1;
+  ptr.pour = false;
+  autoMs += dt;
+  interval = autoSpeed <= 1 ? 0.1 : autoSpeed === 2 ? 0.045 : 0;
+  if (autoJob && interval > 0 && autoMs < interval) {
+    act = false;
+  } else {
+    autoMs = 0;
+    autoJob = pickAutoJob(G.player, G.mugs, G.customers, G.tips, G.party, G.round);
+    act = true;
+  }
+  applyAutoJob(autoJob, act);
+}
+
+function clearPlayerMotion() {
+  keys.l = false;
+  keys.r = false;
+  keys.u = false;
+  keys.d = false;
+  holdU = 0;
+  holdD = 0;
+  ptr.down = false;
+  ptr.target = -1;
+  ptr.pour = false;
+  G.pourBuf = 0;
+  G.hopUpBuf = 0;
+  G.hopDownBuf = 0;
+}
+
+function syncAutoUi() {
+  btnAuto.classList.toggle('on', autoOn);
+  btnAuto.setAttribute('aria-pressed', autoOn ? 'true' : 'false');
+  btnAuto.textContent = autoOn ? '停下' : '自动';
+  btnAuto.setAttribute('aria-label', autoOn ? '停止自动' : '自动');
+}
+
+function syncSpeedUi() {
+  speedEl.value = String(autoSpeed);
+  speedLab.textContent = SPEED_LABELS[autoSpeed];
+  speedEl.title = SPEED_LABELS[autoSpeed];
+  speedEl.setAttribute('aria-valuetext', SPEED_LABELS[autoSpeed]);
+}
+
+function toggleAuto() {
+  autoOn = !autoOn;
+  autoMs = 0;
+  autoJob = null;
+  clearPlayerMotion();
+  syncAutoUi();
+  hudPlay();
+  if (!autoOn) return;
+  audio.ensure();
+  if (G.mode === 'title') startRun('classic');
+}
+
+function setAutoSpeed(n) {
+  n = parseInt(n, 10);
+  if (!isFinite(n) || n < 1 || n > 4) n = 3;
+  autoSpeed = n;
+  saveAutoSpeed(autoSpeed);
+  syncSpeedUi();
 }
 
 function tickPlayer(dt) {
@@ -1151,16 +1824,16 @@ function tickPlayer(dt) {
       G.hopDownBuf = 0;
       ptr.target = -1;
       ptr.pour = false;
-    } else if (ptr.target >= 0 && ptr.target !== p.bar) {
+    } else if (!autoOn && ptr.target >= 0 && ptr.target !== p.bar) {
       hop(ptr.target > p.bar ? 1 : -1);
     }
   }
 
-  if (keys.u) {
+  if (!autoOn && keys.u) {
     holdU += dt;
     if (holdU > 0.22) { G.hopUpBuf = 0.08; holdU = 0; }
   } else holdU = 0;
-  if (keys.d) {
+  if (!autoOn && keys.d) {
     holdD += dt;
     if (holdD > 0.22) { G.hopDownBuf = 0.08; holdD = 0; }
   } else holdD = 0;
@@ -1169,7 +1842,7 @@ function tickPlayer(dt) {
     G.pourBuf = 0;
     tryPour();
   }
-  if (ptr.target === p.bar && p.hopT <= 0 && p.state !== 'dead' && G.lock <= 0) {
+  if (!autoOn && ptr.target === p.bar && p.hopT <= 0 && p.state !== 'dead' && G.lock <= 0) {
     if (ptr.pour) tryPour();
     ptr.pour = false;
     ptr.target = -1;
@@ -1182,12 +1855,12 @@ function tickPlayer(dt) {
   }
 
   dir = (keys.r ? 1 : 0) - (keys.l ? 1 : 0);
-  if (ptr.down && G.mode !== 'over') {
+  if (ptr.down && G.mode !== 'over' && !autoOn) {
     if (Math.abs(ptr.x - p.x) > 6) dir = ptr.x > p.x ? 1 : -1;
   }
   if (dir) p.face = dir;
   if (p.hopT > 0) dir *= 0.35;
-  nx = p.x + dir * WALK * dt;
+  nx = p.x + dir * autoWalk() * dt;
   p.x = clamp(nx, BAR_LEFT + 8, BAR_RIGHT - 6);
   if (dir) p.walk += Math.abs(dir) * WALK * dt * 0.2;
 }
@@ -1397,6 +2070,7 @@ function tick(dt) {
   }
 
   if (G.mode === 'title') thinkAI();
+  else if (G.mode === 'play' && autoOn) tickAuto(dt);
 
   tickPlayer(dt);
   if (G.lock > 0) return;
@@ -1862,6 +2536,7 @@ function frame(ts) {
 function bindPad(el, setter) {
   function down(ev) {
     ev.preventDefault();
+    if (autoOn) return;
     setter(true);
     el.classList.add('held');
     audio.ensure();
@@ -1905,7 +2580,16 @@ function worldFromEvent(e) {
 
 function keyOn(e, down) {
   var k = e.code;
-  if (k === 'ArrowLeft' || k === 'KeyA') { keys.l = down; e.preventDefault(); }
+  if (autoOn) {
+    if (
+      k === 'ArrowLeft' || k === 'ArrowRight' || k === 'ArrowUp' || k === 'ArrowDown' ||
+      k === 'KeyD' || k === 'KeyS' || k === 'KeyW' || k === 'Space'
+    ) {
+      e.preventDefault();
+    }
+    return;
+  }
+  if (k === 'ArrowLeft') { keys.l = down; e.preventDefault(); }
   else if (k === 'ArrowRight' || k === 'KeyD') { keys.r = down; e.preventDefault(); }
   else if (k === 'ArrowDown' || k === 'KeyS') {
     keys.d = down;
@@ -1940,6 +2624,11 @@ window.addEventListener('keydown', function (e) {
   if (e.code === 'KeyR') {
     retry();
     e.preventDefault();
+    return;
+  }
+  if (e.code === 'KeyA') {
+    e.preventDefault();
+    toggleAuto();
     return;
   }
   if (G.mode === 'title') {
@@ -1991,12 +2680,16 @@ ovRetry.addEventListener('click', function () {
   audio.ensure();
   startRun(G.kind);
 });
+btnAuto.addEventListener('click', function () { toggleAuto(); });
+speedEl.addEventListener('input', function () {
+  setAutoSpeed(parseInt(speedEl.value, 10));
+});
 
 canvas.addEventListener('pointerdown', function (e) {
   var w;
   audio.ensure();
   canvas.focus({ preventScroll: true });
-  if (G.mode === 'over' || G.mode === 'title') return;
+  if (G.mode === 'over' || G.mode === 'title' || autoOn) return;
   e.preventDefault();
   w = worldFromEvent(e);
   ptr.down = true;
@@ -2013,7 +2706,7 @@ canvas.addEventListener('pointerdown', function (e) {
 });
 canvas.addEventListener('pointermove', function (e) {
   var w;
-  if (!ptr.down) return;
+  if (!ptr.down || autoOn) return;
   w = worldFromEvent(e);
   ptr.x = w.x;
   ptr.y = w.y;
@@ -2038,6 +2731,8 @@ document.addEventListener('visibilitychange', function () {
 
 bestEl.textContent = String(G.bestC);
 renderPips();
+syncAutoUi();
+syncSpeedUi();
 showTitle();
 resize();
 hudPlay();
