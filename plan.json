@@ -2595,7 +2595,7 @@
     "blurb": "雷达全向开火，把星堡打穿。",
     "hue": 188,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/bosconian/",
     "kind": "remake"
   },
@@ -2619,7 +2619,7 @@
     "blurb": "黑白切换，同色吃弹反色打爆。",
     "hue": 250,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/ikaruga/",
     "kind": "remake"
   },
@@ -2633,6 +2633,30 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/millipede/",
+    "kind": "remake"
+  },
+  {
+    "n": 229,
+    "id": "asteroids",
+    "title": "岩带",
+    "subtitle": "ROCK",
+    "blurb": "飞转着砸石头，别把自己撞碎。",
+    "hue": 210,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/asteroids/",
+    "kind": "remake"
+  },
+  {
+    "n": 230,
+    "id": "battlezone",
+    "title": "坦克",
+    "subtitle": "TANK",
+    "blurb": "线框地平线上，先开炮的活。",
+    "hue": 78,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/battlezone/",
     "kind": "remake"
   }
 ]

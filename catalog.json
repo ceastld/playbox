@@ -2444,5 +2444,29 @@
     "dir": "g/alibaba/",
     "url": "./g/alibaba/",
     "kind": "remake"
+  },
+  {
+    "n": 225,
+    "id": "bosconian",
+    "title": "博斯",
+    "subtitle": "BOSC",
+    "blurb": "雷达全向开火，把星堡打穿。",
+    "hue": 188,
+    "tag": "复刻",
+    "dir": "g/bosconian/",
+    "url": "./g/bosconian/",
+    "kind": "remake"
+  },
+  {
+    "n": 227,
+    "id": "ikaruga",
+    "title": "光暗",
+    "subtitle": "POLAR",
+    "blurb": "黑白切换，同色吃弹反色打爆。",
+    "hue": 250,
+    "tag": "复刻",
+    "dir": "g/ikaruga/",
+    "url": "./g/ikaruga/",
+    "kind": "remake"
   }
 ]
