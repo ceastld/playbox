@@ -2504,5 +2504,17 @@
     "dir": "g/millipede/",
     "url": "./g/millipede/",
     "kind": "remake"
+  },
+  {
+    "n": 229,
+    "id": "asteroids",
+    "title": "岩带",
+    "subtitle": "ROCK",
+    "blurb": "飞转着砸石头，别把自己撞碎。",
+    "hue": 210,
+    "tag": "复刻",
+    "dir": "g/asteroids/",
+    "url": "./g/asteroids/",
+    "kind": "remake"
   }
 ]
