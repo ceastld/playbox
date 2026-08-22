@@ -1983,7 +1983,7 @@
     "blurb": "街上连打，捡铁管清场。",
     "hue": 4,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/rage-street/",
     "kind": "remake"
   },
@@ -1995,7 +1995,7 @@
     "blurb": "古堡里甩鞭，打蜡烛摸道具。",
     "hue": 272,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/castle-whip/",
     "kind": "remake"
   },
@@ -2033,6 +2033,30 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/ghost-run/",
+    "kind": "remake"
+  },
+  {
+    "n": 179,
+    "id": "slug-run",
+    "title": "合金",
+    "subtitle": "SLUG",
+    "blurb": "救人开车，一路打到关底。",
+    "hue": 72,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/slug-run/",
+    "kind": "remake"
+  },
+  {
+    "n": 180,
+    "id": "rain-isle",
+    "title": "虹岛",
+    "subtitle": "RAIN",
+    "blurb": "彩虹当梯子，往上蹦。",
+    "hue": 196,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/rain-isle/",
     "kind": "remake"
   }
 ]

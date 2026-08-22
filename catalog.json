@@ -1844,5 +1844,29 @@
     "dir": "g/beast-run/",
     "url": "./g/beast-run/",
     "kind": "remake"
+  },
+  {
+    "n": 174,
+    "id": "rage-street",
+    "title": "怒街",
+    "subtitle": "RAGE",
+    "blurb": "街上连打，捡铁管清场。",
+    "hue": 4,
+    "tag": "复刻",
+    "dir": "g/rage-street/",
+    "url": "./g/rage-street/",
+    "kind": "remake"
+  },
+  {
+    "n": 175,
+    "id": "castle-whip",
+    "title": "城夜",
+    "subtitle": "VANIA",
+    "blurb": "古堡里甩鞭，打蜡烛摸道具。",
+    "hue": 272,
+    "tag": "复刻",
+    "dir": "g/castle-whip/",
+    "url": "./g/castle-whip/",
+    "kind": "remake"
   }
 ]
