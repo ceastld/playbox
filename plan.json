@@ -73,7 +73,7 @@
     "blurb": "冷却好了才能翻转重力，落地要算好。",
     "hue": 48,
     "tag": "转",
-    "status": "hardening",
+    "status": "shipped",
     "dir": "g/flip-well/"
   },
   {
@@ -95,7 +95,7 @@
     "blurb": "上浮下潜躲开声呐环，氧气在掉。",
     "hue": 195,
     "tag": "潜",
-    "status": "hardening",
+    "status": "shipped",
     "dir": "g/sonar-dive/"
   },
   {
@@ -117,7 +117,7 @@
     "blurb": "没有刹车，只能靠墙和反向轻点。",
     "hue": 210,
     "tag": "滑",
-    "status": "hardening",
+    "status": "shipped",
     "dir": "g/ice-slide/"
   },
   {
@@ -128,7 +128,7 @@
     "blurb": "旋转物块去吻合远处的剪影。",
     "hue": 40,
     "tag": "形",
-    "status": "hardening",
+    "status": "shipped",
     "dir": "g/shadow-fit/"
   },
   {

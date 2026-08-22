@@ -75,6 +75,20 @@ body {
   min-width: 0;
 }
 
+.row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-variant-numeric: tabular-nums;
+}
+
+#stage-label {
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  color: #c9c6e8;
+  white-space: nowrap;
+}
+
 .o2 {
   display: flex;
   align-items: center;
@@ -341,6 +355,8 @@ canvas {
   .hint { font-size: 10px; }
   .o2 { width: min(200px, 48vw); gap: 6px; }
   .o2 em { display: none; }
+  .row { gap: 8px; }
+  #stage-label, #dist-label { font-size: 10px; letter-spacing: 0.08em; }
 }
 
 @media (pointer: coarse) {

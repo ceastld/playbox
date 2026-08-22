@@ -2,30 +2,213 @@
 
 (function () {
   const WORLD_H = 360;
-  const WORLD_LEN = 4280;
-  const SPEED = 126;
   const SPEED_Y = 268;
   const PLAYER_R = 12;
-  const O2_MAX = 39.5;
-  const EXIT_X = 4120;
-  const EXIT_Y = 178;
   const EXIT_R = 52;
   const TAU = Math.PI * 2;
 
-  const BEACONS = [
-    { x: 540, y: 186, safe: 104, gap: 54, speed: 80, thick: 18, rMax: 460, period: 2.8, trig: 520, charge: 0.85 },
-    { x: 900, y: 198, safe: 272, gap: 50, speed: 88, thick: 17, rMax: 450, period: 2.5, trig: 470, charge: 0.62 },
-    { x: 1240, y: 150, safe: 92, gap: 44, speed: 96, thick: 16, rMax: 430, period: 2.25, trig: 450, charge: 0.55 },
-    { x: 1560, y: 230, safe: 286, gap: 42, speed: 102, thick: 16, rMax: 420, period: 2.1, trig: 440, charge: 0.5 },
-    { x: 1860, y: 128, safe: 200, gap: 40, speed: 108, thick: 15, rMax: 410, period: 1.95, trig: 430, charge: 0.48 },
-    { x: 2160, y: 250, safe: 88, gap: 38, speed: 114, thick: 15, rMax: 400, period: 1.85, trig: 420, charge: 0.46 },
-    { x: 2440, y: 168, safe: 278, gap: 36, speed: 118, thick: 14, rMax: 390, period: 1.72, trig: 410, charge: 0.44 },
-    { x: 2720, y: 96, safe: 276, gap: 34, speed: 124, thick: 14, rMax: 380, period: 1.62, trig: 400, charge: 0.42 },
-    { x: 3000, y: 268, safe: 96, gap: 33, speed: 128, thick: 13, rMax: 370, period: 1.55, trig: 390, charge: 0.4 },
-    { x: 3260, y: 188, safe: 92, gap: 32, speed: 134, thick: 13, rMax: 360, period: 1.48, trig: 380, charge: 0.38 },
-    { x: 3520, y: 84, safe: 98, gap: 30, speed: 140, thick: 13, rMax: 350, period: 1.42, trig: 370, charge: 0.36 },
-    { x: 3760, y: 248, safe: 86, gap: 28, speed: 146, thick: 12, rMax: 340, period: 1.36, trig: 350, charge: 0.34 },
-    { x: 3960, y: 160, safe: 262, gap: 28, speed: 152, thick: 12, rMax: 320, period: 1.3, trig: 330, charge: 0.32 }
+  const STAGES = [
+    {
+      name: '浅湾',
+      sub: 'BAY',
+      hint: '钻进发亮的缺口',
+      len: 1180,
+      exitX: 1020,
+      exitY: 180,
+      o2: 18,
+      speed: 116,
+      hall: 72,
+      pinches: [],
+      beacons: [
+        { x: 620, y: 180, safe: 180, gap: 62, speed: 68, thick: 16, rMax: 440, trig: 500, charge: 0.95 }
+      ]
+    },
+    {
+      name: '双响',
+      sub: 'PAIR',
+      hint: '连续穿过两道环',
+      len: 1560,
+      exitX: 1400,
+      exitY: 180,
+      o2: 20,
+      speed: 118,
+      hall: 72,
+      pinches: [],
+      beacons: [
+        { x: 520, y: 178, safe: 176, gap: 54, speed: 78, thick: 16, rMax: 430, trig: 470, charge: 0.82 },
+        { x: 980, y: 182, safe: 184, gap: 50, speed: 84, thick: 16, rMax: 420, trig: 450, charge: 0.72 }
+      ]
+    },
+    {
+      name: '错位',
+      sub: 'SHIFT',
+      hint: '缺口深度会变',
+      len: 1780,
+      exitX: 1620,
+      exitY: 188,
+      o2: 20,
+      speed: 120,
+      hall: 72,
+      pinches: [],
+      beacons: [
+        { x: 500, y: 150, safe: 108, gap: 48, speed: 86, thick: 16, rMax: 420, trig: 450, charge: 0.7 },
+        { x: 920, y: 220, safe: 258, gap: 46, speed: 92, thick: 15, rMax: 410, trig: 430, charge: 0.62 },
+        { x: 1320, y: 180, safe: 168, gap: 44, speed: 96, thick: 15, rMax: 400, trig: 400, charge: 0.56 }
+      ]
+    },
+    {
+      name: '岩喉',
+      sub: 'THROAT',
+      hint: '岩壁会收窄',
+      len: 1860,
+      exitX: 1700,
+      exitY: 176,
+      o2: 19.5,
+      speed: 122,
+      hall: 70,
+      pinches: [
+        { x: 920, w: 240, side: 'both', amt: 86 }
+      ],
+      beacons: [
+        { x: 480, y: 180, safe: 200, gap: 44, speed: 94, thick: 15, rMax: 400, trig: 420, charge: 0.58 },
+        { x: 920, y: 180, safe: 176, gap: 36, speed: 102, thick: 15, rMax: 360, trig: 380, charge: 0.5 },
+        { x: 1360, y: 200, safe: 250, gap: 38, speed: 106, thick: 14, rMax: 390, trig: 390, charge: 0.48 }
+      ]
+    },
+    {
+      name: '急脉',
+      sub: 'PULSE',
+      hint: '环更快，缺口更窄',
+      len: 1980,
+      exitX: 1820,
+      exitY: 170,
+      o2: 19,
+      speed: 124,
+      hall: 70,
+      pinches: [],
+      beacons: [
+        { x: 460, y: 140, safe: 96, gap: 36, speed: 112, thick: 14, rMax: 390, trig: 400, charge: 0.46 },
+        { x: 840, y: 230, safe: 268, gap: 34, speed: 118, thick: 14, rMax: 380, trig: 380, charge: 0.42 },
+        { x: 1200, y: 120, safe: 92, gap: 32, speed: 124, thick: 14, rMax: 370, trig: 360, charge: 0.4 },
+        { x: 1540, y: 240, safe: 262, gap: 32, speed: 128, thick: 13, rMax: 360, trig: 340, charge: 0.38 }
+      ]
+    },
+    {
+      name: '交错',
+      sub: 'CROSS',
+      hint: '深浅交错，跟上缺口',
+      len: 2040,
+      exitX: 1880,
+      exitY: 180,
+      o2: 18,
+      speed: 126,
+      hall: 68,
+      pinches: [],
+      beacons: [
+        { x: 420, y: 100, safe: 78, gap: 32, speed: 126, thick: 13, rMax: 360, trig: 360, charge: 0.4 },
+        { x: 720, y: 270, safe: 286, gap: 30, speed: 132, thick: 13, rMax: 350, trig: 330, charge: 0.36 },
+        { x: 1020, y: 90, safe: 74, gap: 28, speed: 136, thick: 13, rMax: 340, trig: 310, charge: 0.34 },
+        { x: 1320, y: 280, safe: 288, gap: 28, speed: 140, thick: 12, rMax: 330, trig: 300, charge: 0.32 },
+        { x: 1600, y: 180, safe: 170, gap: 28, speed: 144, thick: 12, rMax: 320, trig: 290, charge: 0.3 }
+      ]
+    },
+    {
+      name: '夹缝',
+      sub: 'SQUEEZE',
+      hint: '夹缝里穿环',
+      len: 2120,
+      exitX: 1960,
+      exitY: 168,
+      o2: 17.5,
+      speed: 128,
+      hall: 64,
+      pinches: [
+        { x: 680, w: 260, side: 'top', amt: 118 },
+        { x: 1240, w: 270, side: 'bot', amt: 122 },
+        { x: 1680, w: 200, side: 'both', amt: 78 }
+      ],
+      beacons: [
+        { x: 440, y: 200, safe: 230, gap: 30, speed: 130, thick: 13, rMax: 350, trig: 340, charge: 0.36 },
+        { x: 720, y: 230, safe: 250, gap: 26, speed: 138, thick: 13, rMax: 300, trig: 300, charge: 0.3 },
+        { x: 1060, y: 140, safe: 96, gap: 26, speed: 142, thick: 12, rMax: 340, trig: 300, charge: 0.28 },
+        { x: 1280, y: 130, safe: 88, gap: 24, speed: 146, thick: 12, rMax: 300, trig: 280, charge: 0.26 },
+        { x: 1680, y: 180, safe: 168, gap: 24, speed: 150, thick: 12, rMax: 280, trig: 260, charge: 0.24 }
+      ]
+    },
+    {
+      name: '连扫',
+      sub: 'SWEEP',
+      hint: '预警更短',
+      len: 2040,
+      exitX: 1880,
+      exitY: 190,
+      o2: 16.6,
+      speed: 130,
+      hall: 64,
+      pinches: [
+        { x: 1080, w: 200, side: 'both', amt: 70 }
+      ],
+      beacons: [
+        { x: 400, y: 160, safe: 92, gap: 26, speed: 148, thick: 13, rMax: 340, trig: 280, charge: 0.26 },
+        { x: 640, y: 220, safe: 268, gap: 24, speed: 152, thick: 13, rMax: 330, trig: 250, charge: 0.22 },
+        { x: 880, y: 140, safe: 88, gap: 24, speed: 156, thick: 12, rMax: 320, trig: 240, charge: 0.2 },
+        { x: 1120, y: 180, safe: 180, gap: 22, speed: 158, thick: 12, rMax: 300, trig: 230, charge: 0.2 },
+        { x: 1360, y: 250, safe: 276, gap: 22, speed: 160, thick: 12, rMax: 310, trig: 230, charge: 0.18 },
+        { x: 1600, y: 110, safe: 82, gap: 22, speed: 164, thick: 12, rMax: 300, trig: 220, charge: 0.18 }
+      ]
+    },
+    {
+      name: '暗潮',
+      sub: 'DARK',
+      hint: '贴顶贴底，氧气很紧',
+      len: 2180,
+      exitX: 2020,
+      exitY: 248,
+      o2: 16.8,
+      speed: 132,
+      hall: 60,
+      pinches: [
+        { x: 580, w: 220, side: 'top', amt: 100 },
+        { x: 1080, w: 240, side: 'bot', amt: 108 },
+        { x: 1600, w: 230, side: 'both', amt: 88 }
+      ],
+      beacons: [
+        { x: 400, y: 240, safe: 268, gap: 24, speed: 152, thick: 12, rMax: 330, trig: 260, charge: 0.22 },
+        { x: 640, y: 250, safe: 280, gap: 22, speed: 158, thick: 12, rMax: 290, trig: 240, charge: 0.2 },
+        { x: 900, y: 110, safe: 78, gap: 22, speed: 160, thick: 12, rMax: 320, trig: 250, charge: 0.18 },
+        { x: 1140, y: 100, safe: 72, gap: 20, speed: 164, thick: 12, rMax: 280, trig: 230, charge: 0.18 },
+        { x: 1420, y: 250, safe: 282, gap: 20, speed: 168, thick: 11, rMax: 320, trig: 230, charge: 0.16 },
+        { x: 1640, y: 180, safe: 176, gap: 20, speed: 170, thick: 11, rMax: 260, trig: 210, charge: 0.16 },
+        { x: 1860, y: 240, safe: 250, gap: 22, speed: 166, thick: 12, rMax: 280, trig: 200, charge: 0.16 }
+      ]
+    },
+    {
+      name: '深渊',
+      sub: 'ABYSS',
+      hint: '最后一航，缺口极窄',
+      len: 2280,
+      exitX: 2120,
+      exitY: 88,
+      o2: 17.1,
+      speed: 134,
+      hall: 56,
+      pinches: [
+        { x: 500, w: 210, side: 'bot', amt: 110 },
+        { x: 960, w: 220, side: 'top', amt: 118 },
+        { x: 1420, w: 220, side: 'both', amt: 96 },
+        { x: 1880, w: 230, side: 'bot', amt: 128 }
+      ],
+      beacons: [
+        { x: 380, y: 120, safe: 80, gap: 22, speed: 160, thick: 12, rMax: 320, trig: 250, charge: 0.2 },
+        { x: 580, y: 110, safe: 74, gap: 20, speed: 166, thick: 12, rMax: 280, trig: 220, charge: 0.16 },
+        { x: 820, y: 260, safe: 286, gap: 20, speed: 170, thick: 11, rMax: 330, trig: 230, charge: 0.16 },
+        { x: 1040, y: 260, safe: 290, gap: 18, speed: 174, thick: 11, rMax: 280, trig: 210, charge: 0.14 },
+        { x: 1280, y: 180, safe: 168, gap: 18, speed: 176, thick: 11, rMax: 300, trig: 210, charge: 0.14 },
+        { x: 1500, y: 180, safe: 180, gap: 18, speed: 178, thick: 11, rMax: 250, trig: 200, charge: 0.14 },
+        { x: 1740, y: 90, safe: 72, gap: 18, speed: 180, thick: 11, rMax: 320, trig: 210, charge: 0.13 },
+        { x: 1960, y: 90, safe: 78, gap: 18, speed: 182, thick: 11, rMax: 260, trig: 190, charge: 0.12 }
+      ]
+    }
   ];
 
   const canvas = document.getElementById('c');
@@ -42,6 +225,7 @@
   const o2Wrap = document.getElementById('o2-wrap');
   const o2Fill = document.getElementById('o2-fill');
   const o2Num = document.getElementById('o2-num');
+  const stageLabel = document.getElementById('stage-label');
   const distLabel = document.getElementById('dist-label');
   const toastEl = document.getElementById('toast');
   const hintEl = document.getElementById('hint');
@@ -63,8 +247,10 @@
   const G = {
     mode: 'title',
     t: 0,
-    o2: O2_MAX,
+    o2: 18,
+    o2Max: 18,
     dodged: 0,
+    runDodged: 0,
     near: 0,
     shake: 0,
     flash: 0,
@@ -75,11 +261,18 @@
     toastT: 0,
     warned: false,
     taught: false,
+    dockHint: false,
     prop: 0,
     vy: 0,
     player: { x: 80, y: 180, target: 180 },
     beacons: [],
-    clock: 0
+    clock: 0,
+    stage: 0,
+    stageDef: STAGES[0],
+    worldLen: STAGES[0].len,
+    exitX: STAGES[0].exitX,
+    exitY: STAGES[0].exitY,
+    speed: STAGES[0].speed
   };
 
   function clamp(v, a, b) {
@@ -209,22 +402,22 @@
     const n = Math.sin(x * 0.0084) * 14 + Math.sin(x * 0.018 + 1.4) * 9;
     top += n;
     bot -= n * 0.7;
-    if (x > 1460 && x < 1760) {
-      const u = 1 - Math.abs((x - 1610) / 150);
-      top += 22 * Math.max(0, u);
+    const st = G.stageDef;
+    const pinches = (st && st.pinches) || [];
+    for (let i = 0; i < pinches.length; i++) {
+      const p = pinches[i];
+      const u = 1 - Math.abs((x - p.x) / p.w);
+      if (u > 0) {
+        if (p.side !== 'bot') top += p.amt * u;
+        if (p.side !== 'top') bot -= p.amt * u;
+      }
     }
-    if (x > 2520 && x < 2920) {
-      const u = 1 - Math.abs((x - 2720) / 200);
-      top += 108 * Math.max(0, u);
-    }
-    if (x > 3180 && x < 3620) {
-      const u = 1 - Math.abs((x - 3400) / 220);
-      bot -= 112 * Math.max(0, u);
-    }
-    if (top > bot - 72) {
+    const hall = (st && st.hall) || 72;
+    if (top > bot - hall) {
       const m = (top + bot) * 0.5;
-      top = m - 36;
-      bot = m + 36;
+      const h = hall * 0.5;
+      top = m - h;
+      bot = m + h;
     }
     return { top: top, bot: bot };
   }
@@ -240,7 +433,7 @@
     motes.length = 0;
     for (let i = 0; i < 70; i++) {
       motes.push({
-        x: Math.random() * (WORLD_LEN + 800) - 200,
+        x: Math.random() * ((G.worldLen || 1600) + 800) - 200,
         y: Math.random() * WORLD_H,
         r: Math.random() * 1.6 + 0.3,
         a: Math.random() * 0.28 + 0.04,
@@ -300,9 +493,20 @@
     scale = H / WORLD_H;
   }
 
+  function applyStage() {
+    const s = STAGES[G.stage] || STAGES[0];
+    G.stageDef = s;
+    G.worldLen = s.len;
+    G.exitX = s.exitX;
+    G.exitY = s.exitY;
+    G.speed = s.speed;
+    G.o2Max = s.o2;
+  }
+
   function resetRun() {
+    applyStage();
     G.t = 0;
-    G.o2 = O2_MAX;
+    G.o2 = G.o2Max;
     G.dodged = 0;
     G.near = 0;
     G.shake = 0;
@@ -312,7 +516,8 @@
     G.why = '';
     G.dieT = 0;
     G.warned = false;
-    G.taught = false;
+    G.taught = G.stage > 0;
+    G.dockHint = false;
     G.prop = 0;
     G.vy = 0;
     G.player.x = 86;
@@ -322,7 +527,7 @@
     rings.length = 0;
     particles.length = 0;
     bubbles.length = 0;
-    G.beacons = BEACONS.map(function (b) {
+    G.beacons = G.stageDef.beacons.map(function (b) {
       return {
         x: b.x,
         y: b.y,
@@ -331,7 +536,7 @@
         speed: b.speed,
         thick: b.thick,
         rMax: b.rMax,
-        period: b.period,
+        period: b.period || 0,
         trig: b.trig,
         charge: b.charge,
         cd: 0,
@@ -353,56 +558,91 @@
   function showPanel(kind) {
     overlay.classList.remove('hidden');
     panel.classList.remove('win', 'lose');
+    const st = STAGES[G.stage] || STAGES[0];
     if (kind === 'title') {
       ovKicker.textContent = 'DIVE';
       ovTitle.textContent = '潜航';
-      ovLead.innerHTML = '上浮下潜，从声呐环的盲区穿过。<br />氧气在掉，驶向青色回收舱。';
+      ovLead.innerHTML = '上浮下潜，从声呐环的盲区穿过。<br />十段航道，氧气在掉，驶向青色回收舱。';
       ovOps.textContent = 'W / ↑ 上浮 · S / ↓ 下潜 · 拖屏幕控深度 · M 静音';
       ovBtn.textContent = '下潜';
     } else if (kind === 'win') {
       panel.classList.add('win');
       ovKicker.textContent = 'DOCKED';
       ovTitle.textContent = '靠港';
-      ovLead.textContent = '穿过声呐网，停进回收舱。';
-      ovOps.textContent = '剩余氧气 ' + Math.max(0, G.o2).toFixed(1) + ' 秒 · 穿过 ' + G.dodged + ' 道环';
+      ovLead.textContent = '穿过十段声呐网，停进回收舱。';
+      ovOps.textContent = '剩余氧气 ' + Math.max(0, G.o2).toFixed(1) + ' 秒 · 穿过 ' + G.runDodged + ' 道环';
       ovBtn.textContent = '再潜一次';
     } else {
       panel.classList.add('lose');
       if (G.why === 'air') {
         ovKicker.textContent = 'BLACKOUT';
         ovTitle.textContent = '气尽';
-        ovLead.textContent = '氧气归零，潜器沉入暗处。';
+        ovLead.textContent = '第 ' + (G.stage + 1) + ' 航「' + st.name + '」氧气归零，潜器沉入暗处。';
       } else {
         ovKicker.textContent = 'LOCKED';
         ovTitle.textContent = '声呐锁定';
-        ovLead.textContent = '波阵扫到艇壳，巡逻锁定了你。';
+        ovLead.textContent = '第 ' + (G.stage + 1) + ' 航「' + st.name + '」波阵扫到艇壳，巡逻锁定了你。';
       }
-      ovOps.textContent = '航行 ' + Math.max(0, G.player.x - 86 | 0) + ' · 穿过 ' + G.dodged + ' 道环';
+      ovOps.textContent = '航行 ' + Math.max(0, G.player.x - 86 | 0) + ' · 穿过 ' + G.dodged + ' 道环 · 重开本航';
       ovBtn.textContent = '再潜一次';
     }
   }
 
-  function startPlay() {
+  function cueStage() {
+    const s = STAGES[G.stage];
+    hintEl.textContent = s.hint + ' · M 静音';
+    toast((G.stage + 1) + '/' + STAGES.length + ' ' + s.name + ' · ' + s.hint);
+  }
+
+  function startPlay(fromStart) {
     audio.start();
+    if (fromStart || G.mode === 'title' || G.mode === 'win' || G.mode === 'docking') {
+      G.stage = 0;
+      G.runDodged = 0;
+    } else if (G.mode === 'clearing') {
+      G.runDodged += G.dodged;
+      if (G.stage < STAGES.length - 1) G.stage += 1;
+    }
     resetRun();
     G.mode = 'play';
     overlay.classList.add('hidden');
-    hintEl.textContent = '上浮下潜 · 钻进发亮的缺口 · M 静音';
-    toast('航道会亮 · 钻进缺口');
+    cueStage();
+  }
+
+  function advanceStage() {
+    G.runDodged += G.dodged;
+    if (G.stage >= STAGES.length - 1) {
+      G.mode = 'win';
+      showPanel('win');
+      return;
+    }
+    G.stage += 1;
+    resetRun();
+    G.mode = 'play';
+    G.lock = 0.42;
+    audio.start();
+    cueStage();
   }
 
   function endGame(win, why) {
     if (G.mode !== 'play') return;
     G.why = why || '';
     if (win) {
-      G.mode = 'docking';
-      G.dieT = 0.7;
-      toastEl.classList.add('hidden');
-      G.toastT = 0;
-      audio.win();
+      const last = G.stage >= STAGES.length - 1;
+      G.mode = last ? 'docking' : 'clearing';
+      G.dieT = last ? 0.72 : 0.55;
+      if (last) {
+        toastEl.classList.add('hidden');
+        G.toastT = 0;
+        audio.win();
+      } else {
+        toast(STAGES[G.stage].name + ' 靠港');
+        audio.gap();
+        audio.beep(520, 0.2, 'sine', 0.07, 980);
+      }
       emit(32, {
-        x: EXIT_X,
-        y: EXIT_Y,
+        x: G.exitX,
+        y: G.exitY,
         j: 18,
         vx0: -70,
         vx1: 70,
@@ -525,10 +765,10 @@
       G.vy = (p.y - prevY) / dt;
       if (Math.abs(G.vy) > 40 && Math.random() < dt * 9) bubble(p.x - 8, p.y, 1);
 
-      let spd = SPEED;
-      if (p.x > EXIT_X - 240) spd *= mix(1, 0.42, clamp((p.x - (EXIT_X - 240)) / 240, 0, 1));
+      let spd = G.speed;
+      if (p.x > G.exitX - 240) spd *= mix(1, 0.42, clamp((p.x - (G.exitX - 240)) / 240, 0, 1));
       p.x += spd * dt;
-      if (p.x > EXIT_X) p.x = EXIT_X;
+      if (p.x > G.exitX) p.x = G.exitX;
 
       G.o2 -= dt;
       if (G.o2 <= 0) {
@@ -536,25 +776,30 @@
         endGame(false, 'air');
         return;
       }
-      if (!G.warned && G.o2 < 9) {
+      const airLine = Math.max(5, G.o2Max * 0.3);
+      if (!G.warned && G.o2 < airLine) {
         G.warned = true;
         o2Wrap.classList.add('warn');
         toast('氧气将尽', true);
       }
-      if (G.o2 < 9 && G.t - audio.lastWarn > 1.05) {
+      if (G.o2 < airLine && G.t - audio.lastWarn > 1.05) {
         audio.lastWarn = G.t;
         audio.warn();
       }
+      if (G.stage === 0 && !G.dockHint && p.x > G.exitX - 300) {
+        G.dockHint = true;
+        toast('对准青色回收舱');
+      }
 
-      const dx = EXIT_X - p.x;
-      const dy = EXIT_Y - p.y;
+      const dx = G.exitX - p.x;
+      const dy = G.exitY - p.y;
       if (dx * dx + dy * dy < (EXIT_R - 6) * (EXIT_R - 6)) {
         endGame(true, 'dock');
         return;
       }
-    } else if (G.mode === 'docking') {
-      p.x = lerp(p.x, EXIT_X, dt * 4);
-      p.y = lerp(p.y, EXIT_Y, dt * 4);
+    } else if (G.mode === 'docking' || G.mode === 'clearing') {
+      p.x = lerp(p.x, G.exitX, dt * 4);
+      p.y = lerp(p.y, G.exitY, dt * 4);
       G.vy *= 0.9;
     } else if (G.mode === 'dying') {
       p.y += dt * 28;
@@ -646,7 +891,7 @@
 
     camX = p.x - (W * 0.3) / scale;
     const minCam = -40;
-    const maxCam = WORLD_LEN - W / scale + 80;
+    const maxCam = G.worldLen - W / scale + 80;
     camX = clamp(camX, minCam, Math.max(minCam, maxCam));
     updateFx(dt);
     syncHud();
@@ -682,10 +927,14 @@
   }
 
   function syncHud() {
-    const pct = clamp(G.mode === 'title' ? 1 : G.o2 / O2_MAX, 0, 1);
+    const pct = clamp(G.mode === 'title' ? 1 : G.o2 / G.o2Max, 0, 1);
     o2Fill.style.transform = 'scaleX(' + pct + ')';
     o2Num.textContent = String(Math.ceil(pct * 100));
-    const d = Math.max(0, (EXIT_X - G.player.x) | 0);
+    const d = Math.max(0, (G.exitX - G.player.x) | 0);
+    const st = STAGES[G.stage];
+    stageLabel.textContent = G.mode === 'title'
+      ? '航道 —'
+      : (G.stage + 1) + '/' + STAGES.length + ' ' + st.name;
     distLabel.textContent = G.mode === 'title' ? '距舱 —' : '距舱 ' + d;
   }
 
@@ -811,8 +1060,8 @@
   }
 
   function drawHatch() {
-    const x = sx(EXIT_X);
-    const y = sy(EXIT_Y);
+    const x = sx(G.exitX);
+    const y = sy(G.exitY);
     const r = EXIT_R * scale;
     const pulse = 0.55 + Math.sin(G.clock * 3.2) * 0.2;
     const rad = ctx.createRadialGradient(x, y, 4, x, y, r * 1.8);
@@ -1075,7 +1324,7 @@
       ctx.fillStyle = 'rgba(0, 240, 255,' + (G.cyanFlash * 0.16) + ')';
       ctx.fillRect(0, 0, W, H);
     }
-    if (G.mode === 'play' && G.o2 < 9) {
+    if (G.mode === 'play' && G.o2 < Math.max(5, G.o2Max * 0.3)) {
       const a = 0.08 + Math.sin(G.t * 8) * 0.05;
       ctx.fillStyle = 'rgba(255, 61, 184,' + a + ')';
       ctx.fillRect(0, 0, W, H);
@@ -1112,12 +1361,19 @@
 
     if (G.mode === 'play') audio.tickDrone(G.o2);
 
-    if (G.mode === 'dying' || G.mode === 'docking') {
+    if (G.mode === 'dying' || G.mode === 'docking' || G.mode === 'clearing') {
       G.dieT -= dt;
       if (G.dieT <= 0) {
-        const win = G.mode === 'docking';
-        G.mode = win ? 'win' : 'lose';
-        showPanel(win ? 'win' : 'lose');
+        if (G.mode === 'clearing') {
+          advanceStage();
+        } else if (G.mode === 'docking') {
+          G.runDodged += G.dodged;
+          G.mode = 'win';
+          showPanel('win');
+        } else {
+          G.mode = 'lose';
+          showPanel('lose');
+        }
       }
     }
 
@@ -1141,12 +1397,14 @@
     }
     if (k === 'r' || k === 'R') {
       audio.ensure();
-      startPlay();
+      startPlay(G.mode === 'title' || G.mode === 'win');
     }
     if (k === ' ' || k === 'Enter') {
       e.preventDefault();
       audio.ensure();
-      if (G.mode === 'title' || G.mode === 'win' || G.mode === 'lose') startPlay();
+      if (G.mode === 'title' || G.mode === 'win' || G.mode === 'lose') {
+        startPlay(G.mode === 'title' || G.mode === 'win');
+      }
     }
   }
 
@@ -1176,11 +1434,11 @@
 
   ovBtn.addEventListener('click', function () {
     audio.ensure();
-    startPlay();
+    startPlay(G.mode === 'title' || G.mode === 'win');
   });
   btnRetry.addEventListener('click', function () {
     audio.ensure();
-    startPlay();
+    startPlay(G.mode === 'title' || G.mode === 'win');
   });
   btnMute.addEventListener('click', function () {
     audio.ensure();

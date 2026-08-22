@@ -1,8 +1,7 @@
 'use strict';
 
 (function () {
-  const DURATION = 56;
-  const GOAL = 5;
+  const DURATION = 100;
   const STEP = 1 / 60;
   const TAU = Math.PI * 2;
   const SIL = 56;
@@ -10,6 +9,7 @@
   const OUTRO = 0.4;
   const PENALTY = 2.4;
   const ROT = 2.35;
+  const CN = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十', '十一', '十二'];
   const VIEW_YAW = 0.7;
   const VIEW_PITCH = 0.46;
   const MUTE_KEY = 'playbox-shadow-fit-mute';
@@ -30,7 +30,12 @@
       cubes: [[0, 0, 0], [1, 0, 0], [2, 0, 0], [2, 1, 0]],
       yaw: Math.PI * 0.5,
       pitch: 0.1,
-      need: 0.74
+      need: 0.7,
+      hold: 1.18,
+      miss: 1.6,
+      off: 0.78,
+      startMax: 0.6,
+      teach: '左右拖动旋转 · 品红影子填进青色缺口'
     },
     {
       name: '丁字',
@@ -38,7 +43,25 @@
       cubes: [[0, 0, 0], [1, 0, 0], [2, 0, 0], [1, 1, 0], [1, 2, 0]],
       yaw: Math.PI * 0.5,
       pitch: 0.08,
-      need: 0.78
+      need: 0.74,
+      hold: 1.08,
+      miss: 2,
+      off: 0.9,
+      startMax: 0.55,
+      teach: '对准缺口后空格锁定，或停住等自动锁'
+    },
+    {
+      name: '拐臂',
+      sub: 'BENT',
+      cubes: [[0, 0, 0], [1, 0, 0], [1, 0, 1]],
+      yaw: 0.42,
+      pitch: 0.58,
+      need: 0.76,
+      hold: 1,
+      miss: 2.2,
+      off: 1,
+      startMax: 0.52,
+      teach: '上下也要转 · 影子会跟着变厚变薄'
     },
     {
       name: '阶台',
@@ -46,7 +69,11 @@
       cubes: [[0, 0, 0], [1, 0, 0], [1, 1, 0], [2, 1, 0], [2, 2, 0]],
       yaw: Math.PI * 0.5,
       pitch: 0.52,
-      need: 0.81
+      need: 0.79,
+      hold: 0.94,
+      miss: 2.4,
+      off: 1.06,
+      startMax: 0.48
     },
     {
       name: '分叉',
@@ -54,7 +81,11 @@
       cubes: [[0, 1, 0], [1, 1, 0], [2, 1, 0], [1, 0, 0], [1, 1, 1]],
       yaw: 0.38,
       pitch: 0.72,
-      need: 0.83
+      need: 0.82,
+      hold: 0.86,
+      miss: 2.6,
+      off: 1.14,
+      startMax: 0.44
     },
     {
       name: '盘旋',
@@ -62,9 +93,50 @@
       cubes: [[0, 0, 0], [1, 0, 0], [1, 0, 1], [1, 1, 1], [2, 1, 1], [2, 2, 1]],
       yaw: 0.92,
       pitch: 0.78,
-      need: 0.85
+      need: 0.84,
+      hold: 0.78,
+      miss: 2.8,
+      off: 1.2,
+      startMax: 0.4
+    },
+    {
+      name: '折层',
+      sub: 'ZIG',
+      cubes: [[0, 0, 0], [1, 0, 0], [1, 0, 1], [1, 1, 1], [2, 1, 1]],
+      yaw: 1.15,
+      pitch: 0.72,
+      need: 0.86,
+      hold: 0.7,
+      miss: 3,
+      off: 1.28,
+      startMax: 0.36
+    },
+    {
+      name: '座椅',
+      sub: 'CHAIR',
+      cubes: [[0, 0, 0], [1, 0, 0], [2, 0, 0], [0, 1, 0], [0, 2, 0], [0, 0, 1]],
+      yaw: 0.35,
+      pitch: 0.65,
+      need: 0.87,
+      hold: 0.62,
+      miss: 3.2,
+      off: 1.34,
+      startMax: 0.34
+    },
+    {
+      name: '绞蛇',
+      sub: 'SNAKE',
+      cubes: [[0, 0, 0], [1, 0, 0], [1, 0, 1], [1, 1, 1], [1, 2, 1], [2, 2, 1], [2, 2, 2]],
+      yaw: 1.08,
+      pitch: 0.72,
+      need: 0.88,
+      hold: 0.52,
+      miss: 3.5,
+      off: 1.42,
+      startMax: 0.3
     }
   ];
+  const GOAL = SHAPES.length;
 
   const canvas = document.getElementById('view');
   const ctx = canvas.getContext('2d', { alpha: false });
@@ -230,7 +302,12 @@
       extent: ext * 1.08,
       yaw: def.yaw,
       pitch: def.pitch,
-      need: def.need
+      need: def.need,
+      hold: def.hold == null ? 1 : def.hold,
+      miss: def.miss == null ? PENALTY : def.miss,
+      off: def.off == null ? 1 : def.off,
+      startMax: def.startMax == null ? 0.52 : def.startMax,
+      teach: def.teach || ''
     };
   }
 
@@ -483,23 +560,43 @@
   }
 
   function pickStart(shape, rnd) {
-    const need = shape.need;
-    let fallback = { yaw: shape.yaw + 1.35, pitch: shape.pitch + 0.62 };
-    for (let i = 0; i < 40; i++) {
-      const yaw = shape.yaw + (0.7 + rnd() * 1.3) * (rnd() < 0.5 ? -1 : 1);
-      const pitch = shape.pitch + (0.28 + rnd() * 0.8) * (rnd() < 0.5 ? -1 : 1);
+    const off = shape.off;
+    const cap = shape.need * shape.startMax;
+    let fallback = { yaw: shape.yaw + Math.PI * 0.72, pitch: shape.pitch + 0.9 };
+    let best = 9;
+    let under = null;
+    let underV = 9;
+    for (let i = 0; i < 72; i++) {
+      let yaw;
+      let pitch;
+      if (i < 12) {
+        const a = (i / 12) * TAU;
+        yaw = shape.yaw + Math.cos(a) * (1.05 + off * 0.55);
+        pitch = shape.pitch + Math.sin(a) * (0.62 + off * 0.38);
+      } else {
+        yaw = shape.yaw + (0.85 + rnd() * 1.7) * off * (rnd() < 0.5 ? -1 : 1);
+        pitch = shape.pitch + (0.35 + rnd() * 1.05) * off * (rnd() < 0.5 ? -1 : 1);
+      }
       const filled = rasterShadow(shape, yaw, pitch, G.currBits);
       const v = iouBits(G.currBits, G.targetBits);
-      if (v < need * 0.52 && filled > 90) return { yaw: yaw, pitch: pitch };
-      if (filled > 90) fallback = { yaw: yaw, pitch: pitch };
+      if (filled <= 80) continue;
+      if (v < best) {
+        best = v;
+        fallback = { yaw: yaw, pitch: pitch };
+      }
+      if (v < cap && v < underV) {
+        underV = v;
+        under = { yaw: yaw, pitch: pitch };
+      }
     }
-    return fallback;
+    return under || fallback;
   }
 
   function setupRound(index) {
     const base = PREPPED[index];
-    const jitterY = (G.rand() - 0.5) * 0.22;
-    const jitterP = (G.rand() - 0.5) * 0.16;
+    const jScale = 0.28 + index * 0.14;
+    const jitterY = (G.rand() - 0.5) * 0.22 * jScale;
+    const jitterP = (G.rand() - 0.5) * 0.16 * jScale;
     G.shape = {
       name: base.name,
       sub: base.sub,
@@ -511,7 +608,12 @@
       extent: base.extent,
       yaw: base.yaw + jitterY,
       pitch: base.pitch + jitterP,
-      need: base.need
+      need: base.need,
+      hold: base.hold,
+      miss: base.miss,
+      off: base.off,
+      startMax: base.startMax,
+      teach: base.teach
     };
     G.need = G.shape.need;
     G.round = index;
@@ -539,14 +641,14 @@
       kickerEl.textContent = 'SILHOUETTE';
       titleEl.textContent = '剪影';
       leadEl.innerHTML = '旋转物块，让影子吻上远处的缺口。';
-      metaEl.textContent = '五道剪影。对齐后锁定，灯灭前全部锁入。';
+      metaEl.textContent = CN[GOAL] + '道剪影。对齐后锁定，灯灭前全部锁入。';
       btnMain.textContent = '点灯';
       footEl.textContent = '拖动 / WASD 旋转 · 空格锁定 · M 静音';
     } else if (G.mode === 'win') {
       card.classList.add('win');
       kickerEl.textContent = 'LOCKED';
       titleEl.textContent = '影合';
-      leadEl.textContent = '五道剪影已锁入墙中。';
+      leadEl.textContent = CN[GOAL] + '道剪影已锁入墙中。';
       metaEl.textContent = '剩余 ' + G.remain.toFixed(1) + ' 秒 · 吻合完成';
       btnMain.textContent = '再锁一回';
       footEl.textContent = '空格 / 回车 · R 重开';
@@ -612,7 +714,7 @@
 
   function failLock() {
     G.lockCool = 0.28;
-    G.remain = Math.max(0, G.remain - PENALTY);
+    G.remain = Math.max(0, G.remain - (G.shape && G.shape.miss ? G.shape.miss : PENALTY));
     G.shake = 8;
     G.flash = 0.7;
     audio.pulse('miss');
@@ -743,10 +845,11 @@
     }
 
     if (G.outro <= 0) {
-      if (keys.l) G.yaw -= ROT * dt;
-      if (keys.r) G.yaw += ROT * dt;
-      if (keys.u) G.pitch -= ROT * dt;
-      if (keys.d) G.pitch += ROT * dt;
+      const rate = ROT * (G.iou > G.need * 0.82 ? 0.42 : 1);
+      if (keys.l) G.yaw -= rate * dt;
+      if (keys.r) G.yaw += rate * dt;
+      if (keys.u) G.pitch -= rate * dt;
+      if (keys.d) G.pitch += rate * dt;
       G.t += dt;
       G.remain = Math.max(0, G.remain - dt);
     }
@@ -762,7 +865,8 @@
 
     if (G.aligned) {
       const over = clamp((G.iou - G.need) / Math.max(0.04, 1 - G.need), 0, 1);
-      G.meter = Math.min(1, G.meter + (0.85 + over * 1.1) * dt);
+      const hold = G.shape && G.shape.hold ? G.shape.hold : 1;
+      G.meter = Math.min(1, G.meter + (0.85 + over * 1.1) * hold * dt);
       if (G.clock - audio.lastTick > 0.46) {
         audio.lastTick = G.clock;
         audio.pulse('tick');
@@ -830,7 +934,8 @@
     } else {
       fitRead.classList.remove('hot');
     }
-    if (G.remain < 8) timeRead.classList.add('warn');
+    const timeWarn = G.round >= 5 ? 12 : 8;
+    if (G.remain < timeWarn) timeRead.classList.add('warn');
     else timeRead.classList.remove('warn');
 
     btnLock.classList.toggle('hot', G.aligned);
@@ -839,14 +944,20 @@
       hintEl.textContent = G.gold > 0.7 ? '完美锁入' : '锁入 · ' + G.shape.name;
       hintEl.className = G.gold > 0.7 ? 'hint gold' : 'hint hot';
     } else if (G.aligned) {
-      hintEl.textContent = '对齐了 · 空格或点锁定';
+      hintEl.textContent = G.round >= 5 ? '对齐了 · 停稳再锁' : '对齐了 · 空格或点锁定';
       hintEl.className = 'hint hot';
     } else if (G.iou > G.need * 0.7) {
-      hintEl.textContent = '接近了 · 再转一点';
+      hintEl.textContent = G.round >= 5 ? '差一点 · 缺口更紧了' : '接近了 · 再转一点';
       hintEl.className = 'hint';
-    } else if (G.remain < 8) {
+    } else if (G.remain < timeWarn) {
       hintEl.textContent = '灯将灭';
       hintEl.className = 'hint warn';
+    } else if (G.shape && G.shape.teach && G.round <= 2) {
+      hintEl.textContent = G.shape.teach;
+      hintEl.className = 'hint';
+    } else if (G.round >= 5) {
+      hintEl.textContent = G.shape.name + ' · 对上再停稳';
+      hintEl.className = 'hint';
     } else {
       hintEl.textContent = '拖动或 WASD 旋转 · 影子填进缺口';
       hintEl.className = 'hint';
@@ -1095,7 +1206,11 @@
     ctx.font = '10px "Segoe UI","PingFang SC",sans-serif';
     ctx.fillStyle = 'rgba(154,160,200,0.7)';
     ctx.textAlign = 'center';
-    ctx.fillText('影壁  SHADOW', x + w / 2, y - 16);
+    ctx.fillText(
+      G.shape ? G.shape.name + '  ' + G.shape.sub : '影壁  SHADOW',
+      x + w / 2,
+      y - 16
+    );
     ctx.restore();
   }
 
@@ -1233,8 +1348,9 @@
     ptr.moved += Math.abs(dx) + Math.abs(dy);
     if (G.mode === 'play' && G.outro <= 0) {
       const sens = 0.0072 * (960 / Math.max(W, 480));
-      G.yaw += dx * sens;
-      G.pitch += dy * sens;
+      const near = G.iou > G.need * 0.82 ? 0.48 : 1;
+      G.yaw += dx * sens * near;
+      G.pitch += dy * sens * near;
     }
   });
 

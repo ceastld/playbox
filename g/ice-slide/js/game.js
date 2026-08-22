@@ -131,8 +131,138 @@
         { x: 740, y: 400 }
       ],
       movers: [{ x: 760, y: 140, r: 18, axis: "x", a: 668, b: 880, spd: 86 }]
+    },
+    {
+      name: "夹道",
+      sub: "PINCH",
+      hint: "走廊变窄，少点几次",
+      time: 32,
+      spawn: { x: 92, y: 90 },
+      exit: { x: 848, y: 448 },
+      walls: [
+        { x: 248, y: 26, w: 26, h: 360 },
+        { x: 468, y: 154, w: 26, h: 360 },
+        { x: 688, y: 26, w: 26, h: 360 }
+      ],
+      posts: [{ x: 360, y: 250, r: 20 }],
+      rifts: [
+        { x: 448, y: 490, r: 32 },
+        { x: 672, y: 58, r: 28 },
+        { x: 820, y: 108, r: 40 }
+      ],
+      gems: [{ x: 360, y: 448 }],
+      movers: [],
+      guide: [
+        { x: 120, y: 90, r: 70 },
+        { x: 120, y: 440, r: 64 },
+        { x: 350, y: 440, r: 64 },
+        { x: 350, y: 90, r: 60 },
+        { x: 530, y: 90, r: 50 },
+        { x: 530, y: 250, r: 56 },
+        { x: 530, y: 440, r: 64 },
+        { x: 848, y: 448, r: 80 }
+      ]
+    },
+    {
+      name: "对扫",
+      sub: "SWEEP",
+      hint: "两根冰柱对扫，借力改向",
+      time: 28,
+      spawn: { x: 90, y: 270 },
+      exit: { x: 860, y: 270 },
+      walls: [
+        { x: 292, y: 26, w: 24, h: 196 },
+        { x: 292, y: 324, w: 24, h: 190 },
+        { x: 628, y: 26, w: 24, h: 196 },
+        { x: 628, y: 324, w: 24, h: 190 }
+      ],
+      posts: [],
+      rifts: [
+        { x: 460, y: 72, r: 40 },
+        { x: 460, y: 468, r: 40 },
+        { x: 160, y: 86, r: 30 },
+        { x: 800, y: 454, r: 34 }
+      ],
+      gems: [
+        { x: 460, y: 270 },
+        { x: 780, y: 92 }
+      ],
+      movers: [
+        { x: 460, y: 270, r: 22, axis: "y", a: 118, b: 422, spd: 96 },
+        { x: 760, y: 270, r: 18, axis: "y", a: 96, b: 444, spd: 114 }
+      ],
+      guide: [
+        { x: 160, y: 270, r: 80 },
+        { x: 460, y: 270, r: 70 },
+        { x: 760, y: 270, r: 70 },
+        { x: 860, y: 270, r: 80 }
+      ]
+    },
+    {
+      name: "盲弯",
+      sub: "HOOK",
+      hint: "外墙借力，内弯全是裂口",
+      time: 26,
+      spawn: { x: 92, y: 108 },
+      exit: { x: 100, y: 430 },
+      walls: [{ x: 26, y: 242, w: 740, h: 26 }],
+      posts: [
+        { x: 910, y: 70, r: 26 },
+        { x: 910, y: 470, r: 26 }
+      ],
+      rifts: [
+        { x: 700, y: 214, r: 34 },
+        { x: 700, y: 308, r: 34 },
+        { x: 380, y: 214, r: 30 }
+      ],
+      gems: [{ x: 260, y: 440 }],
+      movers: [{ x: 380, y: 440, r: 16, axis: "x", a: 180, b: 560, spd: 78 }],
+      guide: [
+        { x: 200, y: 108, r: 70 },
+        { x: 820, y: 108, r: 48 },
+        { x: 820, y: 270, r: 48 },
+        { x: 820, y: 430, r: 56 },
+        { x: 100, y: 430, r: 80 }
+      ]
+    },
+    {
+      name: "终门",
+      sub: "LAST",
+      hint: "门缝里没有容错，连撞再滑",
+      time: 24,
+      spawn: { x: 90, y: 312 },
+      exit: { x: 860, y: 270 },
+      walls: [
+        { x: 300, y: 26, w: 26, h: 176 },
+        { x: 300, y: 338, w: 26, h: 176 },
+        { x: 488, y: 26, w: 300, h: 48 },
+        { x: 488, y: 466, w: 300, h: 48 }
+      ],
+      posts: [{ x: 180, y: 96, r: 28 }],
+      rifts: [
+        { x: 520, y: 132, r: 58 },
+        { x: 520, y: 408, r: 58 },
+        { x: 730, y: 150, r: 70 },
+        { x: 730, y: 390, r: 70 }
+      ],
+      gems: [
+        { x: 400, y: 270 },
+        { x: 620, y: 270 }
+      ],
+      movers: [{ x: 730, y: 270, r: 15, axis: "y", a: 214, b: 326, spd: 90 }],
+      guide: [
+        { x: 200, y: 270, r: 48 },
+        { x: 400, y: 270, r: 50 },
+        { x: 600, y: 270, r: 46 },
+        { x: 860, y: 270, r: 70 }
+      ]
     }
   ];
+
+  let GEM_TOTAL = 0;
+  for (let i = 0; i < STAGES.length; i++) {
+    GEM_TOTAL += (STAGES[i].gems || []).length;
+  }
 
   function borders() {
     return [
@@ -426,13 +556,30 @@
     return null;
   }
 
+  function pickGuide(st, guide) {
+    if (st._gi == null) st._gi = 0;
+    while (st._gi < guide.length) {
+      const g = guide[st._gi];
+      if (hypot2(st.px - g.x, st.py - g.y) < (g.r || 84)) {
+        st._gi += 1;
+        continue;
+      }
+      return g;
+    }
+    return { x: st.exit.x, y: st.exit.y };
+  }
+
   function greedyDir(st) {
     const s = STAGES[st.stageIndex];
     let tx = s.exit.x;
     let ty = s.exit.y;
     const sp = hypot2(st.vx, st.vy);
 
-    if (st.stageIndex === 1 && st.py < 230) {
+    if (s.guide && s.guide.length) {
+      const g = pickGuide(st, s.guide);
+      tx = g.x;
+      ty = g.y;
+    } else if (st.stageIndex === 1 && st.py < 230) {
       tx = 860;
       ty = 110;
       if (st.px > 700) {
@@ -498,12 +645,21 @@
           ay -= hy * 1.2;
         }
       }
+      if (s.guide) {
+        for (let i = 4; i < st.walls.length; i++) {
+          const w = st.walls[i];
+          if (fx > w.x - 10 && fx < w.x + w.w + 10 && fy > w.y - 10 && fy < w.y + w.h + 10) {
+            ax -= hx * 0.8;
+            ay -= hy * 0.8;
+          }
+        }
+      }
     }
 
     const mag = hypot2(ax, ay);
     if (mag < 0.15) return null;
     if (sp > 300 && mag < 0.4) return { x: -st.vx / sp, y: -st.vy / sp };
-    if (sp > 150) {
+    if (sp > 150 && !s.guide) {
       const hx = st.vx / sp;
       const hy = st.vy / sp;
       const lookW = 110;
@@ -901,8 +1057,8 @@
       ovTitle.textContent = "冰面";
       ovLead.innerHTML = "没有刹车。轻点加速，反向轻点减速。<br />撞墙改向。滑进青色门，躲开品红裂口。";
       ovOps.textContent = coarse
-        ? "点屏幕朝向轻点 · 或用左上右下 · 五关 · M 静音"
-        : "WASD / 方向键轻点 · 点向目标方向 · M 静音";
+        ? "点屏幕朝向轻点 · 或用左上右下 · " + STAGES.length + " 关 · M 静音"
+        : "WASD / 方向键轻点 · 点向目标方向 · " + STAGES.length + " 关 · M 静音";
       ovBtn.textContent = "上冰";
     } else if (kind === "lose") {
       ovKicker.textContent = "CRACK";
@@ -914,7 +1070,7 @@
     } else if (kind === "win") {
       ovKicker.textContent = "STILL";
       ovTitle.textContent = "全线滑过";
-      ovLead.textContent = "没有刹车，你还是滑进了最后一道门。晶石 " + st.runGems + " / 9。";
+      ovLead.textContent = "没有刹车，你还是滑进了最后一道门。晶石 " + st.runGems + " / " + GEM_TOTAL + "。";
       ovOps.textContent = "";
       ovBtn.textContent = "再来一局";
     }

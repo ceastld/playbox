@@ -172,8 +172,8 @@
         apad(E),
         apad(E),
         apad(E),
-        apad("..X........"),
         apad("========..."),
+        apad("..X........"),
         apad(E),
         apad(E),
         apad("........==="),
@@ -210,6 +210,142 @@
         apad(E),
         apad(E),
         apad("======....."),
+        apad(E),
+        apad(E),
+        apad(SU),
+        W
+      ]
+    },
+    {
+      name: "窄台",
+      sub: "LEDGE",
+      hint: "台面只有两格。空中平移，贴着窄沿翻上去。",
+      map: [
+        W,
+        apad(SD),
+        apad(E),
+        apad(".........=="),
+        apad("..........X"),
+        apad(E),
+        apad(E),
+        apad(E),
+        apad(E),
+        apad(E),
+        apad(E),
+        apad("P.........."),
+        apad("===........"),
+        apad(E),
+        apad(E),
+        apad(E),
+        apad(E),
+        apad(SU),
+        W
+      ]
+    },
+    {
+      name: "假台",
+      sub: "FAKE",
+      hint: "头上那块台两面都是刺。先走到空处，再翻到左边的真沿。",
+      map: [
+        W,
+        apad(SD),
+        apad(E),
+        apad("=====......"),
+        apad("X.........."),
+        apad(E),
+        apad(E),
+        apad("........^^^"),
+        apad("........==="),
+        apad("........vvv"),
+        apad(E),
+        apad(".........P."),
+        apad(".......===="),
+        apad(E),
+        apad(E),
+        apad(E),
+        apad(E),
+        apad(SU),
+        W
+      ]
+    },
+    {
+      name: "过顶",
+      sub: "OVER",
+      hint: "先贴上沿等冷却。再翻下来，落到另一侧的台面上。",
+      map: [
+        W,
+        apad(SD),
+        apad(E),
+        apad(E),
+        apad("=====......"),
+        apad(E),
+        apad(E),
+        apad(E),
+        apad(E),
+        apad(E),
+        apad(".........X."),
+        apad("...^^^^===="),
+        apad(E),
+        apad("P.........."),
+        apad("===........"),
+        apad(E),
+        apad(E),
+        apad(SU),
+        W
+      ]
+    },
+    {
+      name: "折返",
+      sub: "ZIG",
+      hint: "贴上、翻下、再贴上。冷却没好转头就会扎进刺里。",
+      map: [
+        W,
+        apad(SD),
+        apad(E),
+        apad("......====."),
+        apad(".......X..."),
+        apad(E),
+        apad("=====......"),
+        apad(E),
+        apad(E),
+        apad(E),
+        apad(E),
+        apad(E),
+        apad(E),
+        apad("...^^^^===="),
+        apad(E),
+        apad("P.........."),
+        apad("===........"),
+        apad(E),
+        apad(E),
+        apad(SU),
+        W
+      ]
+    },
+    {
+      name: "绝井",
+      sub: "LAST",
+      hint: "窄沿、夹刺、过顶。冷却不到就别翻。",
+      map: [
+        W,
+        apad(SD),
+        apad(E),
+        apad(".........=="),
+        apad("..........X"),
+        apad(E),
+        apad(E),
+        apad("=====......"),
+        apad(E),
+        apad(E),
+        apad(E),
+        apad(E),
+        apad(E),
+        apad(E),
+        apad(E),
+        apad("...^^^^===="),
+        apad(E),
+        apad("P.........."),
+        apad("===........"),
         apad(E),
         apad(E),
         apad(SU),
@@ -476,63 +612,145 @@
 
   function makeAI(index) {
     let flipped = 0;
+    let phase = 0;
     return function (st) {
       const inp = { left: false, right: false, flip: false };
       const x = st.px;
       const g = st.grav;
       const gd = st.grounded;
       const y = st.py;
+      const cool = st.cool;
 
       if (index === 0) {
-        if (g > 0 && gd && st.cool <= 0 && st.time > 0.18) inp.flip = true;
+        if (g > 0 && gd && cool <= 0 && st.time > 0.18) inp.flip = true;
         return inp;
       }
       if (index === 1) {
         inp.left = x > 70;
-        if (g > 0 && gd && y > 380 && st.cool <= 0) inp.flip = true;
+        if (g > 0 && gd && y > 380 && cool <= 0) inp.flip = true;
         return inp;
       }
       if (index === 2) {
         inp.right = x < 310;
-        if (!gd && g > 0 && x > 150 && y > 280 && st.cool <= 0) inp.flip = true;
+        if (!gd && g > 0 && x > 150 && y > 280 && cool <= 0) inp.flip = true;
         return inp;
       }
       if (index === 3) {
         inp.left = x > 70;
-        if (!gd && g > 0 && x < 200 && y > 340 && y < 480 && st.cool <= 0) inp.flip = true;
+        if (!gd && g > 0 && x < 200 && y > 340 && y < 480 && cool <= 0) inp.flip = true;
         return inp;
       }
       if (index === 4) {
         inp.right = x < 320;
-        if (!gd && g > 0 && x > 160 && y > 300 && st.cool <= 0) inp.flip = true;
+        if (!gd && g > 0 && x > 160 && y > 300 && cool <= 0) inp.flip = true;
         return inp;
       }
       if (index === 5) {
-        if (flipped === 0) {
-          if (gd && g > 0 && st.cool <= 0 && st.time > 0.12) {
+        if (phase === 0) {
+          if (gd && g > 0 && cool <= 0 && st.time > 0.12) {
             inp.flip = true;
-            flipped = 1;
+            phase = 1;
           }
-        } else if (flipped === 1) {
+        } else if (phase === 1) {
           if (gd && g < 0 && y > 390) {
-            inp.left = true;
+            if (cool <= 0) inp.left = true;
           } else if (gd && g < 0) {
-            if (st.cool <= 0) inp.right = x < 310;
-          } else {
+            inp.left = x > 100;
+          } else if (!gd && g < 0 && y < 400) {
             inp.left = x > 140;
-            if (x < 250 && x > 50 && y < 272 && st.cool <= 0) {
-              inp.flip = true;
-              flipped = 2;
-            }
           }
-        } else {
-          inp.left = x > 90;
         }
         return inp;
       }
       if (index === 6) {
         inp.left = x > 70;
-        if (g > 0 && gd && y > 470 && st.cool <= 0) inp.flip = true;
+        if (g > 0 && gd && y > 470 && cool <= 0) inp.flip = true;
+        return inp;
+      }
+      if (index === 7) {
+        inp.right = x < 350;
+        if (!gd && g > 0 && x > 90 && y > 430 && cool <= 0) inp.flip = true;
+        return inp;
+      }
+      if (index === 8) {
+        inp.left = x > 70;
+        if (g > 0 && x < 210 && cool <= 0 && st.time > 0.4) inp.flip = true;
+        return inp;
+      }
+      if (index === 9) {
+        if (phase === 0) {
+          if (gd && g > 0 && cool <= 0 && st.time > 0.1) {
+            inp.flip = true;
+            phase = 1;
+          }
+        } else if (phase === 1) {
+          if (gd && g < 0) {
+            if (cool <= 0) {
+              inp.right = x < 180;
+              if (x > 168) {
+                inp.flip = true;
+                phase = 2;
+              }
+            }
+          }
+        } else {
+          inp.right = x < 340;
+        }
+        return inp;
+      }
+      if (index === 10) {
+        if (phase === 0) {
+          if (gd && g > 0 && cool <= 0 && st.time > 0.1) {
+            inp.flip = true;
+            phase = 1;
+          }
+        } else if (phase === 1) {
+          if (gd && g < 0 && y > 200) {
+            if (cool <= 0) {
+              inp.right = x < 180;
+              if (x > 168) {
+                inp.flip = true;
+                phase = 2;
+              }
+            }
+          }
+        } else if (phase === 2) {
+          inp.right = x < 340;
+          if (gd && g > 0 && x > 280 && cool <= 0) {
+            inp.flip = true;
+            phase = 3;
+          }
+        } else {
+          inp.left = x > 260;
+          inp.right = x < 240;
+        }
+        return inp;
+      }
+      if (index === 11) {
+        if (phase === 0) {
+          if (gd && g > 0 && cool <= 0 && st.time > 0.1) {
+            inp.flip = true;
+            phase = 1;
+          }
+        } else if (phase === 1) {
+          if (gd && g < 0 && y > 180) {
+            if (cool <= 0) {
+              inp.right = x < 180;
+              if (x > 168) {
+                inp.flip = true;
+                phase = 2;
+              }
+            }
+          }
+        } else if (phase === 2) {
+          inp.right = x < 360;
+          if (gd && g > 0 && x > 310 && cool <= 0) {
+            inp.flip = true;
+            phase = 3;
+          }
+        } else {
+          inp.right = x < 360;
+        }
         return inp;
       }
       return inp;
@@ -585,10 +803,11 @@
   validateStages();
 
   if (typeof document === "undefined") {
-    const results = STAGES.map((_, i) => simulateStage(i, 32, i === 5));
-    results.forEach((r) => {
+    const results = STAGES.map((_, i) => simulateStage(i, 40, false));
+    results.forEach((r, i) => {
       const mark = r.phase === "clear" ? "OK" : "FAIL";
-      console.log(mark, r.name, "phase=" + r.phase, "t=" + r.t, "flips=" + r.flips, "pos", r.x, r.y, "g", r.grav);
+      console.log(mark, r.name, "phase=" + r.phase, "t=" + r.t, "flips=" + r.flips, "pos", r.x, r.y, "g", r.grav, r.cause || "");
+      if (r.phase !== "clear") simulateStage(i, 8, true);
     });
     const failed = results.filter((r) => r.phase !== "clear");
     if (failed.length) {
@@ -834,8 +1053,8 @@
       ovTitle.textContent = "井翻";
       ovLead.textContent = "冷却转满才能翻转重力。落地要算好，刺面会吞人。";
       ovOps.textContent = coarse
-        ? "左 / 右平移 · 翻 · 共七口井 · M 静音"
-        : "方向键 / A D 平移 · 空格或点按翻转 · 触屏用左翻右 · M 静音";
+        ? "左 / 右平移 · 翻 · 共" + STAGES.length + "口井 · M 静音"
+        : "方向键 / A D 平移 · 空格或点按翻转 · 触屏用左翻右 · 共" + STAGES.length + "口井 · M 静音";
       ovBtn.textContent = "下井";
     } else if (kind === "dead") {
       panel.classList.add("lose");
@@ -848,9 +1067,9 @@
       ovBtn.textContent = "再落一次";
     } else if (kind === "win") {
       panel.classList.add("win");
-      ovKicker.textContent = "MOUTH";
-      ovTitle.textContent = "井口";
-      ovLead.textContent = "七次翻转，每一次都踩在冷却之后。井把你送回了光里。";
+      ovKicker.textContent = "WELL";
+      ovTitle.textContent = "出井";
+      ovLead.textContent = STAGES.length + " 口井，每一次都踩在冷却之后。井把你送回了光里。";
       ovOps.textContent = "";
       ovBtn.textContent = "再来一局";
     }
