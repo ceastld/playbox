@@ -1041,7 +1041,7 @@
     "blurb": "硬币旋着时把别的叠上去。",
     "hue": 46,
     "tag": "旋",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/coin-spin/"
   },
   {
@@ -1074,7 +1074,7 @@
     "blurb": "捉住萤火虫，放走假的。",
     "hue": 70,
     "tag": "萤",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/jar-firefly/"
   },
   {

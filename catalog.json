@@ -904,5 +904,16 @@
     "tag": "脉",
     "dir": "g/pulse-gate/",
     "url": "./g/pulse-gate/"
+  },
+  {
+    "n": 95,
+    "id": "coin-spin",
+    "title": "旋币",
+    "subtitle": "SPIN",
+    "blurb": "硬币旋着时把别的叠上去。",
+    "hue": 46,
+    "tag": "旋",
+    "dir": "g/coin-spin/",
+    "url": "./g/coin-spin/"
   }
 ]
