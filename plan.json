@@ -2787,7 +2787,7 @@
     "blurb": "绕着行星喷火，钻进坑里拆炮。",
     "hue": 266,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/gravitar/",
     "kind": "remake"
   },
@@ -2799,7 +2799,7 @@
     "blurb": "旋转开火，别让护盾被啃穿。",
     "hue": 320,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/space-fury/",
     "kind": "remake"
   },
@@ -2811,7 +2811,7 @@
     "blurb": "封闭赛道弹射，别撞自己的弹。",
     "hue": 174,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/omega-race/",
     "kind": "remake"
   },
@@ -2825,6 +2825,42 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/black-widow/",
+    "kind": "remake"
+  },
+  {
+    "n": 245,
+    "id": "star-fire",
+    "title": "星火",
+    "subtitle": "FIRE",
+    "blurb": "座舱里对射，把敌舰打出火来。",
+    "hue": 16,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/star-fire/",
+    "kind": "remake"
+  },
+  {
+    "n": 246,
+    "id": "xenophobe",
+    "title": "异种",
+    "subtitle": "XENO",
+    "blurb": "三廊清虫，别让它们扒上门。",
+    "hue": 112,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/xenophobe/",
+    "kind": "remake"
+  },
+  {
+    "n": 247,
+    "id": "blasteroids",
+    "title": "岩变",
+    "subtitle": "BLAST",
+    "blurb": "砸石头还能合体变大船。",
+    "hue": 208,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/blasteroids/",
     "kind": "remake"
   }
 ]

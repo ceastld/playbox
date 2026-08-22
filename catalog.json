@@ -2636,5 +2636,41 @@
     "dir": "g/star-trench/",
     "url": "./g/star-trench/",
     "kind": "remake"
+  },
+  {
+    "n": 241,
+    "id": "gravitar",
+    "title": "引力",
+    "subtitle": "GRAV",
+    "blurb": "绕着行星喷火，钻进坑里拆炮。",
+    "hue": 266,
+    "tag": "复刻",
+    "dir": "g/gravitar/",
+    "url": "./g/gravitar/",
+    "kind": "remake"
+  },
+  {
+    "n": 242,
+    "id": "space-fury",
+    "title": "怒空",
+    "subtitle": "FURY",
+    "blurb": "旋转开火，别让护盾被啃穿。",
+    "hue": 320,
+    "tag": "复刻",
+    "dir": "g/space-fury/",
+    "url": "./g/space-fury/",
+    "kind": "remake"
+  },
+  {
+    "n": 243,
+    "id": "omega-race",
+    "title": "环赛",
+    "subtitle": "OMEGA",
+    "blurb": "封闭赛道弹射，别撞自己的弹。",
+    "hue": 174,
+    "tag": "复刻",
+    "dir": "g/omega-race/",
+    "url": "./g/omega-race/",
+    "kind": "remake"
   }
 ]

@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" fill="#14030f"/>
+  <rect x="5" y="14" width="54" height="36" rx="4" fill="#0c0208" stroke="#ff3db8" stroke-width="1.2"/>
+  <g fill="#ffe8f6" opacity=".5">
+    <circle cx="14" cy="20" r=".55"/>
+    <circle cx="50" cy="22" r=".4"/>
+    <circle cx="22" cy="42" r=".5"/>
+    <circle cx="46" cy="40" r=".4"/>
+    <circle cx="33" cy="18" r=".35"/>
+  </g>
+  <circle cx="32" cy="24" r="6.4" fill="none" stroke="#ff3db8" stroke-width="1.15"/>
+  <circle cx="32" cy="24" r="2.4" fill="#ffe36b"/>
+  <circle cx="32.6" cy="23.5" r=".7" fill="#14030f"/>
+  <polygon points="16,28 12,34 16,32 20,34" fill="none" stroke="#00e8ff" stroke-width="1.05" stroke-linejoin="round"/>
+  <polygon points="48,28 44,34 48,32 52,34" fill="none" stroke="#ff7ad2" stroke-width="1.05" stroke-linejoin="round"/>
+  <polygon points="32,36 36,52 32,48 28,52" fill="none" stroke="#e8f4ff" stroke-width="1.45" stroke-linejoin="round"/>
+  <ellipse cx="32" cy="42" rx="8" ry="6" fill="none" stroke="#ff3db8" stroke-width="0.9" opacity=".7"/>
+  <path d="M32 48 L30.4 53 L32 51 L33.6 53 Z" fill="#00e8ff"/>
+</svg>
