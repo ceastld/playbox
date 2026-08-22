@@ -1196,5 +1196,17 @@
     "dir": "g/chain-boom/",
     "url": "./g/chain-boom/",
     "kind": "remake"
+  },
+  {
+    "n": 114,
+    "id": "frog-hop",
+    "title": "蛙路",
+    "subtitle": "FROG",
+    "blurb": "过马路过河，别被撞。",
+    "hue": 130,
+    "tag": "复刻",
+    "dir": "g/frog-hop/",
+    "url": "./g/frog-hop/",
+    "kind": "remake"
   }
 ]

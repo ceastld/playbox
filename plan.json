@@ -1263,7 +1263,7 @@
     "blurb": "过马路过河，别被撞。",
     "hue": 130,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/frog-hop/",
     "kind": "remake"
   },
@@ -1385,6 +1385,18 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/air-puck/",
+    "kind": "remake"
+  },
+  {
+    "n": 125,
+    "id": "beat-tap",
+    "title": "拍点",
+    "subtitle": "BEAT",
+    "blurb": "卡在点上，连击发烫。",
+    "hue": 320,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/beat-tap/",
     "kind": "remake"
   }
 ]
