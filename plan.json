@@ -3327,7 +3327,7 @@
     "blurb": "驾驶机甲扫射，把地面炮台打穿。",
     "hue": 168,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/cyber-nator/",
     "kind": "remake"
   },
@@ -3339,7 +3339,7 @@
     "blurb": "恶魔吐火，把宝石从石像里打出来。",
     "hue": 286,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/netherworld/",
     "kind": "remake"
   },
@@ -3351,7 +3351,7 @@
     "blurb": "俯冲轰炸，把坦克编队炸开。",
     "hue": 142,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/twin-hawk/",
     "kind": "remake"
   },
@@ -3363,7 +3363,7 @@
     "blurb": "贴墙射击，躲进门里换弹。",
     "hue": 8,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/rolling-thunder/",
     "kind": "remake"
   },
@@ -3377,6 +3377,54 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/gunstar/",
+    "kind": "remake"
+  },
+  {
+    "n": 291,
+    "id": "darius",
+    "title": "大流",
+    "subtitle": "DARS",
+    "blurb": "横扫巨型鱼舰，把核心装甲打穿。",
+    "hue": 48,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/darius/",
+    "kind": "remake"
+  },
+  {
+    "n": 292,
+    "id": "silkworm",
+    "title": "蚕战",
+    "subtitle": "SILK",
+    "blurb": "直升机扫射，把公路车队炸开。",
+    "hue": 92,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/silkworm/",
+    "kind": "remake"
+  },
+  {
+    "n": 293,
+    "id": "axelay",
+    "title": "轴射",
+    "subtitle": "AXEL",
+    "blurb": "透视管里开火，把编队撕开。",
+    "hue": 196,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/axelay/",
+    "kind": "remake"
+  },
+  {
+    "n": 294,
+    "id": "viewtiful",
+    "title": "红侠",
+    "subtitle": "VIEW",
+    "blurb": "慢镜斩击，把敌人打成慢动作。",
+    "hue": 4,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/viewtiful/",
     "kind": "remake"
   }
 ]

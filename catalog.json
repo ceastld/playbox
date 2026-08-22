@@ -3188,5 +3188,53 @@
     "dir": "g/kiwi/",
     "url": "./g/kiwi/",
     "kind": "remake"
+  },
+  {
+    "n": 286,
+    "id": "cyber-nator",
+    "title": "机甲",
+    "subtitle": "CYBR",
+    "blurb": "驾驶机甲扫射，把地面炮台打穿。",
+    "hue": 168,
+    "tag": "复刻",
+    "dir": "g/cyber-nator/",
+    "url": "./g/cyber-nator/",
+    "kind": "remake"
+  },
+  {
+    "n": 287,
+    "id": "netherworld",
+    "title": "冥界",
+    "subtitle": "NETH",
+    "blurb": "恶魔吐火，把宝石从石像里打出来。",
+    "hue": 286,
+    "tag": "复刻",
+    "dir": "g/netherworld/",
+    "url": "./g/netherworld/",
+    "kind": "remake"
+  },
+  {
+    "n": 288,
+    "id": "twin-hawk",
+    "title": "双鹰",
+    "subtitle": "HAWK",
+    "blurb": "俯冲轰炸，把坦克编队炸开。",
+    "hue": 142,
+    "tag": "复刻",
+    "dir": "g/twin-hawk/",
+    "url": "./g/twin-hawk/",
+    "kind": "remake"
+  },
+  {
+    "n": 289,
+    "id": "rolling-thunder",
+    "title": "滚雷",
+    "subtitle": "ROLL",
+    "blurb": "贴墙射击，躲进门里换弹。",
+    "hue": 8,
+    "tag": "复刻",
+    "dir": "g/rolling-thunder/",
+    "url": "./g/rolling-thunder/",
+    "kind": "remake"
   }
 ]

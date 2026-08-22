@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#041412" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>机甲 · CYBR</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23041412'/%3E%3Crect x='2' y='2' width='28' height='28' rx='4' fill='%23081c18' stroke='%2300ffcc' stroke-width='1.4'/%3E%3Cpath d='M4 24h24' stroke='%2300ffcc' stroke-width='1.2' opacity='.5'/%3E%3Crect x='10' y='14' width='9' height='8' rx='1' fill='%2300ffcc'/%3E%3Crect x='11.4' y='15.4' width='4.2' height='2.2' fill='%23c8fff4'/%3E%3Crect x='10.4' y='22' width='3' height='3.4' fill='%2300c8a0'/%3E%3Crect x='15.4' y='22' width='3' height='3.4' fill='%2300c8a0'/%3E%3Cpath d='M19 16h8' stroke='%23ffe36b' stroke-width='1.6'/%3E%3Ccircle cx='24' cy='10' r='2.4' fill='%2300e8ff'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>机甲</b>
+        <span>CYBR</span>
+      </div>
+      <div class="status">
+        <div class="scores" aria-live="polite">
+          <div class="score" id="score-box">
+            <em>分数</em>
+            <b id="score">0</b>
+            <span id="score-add" class="score-add" hidden>+0</span>
+          </div>
+          <div class="score best">
+            <em>最高</em>
+            <b id="best">0</b>
+          </div>
+          <div class="score hp" id="hp-box">
+            <em>装甲</em>
+            <b id="hp">6</b>
+            <span class="hp-track" aria-hidden="true"><i id="hp-fill"></i></span>
+          </div>
+          <div class="score combo" id="combo-box">
+            <em>连击</em>
+            <b id="combo">×1</b>
+          </div>
+        </div>
+        <div class="row">
+          <span id="stage-label">废港</span>
+          <span id="tag-label">扫荡</span>
+          <span id="gun-label" class="gun">机炮</span>
+          <span class="pips" id="pips" aria-label="剩余性命"></span>
+        </div>
+      </div>
+      <div class="tools">
+        <div class="modes" role="radiogroup" aria-label="模式">
+          <button type="button" id="mode-raid" aria-pressed="true">扫荡</button>
+          <button type="button" id="mode-storm" aria-pressed="false">火网</button>
+        </div>
+        <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
+        <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <div class="board-wrap">
+        <canvas id="c" tabindex="0" role="application" aria-label="机甲，侧视步行装甲，短跳，独立转炮打空打地"></canvas>
+      </div>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden"></div>
+      <div id="chain-pop" class="chain-pop hidden" aria-hidden="true">×2</div>
+      <div id="pad" class="pad">
+        <button type="button" id="btn-jump" aria-label="跳跃">跳</button>
+        <button type="button" id="btn-left" aria-label="左">左</button>
+        <button type="button" id="btn-fire" aria-label="开火">射</button>
+        <button type="button" id="btn-right" aria-label="右">右</button>
+        <button type="button" id="btn-duck" aria-label="下瞄">下</button>
+      </div>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">CYBR</p>
+          <h1 id="ov-title">机甲</h1>
+          <p class="lead" id="ov-lead">驾驶步行装甲。短跳过坑，转炮打空中的武装直升机和地面坦克。装甲打空丢一条命。</p>
+          <p class="ops" id="ov-ops">WASD / 方向 走 · 上跳 · 空格射击 · 鼠标转炮 · R 重开 · M 静音</p>
+          <div class="ov-actions" id="ov-start">
+            <button type="button" id="btn-raid">扫荡</button>
+            <button type="button" id="btn-storm">火网</button>
+          </div>
+          <div class="ov-actions gone" id="ov-end">
+            <button type="button" id="ov-again">再来</button>
+            <button type="button" id="ov-menu">换模式</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">短跳 · 转炮打空打地 · 装甲打空丢命</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>
