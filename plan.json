@@ -1899,7 +1899,7 @@
     "blurb": "横版打飞机，选升级，后面跟一串分身。",
     "hue": 204,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/gradius-run/",
     "kind": "remake"
   },
@@ -1911,7 +1911,7 @@
     "blurb": "横切忍者，救人，忍术清屏。",
     "hue": 350,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/shinobi-run/",
     "kind": "remake"
   },
@@ -1949,6 +1949,30 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/wonder-isle/",
+    "kind": "remake"
+  },
+  {
+    "n": 172,
+    "id": "dual-cut",
+    "title": "双截",
+    "subtitle": "DRAGON",
+    "blurb": "巷子里连打，捡武器清场。",
+    "hue": 16,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/dual-cut/",
+    "kind": "remake"
+  },
+  {
+    "n": 173,
+    "id": "beast-run",
+    "title": "兽化",
+    "subtitle": "BEAST",
+    "blurb": "打出魂火，变成野兽冲。",
+    "hue": 28,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/beast-run/",
     "kind": "remake"
   }
 ]

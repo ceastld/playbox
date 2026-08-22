@@ -1760,5 +1760,29 @@
     "dir": "g/hang-on/",
     "url": "./g/hang-on/",
     "kind": "remake"
+  },
+  {
+    "n": 167,
+    "id": "gradius-run",
+    "title": "秘武",
+    "subtitle": "GRADIUS",
+    "blurb": "横版打飞机，选升级，后面跟一串分身。",
+    "hue": 204,
+    "tag": "复刻",
+    "dir": "g/gradius-run/",
+    "url": "./g/gradius-run/",
+    "kind": "remake"
+  },
+  {
+    "n": 168,
+    "id": "shinobi-run",
+    "title": "忍",
+    "subtitle": "SHINOBI",
+    "blurb": "横切忍者，救人，忍术清屏。",
+    "hue": 350,
+    "tag": "复刻",
+    "dir": "g/shinobi-run/",
+    "url": "./g/shinobi-run/",
+    "kind": "remake"
   }
 ]
