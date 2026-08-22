@@ -2283,7 +2283,7 @@
     "blurb": "推球砸怪，挖出樱桃。",
     "hue": 18,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/mr-do/",
     "kind": "remake"
   },
@@ -2295,7 +2295,7 @@
     "blurb": "推冰块砸蜜蜂。",
     "hue": 188,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/pengo-push/",
     "kind": "remake"
   },
@@ -2333,6 +2333,30 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/bomb-jack/",
+    "kind": "remake"
+  },
+  {
+    "n": 204,
+    "id": "rally-x",
+    "title": "迷宫车",
+    "subtitle": "RALLY",
+    "blurb": "绕开红车去收旗。",
+    "hue": 40,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/rally-x/",
+    "kind": "remake"
+  },
+  {
+    "n": 205,
+    "id": "circus-jump",
+    "title": "杂技",
+    "subtitle": "CIRCUS",
+    "blurb": "蹦床弹上去，戳破气球。",
+    "hue": 330,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/circus-jump/",
     "kind": "remake"
   }
 ]

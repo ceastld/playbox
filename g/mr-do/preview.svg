@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" fill="#05030c"/>
+  <rect x="5" y="5" width="54" height="54" rx="8" fill="#12080c" stroke="#ff6a22" stroke-width="1.3"/>
+  <rect x="8" y="10" width="48" height="10" fill="#c45a22"/>
+  <rect x="8" y="20" width="48" height="12" fill="#8a3a18"/>
+  <rect x="8" y="32" width="48" height="14" fill="#5a2218"/>
+  <rect x="8" y="46" width="48" height="8" fill="#1a0c10"/>
+  <path d="M8 46h48" stroke="#ff6a22" stroke-width="1.1" opacity=".45"/>
+  <rect x="30" y="38" width="5" height="16" fill="#14080c"/>
+  <rect x="18" y="46" width="28" height="4.2" fill="#14080c"/>
+  <path d="M26 22h12l-6-8z" fill="#ff6a22"/>
+  <rect x="28" y="22" width="8" height="8" fill="#3a1a22"/>
+  <rect x="30.4" y="28" width="3.2" height="2.4" fill="#ffe36b" opacity=".7"/>
+  <circle cx="14" cy="14" r="2.1" fill="#ff3d58"/>
+  <circle cx="17.4" cy="14.4" r="1.9" fill="#ff3d58"/>
+  <path d="M15.6 11.4c.3-1.5 1.6-1.7 2-.1" stroke="#3dff88" stroke-width="1.05" fill="none"/>
+  <circle cx="48" cy="14" r="2.1" fill="#ff3d58"/>
+  <circle cx="51.2" cy="14.5" r="1.8" fill="#ff3d58"/>
+  <path d="M49.5 11.5c.3-1.4 1.5-1.6 1.9-.1" stroke="#3dff88" stroke-width="1.05" fill="none"/>
+  <circle cx="14" cy="50" r="2" fill="#ff3d58"/>
+  <circle cx="50" cy="50.2" r="1.9" fill="#ff3d58"/>
+  <circle cx="40" cy="40" r="4.1" fill="#ffe36b"/>
+  <circle cx="38.8" cy="38.7" r="1.25" fill="#fff8d0"/>
+  <circle cx="40" cy="40" r="4.1" fill="none" stroke="#00f0ff" stroke-width=".6" opacity=".55"/>
+  <path d="M18 8.2l2.6 4.6H15.4z" fill="#ff6a22"/>
+  <circle cx="18" cy="7.5" r="1.2" fill="#ffe36b"/>
+  <circle cx="18" cy="13.6" r="2.5" fill="#fff6ea"/>
+  <circle cx="18.3" cy="13.9" r=".55" fill="#ff3d58"/>
+  <circle cx="17.2" cy="13.1" r=".35" fill="#1a1428"/>
+  <circle cx="19" cy="13.1" r=".35" fill="#1a1428"/>
+  <ellipse cx="18" cy="16.2" rx="2.4" ry=".8" fill="#ffe36b"/>
+  <ellipse cx="22" cy="34" rx="3.6" ry="2.7" fill="#ff5430"/>
+  <path d="M20.2 31.4l.8-2.2 1.4 2.1M23 31.6l1-2 1.2 2" fill="#ff5430"/>
+  <circle cx="21.1" cy="33.4" r=".7" fill="#fff"/>
+  <circle cx="23.4" cy="33.4" r=".7" fill="#fff"/>
+  <circle cx="21.3" cy="33.5" r=".32" fill="#1a1428"/>
+  <circle cx="23.6" cy="33.5" r=".32" fill="#1a1428"/>
+</svg>

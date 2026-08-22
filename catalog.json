@@ -2144,5 +2144,29 @@
     "dir": "g/pooyan/",
     "url": "./g/pooyan/",
     "kind": "remake"
+  },
+  {
+    "n": 199,
+    "id": "mr-do",
+    "title": "推球",
+    "subtitle": "DO",
+    "blurb": "推球砸怪，挖出樱桃。",
+    "hue": 18,
+    "tag": "复刻",
+    "dir": "g/mr-do/",
+    "url": "./g/mr-do/",
+    "kind": "remake"
+  },
+  {
+    "n": 200,
+    "id": "pengo-push",
+    "title": "推冰",
+    "subtitle": "PENGO",
+    "blurb": "推冰块砸蜜蜂。",
+    "hue": 188,
+    "tag": "复刻",
+    "dir": "g/pengo-push/",
+    "url": "./g/pengo-push/",
+    "kind": "remake"
   }
 ]
