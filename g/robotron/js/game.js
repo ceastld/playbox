@@ -17,7 +17,11 @@
   const COMBO_WIN = 1.22;
   const BEST_KEY = 'playbox-robotron-best';
   const MUTE_KEY = 'playbox-robotron-mute';
-  const OPS = 'WASD / 方向键走 · 鼠标瞄准点射或 IJKL 射 · R 重开 · M 静音';
+  const AUTO_SPEED_KEY = 'playbox-robotron-auto-speed';
+  const SPEED_LABELS = ['', '慢', '中', '快', '极快'];
+  const AUTO_SCALE = [1, 1, 2, 4, 10];
+  const AUTO_START_WAIT = [0, 0.55, 0.38, 0.2, 0.06];
+  const OPS = 'WASD / 方向键走 · 鼠标瞄准点射或 IJKL 射 · A 自动 · R 重开 · M 静音';
   const OCT = [
     [1, 0], [1, 1], [0, 1], [-1, 1],
     [-1, 0], [-1, -1], [0, -1], [1, -1]
@@ -264,6 +268,9 @@
   const modeGuard = document.getElementById('mode-guard');
   const btnMute = document.getElementById('btn-mute');
   const btnRetry = document.getElementById('btn-retry');
+  const btnAuto = document.getElementById('btn-auto');
+  const speedEl = document.getElementById('speed');
+  const speedLab = document.getElementById('speed-lab');
   const scoreEl = document.getElementById('score');
   const bestEl = document.getElementById('best');
   const scoreBox = document.getElementById('score-box');
@@ -307,6 +314,14 @@
   const pops = [];
   const rings = [];
   const motes = [];
+  const autoMove = { x: 0, y: 0 };
+  const autoAimV = { x: 1, y: 0 };
+  let autoOn = false;
+  let autoSpeed = 3;
+  let autoOvWait = 0;
+  let autoStrafe = 1;
+  let autoWallT = 0;
+  let autoTarget = null;
 
   const G = {
     mode: 'title',
@@ -384,7 +399,24 @@
 
   function hitStop(sec) {
     if (REDUCE) return;
+    if (autoOn && autoSpeed >= 3) return;
     G.stop = Math.max(G.stop, Math.min(0.08, sec));
+  }
+
+  function loadAutoSpeed() {
+    try {
+      const n = parseInt(localStorage.getItem(AUTO_SPEED_KEY) || '3', 10);
+      if (!isFinite(n) || n < 1 || n > 4) return 3;
+      return n;
+    } catch (err) {
+      return 3;
+    }
+  }
+
+  function saveAutoSpeed(n) {
+    try {
+      localStorage.setItem(AUTO_SPEED_KEY, String(n));
+    } catch (err) { /* ignore */ }
   }
 
   function screenFlash(rgb, a) {
@@ -1025,6 +1057,7 @@
   }
 
   function getMoveVec() {
+    if (autoOn && G.mode === 'play') return norm(autoMove.x, autoMove.y);
     let mx = 0;
     let my = 0;
     if (keys.l) mx -= 1;
@@ -1043,6 +1076,7 @@
   }
 
   function getShootVec() {
+    if (autoOn && G.mode === 'play') return norm(autoAimV.x, autoAimV.y);
     if (shoot.l || shoot.r || shoot.u || shoot.d) {
       let sxv = 0;
       let syv = 0;
@@ -1064,8 +1098,308 @@
     return { x: 0, y: 0, l: 0 };
   }
 
+  function enemyVel(e) {
+    if (e.type === 'spheroid') return { x: e.vx, y: e.vy };
+    return { x: e.fx * e.spd, y: e.fy * e.spd };
+  }
+
+  function killWeight(e) {
+    if (e.type === 'spheroid') return 9.4;
+    if (e.type === 'brain') return 8.6;
+    if (e.type === 'prog') return 7.4;
+    if (e.type === 'enforcer') return 6.5;
+    if (e.type === 'grunt') return 5.2;
+    if (e.type === 'hulk') return 1.1;
+    return 3;
+  }
+
+  function humanThreat(h) {
+    let t = 0;
+    for (let i = 0; i < G.enemies.length; i++) {
+      const e = G.enemies[i];
+      if (!e.alive) continue;
+      if (e.type !== 'hulk' && e.type !== 'brain') continue;
+      const d = hypot(e.x - h.x, e.y - h.y);
+      if (e.type === 'hulk' && d < 70) t += (70 - d) * 1.6;
+      if (e.type === 'brain' && d < 90) t += (90 - d) * 0.9;
+    }
+    return t;
+  }
+
+  function pickAutoTarget() {
+    const px = G.player.x;
+    const py = G.player.y;
+    let best = null;
+    let bestS = -1e12;
+    for (let i = 0; i < G.eShots.length; i++) {
+      const s = G.eShots[i];
+      const dx = s.x - px;
+      const dy = s.y - py;
+      const d = hypot(dx, dy);
+      if (d > 150) continue;
+      const sp = hypot(s.vx, s.vy) || 1;
+      const closing = -(dx * s.vx + dy * s.vy) / sp;
+      if (closing < 8 && d > 42) continue;
+      const sc = (s.homing ? 16000 : 9000) / Math.max(10, d) + closing * 6;
+      if (sc > bestS) {
+        bestS = sc;
+        best = { x: s.x, y: s.y, vx: s.vx, vy: s.vy, kind: 'shot' };
+      }
+    }
+    for (let i = 0; i < G.enemies.length; i++) {
+      const e = G.enemies[i];
+      if (!e.alive || e.spawn > 0) continue;
+      const d = hypot(e.x - px, e.y - py);
+      let sc = killWeight(e) * 1100 / (d + 18);
+      if (e.type === 'hulk') {
+        sc = 90 / (d + 36);
+        const h = nearestHuman(e.x, e.y);
+        if (h && hypot(h.x - e.x, h.y - e.y) < 78) sc += 1400;
+        if (d < 70) sc += 520;
+      } else if (e.type === 'spheroid') {
+        sc *= 1.35;
+      } else if (e.type === 'brain') {
+        const h = nearestHuman(e.x, e.y);
+        if (h && hypot(h.x - e.x, h.y - e.y) < 120) sc += 700;
+      }
+      if (sc > bestS) {
+        bestS = sc;
+        best = e;
+      }
+    }
+    if (autoTarget) {
+      const t = autoTarget;
+      let valid = false;
+      if (t.kind === 'shot') {
+        for (let i = 0; i < G.eShots.length; i++) {
+          if (G.eShots[i] === t) {
+            valid = true;
+            break;
+          }
+        }
+      } else if (t.alive) valid = true;
+      if (valid) {
+        const d = hypot(t.x - px, t.y - py);
+        if (d < 220) {
+          const keep = (t.kind === 'shot' ? 9000 : killWeight(t) * 1100) / (d + 18);
+          if (keep > bestS * 0.72) best = t;
+        }
+      }
+    }
+    autoTarget = best;
+    return best;
+  }
+
+  function scoreAutoMove(nx, ny, dx, dy, look) {
+    const px = G.player.x;
+    const py = G.player.y;
+    const inv = G.invuln > 0.12 || G.ready > 0;
+    const panicMul = inv ? 0.12 : 1;
+    let score = 0;
+    const minX = WALL + P_R + 2;
+    const maxX = VW - WALL - P_R - 2;
+    const minY = WALL + P_R + 2;
+    const maxY = VH - WALL - P_R - 2;
+    if (nx < minX || nx > maxX || ny < minY || ny > maxY) return -1e9;
+    const wall = Math.min(nx - minX, maxX - nx, ny - minY, maxY - ny);
+    if (wall < 34) score -= (34 - wall) * (inv ? 40 : 210);
+    if (wall < 14) score -= 7000;
+
+    const el = hitElectrode(nx, ny, P_R + 3);
+    if (el) score -= 120000;
+    for (let i = 0; i < G.electrodes.length; i++) {
+      const e = G.electrodes[i];
+      if (!e.alive) continue;
+      const d = hypot(e.x - nx, e.y - ny);
+      if (d < e.r + P_R + 18) score -= 4200 / Math.max(4, d - e.r);
+    }
+
+    let closest = 1e9;
+    let nearX = 0;
+    let nearY = 0;
+    let nearN = 0;
+    let huntX = 0;
+    let huntY = 0;
+    let huntW = 0;
+    let dens = 0;
+    for (let i = 0; i < G.enemies.length; i++) {
+      const e = G.enemies[i];
+      if (!e.alive || e.spawn > 0) continue;
+      const v = enemyVel(e);
+      const ex = e.x + v.x * look;
+      const ey = e.y + v.y * look;
+      const edx = ex - nx;
+      const edy = ey - ny;
+      const d = hypot(edx, edy) || 1;
+      const mass = e.type === 'hulk' ? 2.6 : (e.type === 'prog' ? 1.8 : (e.type === 'grunt' ? 1.2 : 1));
+      const contact = e.r + P_R + (e.type === 'hulk' ? 22 : (e.type === 'prog' ? 28 : 16));
+      if (d < closest) closest = d;
+      if (d < 200) {
+        nearX += edx * mass;
+        nearY += edy * mass;
+        nearN += mass;
+      }
+      if (d < contact + 8) score -= 95000 * mass * panicMul;
+      else if (d < contact + 70) score -= (26000 * mass * panicMul) / Math.max(8, d - e.r);
+      if (e.type === 'hulk' && d < 110) score -= 4200 / Math.max(12, d);
+      const ahead = dx * edx + dy * edy;
+      if (ahead > 0 && d < 160) dens += mass / d;
+      if (e.type !== 'hulk') {
+        const w = killWeight(e);
+        huntX += edx * w;
+        huntY += edy * w;
+        huntW += w;
+      }
+    }
+    score -= dens * 1600 * panicMul;
+
+    for (let i = 0; i < G.eShots.length; i++) {
+      const s = G.eShots[i];
+      const sxv = s.x + s.vx * look - nx;
+      const syv = s.y + s.vy * look - ny;
+      const d = hypot(sxv, syv);
+      const hitR = P_R + s.r + 10;
+      if (d < hitR) score -= (s.homing ? 42000 : 24000) * panicMul;
+      else if (d < hitR + 36) score -= (s.homing ? 9000 : 4200) / Math.max(6, d) * panicMul;
+      const relx = nx - s.x;
+      const rely = ny - s.y;
+      const sp2 = s.vx * s.vx + s.vy * s.vy || 1;
+      const t = clamp((relx * s.vx + rely * s.vy) / sp2, 0, 0.45);
+      const cx = s.x + s.vx * t - nx;
+      const cy = s.y + s.vy * t - ny;
+      const cd = hypot(cx, cy);
+      if (cd < P_R + s.r + 8) score -= 18000 * panicMul;
+    }
+
+    if (nearN > 0) {
+      const nd = hypot(nearX, nearY) || 1;
+      const away = -(nearX / nd) * dx - (nearY / nd) * dy;
+      const side = (-nearY / nd) * dx + (nearX / nd) * dy;
+      if (closest < 58) score += away * 6400 * panicMul;
+      else if (closest < 130) {
+        score += away * 1400 * panicMul;
+        score += Math.abs(side) * 1100;
+        score += autoStrafe * side * 820;
+      } else {
+        score += autoStrafe * side * 280;
+      }
+    }
+
+    const panic = !inv && (closest < 52);
+    const huN = liveHumans();
+    if (!panic && huN > 0) {
+      let bestH = null;
+      let bestHd = 1e9;
+      for (let i = 0; i < G.humans.length; i++) {
+        const h = G.humans[i];
+        if (!h.alive) continue;
+        const threat = humanThreat(h);
+        const d = hypot(h.x - nx, h.y - ny);
+        const adj = d + threat * 0.35;
+        if (adj < bestHd) {
+          bestHd = adj;
+          bestH = h;
+        }
+      }
+      if (bestH) {
+        const hx = bestH.x - nx;
+        const hy = bestH.y - ny;
+        const hd = hypot(hx, hy) || 1;
+        const urge = inv ? 2.6 : 1.55;
+        score += (26000 * urge) / (hd + 16);
+        score += ((hx * dx + hy * dy) / hd) * (2800 * urge);
+        if (hd < 22) score += 2400;
+      }
+    } else if (!panic && huntW > 0) {
+      const hd = hypot(huntX, huntY) || 1;
+      const liveE = liveEnemies();
+      const chase = liveE <= 3 ? 2100 : 980;
+      if (closest > 88) score += (huntX * dx + huntY * dy) / hd * chase;
+      else if (closest < 62) score -= (huntX * dx + huntY * dy) / hd * 640;
+    }
+
+    if (closest > 240 && huN === 0) score -= (closest - 240) * 3.2;
+    score += (dx * autoMove.x + dy * autoMove.y) * 480;
+    score -= (Math.abs(nx - VW * 0.5) + Math.abs(ny - VH * 0.5)) * 0.05;
+    if (dx === 0 && dy === 0) score -= 260;
+    return score;
+  }
+
+  function autoThink() {
+    if (G.deadT > 0) return;
+    const look = 0.18;
+    const reach = P_SPD * look;
+    const px = G.player.x;
+    const py = G.player.y;
+    let bestS = -1e15;
+    let bx = autoMove.x;
+    let by = autoMove.y;
+    const nDir = 16;
+    for (let i = 0; i < nDir; i++) {
+      const a = (TAU * i) / nDir;
+      const dx = Math.cos(a);
+      const dy = Math.sin(a);
+      const nx = clamp(px + dx * reach, WALL + P_R, VW - WALL - P_R);
+      const ny = clamp(py + dy * reach, WALL + P_R, VH - WALL - P_R);
+      const s = scoreAutoMove(nx, ny, dx, dy, look);
+      if (s > bestS) {
+        bestS = s;
+        bx = dx;
+        by = dy;
+      }
+    }
+    const stay = scoreAutoMove(px, py, 0, 0, look);
+    if (stay > bestS + 80) {
+      bx = 0;
+      by = 0;
+      bestS = stay;
+    }
+    const cur = scoreAutoMove(
+      clamp(px + autoMove.x * reach, WALL + P_R, VW - WALL - P_R),
+      clamp(py + autoMove.y * reach, WALL + P_R, VH - WALL - P_R),
+      autoMove.x, autoMove.y, look
+    );
+    const danger = cur < -4000 || bestS < -4000;
+    if (bestS > cur + (danger ? 40 : 160) || hypot(autoMove.x, autoMove.y) < 0.05) {
+      autoMove.x = bx;
+      autoMove.y = by;
+    }
+
+    autoWallT = Math.max(0, autoWallT - look);
+    const minX = WALL + P_R + 8;
+    const maxX = VW - WALL - P_R - 8;
+    const minY = WALL + P_R + 8;
+    const maxY = VH - WALL - P_R - 8;
+    const nextX = px + autoMove.x * 28;
+    const nextY = py + autoMove.y * 28;
+    if (nextX < minX || nextX > maxX || nextY < minY || nextY > maxY) {
+      if (autoWallT <= 0) {
+        autoStrafe *= -1;
+        autoWallT = 0.42;
+      }
+    }
+
+    const tgt = pickAutoTarget();
+    if (tgt) {
+      const v = tgt.kind === 'shot' ? tgt : enemyVel(tgt);
+      const d = hypot(tgt.x - px, tgt.y - py);
+      const t = Math.min(0.32, d / SHOT_SPD);
+      const ax = tgt.x + (v.x || 0) * t - px;
+      const ay = tgt.y + (v.y || 0) * t - py;
+      const n = norm(ax, ay);
+      if (n.l > 0.01) {
+        autoAimV.x = n.x;
+        autoAimV.y = n.y;
+      }
+    } else {
+      autoAimV.x = 0;
+      autoAimV.y = 0;
+    }
+  }
+
   function pollPad() {
     pad.mx = pad.my = pad.sx = pad.sy = 0;
+    if (autoOn) return;
     if (!navigator.getGamepads) return;
     const pads = navigator.getGamepads();
     if (!pads) return;
@@ -1104,7 +1438,8 @@
     clampArena(G.player);
 
     const sv = getShootVec();
-    const wantFire = fireHold || mouse.down || stickR.on && hypot(stickR.x, stickR.y) > 0.28
+    const wantFire = (autoOn && G.mode === 'play' && autoTarget && sv.l > 0.01)
+      || fireHold || mouse.down || stickR.on && hypot(stickR.x, stickR.y) > 0.28
       || shoot.l || shoot.r || shoot.u || shoot.d || hypot(pad.sx, pad.sy) > 0.28;
     if (sv.l > 0.01) {
       G.player.ax = sv.x;
@@ -1548,7 +1883,10 @@
     hideOverlay();
     audio.start();
     toast(G.kind === 'guard' ? '护人 · 多救人叠倍率' : ('扫荡 · ' + spec.name), false, G.kind === 'guard');
-    setHint(G.kind === 'guard' ? '多救人 · 铁拳会碾人 · 清波' : '双摇杆扫场 · 救人叠倍率 · 清波', G.kind === 'guard' ? 'hot' : '');
+    setHint(autoOn
+      ? '自动托管 · 救人清机 · A 停下'
+      : (G.kind === 'guard' ? '多救人 · 铁拳会碾人 · 清波' : '双摇杆扫场 · 救人叠倍率 · 清波'),
+      G.kind === 'guard' && !autoOn ? 'hot' : '');
     syncHud();
   }
 
@@ -1566,7 +1904,7 @@
     G.invuln = 99;
     G.ready = 0;
     showOverlay('title');
-    setHint('WASD 走 · 鼠标或 IJKL 射 · 救人叠倍率 · 清波');
+    setHint(autoOn ? '自动托管 · 即将开局 · A 停下' : 'WASD 走 · 鼠标或 IJKL 射 · A 自动 · 救人叠倍率 · 清波');
     syncHud();
   }
 
@@ -1669,6 +2007,14 @@
       return;
     }
     if (G.mode === 'title') {
+      if (autoOn) {
+        autoOvWait += dt;
+        if (autoOvWait >= (AUTO_START_WAIT[autoSpeed] || 0.2)) {
+          autoOvWait = 0;
+          startGame(G.kind);
+          return;
+        }
+      }
       demoThink(dt);
       G.mode = 'title';
       updateEnemies(dt);
@@ -1691,6 +2037,7 @@
       updateFx(dt);
       return;
     }
+    if (autoOn && G.deadT <= 0) autoThink();
     if (G.deadT > 0) {
       G.deadT -= dt;
       updateEnemies(dt);
@@ -2116,6 +2463,73 @@
     seedMotes();
   }
 
+  function syncAutoUi() {
+    if (!btnAuto) return;
+    btnAuto.classList.toggle('on', autoOn);
+    btnAuto.setAttribute('aria-pressed', autoOn ? 'true' : 'false');
+    btnAuto.textContent = autoOn ? '停下' : '自动';
+    btnAuto.setAttribute('aria-label', autoOn ? '停止自动' : '自动');
+  }
+
+  function syncSpeedUi() {
+    if (!speedEl || !speedLab) return;
+    speedEl.value = String(autoSpeed);
+    speedLab.textContent = SPEED_LABELS[autoSpeed];
+    speedEl.title = SPEED_LABELS[autoSpeed];
+    speedEl.setAttribute('aria-valuetext', SPEED_LABELS[autoSpeed]);
+  }
+
+  function clearPlayerMotion() {
+    keys.u = keys.d = keys.l = keys.r = false;
+    shoot.u = shoot.d = shoot.l = shoot.r = false;
+    fireHold = false;
+    mouse.down = false;
+    mouseAim = false;
+    stickL.on = stickR.on = false;
+    stickL.x = stickL.y = stickR.x = stickR.y = 0;
+    pad.mx = pad.my = pad.sx = pad.sy = 0;
+    setStickKnob(knobL, 0, 0);
+    setStickKnob(knobR, 0, 0);
+  }
+
+  function toggleAuto() {
+    autoOn = !autoOn;
+    autoOvWait = 0;
+    autoTarget = null;
+    syncAutoUi();
+    if (autoOn) {
+      clearPlayerMotion();
+      audio.ensure();
+      if (G.mode === 'play') setHint('自动托管 · 救人清机 · A 停下');
+      else if (G.mode === 'title') setHint('自动托管 · 即将开局 · A 停下');
+      else setHint('自动仍开着 · R 再来接着托管');
+    } else {
+      autoMove.x = 0;
+      autoMove.y = 0;
+      if (G.mode === 'play') {
+        setHint(G.kind === 'guard' ? '多救人 · 铁拳会碾人 · 清波' : '双摇杆扫场 · 救人叠倍率 · 清波', G.kind === 'guard' ? 'hot' : '');
+      } else if (G.mode === 'title') {
+        setHint('WASD 走 · 鼠标或 IJKL 射 · A 自动 · 救人叠倍率 · 清波');
+      } else {
+        setHint(G.mode === 'win' ? '扫清了 · R 再来' : 'R 重开随时可用', G.mode === 'win' ? 'hot' : 'warn');
+      }
+    }
+  }
+
+  function setAutoSpeed(n) {
+    n = parseInt(n, 10);
+    if (!(n >= 1 && n <= 4)) n = 3;
+    autoSpeed = n;
+    saveAutoSpeed(autoSpeed);
+    syncSpeedUi();
+  }
+
+  function autoScale() {
+    if (!autoOn) return 1;
+    if (G.mode === 'play') return AUTO_SCALE[autoSpeed] || 1;
+    return 1;
+  }
+
   function setStickKnob(knob, x, y) {
     if (!knob) return;
     const m = 28;
@@ -2140,6 +2554,7 @@
       e.preventDefault();
       e.stopPropagation();
       audio.ensure();
+      if (autoOn) return;
       stick.on = true;
       stick.id = e.pointerId;
       if (el.setPointerCapture) el.setPointerCapture(e.pointerId);
@@ -2174,7 +2589,7 @@
     mouse.x = w.x;
     mouse.y = w.y;
     mouseAim = true;
-    if (overlayBlocksPlay()) return;
+    if (overlayBlocksPlay() || autoOn) return;
     mouse.down = true;
     fireHold = true;
     if (canvas.setPointerCapture) canvas.setPointerCapture(e.pointerId);
@@ -2218,9 +2633,14 @@
   function onKey(e, down) {
     const k = e.key;
     const code = e.code;
+    if (k === 'a' || k === 'A' || code === 'KeyA') {
+      e.preventDefault();
+      if (down && !e.repeat) toggleAuto();
+      return;
+    }
     const isUp = k === 'ArrowUp' || k === 'w' || k === 'W' || code === 'KeyW';
     const isDn = k === 'ArrowDown' || k === 's' || k === 'S' || code === 'KeyS';
-    const isLf = k === 'ArrowLeft' || k === 'a' || k === 'A' || code === 'KeyA';
+    const isLf = k === 'ArrowLeft';
     const isRt = k === 'ArrowRight' || k === 'd' || k === 'D' || code === 'KeyD';
     const shUp = k === 'i' || k === 'I' || code === 'KeyI';
     const shDn = k === 'k' || k === 'K' || code === 'KeyK';
@@ -2228,7 +2648,19 @@
     const shRt = k === 'l' || k === 'L' || code === 'KeyL';
     const isSp = k === ' ' || k === 'Spacebar' || code === 'Space';
     if (isUp || isDn || isLf || isRt || shUp || shDn || shLf || shRt || isSp) e.preventDefault();
-    if (overlayBlocksPlay() && (isUp || isDn || isLf || isRt || shUp || shDn || shLf || shRt || isSp)) {
+    if (autoOn && (isUp || isDn || isLf || isRt || shUp || shDn || shLf || shRt || isSp)) {
+      if (!down) {
+        if (isUp) setMoveKey('up', false);
+        if (isDn) setMoveKey('down', false);
+        if (isLf) setMoveKey('left', false);
+        if (isRt) setMoveKey('right', false);
+        if (shUp) setShootKey('up', false);
+        if (shDn) setShootKey('down', false);
+        if (shLf) setShootKey('left', false);
+        if (shRt) setShootKey('right', false);
+        if (isSp) fireHold = false;
+      }
+    } else if (overlayBlocksPlay() && (isUp || isDn || isLf || isRt || shUp || shDn || shLf || shRt || isSp)) {
       if (!down) {
         if (isUp) setMoveKey('up', false);
         if (isDn) setMoveKey('down', false);
@@ -2264,6 +2696,7 @@
     if (e.repeat) return;
     if (isSp || k === 'Enter') {
       if (e.target && e.target.tagName === 'BUTTON') return;
+      if (autoOn) return;
       audio.ensure();
       if (overlayOpen()) {
         primaryAction();
@@ -2284,6 +2717,8 @@
     const g1 = waveSpec('guard', 1);
     if (g1.humans <= w1.humans) throw new Error('guard humans');
     if (clamp(3, 0, 2) !== 2) throw new Error('clamp');
+    const sm = scoreAutoMove(VW * 0.5, VH * 0.5, 1, 0, 0.18);
+    if (!isFinite(sm)) throw new Error('scoreAutoMove');
     return true;
   }
 
@@ -2315,6 +2750,14 @@
     audio.ensure();
     audio.setMuted(!audio.muted);
   });
+  if (btnAuto) btnAuto.addEventListener('click', function () {
+    audio.ensure();
+    toggleAuto();
+  });
+  if (speedEl) {
+    speedEl.addEventListener('input', function () { setAutoSpeed(speedEl.value); });
+    speedEl.addEventListener('change', function () { setAutoSpeed(speedEl.value); });
+  }
   if (modeSweep) modeSweep.addEventListener('click', function () {
     audio.ensure();
     startGame('sweep');
@@ -2343,12 +2786,15 @@
 
   selfCheck();
   loadBest();
+  autoSpeed = loadAutoSpeed();
+  syncSpeedUi();
+  syncAutoUi();
   resize();
   bootTitle();
   syncHud();
 
   if (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) {
-    setHint('左摇杆走 · 右摇杆射 · 救人叠倍率');
+    setHint('左摇杆走 · 右摇杆射 · A 自动 · 救人叠倍率');
   }
 
   let last = performance.now();
@@ -2362,14 +2808,18 @@
     let dt = (now - last) / 1000;
     last = now;
     if (dt > 0.05) dt = 0.05;
-    acc += dt;
+    const turbo = autoOn && autoSpeed >= 3 && G.mode === 'play';
+    if (turbo) G.stop = 0;
+    const scale = autoScale();
+    acc += dt * scale;
     let steps = 0;
-    while (acc >= STEP && steps < 5) {
+    const maxSteps = scale >= 8 ? 48 : scale >= 4 ? 24 : 12;
+    while (acc >= STEP && steps < maxSteps) {
       update(STEP);
       acc -= STEP;
       steps += 1;
     }
-    if (acc > STEP * 5) acc = 0;
+    if (acc >= STEP) acc = 0;
     draw();
   }
   requestAnimationFrame(frame);
