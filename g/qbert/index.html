@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#05030c" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>方跳 · QBERT</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2305030c'/%3E%3Cpath d='M16 5l7 4v8l-7 4-7-4V9z' fill='%23c86820'/%3E%3Cpath d='M9 9L16 13l7-4L16 5z' fill='%23ffe36b'/%3E%3Cpath d='M9 9v8l7 4v-8z' fill='%23a05018'/%3E%3Cellipse cx='16' cy='11.4' rx='3.1' ry='2.8' fill='%23ff9a32'/%3E%3Ccircle cx='15.2' cy='10.6' r='.7' fill='%2305030c'/%3E%3Crect x='13.8' y='14.2' width='1.5' height='2.4' rx='.4' fill='%23ffb14a'/%3E%3Crect x='16.8' y='14.2' width='1.5' height='2.4' rx='.4' fill='%23ffb14a'/%3E%3Ccircle cx='24' cy='22' r='2.3' fill='%23c45cff'/%3E%3Ccircle cx='8.4' cy='23.2' r='1.7' fill='%23ff3db8'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>方跳</b>
+        <span>QBERT</span>
+      </div>
+      <div class="status">
+        <div class="scores" aria-live="polite">
+          <div class="score" id="score-box">
+            <em>分数</em>
+            <b id="score">0</b>
+            <span id="score-add" class="score-add" hidden>+0</span>
+          </div>
+          <div class="score">
+            <em>轮</em>
+            <b id="round">1</b>
+          </div>
+          <div class="score best">
+            <em>最高</em>
+            <b id="best">0</b>
+          </div>
+          <div class="score combo" id="combo-box">
+            <em>连跳</em>
+            <b id="combo">×1</b>
+          </div>
+        </div>
+        <div class="row">
+          <span id="mode-label">翻色</span>
+          <div class="fill tiles" id="tile-wrap" title="翻色">
+            <em>色</em>
+            <div class="fill-track" aria-hidden="true"><i id="tile-bar"></i></div>
+          </div>
+          <span class="pips" id="pips" aria-label="剩余性命"></span>
+        </div>
+      </div>
+      <div class="tools">
+        <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
+        <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <canvas id="c" tabindex="0" role="application" aria-label="方跳，等距金字塔，跳到相邻方块翻色，躲开红球和科伊"></canvas>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden"></div>
+      <div id="pad" class="pad">
+        <button type="button" id="btn-ul" aria-label="左上">A</button>
+        <button type="button" id="btn-ur" aria-label="右上">W</button>
+        <button type="button" id="btn-dl" aria-label="左下">S</button>
+        <button type="button" id="btn-dr" aria-label="右下">D</button>
+      </div>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">QBERT</p>
+          <h1 id="ov-title">方跳</h1>
+          <p class="lead" id="ov-lead">跳上相邻方块翻色。红球往下蹦，紫蛋孵出科伊来追。边上飞碟能送回顶。跳下去会掉命。</p>
+          <p class="ops" id="ov-ops">点相邻块 · WASD / 方向键等距跳 · R 重开 · M 静音</p>
+          <div class="ov-actions" id="ov-start">
+            <button type="button" id="btn-classic">翻色</button>
+            <button type="button" id="btn-chase">追蛇</button>
+          </div>
+          <div class="ov-actions gone" id="ov-end">
+            <button type="button" id="ov-retry">再来</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">WASD 对角跳翻色 · 科伊会追 · 飞碟回顶 · 跳下塔掉命</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>

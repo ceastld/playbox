@@ -2384,5 +2384,53 @@
     "dir": "g/gorf/",
     "url": "./g/gorf/",
     "kind": "remake"
+  },
+  {
+    "n": 219,
+    "id": "food-fight",
+    "title": "食堂",
+    "subtitle": "FOOD",
+    "blurb": "满地扔饭，砸中再补一脚。",
+    "hue": 22,
+    "tag": "复刻",
+    "dir": "g/food-fight/",
+    "url": "./g/food-fight/",
+    "kind": "remake"
+  },
+  {
+    "n": 220,
+    "id": "qbert",
+    "title": "方跳",
+    "subtitle": "QBERT",
+    "blurb": "斜方格蹦跳，把颜色全翻过来。",
+    "hue": 32,
+    "tag": "复刻",
+    "dir": "g/qbert/",
+    "url": "./g/qbert/",
+    "kind": "remake"
+  },
+  {
+    "n": 221,
+    "id": "zookeeper",
+    "title": "园守",
+    "subtitle": "ZOO",
+    "blurb": "墙缝往外窜，连射把它们顶回去。",
+    "hue": 132,
+    "tag": "复刻",
+    "dir": "g/zookeeper/",
+    "url": "./g/zookeeper/",
+    "kind": "remake"
+  },
+  {
+    "n": 222,
+    "id": "crazy-climb",
+    "title": "爬窗",
+    "subtitle": "CLIMB",
+    "blurb": "双手扒楼，躲开花盆和电工。",
+    "hue": 198,
+    "tag": "复刻",
+    "dir": "g/crazy-climb/",
+    "url": "./g/crazy-climb/",
+    "kind": "remake"
   }
 ]

@@ -2523,7 +2523,7 @@
     "blurb": "满地扔饭，砸中再补一脚。",
     "hue": 22,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/food-fight/",
     "kind": "remake"
   },
@@ -2535,7 +2535,7 @@
     "blurb": "斜方格蹦跳，把颜色全翻过来。",
     "hue": 32,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/qbert/",
     "kind": "remake"
   },
@@ -2547,7 +2547,7 @@
     "blurb": "墙缝往外窜，连射把它们顶回去。",
     "hue": 132,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/zookeeper/",
     "kind": "remake"
   },
@@ -2559,7 +2559,7 @@
     "blurb": "双手扒楼，躲开花盆和电工。",
     "hue": 198,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/crazy-climb/",
     "kind": "remake"
   },
@@ -2573,6 +2573,54 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/alibaba/",
+    "kind": "remake"
+  },
+  {
+    "n": 224,
+    "id": "super-sprint",
+    "title": "超赛",
+    "subtitle": "SPRT",
+    "blurb": "俯视赛道甩尾，别撞墙。",
+    "hue": 8,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/super-sprint/",
+    "kind": "remake"
+  },
+  {
+    "n": 225,
+    "id": "bosconian",
+    "title": "博斯",
+    "subtitle": "BOSC",
+    "blurb": "雷达全向开火，把星堡打穿。",
+    "hue": 188,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/bosconian/",
+    "kind": "remake"
+  },
+  {
+    "n": 226,
+    "id": "skate-720",
+    "title": "滑板",
+    "subtitle": "SK8",
+    "blurb": "公园里连跳，转够720再落地。",
+    "hue": 168,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/skate-720/",
+    "kind": "remake"
+  },
+  {
+    "n": 227,
+    "id": "ikaruga",
+    "title": "光暗",
+    "subtitle": "POLAR",
+    "blurb": "黑白切换，同色吃弹反色打爆。",
+    "hue": 250,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/ikaruga/",
     "kind": "remake"
   }
 ]

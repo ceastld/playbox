@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#100804" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>食堂 · FOOD</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23100804'/%3E%3Ccircle cx='11' cy='20' r='5' fill='%23ff4840'/%3E%3Crect x='18' y='8' width='8' height='4' rx='1' fill='%23fff4e8'/%3E%3Crect x='19.2' y='12' width='5.6' height='8' rx='1' fill='%23ff7a29'/%3E%3Ccircle cx='22' cy='22' r='2.2' fill='%23ffe36b'/%3E%3Cpath d='M8 26c3-2 6-1 8 1' fill='none' stroke='%23ffe36b' stroke-width='1.4' stroke-linecap='round'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>食堂</b>
+        <span>FOOD</span>
+      </div>
+      <div class="status">
+        <div class="scores" aria-live="polite">
+          <div class="score" id="score-box">
+            <em>分数</em>
+            <b id="score">0</b>
+            <span id="score-add" class="score-add" hidden>+0</span>
+          </div>
+          <div class="score best">
+            <em>最高</em>
+            <b id="best">0</b>
+          </div>
+          <div class="score combo" id="combo-box">
+            <em>连击</em>
+            <b id="combo">×1</b>
+          </div>
+        </div>
+        <div class="row">
+          <span id="stage-label">开饭</span>
+          <span id="tag-label">厨 —</span>
+          <span id="time-label">—</span>
+          <span id="held-label" class="held">空手</span>
+          <span class="pips" id="pips" aria-label="剩余性命"></span>
+        </div>
+      </div>
+      <div class="tools">
+        <div class="modes" role="radiogroup" aria-label="模式">
+          <button type="button" id="mode-fan" aria-pressed="true">开饭</button>
+          <button type="button" id="mode-smash" aria-pressed="false">乱砸</button>
+        </div>
+        <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
+        <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <div class="board-wrap">
+        <canvas id="c" tabindex="0" role="application" aria-label="食堂场地，捡食物砸厨子，偷吃甜筒"></canvas>
+      </div>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden"></div>
+      <div id="chain-pop" class="chain-pop hidden" aria-hidden="true">×2</div>
+      <div id="vpad" class="vpad" aria-label="移动摇杆">
+        <div class="vpad-base"><div class="vpad-knob" id="vpad-knob"></div></div>
+      </div>
+      <button type="button" id="btn-throw" class="throw-btn" aria-label="砸">砸</button>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">FOOD</p>
+          <h1 id="ov-title">食堂</h1>
+          <p class="lead" id="ov-lead">捡食物砸追来的厨子，偷吃甜筒得分。<br />香蕉皮会滑倒。全打倒或撑过倒计时进下一桌。</p>
+          <p class="ops" id="ov-ops">WASD / 方向键跑 · 空格砸 · R 重开 · M 静音</p>
+          <div class="ov-actions" id="ov-start">
+            <button type="button" id="btn-fan">开饭</button>
+            <button type="button" id="btn-smash">乱砸</button>
+          </div>
+          <div class="ov-actions gone" id="ov-end">
+            <button type="button" id="ov-again">再来</button>
+            <button type="button" id="ov-menu">换模式</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">捡了就砸 · 吃甜筒 · 香蕉皮会滑</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>
