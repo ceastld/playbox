@@ -13,6 +13,9 @@
   var BEST_KEY = 'playbox-chain-boom-best';
   var MUTE_KEY = 'playbox-chain-boom-mute';
   var MODE_KEY = 'playbox-chain-boom-mode';
+  var AUTO_SPEED_KEY = 'playbox-chain-boom-auto-speed';
+  var AUTO_DELAY = [0, 420, 200, 70, 0];
+  var AUTO_SPEED_NAME = ['', '慢', '中', '快', '极快'];
   var DC = [1, -1, 0, 0];
   var DR = [0, 0, 1, -1];
 
@@ -184,6 +187,250 @@
     return g;
   }
 
+  function listGroups(grid) {
+    var groups = [];
+    var seen = [];
+    var r, c, i, g;
+    for (r = 0; r < ROWS; r++) {
+      seen[r] = [];
+      for (c = 0; c < COLS; c++) seen[r][c] = 0;
+    }
+    for (r = 0; r < ROWS; r++) {
+      for (c = 0; c < COLS; c++) {
+        if (grid[r][c] < 0 || seen[r][c]) continue;
+        g = findGroup(grid, c, r);
+        for (i = 0; i < g.length; i++) seen[g[i].r][g[i].c] = 1;
+        if (g.length >= 2) groups.push(g);
+      }
+    }
+    return groups;
+  }
+
+  function applyPop(grid, group) {
+    var next = copyGrid(grid);
+    var i;
+    for (i = 0; i < group.length; i++) next[group[i].r][group[i].c] = -1;
+    return packGrid(next);
+  }
+
+  function countOrphans(grid) {
+    var n = 0;
+    var seen = [];
+    var r, c, i, g;
+    for (r = 0; r < ROWS; r++) {
+      seen[r] = [];
+      for (c = 0; c < COLS; c++) seen[r][c] = 0;
+    }
+    for (r = 0; r < ROWS; r++) {
+      for (c = 0; c < COLS; c++) {
+        if (grid[r][c] < 0 || seen[r][c]) continue;
+        g = findGroup(grid, c, r);
+        for (i = 0; i < g.length; i++) seen[g[i].r][g[i].c] = 1;
+        if (g.length === 1) n += 1;
+      }
+    }
+    return n;
+  }
+
+  function maxGroupSize(groups) {
+    var m = 0;
+    var i;
+    for (i = 0; i < groups.length; i++) {
+      if (groups[i].length > m) m = groups[i].length;
+    }
+    return m;
+  }
+
+  function groupAnchor(group) {
+    var sx = 0;
+    var sy = 0;
+    var i;
+    var best = group[0];
+    var bd = 1e9;
+    var d;
+    for (i = 0; i < group.length; i++) {
+      sx += group[i].c;
+      sy += group[i].r;
+    }
+    sx /= group.length;
+    sy /= group.length;
+    for (i = 0; i < group.length; i++) {
+      d = Math.abs(group[i].c - sx) + Math.abs(group[i].r - sy);
+      if (d < bd) {
+        bd = d;
+        best = group[i];
+      }
+    }
+    return { c: best.c, r: best.r };
+  }
+
+  function evalBoard(grid, kind) {
+    var tiles = countTiles(grid);
+    if (tiles === 0) return 9000 + CLEAR_BONUS;
+    var groups = listGroups(grid);
+    if (!groups.length) return -5000 - tiles * 70;
+    var i;
+    var n;
+    var pot = 0;
+    var mx = 0;
+    for (i = 0; i < groups.length; i++) {
+      n = groups[i].length;
+      pot += n * n;
+      if (n > mx) mx = n;
+    }
+    var orphans = countOrphans(grid);
+    var h = pot * 0.4 + mx * 22 - orphans * 95 - tiles * 7 + groups.length * 3;
+    if (kind === 'clear') h -= orphans * 90 + tiles * 5;
+    else h += pot * 0.12;
+    return h;
+  }
+
+  function valueLine(grid, depth, combo, kind) {
+    if (depth <= 0) return evalBoard(grid, kind);
+    var groups = listGroups(grid);
+    if (!groups.length) return evalBoard(grid, kind);
+    groups.sort(function (a, b) { return b.length - a.length; });
+    var cap = depth >= 2 ? 8 : 14;
+    var lim = groups.length < cap ? groups.length : cap;
+    var best = -1e12;
+    var i;
+    var g;
+    var n;
+    var next;
+    var sc;
+    var left;
+    for (i = 0; i < lim; i++) {
+      g = groups[i];
+      n = g.length;
+      next = applyPop(grid, g);
+      left = countTiles(next);
+      sc = n * n * combo + valueLine(next, depth - 1, combo + 1, kind) * 0.93;
+      if (left === 0) sc += CLEAR_BONUS + 4000;
+      if (sc > best) best = sc;
+    }
+    return best;
+  }
+
+  function pickAiMove(grid, kind) {
+    kind = kind === 'timed' ? 'timed' : 'clear';
+    var groups = listGroups(grid);
+    if (!groups.length) return null;
+    var depth = groups.length > 16 ? 2 : 3;
+    var best = null;
+    var bestScore = -1e15;
+    var bestN = 0;
+    var i;
+    var g;
+    var n;
+    var next;
+    var ng;
+    var mxNext;
+    var sc;
+    var grown;
+    var a;
+    var left;
+    for (i = 0; i < groups.length; i++) {
+      g = groups[i];
+      n = g.length;
+      next = applyPop(grid, g);
+      ng = listGroups(next);
+      mxNext = maxGroupSize(ng);
+      grown = mxNext - n;
+      left = countTiles(next);
+      sc = n * n + valueLine(next, depth - 1, 2, kind) * 0.93;
+      sc += n * 4;
+      if (grown > 0) sc += grown * grown * 18 + mxNext * mxNext * 0.2;
+      if (mxNext >= n + 2) sc += 280 * (mxNext - n);
+      if (left === 0) sc += CLEAR_BONUS + 5000;
+      else if (!ng.length) sc -= kind === 'clear' ? 2400 : 400;
+      if (
+        sc > bestScore + 0.01 ||
+        (Math.abs(sc - bestScore) <= 0.01 && n > bestN) ||
+        (Math.abs(sc - bestScore) <= 0.01 && n === bestN && best &&
+          (g[0].r > best.r || (g[0].r === best.r && g[0].c < best.c)))
+      ) {
+        bestScore = sc;
+        bestN = n;
+        a = groupAnchor(g);
+        best = { c: a.c, r: a.r, n: n };
+      }
+    }
+    return best;
+  }
+
+  function playAutoRun(kind, maxPops, refill) {
+    var grid = makeBoard();
+    var pops = 0;
+    var score = 0;
+    var combo = 1;
+    var biggest = 0;
+    var minGroup = 99;
+    var invalid = 0;
+    var boards = 1;
+    var cleared = 0;
+    var i;
+    var g;
+    var mv;
+    while (pops < maxPops) {
+      mv = pickAiMove(grid, kind);
+      if (!mv) {
+        if (refill && (countTiles(grid) === 0 || !hasMove(grid))) {
+          if (countTiles(grid) === 0) {
+            score += CLEAR_BONUS;
+            cleared += 1;
+          } else {
+            combo = 1;
+          }
+          grid = makeBoard();
+          boards += 1;
+          continue;
+        }
+        break;
+      }
+      g = findGroup(grid, mv.c, mv.r);
+      if (g.length < 2) {
+        invalid += 1;
+        break;
+      }
+      if (g.length < minGroup) minGroup = g.length;
+      if (g.length > biggest) biggest = g.length;
+      score += scorePop(g.length, combo);
+      combo += 1;
+      for (i = 0; i < g.length; i++) grid[g[i].r][g[i].c] = -1;
+      grid = packGrid(grid);
+      pops += 1;
+      if (countTiles(grid) === 0) {
+        score += CLEAR_BONUS;
+        cleared += 1;
+        if (refill) {
+          grid = makeBoard();
+          boards += 1;
+        } else {
+          break;
+        }
+      } else if (!hasMove(grid)) {
+        if (refill) {
+          combo = 1;
+          grid = makeBoard();
+          boards += 1;
+        } else {
+          break;
+        }
+      }
+    }
+    if (minGroup === 99) minGroup = 0;
+    return {
+      pops: pops,
+      score: score,
+      biggest: biggest,
+      minGroup: minGroup,
+      invalid: invalid,
+      boards: boards,
+      cleared: cleared,
+      leftover: countTiles(grid)
+    };
+  }
+
   function runSelfTest() {
     var fail = 0;
     function eq(a, b, msg) {
@@ -233,6 +480,51 @@
     board[9][1] = -1;
     eq(hasMove(board), false, 'orphan');
 
+    var sandwich = emptyGrid();
+    sandwich[8][0] = 0; sandwich[9][0] = 0;
+    sandwich[8][1] = 2; sandwich[9][1] = 2;
+    sandwich[8][2] = 0; sandwich[9][2] = 0;
+    var chainPick = pickAiMove(sandwich, 'clear');
+    eq(chainPick ? sandwich[chainPick.r][chainPick.c] : -1, 2, 'chain starter is separator');
+    eq(chainPick && findGroup(sandwich, chainPick.c, chainPick.r).length >= 2 ? 1 : 0, 1, 'chain pick is cluster');
+    var chained = applyPop(sandwich, findGroup(sandwich, chainPick.c, chainPick.r));
+    eq(findGroup(chained, 0, 9).length, 4, 'separator pop merges a four');
+
+    var mergeVsBlob = emptyGrid();
+    for (rr = 7; rr < 10; rr++) {
+      mergeVsBlob[rr][0] = 0;
+      mergeVsBlob[rr][1] = 1;
+      mergeVsBlob[rr][2] = 0;
+    }
+    for (rr = 8; rr < 10; rr++) {
+      for (cc = 5; cc < 8; cc++) mergeVsBlob[rr][cc] = 3;
+    }
+    var mergePick = pickAiMove(mergeVsBlob, 'clear');
+    eq(mergePick ? mergeVsBlob[mergePick.r][mergePick.c] : -1, 1, 'prefer merge chain over fat blob');
+
+    var lonely = emptyGrid();
+    lonely[9][0] = 0;
+    lonely[9][2] = 1;
+    lonely[8][2] = 1;
+    var onlyPair = pickAiMove(lonely, 'clear');
+    eq(onlyPair ? lonely[onlyPair.r][onlyPair.c] : -1, 1, 'only legal cluster');
+    eq(pickAiMove(emptyGrid(), 'clear') === null ? 1 : 0, 1, 'no move empty');
+
+    var timedPick = pickAiMove(sandwich, 'timed');
+    eq(timedPick ? sandwich[timedPick.r][timedPick.c] : -1, 2, 'timed also starts chain');
+
+    var clearRun = playAutoRun('clear', 60, false);
+    eq(clearRun.invalid, 0, 'clear auto never taps invalid');
+    eq(clearRun.minGroup >= 2 || clearRun.pops === 0 ? 1 : 0, 1, 'clear auto only clusters');
+    eq(clearRun.pops >= 4 ? 1 : 0, 1, 'clear auto keeps popping');
+    eq(clearRun.biggest >= 3 ? 1 : 0, 1, 'clear auto aims at clusters');
+
+    var timedRun = playAutoRun('timed', 24, true);
+    eq(timedRun.invalid, 0, 'timed auto never taps invalid');
+    eq(timedRun.pops, 24, 'timed auto keeps going across boards');
+    eq(timedRun.minGroup >= 2 ? 1 : 0, 1, 'timed auto only clusters');
+    eq(timedRun.score > 0 ? 1 : 0, 1, 'timed auto scores');
+
     if (fail) {
       console.error('self-test failures', fail);
       if (typeof process !== 'undefined') process.exit(1);
@@ -258,6 +550,9 @@
   var ovTimed = document.getElementById('ov-timed');
   var btnMute = document.getElementById('btn-mute');
   var btnRetry = document.getElementById('btn-retry');
+  var btnAuto = document.getElementById('btn-auto');
+  var speedEl = document.getElementById('speed');
+  var speedLab = document.getElementById('speed-lab');
   var modeClearBtn = document.getElementById('mode-clear');
   var modeTimedBtn = document.getElementById('mode-timed');
   var scoreEl = document.getElementById('score');
@@ -338,6 +633,88 @@
     landFx: false,
     startBest: 0
   };
+
+  var autoOn = false;
+  var autoSpeed = 3;
+  var autoMs = 0;
+
+  function skipMotion() {
+    return REDUCE || (autoOn && autoSpeed >= 4);
+  }
+
+  function loadAutoSpeed() {
+    try {
+      var n = parseInt(localStorage.getItem(AUTO_SPEED_KEY) || '3', 10);
+      if (n >= 1 && n <= 4) return n;
+    } catch (e) { /* ignore */ }
+    return 3;
+  }
+
+  function saveAutoSpeed(n) {
+    try { localStorage.setItem(AUTO_SPEED_KEY, String(n)); } catch (e) { /* ignore */ }
+  }
+
+  function syncAutoUi() {
+    btnAuto.classList.toggle('on', autoOn);
+    btnAuto.setAttribute('aria-pressed', autoOn ? 'true' : 'false');
+    btnAuto.textContent = autoOn ? '停下' : '自动';
+    btnAuto.setAttribute('aria-label', autoOn ? '停止自动' : '自动');
+  }
+
+  function syncSpeedUi() {
+    speedEl.value = String(autoSpeed);
+    speedLab.textContent = AUTO_SPEED_NAME[autoSpeed];
+    speedEl.title = AUTO_SPEED_NAME[autoSpeed];
+    speedEl.setAttribute('aria-valuetext', AUTO_SPEED_NAME[autoSpeed]);
+  }
+
+  function playHint() {
+    if (autoOn) {
+      setHint('托管中 · A 或「停下」取消', 'hot');
+      return;
+    }
+    setHint(G.kind === 'timed'
+      ? '六十秒冲分 · 点同色两块以上 · 连环加分'
+      : '清光整盘 · 点同色两块以上 · 连环加分');
+  }
+
+  function setAutoSpeed(n) {
+    n = parseInt(n, 10);
+    if (!(n >= 1 && n <= 4)) n = 3;
+    autoSpeed = n;
+    saveAutoSpeed(n);
+    syncSpeedUi();
+  }
+
+  function toggleAuto() {
+    autoOn = !autoOn;
+    autoMs = 0;
+    syncAutoUi();
+    audio.ensure();
+    if (autoOn) {
+      if (overlayKind === 'title' || G.mode === 'title') {
+        startPlay(G.kind === 'timed' ? 'timed' : 'clear');
+      }
+    }
+    playHint();
+  }
+
+  function tickAuto(dt) {
+    if (!autoOn) return;
+    if (frozen || G.mode !== 'play') return;
+    if (G.phase !== 'idle' || G.lock > 0) return;
+    autoMs += dt * 1000;
+    var wait = AUTO_DELAY[autoSpeed] || 0;
+    if (autoMs < wait) return;
+    autoMs = 0;
+    var pick = pickAiMove(G.grid, G.kind);
+    if (!pick) return;
+    G.cursor.c = pick.c;
+    G.cursor.r = pick.r;
+    G.cursor.on = true;
+    G.hover = { c: pick.c, r: pick.r };
+    tryPopAt(pick.c, pick.r);
+  }
 
   var audio = {
     ctx: null,
@@ -590,7 +967,7 @@
       ovKicker.textContent = 'CHAIN';
       ovTitle.textContent = '连环';
       ovLead.textContent = '点一簇同色，炸开，往下砸。块越多分越炸，连环接着窜。';
-      ovOps.textContent = '点两块以上同色 · 方向键选格 · 空格炸掉 · M 静音';
+      ovOps.textContent = '点两块以上同色 · 方向键选格 · 空格炸掉 · A 自动 · M 静音';
       ovClear.textContent = '清盘';
       ovTimed.textContent = '限时 60s';
     } else if (kind === 'win') {
@@ -600,7 +977,7 @@
       ovTitle.textContent = '清干净了';
       ovLead.textContent = '全盘炸掉 · ' + G.score + ' 分 · 最大一炸 ' + G.biggest +
         ' · 连环 ×' + G.maxCombo + (rec ? ' · 新纪录' : ' · 最高 ' + currentBest());
-      ovOps.textContent = 'R 重开 · 点模式再来 · M 静音';
+      ovOps.textContent = 'R 重开 · A 自动 · 点模式再来 · M 静音';
       ovClear.textContent = '再清';
       ovTimed.textContent = '限时';
     } else if (kind === 'lose') {
@@ -609,7 +986,7 @@
       ovTitle.textContent = '卡住了';
       ovLead.textContent = '剩下 ' + G.leftover + ' 块孤子 · ' + G.score + ' 分 · 最大一炸 ' +
         G.biggest + ' · 最高 ' + currentBest();
-      ovOps.textContent = 'R 重开 · 点弹层外可看盘 · M 静音';
+      ovOps.textContent = 'R 重开 · A 自动 · 点弹层外可看盘 · M 静音';
       ovClear.textContent = '再清';
       ovTimed.textContent = '限时';
     } else if (kind === 'time') {
@@ -619,7 +996,7 @@
       ovTitle.textContent = '时间到';
       ovLead.textContent = G.score + ' 分 · 炸掉 ' + G.pops + ' 次 · 连环 ×' + G.maxCombo +
         (recT ? ' · 新纪录' : ' · 最高 ' + currentBest());
-      ovOps.textContent = 'R 重开 · 点弹层外可看盘 · M 静音';
+      ovOps.textContent = 'R 重开 · A 自动 · 点弹层外可看盘 · M 静音';
       ovClear.textContent = '清盘';
       ovTimed.textContent = '再冲';
     }
@@ -631,15 +1008,15 @@
   }
 
   function hitStop(sec) {
-    if (REDUCE) {
-      G.stop = Math.max(G.stop, 0.012);
+    if (skipMotion()) {
+      G.stop = autoOn && autoSpeed >= 4 ? 0 : Math.max(G.stop, 0.012);
       return;
     }
     G.stop = Math.max(G.stop, sec);
   }
 
   function kick(nx, ny, mag) {
-    if (REDUCE) {
+    if (skipMotion()) {
       G.kickY += ny * mag * 0.25;
       return;
     }
@@ -934,20 +1311,20 @@
       t.sx = 1.16;
       t.sy = 1.16;
       p = cellCenter(t.c, t.r);
-      emit(REDUCE ? 4 : 10, {
+      emit(skipMotion() ? 4 : 10, {
         x: p.x, y: p.y, j: tileS * 0.28,
         vx0: -220, vx1: 220, vy0: -340, vy1: 80,
         r0: 1.4, r1: tileS * 0.22, life: 0.42, rgb: pal.rgb, g: 920
       });
-      spark(p.x, p.y, pal.hi, REDUCE ? 3 : 7);
+      spark(p.x, p.y, pal.hi, skipMotion() ? 3 : 7);
     }
     ring(mid.x, mid.y, pal.rgb, tileS * 0.2, tileS * (1.6 + n * 0.12), 0.32);
-    emit(REDUCE ? 6 : 14 + n, {
+    emit(skipMotion() ? 6 : 14 + n, {
       x: mid.x, y: mid.y, j: tileS * 0.5,
       vx0: -280, vx1: 280, vy0: -420, vy1: 40,
       r0: 2, r1: tileS * 0.28, life: 0.5, rgb: pal.hi, g: 860
     });
-    spark(mid.x, mid.y, WHITE, REDUCE ? 4 : 10 + n);
+    spark(mid.x, mid.y, WHITE, skipMotion() ? 4 : 10 + n);
     var label = '+' + add;
     if (G.combo >= 2) label += ' ×' + G.combo;
     floatText(mid.x, mid.y, label, pal.hi, n >= 8 ? 28 : 20, n >= 6 || G.combo >= 3);
@@ -957,8 +1334,9 @@
     bumpScore(add);
     syncCombo();
     G.phase = 'pop';
-    G.lock = REDUCE ? 0.06 : 0.14;
+    G.lock = skipMotion() ? (autoOn && autoSpeed >= 4 ? 0 : 0.06) : 0.14;
     G.hover = null;
+    if (autoOn && autoSpeed >= 4) finishPop();
     return true;
   }
 
@@ -993,7 +1371,7 @@
     G.tiles = keep;
     assignPackedPositions();
     G.landFx = false;
-    if (REDUCE) {
+    if (skipMotion()) {
       for (i = 0; i < G.tiles.length; i++) {
         t = G.tiles[i];
         t.x = t.tx;
@@ -1101,10 +1479,10 @@
   function refillBoard(why) {
     G.refillKind = why;
     G.grid = makeBoard();
-    G.tiles = spawnTiles(G.grid, !REDUCE);
+    G.tiles = spawnTiles(G.grid, !skipMotion());
     G.landFx = false;
-    G.lock = 0.05;
-    G.phase = REDUCE ? 'idle' : 'fall';
+    G.lock = skipMotion() ? 0 : 0.05;
+    G.phase = skipMotion() ? 'idle' : 'fall';
     occupyCursor();
     renderHud();
     if (G.phase === 'idle') pulseHints();
@@ -1154,8 +1532,9 @@
     rings.length = 0;
     floats.length = 0;
     G.grid = makeBoard();
-    G.tiles = spawnTiles(G.grid, !REDUCE);
-    G.phase = REDUCE ? 'idle' : 'fall';
+    G.tiles = spawnTiles(G.grid, !skipMotion());
+    G.phase = skipMotion() ? 'idle' : 'fall';
+    autoMs = 0;
     setModeUi(G.kind);
     setOverlay('none');
     try { localStorage.setItem(MODE_KEY, G.kind); } catch (e) { /* ignore */ }
@@ -1164,9 +1543,7 @@
     toastEl.classList.add('hidden');
     syncCombo();
     renderHud();
-    setHint(G.kind === 'timed'
-      ? '六十秒冲分 · 点同色两块以上 · 连环加分'
-      : '清光整盘 · 点同色两块以上 · 连环加分');
+    playHint();
     occupyCursor();
     if (G.phase === 'idle') pulseHints();
     canvas.focus();
@@ -1556,6 +1933,8 @@
         if (tilesSettled('y')) finishFall();
       } else if (G.phase === 'shift') {
         if (tilesSettled('x')) afterSettle();
+      } else if (G.phase === 'idle' && G.lock <= 0) {
+        tickAuto(dt);
       }
     }
   }
@@ -1577,8 +1956,8 @@
   }
 
   function onPointerMove(ev) {
-    if (frozen || G.mode !== 'play' || G.phase !== 'idle') {
-      G.hover = null;
+    if (autoOn || frozen || G.mode !== 'play' || G.phase !== 'idle') {
+      if (!autoOn) G.hover = null;
       return;
     }
     var cellp = pointerCell(ev);
@@ -1594,6 +1973,7 @@
       if (ev.target === overlay) setOverlay('none');
       return;
     }
+    if (autoOn) return;
     if (G.mode !== 'play') return;
     var cellp = pointerCell(ev);
     if (!cellp) return;
@@ -1617,11 +1997,20 @@
       ev.preventDefault();
       return;
     }
+    if (k === 'a' || k === 'A') {
+      if (ev.repeat) return;
+      audio.ensure();
+      toggleAuto();
+      ev.preventDefault();
+      return;
+    }
+    if (ev.target === speedEl) return;
     audio.ensure();
     if (k === ' ' || k === 'Enter') {
       ev.preventDefault();
       if (overlayKind === 'title') { startPlay('clear'); return; }
       if (overlayKind !== 'none' && overlayKind !== 'title') { retry(); return; }
+      if (autoOn) return;
       if (G.mode === 'play' && G.phase === 'idle') {
         occupyCursor();
         G.cursor.on = true;
@@ -1629,9 +2018,16 @@
       }
       return;
     }
+    if (autoOn) {
+      if (k === 'ArrowLeft' || k === 'ArrowRight' || k === 'ArrowUp' || k === 'ArrowDown' ||
+          k === 'w' || k === 'W' || k === 's' || k === 'S' || k === 'd' || k === 'D') {
+        ev.preventDefault();
+      }
+      return;
+    }
     if (frozen || G.mode !== 'play' || G.phase !== 'idle') return;
     var dc = 0, dr = 0;
-    if (k === 'ArrowLeft' || k === 'a' || k === 'A') dc = -1;
+    if (k === 'ArrowLeft') dc = -1;
     else if (k === 'ArrowRight' || k === 'd' || k === 'D') dc = 1;
     else if (k === 'ArrowUp' || k === 'w' || k === 'W') dr = -1;
     else if (k === 'ArrowDown' || k === 's' || k === 'S') dr = 1;
@@ -1644,6 +2040,9 @@
 
   function boot() {
     loadBest();
+    autoSpeed = loadAutoSpeed();
+    syncSpeedUi();
+    syncAutoUi();
     try {
       if (localStorage.getItem(MUTE_KEY) === '1') audio.setMuted(true);
     } catch (e) { /* ignore */ }
@@ -1671,7 +2070,7 @@
     });
     canvas.addEventListener('pointerdown', onPointerDown);
     canvas.addEventListener('pointermove', onPointerMove);
-    canvas.addEventListener('pointerleave', function () { G.hover = null; });
+    canvas.addEventListener('pointerleave', function () { if (!autoOn) G.hover = null; });
     overlay.addEventListener('pointerdown', function (ev) {
       if (ev.target === overlay && overlayKind !== 'title') setOverlay('none');
     });
@@ -1680,6 +2079,9 @@
       audio.ensure();
       audio.setMuted(!audio.muted);
     });
+    btnAuto.addEventListener('click', function () { toggleAuto(); });
+    speedEl.addEventListener('input', function () { setAutoSpeed(speedEl.value); });
+    speedEl.addEventListener('change', function () { setAutoSpeed(speedEl.value); });
     btnRetry.addEventListener('click', retry);
     modeClearBtn.addEventListener('click', function () {
       if (G.kind === 'clear' && G.mode === 'play' && overlayKind === 'none') return;
