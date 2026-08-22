@@ -24,8 +24,13 @@ var STEP = 1 / 60;
 var TAU = Math.PI * 2;
 var BEST_KEY = 'playbox-pang-best';
 var MUTE_KEY = 'playbox-pang-mute';
+var AUTO_SPEED_KEY = 'playbox-pang-auto-speed';
+var SPEED_LABELS = ['', '慢', '中', '快', '极快'];
+var AUTO_SCALE = [1, 0.52, 0.78, 1, 3.4];
+var AUTO_PRED_DT = 1 / 20;
+var AUTO_PRED_T = 1.22;
 var ROOM_COUNT = 5;
-var OPS = '← → / A D 走 · 空格射叉 · 触屏左 射 右 · R 重开 · M 静音';
+var OPS = '← → / D 走 · 空格射叉 · A 自动 · 触屏左 射 右 · R 重开 · M 静音';
 
 var CYN = [0, 232, 255];
 var TEAL = [20, 240, 208];
@@ -268,6 +273,391 @@ function bounceFloorVy(size) {
   return -sizeSpec(size).bounce;
 }
 
+function loadAutoSpeed() {
+  try {
+    var n = parseInt(localStorage.getItem(AUTO_SPEED_KEY) || '3', 10);
+    if (!isFinite(n) || n < 1 || n > 4) return 3;
+    return n;
+  } catch (e) {
+    return 3;
+  }
+}
+
+function saveAutoSpeed(n) {
+  try { localStorage.setItem(AUTO_SPEED_KEY, String(n)); } catch (e) { /* ignore */ }
+}
+
+function cloneBall(b) {
+  return {
+    x: b.x,
+    y: b.y,
+    vx: b.vx,
+    vy: b.vy,
+    r: b.r,
+    bounce: b.bounce,
+    size: b.size,
+    live: true
+  };
+}
+
+function resolvePlat(b, plat, px, py) {
+  var r = b.r;
+  var left = plat.x;
+  var right = plat.x + plat.w;
+  var top = plat.y;
+  var bot = plat.y + plat.h;
+  var wasAbove, wasBelow, wasLeft, wasRight;
+  if (!circleRect(b.x, b.y, r, left, top, plat.w, plat.h)) return false;
+  wasAbove = py + r <= top + 2;
+  wasBelow = py - r >= bot - 2;
+  wasLeft = px + r <= left + 2;
+  wasRight = px - r >= right - 2;
+  if (wasAbove && b.vy >= 0) {
+    b.y = top - r;
+    b.vy = -b.bounce;
+    b.squash = 0.68;
+    return 'floor';
+  }
+  if (wasBelow && b.vy <= 0) {
+    b.y = bot + r;
+    b.vy = Math.abs(b.vy) * 0.55;
+    return 'ceil';
+  }
+  if (wasLeft) {
+    b.x = left - r;
+    b.vx = -Math.abs(b.vx);
+    return 'side';
+  }
+  if (wasRight) {
+    b.x = right + r;
+    b.vx = Math.abs(b.vx);
+    return 'side';
+  }
+  if (b.y < top + plat.h * 0.5) {
+    b.y = top - r;
+    if (b.vy > 0) {
+      b.vy = -b.bounce;
+      b.squash = 0.7;
+    }
+    return 'floor';
+  }
+  b.y = bot + r;
+  if (b.vy < 0) b.vy = Math.abs(b.vy) * 0.5;
+  return 'ceil';
+}
+
+function simStepBall(b, dt, plats) {
+  var px = b.x;
+  var py = b.y;
+  var i;
+  b.vy += GRAVITY * dt;
+  b.x += b.vx * dt;
+  b.y += b.vy * dt;
+  if (b.x - b.r < WALL) {
+    b.x = WALL + b.r;
+    b.vx = Math.abs(b.vx);
+  } else if (b.x + b.r > WORLD_W - WALL) {
+    b.x = WORLD_W - WALL - b.r;
+    b.vx = -Math.abs(b.vx);
+  }
+  if (b.y - b.r < CEIL) {
+    b.y = CEIL + b.r;
+    if (b.vy < 0) b.vy = Math.abs(b.vy) * 0.42;
+  }
+  if (b.y + b.r > FLOOR) {
+    b.y = FLOOR - b.r;
+    b.vy = -b.bounce;
+  }
+  if (plats) {
+    for (i = 0; i < plats.length; i++) resolvePlat(b, plats[i], px, py);
+  }
+}
+
+function harpoonReach(hx, y, r, plats) {
+  var stop = CEIL;
+  var i, plat, bot;
+  if (!plats) return true;
+  for (i = 0; i < plats.length; i++) {
+    plat = plats[i];
+    if (hx < plat.x || hx > plat.x + plat.w) continue;
+    bot = plat.y + plat.h;
+    if (bot > stop) stop = bot;
+  }
+  return y + r > stop + 1.6;
+}
+
+function nearestOpenX(fromX, y, r, plats) {
+  var d, x, minX, maxX;
+  minX = WALL + PLAYER_W * 0.5 + 2;
+  maxX = WORLD_W - WALL - PLAYER_W * 0.5 - 2;
+  fromX = clamp(fromX, minX, maxX);
+  if (harpoonReach(fromX, y, r, plats)) return fromX;
+  for (d = 6; d <= 230; d += 6) {
+    x = fromX - d;
+    if (x >= minX && harpoonReach(x, y, r, plats)) return x;
+    x = fromX + d;
+    if (x <= maxX && harpoonReach(x, y, r, plats)) return x;
+  }
+  return fromX;
+}
+
+function timeToHitAt(b, px, plats, maxT) {
+  var sim, t, dt;
+  dt = AUTO_PRED_DT;
+  sim = cloneBall(b);
+  for (t = dt; t <= maxT; t += dt) {
+    simStepBall(sim, dt, plats);
+    if (playerHitsBall(px, FLOOR, sim.x, sim.y, sim.r * 1.1)) return t;
+  }
+  return 99;
+}
+
+function minTimeToHit(balls, px, plats, maxT) {
+  var i, t, best = 99;
+  for (i = 0; i < balls.length; i++) {
+    if (!balls[i].live) continue;
+    t = timeToHitAt(balls[i], px, plats, maxT);
+    if (t < best) best = t;
+  }
+  return best;
+}
+
+function predictShot(b, playerX, plats, maxT) {
+  var sim, t, dt, hookT, fireAt, walkT, score, best, hx;
+  dt = AUTO_PRED_DT;
+  sim = cloneBall(b);
+  best = null;
+  for (t = dt; t <= maxT; t += dt) {
+    simStepBall(sim, dt, plats);
+    hookT = (FLOOR - 18 - sim.y) / HOOK_V;
+    if (hookT < 0.03 || hookT > 0.95) continue;
+    fireAt = t - hookT;
+    if (fireAt < -0.04) continue;
+    if (fireAt < 0) fireAt = 0;
+    hx = sim.x;
+    if (!harpoonReach(hx, sim.y, sim.r, plats)) continue;
+    walkT = Math.abs(hx - playerX) / PLAYER_SPD;
+    if (walkT > fireAt + 0.12) continue;
+    if (sim.y > FLOOR - 52) continue;
+    score = 0;
+    score += (3 - b.size) * 30;
+    score += (FLOOR - sim.y) * 0.2;
+    score -= fireAt * 58;
+    score -= walkT * 14;
+    if (sim.y > FLOOR - 110) score -= 55;
+    if (b.size === 0) score += 46;
+    if (!best || score > best.score) {
+      best = { x: hx, fireAt: fireAt, t: t, score: score, y: sim.y, size: b.size };
+    }
+  }
+  return best;
+}
+
+function autoDecide(st) {
+  var p = st.player;
+  var balls = st.balls;
+  var plats = st.plats || [];
+  var hooks = st.hooks || [];
+  var px = p.x;
+  var minX = WALL + PLAYER_W * 0.5 + 2;
+  var maxX = WORLD_W - WALL - PLAYER_W * 0.5 - 2;
+  var cap = hookCap(!!st.chain);
+  var liveH = liveHookCount(hooks);
+  var i, b, shot, best, dangerNow, dangerLeft, dangerRight, standX;
+  var l = false;
+  var r = false;
+  var fire = false;
+  var walkDir = st.walkDir || 1;
+  var stuck = st.stuck || 0;
+  var sticky = st.stickyX == null ? px : st.stickyX;
+  var dead = 8;
+  var away, safeL, safeR, tHit, openX, dodging, hookT, leadX, urgent;
+
+  best = null;
+  urgent = null;
+  for (i = 0; i < balls.length; i++) {
+    b = balls[i];
+    if (!b.live) continue;
+    shot = predictShot(b, px, plats, AUTO_PRED_T);
+    if (shot && (!best || shot.score > best.score)) best = shot;
+    if (!urgent || b.size < urgent.size || (b.size === urgent.size && b.y > urgent.y)) urgent = b;
+  }
+
+  dangerNow = minTimeToHit(balls, px, plats, 0.72);
+  dodging = dangerNow < 0.48;
+
+  if (dodging) {
+    safeL = clamp(px - 90, minX, maxX);
+    safeR = clamp(px + 90, minX, maxX);
+    dangerLeft = minTimeToHit(balls, safeL, plats, 0.72);
+    dangerRight = minTimeToHit(balls, safeR, plats, 0.72);
+    away = 0;
+    for (i = 0; i < balls.length; i++) {
+      b = balls[i];
+      if (!b.live) continue;
+      tHit = timeToHitAt(b, px, plats, 0.72);
+      if (tHit < 0.52) {
+        if (b.x >= px) away -= 1;
+        else away += 1;
+      }
+    }
+    if (dangerLeft > dangerRight + 0.05) standX = safeL;
+    else if (dangerRight > dangerLeft + 0.05) standX = safeR;
+    else if (away < 0) standX = safeL;
+    else if (away > 0) standX = safeR;
+    else standX = px < WORLD_W * 0.5 ? safeR : safeL;
+  } else if (best) {
+    standX = clamp(best.x, minX, maxX);
+  } else if (urgent) {
+    openX = nearestOpenX(urgent.x, urgent.y, urgent.r, plats);
+    standX = clamp(openX, minX, maxX);
+  } else {
+    standX = clamp(WORLD_W * 0.5, minX, maxX);
+  }
+
+  if (!dodging && Math.abs(standX - sticky) < 22) standX = sticky;
+
+  if (stuck > 0.78) {
+    walkDir = -walkDir;
+    standX = clamp(px + walkDir * 74, minX, maxX);
+    stuck = 0.18;
+  }
+
+  if (standX < px - dead) l = true;
+  else if (standX > px + dead) r = true;
+
+  if (liveH < cap) {
+    if (best && Math.abs(px - best.x) <= 11 && best.fireAt <= 0.13) {
+      if (!dodging || Math.abs(px - best.x) <= 7) fire = true;
+    }
+    if (!fire) {
+      for (i = 0; i < balls.length; i++) {
+        b = balls[i];
+        if (!b.live) continue;
+        if (b.y > FLOOR - 78) continue;
+        if (!harpoonReach(px, b.y, b.r, plats)) continue;
+        hookT = (FLOOR - 18 - b.y) / HOOK_V;
+        if (hookT < 0.04 || hookT > 0.9) continue;
+        leadX = b.x + b.vx * hookT;
+        if (Math.abs(leadX - px) <= Math.max(9, b.r * 0.48)) fire = true;
+      }
+    }
+  }
+
+  if (l && r) {
+    l = standX < px;
+    r = !l;
+  }
+
+  return {
+    l: l,
+    r: r,
+    fire: fire,
+    standX: standX,
+    stuck: stuck,
+    walkDir: walkDir
+  };
+}
+
+function playAutoRoom(list, plats, seconds, chain) {
+  var player, balls, hooks, i, spec, t, d, pops, fires, walks, both, lastL, lastR;
+  var stickyX, stuck, walkDir, lastX, h, j, k, kids, b;
+  player = makePlayer();
+  balls = [];
+  hooks = [];
+  plats = plats ? plats.slice() : [];
+  pops = 0;
+  fires = 0;
+  walks = 0;
+  both = 0;
+  lastL = false;
+  lastR = false;
+  stickyX = player.x;
+  stuck = 0;
+  walkDir = 1;
+  lastX = player.x;
+  for (i = 0; i < list.length; i++) {
+    spec = list[i];
+    balls.push(makeBall(spec.x, spec.y, spec.size, spec.dir, chain ? chainSpeed(1) : 1));
+  }
+  for (t = 0; t < seconds / STEP; t++) {
+    if (Math.abs(player.x - lastX) < 1.3) stuck += STEP;
+    else stuck = 0;
+    d = autoDecide({
+      player: player,
+      balls: balls,
+      plats: plats,
+      hooks: hooks,
+      chain: !!chain,
+      stickyX: stickyX,
+      stuck: stuck,
+      walkDir: walkDir,
+      lastX: lastX
+    });
+    stickyX = d.standX;
+    walkDir = d.walkDir;
+    stuck = d.stuck;
+    lastX = player.x;
+    if (d.l && d.r) both += 1;
+    lastL = d.l;
+    lastR = d.r;
+    if (d.l) {
+      player.x -= PLAYER_SPD * STEP;
+      player.face = -1;
+      walks += 1;
+    } else if (d.r) {
+      player.x += PLAYER_SPD * STEP;
+      player.face = 1;
+      walks += 1;
+    }
+    player.x = clamp(player.x, WALL + PLAYER_W * 0.5, WORLD_W - WALL - PLAYER_W * 0.5);
+    if (d.fire && liveHookCount(hooks) < hookCap(!!chain)) {
+      hooks.push(makeHook(player.x + player.face * 2, player.y - 18));
+      fires += 1;
+    }
+    for (i = 0; i < hooks.length; i++) {
+      h = hooks[i];
+      if (!h.live) continue;
+      h.tipY -= HOOK_V * STEP;
+      if (h.tipY <= CEIL) {
+        h.live = false;
+        continue;
+      }
+      for (j = 0; j < plats.length; j++) {
+        if (hookHitsPlat(h.x, h.tipY, h.baseY, plats[j])) {
+          h.live = false;
+          break;
+        }
+      }
+      if (!h.live) continue;
+      for (j = 0; j < balls.length; j++) {
+        b = balls[j];
+        if (!b.live) continue;
+        if (hookHitsBall(h.x, h.tipY, h.baseY, b.x, b.y, b.r)) {
+          h.live = false;
+          b.live = false;
+          pops += 1;
+          if (b.size > 0) {
+            kids = splitKids(b.x, b.y, b.size, 1);
+            for (k = 0; k < kids.length; k++) {
+              kids[k].vy = -Math.max(160, kids[k].bounce * 0.42);
+              balls.push(kids[k]);
+            }
+          }
+          break;
+        }
+      }
+    }
+    for (i = 0; i < balls.length; i++) {
+      if (balls[i].live) simStepBall(balls[i], STEP, plats);
+    }
+    for (i = balls.length - 1; i >= 0; i--) if (!balls[i].live) balls.splice(i, 1);
+    for (i = hooks.length - 1; i >= 0; i--) if (!hooks[i].live) hooks.splice(i, 1);
+    if (liveBallCount(balls) <= 0) break;
+  }
+  return { pops: pops, fires: fires, walks: walks, both: both, left: liveBallCount(balls) };
+}
+
 function selfCheck() {
   var kids, b, h, p, spec, i, hitFloor, hitWall;
   if (LIVES !== 3) throw new Error('3 lives');
@@ -335,6 +725,79 @@ function selfCheck() {
   if (!hitFloor) throw new Error('ball never floors');
   if (!hitWall) throw new Error('ball never walls');
   if (b.y + spec.r > FLOOR + 0.5) throw new Error('fell through floor');
+
+  if (AUTO_SPEED_KEY !== 'playbox-pang-auto-speed') throw new Error('auto speed key');
+  if (loadAutoSpeed() < 1 || loadAutoSpeed() > 4) throw new Error('auto speed range');
+  if (AUTO_SCALE[3] !== 1 || AUTO_SCALE[4] <= AUTO_SCALE[3]) throw new Error('auto scale');
+  if (AUTO_SCALE[1] >= AUTO_SCALE[2] || AUTO_SCALE[2] >= AUTO_SCALE[3]) throw new Error('auto scale order');
+  if (SPEED_LABELS[3] !== '快' || SPEED_LABELS[4] !== '极快') throw new Error('speed labels');
+
+  (function autoPlayCheck() {
+    var d, d2, st, run, chain, p, balls, i, walked;
+    p = makePlayer();
+    p.x = 110;
+    balls = [makeBall(330, 88, 3, 1, 1)];
+    st = {
+      player: p,
+      balls: balls,
+      plats: [],
+      hooks: [],
+      chain: false,
+      stickyX: p.x,
+      stuck: 0,
+      walkDir: 1,
+      lastX: p.x
+    };
+    d = autoDecide(st);
+    if (d.l && d.r) throw new Error('AI spawn wiggle');
+    if (!d.r || d.l) throw new Error('AI should walk toward balloon');
+    st.stickyX = d.standX;
+    walked = 0;
+    for (i = 0; i < 5; i++) {
+      d2 = autoDecide(st);
+      if (d2.l && d2.r) throw new Error('AI target wiggle both');
+      if (d2.l) throw new Error('AI walked away from balloon');
+      if (d2.r) walked += 1;
+    }
+    if (walked < 4) throw new Error('AI should keep walking to intercept');
+
+    p.x = 330;
+    st.stickyX = 330;
+    d = autoDecide(st);
+    if (d.l && d.r) throw new Error('AI aligned wiggle');
+    if (!d.fire && !d.l && !d.r) throw new Error('AI idle under balloon');
+
+    p = makePlayer();
+    p.x = 210;
+    balls = [makeBall(210, 400, 3, 1, 1)];
+    balls[0].vy = 220;
+    st = {
+      player: p,
+      balls: balls,
+      plats: [],
+      hooks: [],
+      chain: false,
+      stickyX: p.x,
+      stuck: 0,
+      walkDir: 1,
+      lastX: p.x
+    };
+    d = autoDecide(st);
+    if (d.l && d.r) throw new Error('AI dodge wiggle');
+    if (!d.l && !d.r) throw new Error('AI should dodge falling balloon');
+
+    run = playAutoRoom(ROOMS[0].balls, ROOMS[0].plats, 14, false);
+    if (run.both) throw new Error('AI rooms wiggle both keys');
+    if (run.walks < 30) throw new Error('AI should walk, walks=' + run.walks);
+    if (run.fires < 2) throw new Error('AI should shoot harpoons, fires=' + run.fires);
+    if (run.pops < 1) throw new Error('AI should pop balloons, pops=' + run.pops);
+
+    chain = playAutoRoom(chainWaveBalls(1), chainWavePlats(1), 12, true);
+    if (chain.both) throw new Error('AI chain wiggle both keys');
+    if (chain.walks < 20) throw new Error('AI chain should walk, walks=' + chain.walks);
+    if (chain.fires < 2) throw new Error('AI chain should shoot, fires=' + chain.fires);
+    if (chain.pops < 1) throw new Error('AI chain should pop, pops=' + chain.pops);
+  }());
 }
 
 selfCheck();
@@ -360,6 +823,9 @@ var btnRooms = document.getElementById('btn-rooms');
 var btnChain = document.getElementById('btn-chain');
 var btnMute = document.getElementById('btn-mute');
 var btnRetry = document.getElementById('btn-retry');
+var btnAuto = document.getElementById('btn-auto');
+var speedEl = document.getElementById('speed');
+var speedLab = document.getElementById('speed-lab');
 var btnLeft = document.getElementById('btn-left');
 var btnRight = document.getElementById('btn-right');
 var btnFire = document.getElementById('btn-fire');
@@ -402,6 +868,13 @@ var motes = [];
 
 var keys = { l: false, r: false, fire: false };
 var pointer = { down: false, x: WORLD_W * 0.5, id: null };
+var autoOn = false;
+var autoSpeed = loadAutoSpeed();
+var autoStickyX = WORLD_W * 0.5;
+var autoStuck = 0;
+var autoWalkDir = 1;
+var autoLastX = WORLD_W * 0.5;
+var autoOvWait = 0;
 
 var G = {
   mode: 'title',
@@ -843,6 +1316,9 @@ function loadRoom(resetTime) {
   G.player.fireCd = 0;
   G.player.muzzle = 0;
   G.ready = READY_T;
+  autoStickyX = G.player.x;
+  autoLastX = G.player.x;
+  autoStuck = 0;
   if (G.chain) {
     mul = chainSpeed(G.wave);
     G.plats = chainWavePlats(G.wave).slice();
@@ -892,7 +1368,7 @@ function showTitle() {
   ovTitle.textContent = '穿球';
   ovLead.textContent = '地上左右走，空格向上射叉。气球落地就弹，叉中裂成两只更小的，最小的才爆掉。身子碰到球就丢命，清完一房过关。';
   ovOps.textContent = OPS;
-  hintEl.textContent = '向上射叉裂气球 · 最小才爆 · 别让球撞到人 · 平台挡叉';
+  hintEl.textContent = '向上射叉裂气球 · 最小才爆 · 别让球撞到人 · 平台挡叉 · A 自动';
   hintEl.className = 'hint';
   hudPlay();
   modeLabel.textContent = '穿球';
@@ -954,9 +1430,7 @@ function startGame(kind) {
   hudPlay();
   beginStage();
   hintEl.className = 'hint';
-  hintEl.textContent = G.chain
-    ? '连爆不停。球更快更密，可同时两支叉。'
-    : '五房清屏。叉会被平台挡住，从缝里穿。';
+  playHint();
 }
 
 function retry() {
@@ -1062,52 +1536,6 @@ function afterDie() {
   else G.ready = READY_T;
   toast(G.why === 'time' ? '时限重开本房' : '再来', G.why === 'time' ? 'warn' : '');
   G.why = '';
-}
-
-function resolvePlat(b, plat, px, py) {
-  var r = b.r;
-  var left = plat.x;
-  var right = plat.x + plat.w;
-  var top = plat.y;
-  var bot = plat.y + plat.h;
-  var wasAbove, wasBelow, wasLeft, wasRight;
-  if (!circleRect(b.x, b.y, r, left, top, plat.w, plat.h)) return false;
-  wasAbove = py + r <= top + 2;
-  wasBelow = py - r >= bot - 2;
-  wasLeft = px + r <= left + 2;
-  wasRight = px - r >= right - 2;
-  if (wasAbove && b.vy >= 0) {
-    b.y = top - r;
-    b.vy = -b.bounce;
-    b.squash = 0.68;
-    return 'floor';
-  }
-  if (wasBelow && b.vy <= 0) {
-    b.y = bot + r;
-    b.vy = Math.abs(b.vy) * 0.55;
-    return 'ceil';
-  }
-  if (wasLeft) {
-    b.x = left - r;
-    b.vx = -Math.abs(b.vx);
-    return 'side';
-  }
-  if (wasRight) {
-    b.x = right + r;
-    b.vx = Math.abs(b.vx);
-    return 'side';
-  }
-  if (b.y < top + plat.h * 0.5) {
-    b.y = top - r;
-    if (b.vy > 0) {
-      b.vy = -b.bounce;
-      b.squash = 0.7;
-    }
-    return 'floor';
-  }
-  b.y = bot + r;
-  if (b.vy < 0) b.vy = Math.abs(b.vy) * 0.5;
-  return 'ceil';
 }
 
 function stepBall(b, dt, silent) {
@@ -1295,6 +1723,7 @@ function updateDemo(dt) {
 
 function updatePlay(dt) {
   var p = G.player;
+  if (autoOn) tickAuto();
   if (G.lock > 0) {
     G.lock -= dt;
     updatePlayer(dt);
@@ -1342,11 +1771,7 @@ function updatePlay(dt) {
 }
 
 function update(dt) {
-  if (G.stop > 0) {
-    G.stop -= dt;
-    updateFx(dt * 0.35);
-    return;
-  }
+  if (autoOn && (G.mode === 'title' || G.mode === 'over' || G.mode === 'win')) tickAutoFlow(dt);
   if (G.mode === 'title' || G.mode === 'over' || G.mode === 'win') {
     updateDemo(dt);
     return;
@@ -1678,10 +2103,127 @@ function pointerWorldX(e) {
   return (e.clientX - rect.left - L.x) / L.s;
 }
 
+/* ---- autoplay ---- */
+function playHint() {
+  if (autoOn && G.mode === 'play') {
+    hintEl.textContent = G.chain
+      ? '托管中 · 连爆不停 · 射叉裂气球 · A 停下'
+      : '托管中 · 射叉裂气球 · A 停下';
+    return;
+  }
+  if (G.mode === 'play') {
+    hintEl.textContent = G.chain
+      ? '连爆不停。球更快更密，可同时两支叉。'
+      : '五房清屏。叉会被平台挡住，从缝里穿。';
+    return;
+  }
+  hintEl.textContent = '向上射叉裂气球 · 最小才爆 · 别让球撞到人 · 平台挡叉 · A 自动';
+}
+
+function autoScale() {
+  if (!autoOn || G.mode !== 'play') return 1;
+  return AUTO_SCALE[autoSpeed] || 1;
+}
+
+function clearAutoKeys() {
+  keys.l = false;
+  keys.r = false;
+  keys.fire = false;
+  pointer.down = false;
+}
+
+function tickAuto() {
+  var p, d;
+  clearAutoKeys();
+  if (!autoOn || G.mode !== 'play') return;
+  p = G.player;
+  if (p.deadT > 0 || G.lock > 0 || G.clearing) return;
+  if (Math.abs(p.x - autoLastX) < 1.4) autoStuck += STEP;
+  else autoStuck = 0;
+  d = autoDecide({
+    player: p,
+    balls: G.balls,
+    plats: G.plats,
+    hooks: G.hooks,
+    chain: G.chain,
+    stickyX: autoStickyX,
+    stuck: autoStuck,
+    walkDir: autoWalkDir,
+    lastX: autoLastX
+  });
+  autoStickyX = d.standX;
+  autoWalkDir = d.walkDir;
+  autoStuck = d.stuck;
+  autoLastX = p.x;
+  keys.l = d.l;
+  keys.r = d.r;
+  keys.fire = d.fire;
+}
+
+function tickAutoFlow(dt) {
+  if (!autoOn) return;
+  if (G.mode === 'title') {
+    autoOvWait += dt;
+    if (autoOvWait >= (autoSpeed >= 3 ? 0.25 : 0.5)) {
+      autoOvWait = 0;
+      startGame('rooms');
+    }
+    return;
+  }
+  if (G.mode === 'over' || G.mode === 'win') {
+    autoOvWait += dt;
+    if (autoOvWait >= (autoSpeed >= 3 ? 0.7 : 1.15)) {
+      autoOvWait = 0;
+      startGame(G.kind || 'rooms');
+    }
+  }
+}
+
+function syncAutoUi() {
+  btnAuto.classList.toggle('on', autoOn);
+  btnAuto.setAttribute('aria-pressed', autoOn ? 'true' : 'false');
+  btnAuto.textContent = autoOn ? '停下' : '自动';
+  btnAuto.setAttribute('aria-label', autoOn ? '停止自动' : '自动');
+}
+
+function syncSpeedUi() {
+  speedEl.value = String(autoSpeed);
+  speedLab.textContent = SPEED_LABELS[autoSpeed];
+  speedEl.title = SPEED_LABELS[autoSpeed];
+  speedEl.setAttribute('aria-valuetext', SPEED_LABELS[autoSpeed]);
+}
+
+function toggleAuto() {
+  autoOn = !autoOn;
+  autoOvWait = 0;
+  autoStuck = 0;
+  clearAutoKeys();
+  syncAutoUi();
+  if (autoOn) {
+    audio.ensure();
+    if (G.mode === 'title') startGame('rooms');
+    else if (G.mode === 'over' || G.mode === 'win') startGame(G.kind || 'rooms');
+  }
+  playHint();
+}
+
+function setAutoSpeed(n) {
+  n = parseInt(n, 10);
+  if (!isFinite(n) || n < 1 || n > 4) n = 3;
+  autoSpeed = n;
+  saveAutoSpeed(autoSpeed);
+  syncSpeedUi();
+}
+
+function isAutoKey(e) {
+  return e.code === 'KeyA' || e.key === 'a' || e.key === 'A';
+}
+
 /* ---- input ---- */
 function bindPad(el, setter, tap) {
   function down(ev) {
     ev.preventDefault();
+    if (autoOn) return;
     setter(true);
     el.classList.add('held');
     audio.ensure();
@@ -1708,14 +2250,26 @@ bindPad(btnFire, function (v) { keys.fire = v; }, function () { fire(); });
 
 function keyMove(e, down) {
   var k = e.code;
-  if (k === 'ArrowLeft' || k === 'KeyA') { keys.l = down; e.preventDefault(); }
+  if (k === 'ArrowLeft') { keys.l = down; e.preventDefault(); }
   else if (k === 'ArrowRight' || k === 'KeyD') { keys.r = down; e.preventDefault(); }
   else if (k === 'Space') { keys.fire = down; e.preventDefault(); }
   else if (k === 'ArrowUp' || k === 'ArrowDown' || k === 'KeyW' || k === 'KeyS') e.preventDefault();
 }
 
 window.addEventListener('keydown', function (e) {
+  if (isAutoKey(e)) {
+    if (e.repeat) return;
+    audio.ensure();
+    toggleAuto();
+    e.preventDefault();
+    return;
+  }
+  if (e.target === speedEl) return;
   if (e.repeat) {
+    if (autoOn) {
+      e.preventDefault();
+      return;
+    }
     keyMove(e, true);
     return;
   }
@@ -1755,12 +2309,27 @@ window.addEventListener('keydown', function (e) {
       return;
     }
   }
+  if (autoOn) {
+    if (
+      e.code === 'ArrowLeft' || e.code === 'ArrowRight' || e.code === 'ArrowUp' ||
+      e.code === 'ArrowDown' || e.code === 'Space' || e.code === 'KeyD' ||
+      e.code === 'KeyS' || e.code === 'KeyW'
+    ) {
+      e.preventDefault();
+    }
+    return;
+  }
   if (overlayOpen() && G.mode !== 'play') return;
   keyMove(e, true);
   if (e.code === 'Space') fire();
 });
 
 window.addEventListener('keyup', function (e) {
+  if (isAutoKey(e)) {
+    e.preventDefault();
+    return;
+  }
+  if (autoOn) return;
   keyMove(e, false);
 });
 
@@ -1768,6 +2337,9 @@ btnMute.addEventListener('click', function () {
   audio.ensure();
   audio.setMuted(!audio.muted);
 });
+btnAuto.addEventListener('click', function () { toggleAuto(); });
+speedEl.addEventListener('input', function () { setAutoSpeed(parseInt(speedEl.value, 10)); });
+speedEl.addEventListener('change', function () { setAutoSpeed(parseInt(speedEl.value, 10)); });
 btnRetry.addEventListener('click', function () {
   audio.ensure();
   retry();
@@ -1792,6 +2364,7 @@ ovMenu.addEventListener('click', function () {
 canvas.addEventListener('pointerdown', function (e) {
   audio.ensure();
   e.preventDefault();
+  if (autoOn) return;
   if (overlayOpen() && G.mode !== 'play') return;
   pointer.down = true;
   pointer.id = e.pointerId;
@@ -1828,7 +2401,7 @@ document.addEventListener('visibilitychange', function () {
 });
 
 function frame(now) {
-  var t, dt, n;
+  var t, dt, n, turbo, scale, maxSteps;
   requestAnimationFrame(frame);
   if (hidden) {
     lastTs = now * 0.001;
@@ -1838,19 +2411,32 @@ function frame(now) {
   if (!lastTs) lastTs = t;
   dt = t - lastTs;
   lastTs = t;
-  if (dt > 0.05) dt = 0.05;
-  acc += dt;
-  n = 0;
-  while (acc >= STEP && n < 5) {
-    update(STEP);
-    acc -= STEP;
-    n += 1;
+  if (dt > 0.08) dt = 0.08;
+  turbo = autoOn && autoSpeed >= 4 && G.mode === 'play';
+  if (G.stop > 0 && !turbo) {
+    G.stop -= dt;
+    updateFx(dt * 0.35);
+    if (autoOn && G.mode !== 'play') tickAutoFlow(dt);
+  } else {
+    if (turbo) G.stop = 0;
+    scale = autoScale();
+    acc += dt * scale;
+    n = 0;
+    maxSteps = turbo ? 16 : 5;
+    while (acc >= STEP && n < maxSteps) {
+      update(STEP);
+      acc -= STEP;
+      n += 1;
+    }
+    if (acc > STEP * 4) acc = 0;
   }
   draw();
 }
 
 seedMotes();
 renderPips();
+syncSpeedUi();
+syncAutoUi();
 showTitle();
 resize();
 hudPlay();
