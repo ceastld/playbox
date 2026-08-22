@@ -1371,7 +1371,7 @@
     "blurb": "对上颜色就爆串。",
     "hue": 195,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/bubble-shot/",
     "kind": "remake"
   },
@@ -1445,6 +1445,18 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/centi-crawl/",
+    "kind": "remake"
+  },
+  {
+    "n": 130,
+    "id": "qix-cut",
+    "title": "割域",
+    "subtitle": "QIX",
+    "blurb": "圈地，别碰上线。",
+    "hue": 260,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/qix-cut/",
     "kind": "remake"
   }
 ]

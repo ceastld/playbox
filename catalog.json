@@ -1256,5 +1256,17 @@
     "dir": "g/beat-tap/",
     "url": "./g/beat-tap/",
     "kind": "remake"
+  },
+  {
+    "n": 123,
+    "id": "bubble-shot",
+    "title": "泡弹",
+    "subtitle": "BUBBLE",
+    "blurb": "对上颜色就爆串。",
+    "hue": 195,
+    "tag": "复刻",
+    "dir": "g/bubble-shot/",
+    "url": "./g/bubble-shot/",
+    "kind": "remake"
   }
 ]
