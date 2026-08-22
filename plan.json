@@ -3015,7 +3015,7 @@
     "blurb": "双人扫街，把枪匪和头目打趴。",
     "hue": 8,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/punisher/",
     "kind": "remake"
   },
@@ -3063,7 +3063,7 @@
     "blurb": "队员连斩，清掉巷战里的机甲。",
     "hue": 12,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/captain-commando/",
     "kind": "remake"
   },
@@ -3075,7 +3075,7 @@
     "blurb": "马上挥剑，把强盗砍下马。",
     "hue": 42,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/knights-round/",
     "kind": "remake"
   },
@@ -3087,7 +3087,7 @@
     "blurb": "战机扫射地面，躲开高射炮。",
     "hue": 158,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/p-47/",
     "kind": "remake"
   },
@@ -3101,6 +3101,54 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/willow/",
+    "kind": "remake"
+  },
+  {
+    "n": 268,
+    "id": "simpsons",
+    "title": "辛普",
+    "subtitle": "SIMP",
+    "blurb": "一家四口扫街，把强盗打出春田。",
+    "hue": 48,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/simpsons/",
+    "kind": "remake"
+  },
+  {
+    "n": 269,
+    "id": "sunset-riders",
+    "title": "落日",
+    "subtitle": "SUN",
+    "blurb": "西部连射，骑马把赏金匪打下车。",
+    "hue": 24,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/sunset-riders/",
+    "kind": "remake"
+  },
+  {
+    "n": 270,
+    "id": "strider",
+    "title": "飞龙",
+    "subtitle": "STRI",
+    "blurb": "旋刃滑翔，斩开机甲关卡。",
+    "hue": 350,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/strider/",
+    "kind": "remake"
+  },
+  {
+    "n": 271,
+    "id": "section-z",
+    "title": "Z区",
+    "subtitle": "SECZ",
+    "blurb": "横向射击换区，别被炮台封死。",
+    "hue": 210,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/section-z/",
     "kind": "remake"
   }
 ]

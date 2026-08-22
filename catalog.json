@@ -2912,5 +2912,53 @@
     "dir": "g/blazing-star/",
     "url": "./g/blazing-star/",
     "kind": "remake"
+  },
+  {
+    "n": 260,
+    "id": "punisher",
+    "title": "制裁",
+    "subtitle": "PUNI",
+    "blurb": "双人扫街，把枪匪和头目打趴。",
+    "hue": 8,
+    "tag": "复刻",
+    "dir": "g/punisher/",
+    "url": "./g/punisher/",
+    "kind": "remake"
+  },
+  {
+    "n": 264,
+    "id": "captain-commando",
+    "title": "队长",
+    "subtitle": "CAPT",
+    "blurb": "队员连斩，清掉巷战里的机甲。",
+    "hue": 12,
+    "tag": "复刻",
+    "dir": "g/captain-commando/",
+    "url": "./g/captain-commando/",
+    "kind": "remake"
+  },
+  {
+    "n": 265,
+    "id": "knights-round",
+    "title": "圆桌",
+    "subtitle": "TABLE",
+    "blurb": "马上挥剑，把强盗砍下马。",
+    "hue": 42,
+    "tag": "复刻",
+    "dir": "g/knights-round/",
+    "url": "./g/knights-round/",
+    "kind": "remake"
+  },
+  {
+    "n": 266,
+    "id": "p-47",
+    "title": "雷公",
+    "subtitle": "P47",
+    "blurb": "战机扫射地面，躲开高射炮。",
+    "hue": 158,
+    "tag": "复刻",
+    "dir": "g/p-47/",
+    "url": "./g/p-47/",
+    "kind": "remake"
   }
 ]
