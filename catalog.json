@@ -1532,5 +1532,29 @@
     "dir": "g/time-loop/",
     "url": "./g/time-loop/",
     "kind": "remake"
+  },
+  {
+    "n": 148,
+    "id": "defend-line",
+    "title": "防线",
+    "subtitle": "DEFEND",
+    "blurb": "横扫地平线，救人打虫。",
+    "hue": 118,
+    "tag": "复刻",
+    "dir": "g/defend-line/",
+    "url": "./g/defend-line/",
+    "kind": "remake"
+  },
+  {
+    "n": 150,
+    "id": "lift-gun",
+    "title": "电梯",
+    "subtitle": "LIFT",
+    "blurb": "钻电梯打间谍，搜机密。",
+    "hue": 44,
+    "tag": "复刻",
+    "dir": "g/lift-gun/",
+    "url": "./g/lift-gun/",
+    "kind": "remake"
   }
 ]

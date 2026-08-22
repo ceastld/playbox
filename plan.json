@@ -1671,7 +1671,7 @@
     "blurb": "横扫地平线，救人打虫。",
     "hue": 118,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/defend-line/",
     "kind": "remake"
   },
@@ -1695,7 +1695,7 @@
     "blurb": "钻电梯打间谍，搜机密。",
     "hue": 44,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/lift-gun/",
     "kind": "remake"
   },
@@ -1721,6 +1721,30 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/gaunt-hall/",
+    "kind": "remake"
+  },
+  {
+    "n": 153,
+    "id": "pole-dash",
+    "title": "杆位",
+    "subtitle": "POLE",
+    "blurb": "赛道上超车，别撞护栏。",
+    "hue": 352,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/pole-dash/",
+    "kind": "remake"
+  },
+  {
+    "n": 154,
+    "id": "out-run",
+    "title": "疾驶",
+    "subtitle": "OUTRUN",
+    "blurb": "海边公路飙车，分叉自己选。",
+    "hue": 32,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/out-run/",
     "kind": "remake"
   }
 ]
