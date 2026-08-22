@@ -1395,7 +1395,7 @@
     "blurb": "卡在点上，连击发烫。",
     "hue": 320,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/beat-tap/",
     "kind": "remake"
   },
@@ -1433,6 +1433,18 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/miss-cmd/",
+    "kind": "remake"
+  },
+  {
+    "n": 129,
+    "id": "centi-crawl",
+    "title": "蜈袭",
+    "subtitle": "CENTI",
+    "blurb": "打头打尾，别让它落地。",
+    "hue": 140,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/centi-crawl/",
     "kind": "remake"
   }
 ]

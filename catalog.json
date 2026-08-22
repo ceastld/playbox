@@ -1244,5 +1244,17 @@
     "dir": "g/air-puck/",
     "url": "./g/air-puck/",
     "kind": "remake"
+  },
+  {
+    "n": 125,
+    "id": "beat-tap",
+    "title": "拍点",
+    "subtitle": "BEAT",
+    "blurb": "卡在点上，连击发烫。",
+    "hue": 320,
+    "tag": "复刻",
+    "dir": "g/beat-tap/",
+    "url": "./g/beat-tap/",
+    "kind": "remake"
   }
 ]
