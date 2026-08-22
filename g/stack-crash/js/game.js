@@ -13,6 +13,9 @@
   const GRAV = 980;
   const BEST_KEY = 'playbox-stack-crash-best';
   const MUTE_KEY = 'playbox-stack-crash-mute';
+  const AUTO_SPEED_KEY = 'playbox-stack-crash-auto-speed';
+  const SPEED_LABELS = ['', '慢', '中', '快', '极快'];
+  const AUTO_DELAY = [0, 0.28, 0.1, 0, 0];
   const ISO = 0.82;
   const ISOY = 0.52;
   const HUE0 = 55;
@@ -42,6 +45,9 @@
   const btnRush = el('btn-rush');
   const btnMute = el('btn-mute');
   const btnRetry = el('btn-retry');
+  const btnAuto = el('btn-auto');
+  const speedEl = el('speed');
+  const speedLab = el('speed-lab');
   const scoreEl = el('score');
   const bestEl = el('best');
   const comboEl = el('combo');
@@ -65,6 +71,10 @@
   let overlayKind = 'title';
   let frozen = true;
   let hudTick = 0;
+  let autoOn = false;
+  let autoSpeed = 3;
+  let autoWait = 0;
+  let autoPlaced = false;
 
   const particles = [];
   const debris = [];
@@ -340,7 +350,7 @@
       if (ovLead) {
         ovLead.innerHTML = '板来回扫，点下落齐。悬空的咔一声削掉。<br />齐了会闪、会震、会连。太窄就崩。';
       }
-      if (ovOps) ovOps.textContent = '点击 / 空格落板 · M 静音 · R 重开';
+      if (ovOps) ovOps.textContent = '点击 / 空格落板 · A 自动 · M 静音 · R 重开';
       if (btnClassic) btnClassic.textContent = '经典';
       if (btnRush) btnRush.textContent = '加速';
     } else if (kind === 'lose') {
@@ -353,7 +363,7 @@
           (G.bestCombo ? ' · 连齐 ' + G.bestCombo : '') +
           ' · 最高 ' + G.best + '。';
       }
-      if (ovOps) ovOps.textContent = 'R 重开 · 点模式再来 · M 静音';
+      if (ovOps) ovOps.textContent = 'R 重开 · 点模式再来 · A 自动 · M 静音';
       if (btnClassic) btnClassic.textContent = '经典';
       if (btnRush) btnRush.textContent = '加速';
     }
@@ -364,6 +374,112 @@
     overlayKind = 'none';
     if (overlay) overlay.classList.add('hidden');
     if (panel) panel.classList.remove('win', 'lose');
+  }
+
+  function loadAutoSpeed() {
+    try {
+      const n = parseInt(localStorage.getItem(AUTO_SPEED_KEY) || '3', 10);
+      if (!isFinite(n) || n < 1 || n > 4) return 3;
+      return n;
+    } catch (err) {
+      return 3;
+    }
+  }
+
+  function saveAutoSpeed(n) {
+    try {
+      localStorage.setItem(AUTO_SPEED_KEY, String(n));
+    } catch (err) { /* ignore */ }
+  }
+
+  function autoTurbo() {
+    return autoOn && autoSpeed >= 4;
+  }
+
+  function syncAutoUi() {
+    if (!btnAuto) return;
+    btnAuto.classList.toggle('on', autoOn);
+    btnAuto.setAttribute('aria-pressed', autoOn ? 'true' : 'false');
+    btnAuto.textContent = autoOn ? '停下' : '自动';
+    btnAuto.setAttribute('aria-label', autoOn ? '停止自动' : '自动');
+  }
+
+  function syncSpeedUi() {
+    if (!speedEl) return;
+    speedEl.value = String(autoSpeed);
+    if (speedLab) speedLab.textContent = SPEED_LABELS[autoSpeed];
+    speedEl.title = SPEED_LABELS[autoSpeed];
+    speedEl.setAttribute('aria-valuetext', SPEED_LABELS[autoSpeed]);
+  }
+
+  function hintKind() {
+    if (autoOn) return G.kind === 'rush' ? 'warn' : 'hot';
+    return G.kind === 'rush' ? 'warn' : '';
+  }
+
+  function playHint() {
+    if (autoOn) {
+      return G.kind === 'rush' ? '自动加速 · 对齐就落 · A 停下' : '自动对齐下落 · A 停下';
+    }
+    return G.kind === 'rush' ? '加速模式 · 空格 / 点击落板' : '对齐就落 · 空格 / 点击 · R 重开';
+  }
+
+  function toggleAuto() {
+    autoOn = !autoOn;
+    autoWait = 0;
+    syncAutoUi();
+    if (autoOn) audio.ensure();
+    if (G.mode === 'play' && !frozen) setHint(playHint(), hintKind());
+  }
+
+  function setAutoSpeed(n) {
+    n = n | 0;
+    if (n < 1 || n > 4 || !isFinite(n)) n = 3;
+    autoSpeed = n;
+    saveAutoSpeed(autoSpeed);
+    syncSpeedUi();
+  }
+
+  function slabErr() {
+    const m = G.move;
+    const top = topBlock();
+    if (!m || !top) return 1e9;
+    return Math.max(Math.abs(m.x - top.x), Math.abs(m.z - top.z));
+  }
+
+  function tickAuto(dt) {
+    if (!autoOn || frozen || G.mode !== 'play' || G.phase !== 'swing') return;
+    if (!G.move) return;
+    if (G.lock > 0 || G.hitStop > 0) return;
+    if (autoTurbo() && autoPlaced) return;
+
+    if (autoSpeed >= 4) {
+      G.move.off = 0;
+      applyMoveOff();
+      tryDrop();
+      autoPlaced = true;
+      autoWait = 0;
+      return;
+    }
+
+    autoWait += dt;
+    if (autoWait < (AUTO_DELAY[autoSpeed] || 0)) return;
+
+    const m = G.move;
+    const spd = moveSpeed();
+    const nextOff = m.off + m.dir * spd * dt;
+    const err = slabErr();
+    const wouldCross = (m.off < 0 && nextOff >= 0) || (m.off > 0 && nextOff <= 0);
+    const entering = err > PERFECT && Math.abs(nextOff) <= PERFECT;
+
+    if (err <= PERFECT || wouldCross || entering) {
+      if (err > PERFECT) {
+        m.off = 0;
+        applyMoveOff();
+      }
+      tryDrop();
+      autoWait = 0;
+    }
   }
 
   function topBlock() {
@@ -504,7 +620,7 @@
     };
     applyMoveOff();
     G.phase = 'swing';
-    G.lock = fresh ? 0.18 : 0.08;
+    G.lock = (autoOn && autoSpeed >= 4 && G.mode === 'play') ? 0 : (fresh ? 0.18 : 0.08);
     trail.length = 0;
   }
 
@@ -575,8 +691,9 @@
     resetRun(kind);
     hideOverlay();
     renderHud();
+    autoWait = 0;
     showToast(kind === 'rush' ? '加速 · 对齐就落' : '对齐就落 · 悬空会斩', kind === 'rush' ? 'warn' : 'gold');
-    setHint(kind === 'rush' ? '加速模式 · 空格 / 点击落板' : '对齐就落 · 空格 / 点击 · R 重开', kind === 'rush' ? 'warn' : '');
+    setHint(playHint(), hintKind());
   }
 
   function endGame(why) {
@@ -789,6 +906,7 @@
       startPlay(G.kind);
       return;
     }
+    if (autoOn) return;
     if (G.mode === 'play') tryDrop();
   }
 
@@ -939,11 +1057,14 @@
 
     if (G.hitStop > 0) {
       G.hitStop -= dt;
-      return;
+      if (G.hitStop > 0 && !autoTurbo()) return;
+      G.hitStop = 0;
     }
 
-    if (G.phase === 'swing') stepSwing(dt);
-    else if (G.phase === 'miss') stepMiss(dt);
+    if (G.phase === 'swing') {
+      tickAuto(dt);
+      if (G.phase === 'swing') stepSwing(dt);
+    } else if (G.phase === 'miss') stepMiss(dt);
     else if (G.phase === 'crumble') stepCrumble(dt);
   }
 
@@ -1258,6 +1379,7 @@
     last = now;
     if (dt > 0.08) dt = 0.08;
     if (!hidden) {
+      autoPlaced = false;
       acc += dt;
       let steps = 0;
       while (acc >= STEP && steps < 5) {
@@ -1277,7 +1399,7 @@
   }
 
   function isBtn(t) {
-    return t && t.closest && t.closest('button, .tools, .overlay .panel');
+    return t && t.closest && t.closest('button, .tools, .speed-ctl, .overlay .panel');
   }
 
   function onPointer(e) {
@@ -1290,6 +1412,12 @@
   function onKey(e) {
     const k = e.key;
     if (k === ' ' || k === 'Enter') e.preventDefault();
+    if (k === 'a' || k === 'A') {
+      e.preventDefault();
+      if (e.repeat) return;
+      toggleAuto();
+      return;
+    }
     if (e.repeat) return;
     if (k === 'm' || k === 'M') {
       audio.setMuted(!audio.muted);
@@ -1308,13 +1436,16 @@
       if (localStorage.getItem(MUTE_KEY) === '1') audio.muted = true;
     } catch (err) { /* ignore */ }
     audio.setMuted(audio.muted);
+    autoSpeed = loadAutoSpeed();
+    syncAutoUi();
+    syncSpeedUi();
     loadBest();
     makeMotes();
     seedTitle();
     G.mode = 'title';
     setOverlay('title');
     renderHud();
-    setHint('对齐就落 · 悬空会斩 · 齐了连击');
+    setHint('对齐就落 · 悬空会斩 · A 自动');
     resize();
     last = 0;
     requestAnimationFrame(frame);
@@ -1361,6 +1492,73 @@
     if (btnRetry) btnRetry.addEventListener('click', function () {
       retry();
     });
+    if (btnAuto) btnAuto.addEventListener('click', function () {
+      toggleAuto();
+    });
+    if (speedEl) {
+      speedEl.addEventListener('input', function () {
+        setAutoSpeed(parseInt(speedEl.value, 10));
+      });
+      speedEl.addEventListener('change', function () {
+        setAutoSpeed(parseInt(speedEl.value, 10));
+      });
+    }
     boot();
+  } else {
+    selfCheck();
+  }
+
+  function playAutoN(kind, layers, speed) {
+    autoOn = true;
+    autoSpeed = speed;
+    autoWait = 0;
+    autoPlaced = false;
+    frozen = false;
+    overlayKind = 'none';
+    G.mode = 'play';
+    resetRun(kind);
+    G.mode = 'play';
+    let steps = 0;
+    const cap = 60 * 60 * 12;
+    while (G.height < layers && G.mode === 'play' && steps < cap) {
+      autoPlaced = false;
+      step(STEP);
+      steps += 1;
+    }
+    return {
+      height: G.height,
+      perfects: G.perfects,
+      combo: G.combo,
+      mode: G.mode,
+      why: G.why,
+      steps: steps
+    };
+  }
+
+  function selfCheck() {
+    const classic = playAutoN('classic', 72, 3);
+    if (classic.mode !== 'play') {
+      throw new Error('classic auto died at ' + classic.height + ' (' + classic.why + ')');
+    }
+    if (classic.height < 72) {
+      throw new Error('classic auto too slow: ' + classic.height + ' in ' + classic.steps);
+    }
+    if (classic.perfects < 72) {
+      throw new Error('classic auto not stacking: perfects ' + classic.perfects);
+    }
+    const rush = playAutoN('rush', 80, 3);
+    if (rush.mode !== 'play') {
+      throw new Error('rush auto died at ' + rush.height + ' (' + rush.why + ')');
+    }
+    if (rush.height < 80) {
+      throw new Error('rush auto too slow: ' + rush.height);
+    }
+    if (rush.perfects < 80) {
+      throw new Error('rush auto not stacking: perfects ' + rush.perfects);
+    }
+    const turbo = playAutoN('rush', 48, 4);
+    if (turbo.mode !== 'play' || turbo.height < 48 || turbo.perfects < 48) {
+      throw new Error('turbo auto failed h=' + turbo.height + ' p=' + turbo.perfects + ' m=' + turbo.mode);
+    }
   }
 })();
