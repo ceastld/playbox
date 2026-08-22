@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#05030c" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>搭板 · PLANK</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2305030c'/%3E%3Cpath d='M2 22h8V10H2z M22 22h8V10H22z' fill='%23101824' stroke='%2300f0ff' stroke-width='1.2'/%3E%3Crect x='8' y='9.2' width='16' height='3.2' rx='0.6' fill='%23ffe36b'/%3E%3Cpath d='M4 26h24' stroke='%23ff3db8' stroke-width='1.4' opacity='.7'/%3E%3Ccircle cx='16' cy='7.4' r='1.6' fill='%23ffe36b'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>搭板</b>
+        <span>PLANK</span>
+      </div>
+      <div class="status">
+        <span id="stage-label">十涧</span>
+        <div class="row">
+          <span id="left-label">两端都要有支撑</span>
+          <span class="pips" id="pips" aria-label="剩余性命"></span>
+        </div>
+      </div>
+      <div class="tools">
+        <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
+        <button type="button" id="btn-undo" title="Z" aria-label="收回木板">收</button>
+        <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <canvas id="c" aria-label="搭板过涧"></canvas>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden"></div>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">PLANK</p>
+          <h1 id="ov-title">搭板</h1>
+          <p class="lead" id="ov-lead">木板两端都要有支撑。对准石台放下，灯人就会过桥。<br />只搁住一头，板会翻进涧里。</p>
+          <p class="ops" id="ov-ops">方向键移板 · 空格放下 · 拖两端 · M 静音</p>
+          <button type="button" id="ov-btn">开搭</button>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">木板两端都要搁在实处</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>

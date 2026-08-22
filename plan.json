@@ -29,7 +29,7 @@
     "blurb": "点一下降温，按住升温，把核心留在安全带。",
     "hue": 18,
     "tag": "稳",
-    "status": "hardening",
+    "status": "shipped",
     "dir": "g/melt-core/"
   },
   {
@@ -62,7 +62,7 @@
     "blurb": "只在拍点出刀，空拍会折刃。",
     "hue": 330,
     "tag": "律",
-    "status": "shipped",
+    "status": "hardening",
     "dir": "g/beat-blade/"
   },
   {
@@ -73,7 +73,7 @@
     "blurb": "冷却好了才能翻转重力，落地要算好。",
     "hue": 48,
     "tag": "转",
-    "status": "shipped",
+    "status": "hardening",
     "dir": "g/flip-well/"
   },
   {
@@ -84,7 +84,7 @@
     "blurb": "同色点连线，线不能交叉。",
     "hue": 280,
     "tag": "织",
-    "status": "shipped",
+    "status": "hardening",
     "dir": "g/weave-net/"
   },
   {
@@ -1085,7 +1085,7 @@
     "blurb": "木板两端都要有支撑。",
     "hue": 32,
     "tag": "板",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/bridge-plank/"
   },
   {
@@ -1096,7 +1096,7 @@
     "blurb": "门上的纹必须对上你玩过的主题色。",
     "hue": 250,
     "tag": "门",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/night-gate/"
   }
 ]

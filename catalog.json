@@ -970,5 +970,27 @@
     "tag": "萤",
     "dir": "g/jar-firefly/",
     "url": "./g/jar-firefly/"
+  },
+  {
+    "n": 99,
+    "id": "bridge-plank",
+    "title": "搭板",
+    "subtitle": "PLANK",
+    "blurb": "木板两端都要有支撑。",
+    "hue": 32,
+    "tag": "板",
+    "dir": "g/bridge-plank/",
+    "url": "./g/bridge-plank/"
+  },
+  {
+    "n": 100,
+    "id": "night-gate",
+    "title": "夜门",
+    "subtitle": "GATE",
+    "blurb": "门上的纹必须对上你玩过的主题色。",
+    "hue": 250,
+    "tag": "门",
+    "dir": "g/night-gate/",
+    "url": "./g/night-gate/"
   }
 ]
