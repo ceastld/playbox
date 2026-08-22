@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#140804" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>恐龙 · DINO</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23140804'/%3E%3Crect x='2' y='2' width='28' height='28' rx='4' fill='%231c0c06' stroke='%23ff7a1a' stroke-width='1.4'/%3E%3Cpath d='M5 23h22' stroke='%23c48a4a' stroke-width='1.2' opacity='.55'/%3E%3Cellipse cx='11' cy='22' rx='5.4' ry='2.4' fill='%23080504'/%3E%3Cpath d='M6 20h12l2-4H8z' fill='%23f0d0b0'/%3E%3Cpath d='M18 16l4-2v6h-4z' fill='%23e8a0a8'/%3E%3Ccircle cx='8.4' cy='20.4' r='1.6' fill='%231a1210'/%3E%3Ccircle cx='16.2' cy='20.4' r='1.6' fill='%231a1210'/%3E%3Cpath d='M20 18c4-1 7-4 8-8-2 1-5 2-7 5z' fill='%236a8a32'/%3E%3Ccircle cx='24.6' cy='11.2' r='1.8' fill='%237a9a3a'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>恐龙</b>
+        <span>DINO</span>
+      </div>
+      <div class="status">
+        <div class="scores" aria-live="polite">
+          <div class="score" id="score-box">
+            <em>分数</em>
+            <b id="score">0</b>
+            <span id="score-add" class="score-add" hidden>+0</span>
+          </div>
+          <div class="score best">
+            <em>最高</em>
+            <b id="best">0</b>
+          </div>
+          <div class="score combo" id="combo-box">
+            <em>连击</em>
+            <b id="combo">×1</b>
+          </div>
+        </div>
+        <div class="row">
+          <span id="stage-label">废镇</span>
+          <span id="tag-label">荒原</span>
+          <span id="gun-label" class="gun">拳</span>
+          <span id="ride-label" class="ride" hidden>兜风</span>
+          <div class="fill" id="hp-wrap" title="体力">
+            <em>体</em>
+            <div class="fill-track" aria-hidden="true"><i id="hp-bar"></i></div>
+          </div>
+          <span class="pips" id="pips" aria-label="剩余性命"></span>
+        </div>
+      </div>
+      <div class="tools">
+        <div class="modes" role="radiogroup" aria-label="模式">
+          <button type="button" id="mode-waste" aria-pressed="true">荒原</button>
+          <button type="button" id="mode-tide" aria-pressed="false">兽潮</button>
+        </div>
+        <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
+        <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <div class="board-wrap">
+        <canvas id="c" tabindex="0" role="application" aria-label="恐龙，侧向清场，拳打匪徒恐龙，捡枪，偶遇凯迪拉克兜风"></canvas>
+      </div>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden"></div>
+      <div id="chain-pop" class="chain-pop hidden" aria-hidden="true">×2</div>
+      <div id="pad" class="pad">
+        <button type="button" id="btn-left" aria-label="左">左</button>
+        <button type="button" id="btn-jump" aria-label="跳跃">跳</button>
+        <button type="button" id="btn-right" aria-label="右">右</button>
+        <button type="button" id="btn-atk" aria-label="出拳">拳</button>
+      </div>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">DINO</p>
+          <h1 id="ov-title">恐龙</h1>
+          <p class="lead" id="ov-lead">向右清场。拳打匪徒与恐龙，地上捡枪，偶遇凯迪拉克兜风。体力打空扣一命，过关见头目。</p>
+          <p class="ops" id="ov-ops">方向 / WASD 走 · 上跳 · 空格出拳 · R 重开 · M 静音</p>
+          <div class="ov-actions" id="ov-start">
+            <button type="button" id="btn-waste">荒原</button>
+            <button type="button" id="btn-tide">兽潮</button>
+          </div>
+          <div class="ov-actions gone" id="ov-end">
+            <button type="button" id="ov-again">再来</button>
+            <button type="button" id="ov-menu">换模式</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">往右打 · 拳与枪 · 上车兜风 · 打到暴龙</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>

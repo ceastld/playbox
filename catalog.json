@@ -2864,5 +2864,53 @@
     "dir": "g/ice-climber/",
     "url": "./g/ice-climber/",
     "kind": "remake"
+  },
+  {
+    "n": 256,
+    "id": "venture",
+    "title": "秘窟",
+    "subtitle": "VENT",
+    "blurb": "进房间捡宝，别被怪物堵住门。",
+    "hue": 36,
+    "tag": "复刻",
+    "dir": "g/venture/",
+    "url": "./g/venture/",
+    "kind": "remake"
+  },
+  {
+    "n": 261,
+    "id": "x-men",
+    "title": "变种",
+    "subtitle": "XMEN",
+    "blurb": "变种人连斩，清掉哨站里的哨兵。",
+    "hue": 264,
+    "tag": "复刻",
+    "dir": "g/x-men/",
+    "url": "./g/x-men/",
+    "kind": "remake"
+  },
+  {
+    "n": 262,
+    "id": "cadillacs",
+    "title": "恐龙",
+    "subtitle": "DINO",
+    "blurb": "拳打恐龙帮，开着凯迪拉克冲关。",
+    "hue": 22,
+    "tag": "复刻",
+    "dir": "g/cadillacs/",
+    "url": "./g/cadillacs/",
+    "kind": "remake"
+  },
+  {
+    "n": 263,
+    "id": "blazing-star",
+    "title": "烈星",
+    "subtitle": "BLAZE",
+    "blurb": "蓄力一炮，把编队和装甲打穿。",
+    "hue": 14,
+    "tag": "复刻",
+    "dir": "g/blazing-star/",
+    "url": "./g/blazing-star/",
+    "kind": "remake"
   }
 ]

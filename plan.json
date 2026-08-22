@@ -2967,7 +2967,7 @@
     "blurb": "进房间捡宝，别被怪物堵住门。",
     "hue": 36,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/venture/",
     "kind": "remake"
   },
@@ -3027,7 +3027,7 @@
     "blurb": "变种人连斩，清掉哨站里的哨兵。",
     "hue": 264,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/x-men/",
     "kind": "remake"
   },
@@ -3039,7 +3039,7 @@
     "blurb": "拳打恐龙帮，开着凯迪拉克冲关。",
     "hue": 22,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/cadillacs/",
     "kind": "remake"
   },
@@ -3051,8 +3051,56 @@
     "blurb": "蓄力一炮，把编队和装甲打穿。",
     "hue": 14,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/blazing-star/",
+    "kind": "remake"
+  },
+  {
+    "n": 264,
+    "id": "captain-commando",
+    "title": "队长",
+    "subtitle": "CAPT",
+    "blurb": "队员连斩，清掉巷战里的机甲。",
+    "hue": 12,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/captain-commando/",
+    "kind": "remake"
+  },
+  {
+    "n": 265,
+    "id": "knights-round",
+    "title": "圆桌",
+    "subtitle": "TABLE",
+    "blurb": "马上挥剑，把强盗砍下马。",
+    "hue": 42,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/knights-round/",
+    "kind": "remake"
+  },
+  {
+    "n": 266,
+    "id": "p-47",
+    "title": "雷公",
+    "subtitle": "P47",
+    "blurb": "战机扫射地面，躲开高射炮。",
+    "hue": 158,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/p-47/",
+    "kind": "remake"
+  },
+  {
+    "n": 267,
+    "id": "willow",
+    "title": "柳巫",
+    "subtitle": "WILL",
+    "blurb": "剑与魔法闯关，别被怪潮淹没。",
+    "hue": 278,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/willow/",
     "kind": "remake"
   }
 ]

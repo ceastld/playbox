@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#0a0414" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>变种 · XMEN</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230a0414'/%3E%3Crect x='2' y='2' width='28' height='28' rx='4' fill='%23120818' stroke='%23b44cff' stroke-width='1.4'/%3E%3Cpath d='M8 9l8 14 8-14' fill='none' stroke='%23ffe36b' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M12 9h8' stroke='%2300f0ff' stroke-width='1.2' opacity='.7'/%3E%3Cellipse cx='16' cy='26' rx='6' ry='1.4' fill='%23101814'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>变种</b>
+        <span>XMEN</span>
+      </div>
+      <div class="status">
+        <div class="scores" aria-live="polite">
+          <div class="score" id="score-box">
+            <em>分数</em>
+            <b id="score">0</b>
+            <span id="score-add" class="score-add" hidden>+0</span>
+          </div>
+          <div class="score best">
+            <em>最高</em>
+            <b id="best">0</b>
+          </div>
+          <div class="score combo" id="combo-box">
+            <em>连击</em>
+            <b id="combo">×1</b>
+          </div>
+        </div>
+        <div class="row">
+          <span id="stage-label">街头</span>
+          <span id="tag-label">哨站</span>
+          <span id="mutant-label" class="mutant claw">爪</span>
+          <div class="fill" id="hp-wrap" title="体力">
+            <em>体</em>
+            <div class="fill-track" aria-hidden="true"><i id="hp-bar"></i></div>
+          </div>
+          <div class="fill" id="sp-wrap" title="能量">
+            <em>能</em>
+            <div class="fill-track sp" aria-hidden="true"><i id="sp-bar"></i></div>
+          </div>
+          <span class="pips" id="pips" aria-label="剩余性命"></span>
+        </div>
+      </div>
+      <div class="tools">
+        <div class="modes" role="radiogroup" aria-label="模式">
+          <button type="button" id="mode-post" aria-pressed="true">哨站</button>
+          <button type="button" id="mode-hunt" aria-pressed="false">围捕</button>
+        </div>
+        <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
+        <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <div class="board-wrap">
+        <canvas id="c" tabindex="0" role="application" aria-label="变种，侧向哨站，斩击与短技清场，哨兵射束要跳"></canvas>
+      </div>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden"></div>
+      <div id="chain-pop" class="chain-pop hidden" aria-hidden="true">×2</div>
+      <div id="pad" class="pad">
+        <button type="button" id="btn-left" aria-label="左">左</button>
+        <button type="button" id="btn-jump" aria-label="跳跃">跳</button>
+        <button type="button" id="btn-right" aria-label="右">右</button>
+        <button type="button" id="btn-atk" aria-label="斩击">斩</button>
+        <button type="button" id="btn-sp" aria-label="短技">技</button>
+      </div>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">XMEN</p>
+          <h1 id="ov-title">变种</h1>
+          <p class="lead" id="ov-lead">侧向哨站。选一位变种，近战加短技清场。哨兵悬停射束，磁王会吸人。体力打空扣一命。</p>
+          <p class="ops" id="ov-ops">方向 / WASD 走 · 上跳 · 空格斩 · Shift/Z 技 · R 重开 · M 静音</p>
+          <div class="mutants" id="mutant-row" role="radiogroup" aria-label="选变种">
+            <button type="button" id="m-claw" data-id="claw" aria-pressed="true">爪</button>
+            <button type="button" id="m-ice" data-id="ice" aria-pressed="false">冰</button>
+            <button type="button" id="m-storm" data-id="storm" aria-pressed="false">闪</button>
+            <button type="button" id="m-eye" data-id="eye" aria-pressed="false">眼</button>
+          </div>
+          <div class="ov-actions" id="ov-start">
+            <button type="button" id="btn-post">哨站</button>
+            <button type="button" id="btn-hunt">围捕</button>
+          </div>
+          <div class="ov-actions gone" id="ov-end">
+            <button type="button" id="ov-again">再来</button>
+            <button type="button" id="ov-menu">换模式</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">走跳斩 · Shift 短技 · 跳开射束 · 四变种不同技</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>
