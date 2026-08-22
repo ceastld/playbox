@@ -13,9 +13,13 @@
   const MIN_SLICE_SPD = 240;
   const BEST_KEY = 'playbox-fruit-cut-best';
   const MUTE_KEY = 'playbox-fruit-cut-mute';
+  const AUTO_SPEED_KEY = 'playbox-fruit-cut-auto-speed';
+  const SPEED_LABELS = ['', '慢', '中', '快', '极快'];
+  const AUTO_CD = [0, 0.30, 0.15, 0.048, 0.008];
+  const AUTO_DUR = [0, 0.15, 0.08, 0.032, 0];
   const REDUCE = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const OPS_TITLE = '拖划切开 · 方向键弹斩 · 漏果或斩弹扣命 · M 静音';
-  const OPS_PLAY = '拖划切开 · ←↑↓→ 弹斩 · R 重开 · M 静音';
+  const OPS_TITLE = '拖划切开 · 方向键弹斩 · 漏果或斩弹扣命 · A 自动 · M 静音';
+  const OPS_PLAY = '拖划切开 · ←↑↓→ 弹斩 · A 自动 · R 重开 · M 静音';
 
   const MAG = [255, 61, 184];
   const CYN = [0, 240, 255];
@@ -85,6 +89,9 @@
   const btnZen = document.getElementById('btn-zen');
   const btnMute = document.getElementById('btn-mute');
   const btnRetry = document.getElementById('btn-retry');
+  const btnAuto = document.getElementById('btn-auto');
+  const speedEl = document.getElementById('speed');
+  const speedLab = document.getElementById('speed-lab');
   const scoreEl = document.getElementById('score');
   const bestEl = document.getElementById('best');
   const scoreBox = document.getElementById('score-box');
@@ -164,6 +171,11 @@
     why: '',
     demoT: 0.4
   };
+
+  let autoOn = false;
+  let autoSpeed = 3;
+  let autoCd = 0;
+  let autoSlash = null;
 
   function clamp(v, a, b) {
     return v < a ? a : v > b ? b : v;
@@ -354,6 +366,20 @@
     } catch (err) { /* ignore */ }
   }
 
+  function loadAutoSpeed() {
+    try {
+      const n = parseInt(localStorage.getItem(AUTO_SPEED_KEY) || '3', 10);
+      if (n >= 1 && n <= 4) return n;
+    } catch (err) { /* ignore */ }
+    return 3;
+  }
+
+  function saveAutoSpeed(n) {
+    try {
+      localStorage.setItem(AUTO_SPEED_KEY, String(n));
+    } catch (err) { /* ignore */ }
+  }
+
   function addScore(n) {
     if (G.mode !== 'play' || n <= 0) return;
     G.score += n;
@@ -437,6 +463,10 @@
       tagLabel.className = G.lives === 1 ? 'warn' : '';
       hintEl.textContent = G.lives === 1 ? '最后一命 · 炸弹别碰' : OPS_PLAY;
       hintEl.className = G.lives === 1 ? 'hint warn' : 'hint';
+    }
+    if (autoOn) {
+      hintEl.textContent = '自动托管 · A 停下';
+      if (!(G.kind !== 'zen' && G.lives === 1)) hintEl.className = 'hint';
     }
     renderPips();
   }
@@ -866,6 +896,7 @@
 
   function onPointerDown(e) {
     if (e.target && e.target.closest && e.target.closest('button')) return;
+    if (autoOn) return;
     if (G.mode !== 'play' && G.mode !== 'title') return;
     if (ptr.down) return;
     e.preventDefault();
@@ -890,6 +921,7 @@
     ptr.x = p.x;
     ptr.y = p.y;
     ptr.hover = true;
+    if (autoOn) return;
     if (!ptr.down) return;
     if (ptr.id != null && e.pointerId !== ptr.id) return;
     const dx = p.x - ptr.lx;
@@ -937,6 +969,7 @@
   }
 
   function fireFlick(dx, dy) {
+    if (autoOn) return;
     if (G.mode !== 'play') return;
     if (G.flickCd > 0) return;
     G.flickCd = 0.11;
@@ -971,6 +1004,215 @@
       b.last = p;
       if (b.t >= b.dur) blades.splice(i, 1);
     }
+  }
+
+  function fruitAt(f, t) {
+    return {
+      x: f.x + f.vx * t,
+      y: f.y + f.vy * t + 0.5 * GRAV * t * t
+    };
+  }
+
+  function slashHitsBomb(x1, y1, x2, y2, t, pad) {
+    for (let i = 0; i < fruits.length; i++) {
+      const f = fruits[i];
+      if (!f.live || !f.bomb || f.demo) continue;
+      const p = fruitAt(f, t);
+      const r = hitRadius(f.kind) + pad;
+      if (segHitsCircle(x1, y1, x2, y2, p.x, p.y, r)) return true;
+    }
+    return false;
+  }
+
+  function scoreSlash(x1, y1, x2, y2, t) {
+    let hits = 0;
+    let pts = 0;
+    let urgent = 0;
+    for (let i = 0; i < fruits.length; i++) {
+      const f = fruits[i];
+      if (!f.live || f.bomb || f.demo) continue;
+      const p = fruitAt(f, t);
+      const r = hitRadius(f.kind) * 0.88;
+      if (!segHitsCircle(x1, y1, x2, y2, p.x, p.y, r)) continue;
+      hits += 1;
+      pts += f.kind.score;
+      if (f.vy > 0 && f.y > VH * 0.52) urgent += 1;
+      if (f.vy > 0 && f.y > VH * 0.68) urgent += 3;
+      if (f.vy > 0 && f.y > VH * 0.78) urgent += 4;
+    }
+    if (!hits) return -1;
+    return hits * 140 + pts + urgent * 90 + (hits >= 2 ? 110 : 0);
+  }
+
+  function inSliceBand(f) {
+    return f.y + f.r > 12 && f.y - f.r < VH - 8;
+  }
+
+  function planAutoSwipe() {
+    const t = 0;
+    const pad = autoSpeed <= 2 ? 14 : 10;
+    const list = [];
+    for (let i = 0; i < fruits.length; i++) {
+      const f = fruits[i];
+      if (!f.live || f.bomb || f.demo) continue;
+      if (!inSliceBand(f)) continue;
+      if (f.vy < 0 && f.y > VH * 0.86) continue;
+      list.push(f);
+    }
+    if (!list.length) return null;
+
+    let best = null;
+    let bestS = -1e9;
+
+    function consider(cx, cy, ang, len) {
+      const tx = Math.cos(ang);
+      const ty = Math.sin(ang);
+      const h = len * 0.5;
+      const x1 = cx - tx * h;
+      const y1 = cy - ty * h;
+      const x2 = cx + tx * h;
+      const y2 = cy + ty * h;
+      if (slashHitsBomb(x1, y1, x2, y2, t, pad)) return;
+      const s = scoreSlash(x1, y1, x2, y2, t);
+      if (s < 0) return;
+      if (s > bestS) {
+        bestS = s;
+        best = { x1: x1, y1: y1, x2: x2, y2: y2 };
+      }
+    }
+
+    const angs = [0, 0.32, -0.32, 0.62, -0.62, 1.05, -1.05, Math.PI * 0.5, -Math.PI * 0.5, 0.9, -0.9];
+
+    for (let i = 0; i < list.length; i++) {
+      const a = list[i];
+      for (let j = i + 1; j < list.length; j++) {
+        const b = list[j];
+        const dx = b.x - a.x;
+        const dy = b.y - a.y;
+        const d = hypot(dx, dy);
+        if (d < 22 || d > 118) continue;
+        consider((a.x + b.x) * 0.5, (a.y + b.y) * 0.5, Math.atan2(dy, dx), clamp(d + 28, 56, 128));
+      }
+    }
+
+    for (let i = 0; i < list.length; i++) {
+      const f = list[i];
+      const lens = [48, clamp(58 + f.r * 0.7, 56, 88)];
+      for (let L = 0; L < lens.length; L++) {
+        const len = lens[L];
+        for (let k = 0; k < angs.length; k++) consider(f.x, f.y, angs[k], len);
+      }
+      let nearest = null;
+      let nd = 1e9;
+      for (let j = 0; j < fruits.length; j++) {
+        const b = fruits[j];
+        if (!b.live || !b.bomb || b.demo) continue;
+        const d = hypot(b.x - f.x, b.y - f.y);
+        if (d < nd) {
+          nd = d;
+          nearest = b;
+        }
+      }
+      if (nearest && nd > 1) {
+        const bx = f.x - nearest.x;
+        const by = f.y - nearest.y;
+        const bl = nd;
+        const angPerp = Math.atan2(bx, -by);
+        consider(f.x, f.y, angPerp, 52);
+        consider(f.x, f.y, angPerp + Math.PI * 0.5, 48);
+        const ox = (bx / bl) * (f.r * 0.5);
+        const oy = (by / bl) * (f.r * 0.5);
+        consider(f.x + ox, f.y + oy, angPerp, 50);
+        consider(f.x + ox, f.y + oy, 0, 48);
+        consider(f.x + ox, f.y + oy, Math.PI * 0.5, 48);
+      }
+    }
+
+    return best;
+  }
+
+  function stepAutoSlash(dt) {
+    if (!autoSlash) return;
+    autoSlash.t += dt;
+    const p = clamp(autoSlash.t / autoSlash.dur, 0, 1);
+    const x = lerp(autoSlash.x0, autoSlash.x1, p);
+    const y = lerp(autoSlash.y0, autoSlash.y1, p);
+    addTrailPoint(x, y, 12);
+    if (autoSlash.t >= autoSlash.dur) autoSlash = null;
+  }
+
+  function fireAutoSwipe(sw) {
+    if (slashHitsBomb(sw.x1, sw.y1, sw.x2, sw.y2, 0, autoSpeed <= 2 ? 14 : 10)) return false;
+    if (scoreSlash(sw.x1, sw.y1, sw.x2, sw.y2, 0) < 0) return false;
+    addTrailPoint(sw.x1, sw.y1, 11);
+    trySliceSegment(sw.x1, sw.y1, sw.x2, sw.y2, 1200, true);
+    const dur = REDUCE ? 0 : AUTO_DUR[autoSpeed];
+    if (dur <= 0) {
+      addTrailPoint(sw.x2, sw.y2, 14);
+    } else {
+      autoSlash = {
+        x0: sw.x1, y0: sw.y1, x1: sw.x2, y1: sw.y2,
+        t: 0, dur: dur
+      };
+    }
+    if (autoSpeed < 4) audio.whoosh();
+    return true;
+  }
+
+  function syncAutoUi() {
+    btnAuto.classList.toggle('on', autoOn);
+    btnAuto.setAttribute('aria-pressed', autoOn ? 'true' : 'false');
+    btnAuto.textContent = autoOn ? '停下' : '自动';
+    btnAuto.setAttribute('aria-label', autoOn ? '停止自动' : '自动');
+  }
+
+  function syncSpeedUi() {
+    speedEl.value = String(autoSpeed);
+    speedLab.textContent = SPEED_LABELS[autoSpeed];
+    speedEl.title = SPEED_LABELS[autoSpeed];
+    speedEl.setAttribute('aria-valuetext', SPEED_LABELS[autoSpeed]);
+  }
+
+  function setAutoSpeed(n) {
+    n = parseInt(n, 10);
+    if (!(n >= 1 && n <= 4)) n = 3;
+    autoSpeed = n;
+    saveAutoSpeed(autoSpeed);
+    syncSpeedUi();
+  }
+
+  function clearPlayerSwipe() {
+    ptr.down = false;
+    ptr.id = null;
+    canvas.classList.remove('press');
+  }
+
+  function toggleAuto() {
+    autoOn = !autoOn;
+    autoCd = 0;
+    autoSlash = null;
+    clearPlayerSwipe();
+    syncAutoUi();
+    if (G.mode === 'play') hudPlay();
+    if (!autoOn) return;
+    audio.ensure();
+    if (G.mode === 'title') startRun('classic');
+  }
+
+  function tickAuto(dt) {
+    if (!autoOn) return;
+    stepAutoSlash(dt);
+    if (G.mode !== 'play') return;
+    if (autoSlash) return;
+    autoCd -= dt;
+    if (autoCd > 0) return;
+    const sw = planAutoSwipe();
+    if (!sw) {
+      autoCd = autoSpeed >= 3 ? 0.02 : 0.05;
+      return;
+    }
+    if (fireAutoSwipe(sw)) autoCd = AUTO_CD[autoSpeed];
+    else autoCd = 0.03;
   }
 
   function resetArrays() {
@@ -1010,6 +1252,8 @@
     G.lock = 0;
     G.flickCd = 0;
     G.why = '';
+    autoCd = 0;
+    autoSlash = null;
     resetArrays();
     scoreEl.textContent = '0';
     overlay.classList.add('hidden');
@@ -1245,11 +1489,13 @@
     if (G.stop > 0) {
       G.stop -= dt;
       stepBlades(dt);
+      tickAuto(dt);
       stepFx(dt * 0.35);
       return;
     }
 
     stepBlades(dt);
+    tickAuto(dt);
 
     if (G.mode === 'title') demoSpawn(dt);
 
@@ -1792,6 +2038,7 @@
 
   function onKey(e) {
     const k = e.key;
+    const code = e.code;
     if (k === 'm' || k === 'M') {
       audio.setMuted(!audio.muted);
       e.preventDefault();
@@ -1802,6 +2049,13 @@
       e.preventDefault();
       return;
     }
+    if (k === 'a' || k === 'A' || code === 'KeyA') {
+      e.preventDefault();
+      if (!e.repeat) toggleAuto();
+      return;
+    }
+    const tag = (e.target && e.target.tagName) || '';
+    if (tag === 'INPUT' || tag === 'RANGE') return;
     audio.ensure();
     if (G.mode === 'title') {
       if (k === '1' || k === 'c' || k === 'C' || k === 'Enter') {
@@ -1824,7 +2078,16 @@
       return;
     }
     if (G.mode !== 'play') return;
-    if (k === 'ArrowLeft' || k === 'a' || k === 'A') {
+    if (autoOn) {
+      if (
+        k === 'ArrowLeft' || k === 'ArrowRight' || k === 'ArrowUp' || k === 'ArrowDown' ||
+        k === ' ' || code === 'Space' || code === 'KeyD' || code === 'KeyS' || code === 'KeyW'
+      ) {
+        e.preventDefault();
+      }
+      return;
+    }
+    if (k === 'ArrowLeft') {
       fireFlick(-1, 0);
       e.preventDefault();
     } else if (k === 'ArrowRight' || k === 'd' || k === 'D') {
@@ -1859,6 +2122,15 @@
     audio.ensure();
     audio.setMuted(!audio.muted);
   });
+  btnAuto.addEventListener('click', function () {
+    toggleAuto();
+  });
+  speedEl.addEventListener('input', function () {
+    setAutoSpeed(speedEl.value);
+  });
+  speedEl.addEventListener('change', function () {
+    setAutoSpeed(speedEl.value);
+  });
 
   canvas.addEventListener('pointerdown', onPointerDown);
   canvas.addEventListener('pointermove', onPointerMove);
@@ -1885,6 +2157,9 @@
 
   seedMotes();
   loadBest();
+  autoSpeed = loadAutoSpeed();
+  syncSpeedUi();
+  syncAutoUi();
   renderPips();
   showOverlay();
   resize();
