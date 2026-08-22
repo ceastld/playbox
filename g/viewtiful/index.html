@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#120408" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>红侠 · VIEW</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23120408'/%3E%3Crect x='2' y='2' width='28' height='28' rx='4' fill='%231a080c' stroke='%23ff2a3c' stroke-width='1.4'/%3E%3Cpath d='M4 24h24' stroke='%236a2030' stroke-width='1.2' opacity='.55'/%3E%3Cellipse cx='12' cy='24' rx='5' ry='2' fill='%23080504'/%3E%3Cpath d='M8 22c0-6 8-6 8 0v2H8z' fill='%23ff2a3c'/%3E%3Cpath d='M10 14c0-4 8-4 8 0v4c0 4-8 4-8 0z' fill='%23e02030'/%3E%3Cpath d='M12 14l6 3-6 3z' fill='%23ffe36b'/%3E%3Cpath d='M7 16c-3 1-4 4-3 6' stroke='%23f4f0e8' stroke-width='1.4' fill='none'/%3E%3Ccircle cx='22' cy='12' r='2.2' fill='%23ffe36b' opacity='.7'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>红侠</b>
+        <span>VIEW</span>
+      </div>
+      <div class="status">
+        <div class="scores" aria-live="polite">
+          <div class="score" id="score-box">
+            <em>分数</em>
+            <b id="score">0</b>
+            <span id="score-add" class="score-add" hidden>+0</span>
+          </div>
+          <div class="score best">
+            <em>最高</em>
+            <b id="best">0</b>
+          </div>
+          <div class="score combo" id="combo-box">
+            <em>连击</em>
+            <b id="combo">×1</b>
+          </div>
+        </div>
+        <div class="row">
+          <span id="stage-label">街拍棚</span>
+          <span id="tag-label">开拍</span>
+          <span id="vfx-label" class="vfx-tag">拳踢</span>
+          <div class="fill" id="hp-wrap" title="体力">
+            <em>体</em>
+            <div class="fill-track" aria-hidden="true"><i id="hp-bar"></i></div>
+          </div>
+          <div class="fill vfx" id="vfx-wrap" title="特效槽">
+            <em>镜</em>
+            <div class="fill-track" aria-hidden="true"><i id="vfx-bar"></i></div>
+          </div>
+          <span class="pips" id="pips" aria-label="剩余性命"></span>
+        </div>
+      </div>
+      <div class="tools">
+        <div class="modes" role="radiogroup" aria-label="模式">
+          <button type="button" id="mode-shoot" aria-pressed="true">开拍</button>
+          <button type="button" id="mode-cut" aria-pressed="false">快剪</button>
+        </div>
+        <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
+        <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <div class="board-wrap">
+        <canvas id="c" tabindex="0" role="application" aria-label="红侠，片场格斗，慢镜加重拳，拉近出大招"></canvas>
+      </div>
+      <div class="scan" aria-hidden="true"></div>
+      <div class="grain" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden"></div>
+      <div id="chain-pop" class="chain-pop hidden" aria-hidden="true">×2</div>
+      <div id="pad" class="pad">
+        <button type="button" id="btn-left" aria-label="左">左</button>
+        <button type="button" id="btn-jump" aria-label="跳跃">跳</button>
+        <button type="button" id="btn-right" aria-label="右">右</button>
+        <button type="button" id="btn-atk" aria-label="出拳">拳</button>
+        <button type="button" id="btn-kick" aria-label="踢">踢</button>
+      </div>
+      <div id="vfx-pad" class="vfx-pad">
+        <button type="button" id="btn-slow" aria-label="慢镜">慢</button>
+        <button type="button" id="btn-zoom" aria-label="拉近">镜</button>
+      </div>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">VIEW</p>
+          <h1 id="ov-title">红侠</h1>
+          <p class="lead" id="ov-lead">走跳拳踢。按 V 开慢镜，拳更重、子弹爬行可打回；按 C 拉近出大招。体力打空扣一命。片场三关见头目。</p>
+          <p class="ops" id="ov-ops">方向 / WASD 走 · 上跳 · 空格出拳 · 下/X 踢 · V 慢镜 · C 拉近 · R 重开 · M 静音</p>
+          <div class="ov-actions" id="ov-start">
+            <button type="button" id="btn-shoot">开拍</button>
+            <button type="button" id="btn-cut">快剪</button>
+          </div>
+          <div class="ov-actions gone" id="ov-end">
+            <button type="button" id="ov-again">再来</button>
+            <button type="button" id="ov-menu">换模式</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">走跳拳踢 · V 慢镜打回子弹 · C 拉近大招 · 片场见头目</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>

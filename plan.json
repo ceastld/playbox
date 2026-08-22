@@ -3387,7 +3387,7 @@
     "blurb": "横扫巨型鱼舰，把核心装甲打穿。",
     "hue": 48,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/darius/",
     "kind": "remake"
   },
@@ -3423,7 +3423,7 @@
     "blurb": "慢镜斩击，把敌人打成慢动作。",
     "hue": 4,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/viewtiful/",
     "kind": "remake"
   },
@@ -3461,6 +3461,30 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/chase-hq/",
+    "kind": "remake"
+  },
+  {
+    "n": 298,
+    "id": "psycho-soldier",
+    "title": "超女",
+    "subtitle": "PSYC",
+    "blurb": "念力扫射，把机械兵打散。",
+    "hue": 312,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/psycho-soldier/",
+    "kind": "remake"
+  },
+  {
+    "n": 299,
+    "id": "salamander2",
+    "title": "沙罗",
+    "subtitle": "SALA",
+    "blurb": "横扫蛇形母舰，把核心打穿。",
+    "hue": 174,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/salamander2/",
     "kind": "remake"
   }
 ]

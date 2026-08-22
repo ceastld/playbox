@@ -3272,5 +3272,29 @@
     "dir": "g/axelay/",
     "url": "./g/axelay/",
     "kind": "remake"
+  },
+  {
+    "n": 291,
+    "id": "darius",
+    "title": "大流",
+    "subtitle": "DARS",
+    "blurb": "横扫巨型鱼舰，把核心装甲打穿。",
+    "hue": 48,
+    "tag": "复刻",
+    "dir": "g/darius/",
+    "url": "./g/darius/",
+    "kind": "remake"
+  },
+  {
+    "n": 294,
+    "id": "viewtiful",
+    "title": "红侠",
+    "subtitle": "VIEW",
+    "blurb": "慢镜斩击，把敌人打成慢动作。",
+    "hue": 4,
+    "tag": "复刻",
+    "dir": "g/viewtiful/",
+    "url": "./g/viewtiful/",
+    "kind": "remake"
   }
 ]
