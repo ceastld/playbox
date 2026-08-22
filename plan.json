@@ -2763,7 +2763,7 @@
     "blurb": "沿壕沟俯冲，把核心打穿。",
     "hue": 46,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/star-trench/",
     "kind": "remake"
   },
@@ -2813,6 +2813,18 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/omega-race/",
+    "kind": "remake"
+  },
+  {
+    "n": 244,
+    "id": "black-widow",
+    "title": "黑蛛",
+    "subtitle": "WIDOW",
+    "blurb": "双摇杆在蛛网上扫虫，别被粘住。",
+    "hue": 300,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/black-widow/",
     "kind": "remake"
   }
 ]
