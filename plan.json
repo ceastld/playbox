@@ -2163,7 +2163,7 @@
     "blurb": "打鸟，盾一开就顶回去。",
     "hue": 16,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/phoenix/",
     "kind": "remake"
   },
@@ -2175,7 +2175,7 @@
     "blurb": "同色泡泡连成串就爆。",
     "hue": 320,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/puzzle-pop/",
     "kind": "remake"
   },
@@ -2187,7 +2187,7 @@
     "blurb": "商店买武装，一路打到头目。",
     "hue": 280,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/fantasy-sky/",
     "kind": "remake"
   },
@@ -2199,7 +2199,7 @@
     "blurb": "机枪扫过去，换弹别停。",
     "hue": 36,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/wolf-gun/",
     "kind": "remake"
   },
@@ -2213,6 +2213,54 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/green-raid/",
+    "kind": "remake"
+  },
+  {
+    "n": 194,
+    "id": "pac-land",
+    "title": "豆陆",
+    "subtitle": "LAND",
+    "blurb": "一路往前跑，别掉坑里。",
+    "hue": 56,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/pac-land/",
+    "kind": "remake"
+  },
+  {
+    "n": 195,
+    "id": "alex-leap",
+    "title": "仙境",
+    "subtitle": "ALEX",
+    "blurb": "拳打石头，摸出道具。",
+    "hue": 44,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/alex-leap/",
+    "kind": "remake"
+  },
+  {
+    "n": 196,
+    "id": "sea-1943",
+    "title": "海空",
+    "subtitle": "1943",
+    "blurb": "打飞机补血，冲过航母。",
+    "hue": 200,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/sea-1943/",
+    "kind": "remake"
+  },
+  {
+    "n": 197,
+    "id": "star-force",
+    "title": "星力",
+    "subtitle": "FORCE",
+    "blurb": "地上那层也能轰。",
+    "hue": 210,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/star-force/",
     "kind": "remake"
   }
 ]

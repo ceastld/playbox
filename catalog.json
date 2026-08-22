@@ -2024,5 +2024,53 @@
     "dir": "g/xevi-run/",
     "url": "./g/xevi-run/",
     "kind": "remake"
+  },
+  {
+    "n": 189,
+    "id": "phoenix",
+    "title": "火鸟",
+    "subtitle": "PHOX",
+    "blurb": "打鸟，盾一开就顶回去。",
+    "hue": 16,
+    "tag": "复刻",
+    "dir": "g/phoenix/",
+    "url": "./g/phoenix/",
+    "kind": "remake"
+  },
+  {
+    "n": 190,
+    "id": "puzzle-pop",
+    "title": "泡连",
+    "subtitle": "POP",
+    "blurb": "同色泡泡连成串就爆。",
+    "hue": 320,
+    "tag": "复刻",
+    "dir": "g/puzzle-pop/",
+    "url": "./g/puzzle-pop/",
+    "kind": "remake"
+  },
+  {
+    "n": 191,
+    "id": "fantasy-sky",
+    "title": "幻想",
+    "subtitle": "ZONE",
+    "blurb": "商店买武装，一路打到头目。",
+    "hue": 280,
+    "tag": "复刻",
+    "dir": "g/fantasy-sky/",
+    "url": "./g/fantasy-sky/",
+    "kind": "remake"
+  },
+  {
+    "n": 192,
+    "id": "wolf-gun",
+    "title": "狼牙",
+    "subtitle": "WOLF",
+    "blurb": "机枪扫过去，换弹别停。",
+    "hue": 36,
+    "tag": "复刻",
+    "dir": "g/wolf-gun/",
+    "url": "./g/wolf-gun/",
+    "kind": "remake"
   }
 ]
