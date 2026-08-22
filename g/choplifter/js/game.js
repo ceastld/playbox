@@ -15,7 +15,10 @@
   const COMBO_WIN = 1.42;
   const BEST_KEY = 'playbox-choplifter-best';
   const MUTE_KEY = 'playbox-choplifter-mute';
-  const OPS = '方向 / WASD 飞 · 空格开火 · R 重开 · M 静音';
+  const AUTO_SPEED_KEY = 'playbox-choplifter-auto-speed';
+  const SPEED_LABELS = ['', '慢', '中', '快', '极快'];
+  const AUTO_SCALE = [1, 0.52, 0.78, 1, 3.4];
+  const OPS = '方向 / WASD 飞 · 空格开火 · A 自动 · R 重开 · M 静音';
   const REDUCE = typeof window !== 'undefined' && window.matchMedia
     ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
     : false;
@@ -91,6 +94,9 @@
   const btnOvModes = document.getElementById('ov-modes');
   const btnMute = document.getElementById('btn-mute');
   const btnRetry = document.getElementById('btn-retry');
+  const btnAuto = document.getElementById('btn-auto');
+  const speedEl = document.getElementById('speed');
+  const speedLab = document.getElementById('speed-lab');
   const scoreEl = document.getElementById('score');
   const bestEl = document.getElementById('best');
   const cargoEl = document.getElementById('cargo');
@@ -188,6 +194,14 @@
   };
 
   let inputSrc = 'key';
+  let autoOn = false;
+  let autoSpeed = 3;
+  let autoOvWait = 0;
+  let autoStuck = 0;
+  let autoLastX = BASE_X;
+  let autoLastY = GROUND - 16;
+  let autoLandX = BASE_X;
+  let autoWait = 0;
 
   function clamp(v, a, b) {
     return v < a ? a : v > b ? b : v;
@@ -426,8 +440,22 @@
     }
   };
 
+  function loadAutoSpeed() {
+    try {
+      const n = parseInt(localStorage.getItem(AUTO_SPEED_KEY) || '3', 10);
+      if (!isFinite(n) || n < 1 || n > 4) return 3;
+      return n;
+    } catch (err) {
+      return 3;
+    }
+  }
+  function saveAutoSpeed(n) {
+    try { localStorage.setItem(AUTO_SPEED_KEY, String(n)); } catch (err) { /* ignore */ }
+  }
+
   function hitStop(sec) {
     if (REDUCE || G.mode !== 'play') return;
+    if (autoOn && autoSpeed >= 4) return;
     G.stop = Math.max(G.stop, sec);
   }
   function kick(mag) {
@@ -884,13 +912,13 @@
       const lead = '救出 ' + G.saved + ' / ' + all + '。' + (G.lost === 0 ? '无一阵亡。' : '亡 ' + G.lost + '。') + recTxt;
       showOverlay('win', G.lost === 0 ? '全员归营' : '营救完成', lead);
       audio.win();
-      setHint('R 再飞 · 换模式回标题', 'hot');
+      setHint(autoOn ? '自动仍开着 · 即将再飞 · A 停下' : 'R 再飞 · 换模式回标题', 'hot');
     } else {
       const why = G.why || '坠机了';
       const lead = why + '。救出 ' + G.saved + '，亡 ' + G.lost + '。' + recTxt + ' R 立刻再飞。';
       showOverlay('lose', G.why === '人质全灭' ? '人质全灭' : '坠机了', lead);
       audio.lose();
-      setHint('R 重开 · 空格再飞', 'warn');
+      setHint(autoOn ? '自动仍开着 · 即将再飞 · A 停下' : 'R 重开 · 空格再飞', 'warn');
     }
     hud();
   }
@@ -941,7 +969,478 @@
     G.mult = keepMult;
     G.jetT = 1.4;
     hud();
-    setHint('降落接人 · 满员回营 · 空格开火', '');
+    setHint(autoOn ? '托管中 · 救人回营 · A 停下' : '降落接人 · 满员回营 · 空格开火', autoOn ? 'hot' : '');
+  }
+
+  function autoClearInput() {
+    keys.l = false;
+    keys.r = false;
+    keys.u = false;
+    keys.d = false;
+    pointer.down = false;
+    G.fireHold = false;
+  }
+
+  function syncAutoUi() {
+    if (!btnAuto) return;
+    btnAuto.classList.toggle('on', autoOn);
+    btnAuto.setAttribute('aria-pressed', autoOn ? 'true' : 'false');
+    btnAuto.textContent = autoOn ? '停下' : '自动';
+    btnAuto.setAttribute('aria-label', autoOn ? '停止自动' : '自动');
+  }
+
+  function syncSpeedUi() {
+    if (!speedEl) return;
+    speedEl.value = String(autoSpeed);
+    if (speedLab) speedLab.textContent = SPEED_LABELS[autoSpeed];
+    speedEl.title = SPEED_LABELS[autoSpeed];
+    speedEl.setAttribute('aria-valuetext', SPEED_LABELS[autoSpeed]);
+  }
+
+  function autoScale() {
+    if (!autoOn || G.mode !== 'play') return 1;
+    return AUTO_SCALE[autoSpeed] || 1;
+  }
+
+  function setAutoSpeed(n) {
+    n = parseInt(n, 10);
+    if (!isFinite(n) || n < 1 || n > 4) n = 3;
+    autoSpeed = n;
+    saveAutoSpeed(autoSpeed);
+    syncSpeedUi();
+  }
+
+  function autoPlayHint() {
+    if (autoOn) {
+      if (G.mode === 'play') setHint('托管中 · 救人回营 · A 停下', 'hot');
+      else if (G.mode === 'title') setHint('自动托管 · 即将开局 · A 停下', 'hot');
+      else setHint('自动仍开着 · 即将再飞 · A 停下', G.mode === 'win' ? 'hot' : 'warn');
+    }
+  }
+
+  function toggleAuto() {
+    autoOn = !autoOn;
+    autoOvWait = 0;
+    autoStuck = 0;
+    autoWait = 0;
+    autoClearInput();
+    syncAutoUi();
+    if (autoOn) {
+      audio.ensure();
+      autoPlayHint();
+      if (G.mode === 'title') startGame('rescue');
+    } else if (G.mode === 'play') {
+      setHint('飞向营房开火 · 降落接人 · 送回基地 H 坪', '');
+    } else if (G.mode === 'title') {
+      setHint('方向飞 · 空格开火 · 降落接人 · 送回基地 · A 自动', '');
+    } else {
+      setHint(G.mode === 'win' ? 'R 再飞 · 换模式回标题' : 'R 重开 · 空格再飞', G.mode === 'win' ? 'hot' : 'warn');
+    }
+  }
+
+  function tickAutoFlow(dt) {
+    if (!autoOn) return;
+    if (G.mode === 'title') {
+      autoOvWait += dt;
+      if (autoOvWait >= (autoSpeed >= 3 ? 0.25 : 0.5)) {
+        autoOvWait = 0;
+        startGame('rescue');
+      }
+      return;
+    }
+    if (G.mode === 'lose' || G.mode === 'win') {
+      autoOvWait += dt;
+      if (autoOvWait >= (autoSpeed >= 3 ? 0.7 : 1.15)) {
+        autoOvWait = 0;
+        startGame(G.kind || 'rescue');
+      }
+    }
+  }
+
+  function peakAhead(dir, dist) {
+    let peak = GROUND;
+    const step = 18;
+    for (let d = 0; d <= dist; d += step) {
+      const y = terrainY(G.hx + dir * d);
+      if (y < peak) peak = y;
+    }
+    return peak;
+  }
+
+  function isFlat(x) {
+    return terrainY(x) >= GROUND - 6
+      && terrainY(x - 18) >= GROUND - 10
+      && terrainY(x + 18) >= GROUND - 10;
+  }
+
+  function tankAt(x, rad) {
+    for (let i = 0; i < tanks.length; i++) {
+      const t = tanks[i];
+      if (t.hp > 0 && Math.abs(t.x - x) < rad) return t;
+    }
+    return null;
+  }
+
+  function pickLandX(preferX) {
+    let best = preferX;
+    let bestS = 1e9;
+    const padL = BASE_X - PAD_W * 0.5;
+    const padR = BASE_X + PAD_W * 0.5;
+    for (let d = 0; d <= 260; d += 10) {
+      for (let s = -1; s <= 1; s += 2) {
+        const x = preferX + s * d;
+        if (x < 60 || x > G.worldW - 60) continue;
+        if (x > padL - 8 && x < padR + 8 && Math.abs(preferX - BASE_X) > 80) continue;
+        if (!isFlat(x)) continue;
+        if (tankAt(x, 36)) continue;
+        const sScore = Math.abs(x - preferX) + (tankAt(x, 70) ? 50 : 0);
+        if (sScore < bestS) {
+          bestS = sScore;
+          best = x;
+        }
+      }
+      if (bestS < 16) break;
+    }
+    return clamp(best, 60, G.worldW - 60);
+  }
+
+  function hostageInLane(dir, reach) {
+    const lim = reach == null ? 240 : reach;
+    for (let i = 0; i < hostages.length; i++) {
+      const h = hostages[i];
+      if (h.state !== 'run') continue;
+      const dx = h.x - G.hx;
+      if (dx * dir <= 10) continue;
+      if (Math.abs(dx) > lim) continue;
+      if (G.hy > GROUND - 92) return true;
+    }
+    return false;
+  }
+
+  function liveNearest(arr, hpKey) {
+    let best = null;
+    let bestD = 1e9;
+    for (let i = 0; i < arr.length; i++) {
+      const o = arr[i];
+      if (hpKey && o[hpKey] <= 0) continue;
+      if (!hpKey && o.dead) continue;
+      const d = Math.abs(o.x - G.hx);
+      if (d < bestD) {
+        bestD = d;
+        best = o;
+      }
+    }
+    return best;
+  }
+
+  function nearestRunner() {
+    let best = null;
+    let bestD = 1e9;
+    for (let i = 0; i < hostages.length; i++) {
+      const h = hostages[i];
+      if (h.state !== 'run') continue;
+      const d = Math.abs(h.x - G.hx) + Math.abs(h.x - autoLandX) * 0.15;
+      if (d < bestD) {
+        bestD = d;
+        best = h;
+      }
+    }
+    return best;
+  }
+
+  function barracksPeople(b) {
+    for (let i = 0; i < hostages.length; i++) {
+      const h = hostages[i];
+      if (h.state === 'in' && Math.abs(h.x - b.x) < 48) return true;
+    }
+    return false;
+  }
+
+  function faceToward(x) {
+    const dir = x >= G.hx ? 1 : -1;
+    if (G.face === dir || G.lastSide === dir) return dir;
+    if (dir > 0) {
+      keys.r = true;
+      keys.l = false;
+    } else {
+      keys.l = true;
+      keys.r = false;
+    }
+    return 0;
+  }
+
+  function wantShoot(tx, ty, ground) {
+    const dir = tx >= G.hx ? 1 : -1;
+    const dx = Math.abs(tx - G.hx);
+    const dy = Math.abs((ty == null ? GROUND - 16 : ty) - G.hy);
+    if (dx < 28 || dx > 430) return false;
+    if (ground && (G.hy < 268 || G.hy > GROUND - 16)) return false;
+    if (ground && dy > 160) return false;
+    if (!ground && dy > 48) return false;
+    if (ground && hostageInLane(dir, dx + 20)) return false;
+    if (!faceToward(tx)) return false;
+    return true;
+  }
+
+  function autoSteer(tx, ty, land) {
+    const dx = tx - G.hx;
+    const dir = dx > 8 ? 1 : dx < -8 ? -1 : (G.vx > 12 ? 1 : G.vx < -12 ? -1 : G.lastSide || 1);
+    const peak = peakAhead(dir, land ? 70 : 160);
+    const attack = !land && ty >= 280 && Math.abs(dx) < 250;
+    const clearY = peak - (attack ? 42 : (isFlak() ? 86 : 72));
+    let wantY = ty;
+    if (!land) {
+      wantY = Math.min(ty, clearY);
+    } else {
+      if (Math.abs(dx) > 58 || terrainY(G.hx) < GROUND - 16 || peak < GROUND - 18) {
+        wantY = Math.min(clearY, isFlak() ? 170 : 200);
+      } else {
+        wantY = Math.max(ty, terrainY(tx) - 14);
+      }
+    }
+
+    if (G.landed) {
+      if (!land || Math.abs(dx) > 28) keys.u = true;
+      return;
+    }
+
+    if (G.hy > clearY + 8) {
+      keys.u = true;
+      if (Math.abs(dx) > 90 && G.hy > peak - 40) {
+        /* climb first over the ridge */
+        return;
+      }
+    }
+
+    if (land && Math.abs(dx) < 80) {
+      if (G.vx > 42) keys.l = true;
+      else if (G.vx < -42) keys.r = true;
+      else if (dx > 16) keys.r = true;
+      else if (dx < -16) keys.l = true;
+    } else {
+      if (dx > 22) {
+        if (G.vx > 110 && dx < 150) keys.l = true;
+        else keys.r = true;
+      } else if (dx < -22) {
+        if (G.vx < -110 && dx > -150) keys.r = true;
+        else keys.l = true;
+      } else {
+        if (G.vx > 28) keys.l = true;
+        else if (G.vx < -28) keys.r = true;
+      }
+    }
+
+    const gNow = terrainY(G.hx);
+    if (land) {
+      if (G.vy > 48) keys.u = true;
+      if (G.hy > gNow - 36 && G.vy > 28) keys.u = true;
+      if (G.hy > wantY + 12 && G.vy < 40 && Math.abs(dx) < 50) {
+        /* allow descent */
+      } else if (G.hy > wantY + 8) {
+        keys.u = true;
+      }
+      if (Math.abs(G.vx) > 70 && G.hy > gNow - 50) keys.u = true;
+    } else {
+      if (G.hy > wantY + 10 || G.vy > 26) keys.u = true;
+      else if (G.hy < wantY - 28 && G.vy < 40) keys.d = true;
+    }
+  }
+
+  function autoDodge() {
+    let threat = null;
+    let threatT = 0.62;
+    for (let i = 0; i < eshots.length; i++) {
+      const s = eshots[i];
+      const dx = G.hx - s.x;
+      const dy = G.hy - s.y;
+      const d = Math.hypot(dx, dy);
+      if (d > 170) continue;
+      const nd = Math.hypot(dx - s.vx * 0.12, dy - s.vy * 0.12);
+      if (nd >= d - 1) continue;
+      const sp = Math.hypot(s.vx, s.vy) || 1;
+      const t = d / sp;
+      if (t < threatT) {
+        threatT = t;
+        threat = s;
+      }
+    }
+    for (let i = 0; i < bombs.length; i++) {
+      const b = bombs[i];
+      const dx = G.hx - b.x;
+      const dy = G.hy - b.y;
+      const d = Math.hypot(dx, dy);
+      if (d < 90 && d < 140) {
+        if (!threat || d < 70) threat = b;
+      }
+    }
+    for (let i = 0; i < jets.length; i++) {
+      const j = jets[i];
+      if (j.hp <= 0) continue;
+      if (Math.abs(j.x - G.hx) < 70 && Math.abs(j.y - G.hy) < 28) {
+        threat = threat || j;
+        keys.u = true;
+        if (j.y <= G.hy) keys.d = false;
+      }
+    }
+    const tk = tankAt(G.hx, 40);
+    if (tk && G.hy > GROUND - 50) {
+      keys.u = true;
+      return true;
+    }
+    if (!threat) return false;
+    keys.u = true;
+    if (threat.x >= G.hx) keys.l = true;
+    else keys.r = true;
+    if (G.hy < 70) {
+      keys.u = false;
+      keys.d = true;
+    }
+    return true;
+  }
+
+  function autoCombat() {
+    let jet = null;
+    let jetD = 1e9;
+    for (let i = 0; i < jets.length; i++) {
+      const j = jets[i];
+      if (j.hp <= 0) continue;
+      const d = Math.abs(j.x - G.hx) + Math.abs(j.y - G.hy) * 0.45;
+      if (d < jetD) {
+        jetD = d;
+        jet = j;
+      }
+    }
+    if (jet && Math.abs(jet.y - G.hy) < 42 && Math.abs(jet.x - G.hx) < 320) {
+      if (wantShoot(jet.x, jet.y, false)) G.fireHold = true;
+      return jet;
+    }
+    const aa = liveNearest(aas, 'hp');
+    if (aa && Math.abs(aa.x - G.hx) < 280 && G.hy < GROUND - 40) {
+      if (wantShoot(aa.x, aa.y, true)) G.fireHold = true;
+    }
+    const tank = liveNearest(tanks, 'hp');
+    if (tank && Math.abs(tank.x - G.hx) < 260 && G.hy < GROUND - 30) {
+      if (wantShoot(tank.x, tank.y, true)) G.fireHold = true;
+    }
+    return null;
+  }
+
+  function autoThink() {
+    autoClearInput();
+    if (G.mode !== 'play' || G.deadT > 0) return;
+
+    const moved = Math.hypot(G.hx - autoLastX, G.hy - autoLastY);
+    if (moved < 7 && !G.landed) autoStuck += STEP;
+    else autoStuck = 0;
+    autoLastX = G.hx;
+    autoLastY = G.hy;
+    if (autoStuck > 2.2) {
+      keys.u = true;
+      if (G.hx > BASE_X + 280) keys.l = true;
+      else keys.r = true;
+      return;
+    }
+
+    const field = remainingField();
+    const onPad = G.landed && Math.abs(G.hx - BASE_X) < PAD_W * 0.48 && terrainY(G.hx) >= GROUND - 4;
+    const runner = nearestRunner();
+    const bar = liveNearest(barracks, null);
+
+    function standoffSide(x) {
+      if (G.hx <= x - 24) return -1;
+      if (G.hx >= x + 24) return 1;
+      return G.lastSide >= 0 ? -1 : 1;
+    }
+
+    let goal = 'fly';
+    let tx = autoLandX;
+    let ty = isFlak() ? 168 : 200;
+    let land = false;
+    let prey = null;
+
+    if (onPad && G.cargo > 0) {
+      goal = 'unload';
+    } else if (G.cargo >= G.cap || (G.cargo > 0 && field <= 0)) {
+      goal = 'return';
+      tx = BASE_X;
+      ty = GROUND - 12;
+      land = true;
+    } else if (runner && G.cargo < G.cap && (Math.abs(runner.x - G.hx) < 520 || G.landed)) {
+      goal = 'pickup';
+      autoLandX = pickLandX(runner.x);
+      tx = autoLandX;
+      ty = GROUND - 12;
+      prey = tankAt(autoLandX, 52) || tankAt(G.hx, 42);
+      if (!prey) {
+        const aa = liveNearest(aas, 'hp');
+        if (aa && Math.abs(aa.x - autoLandX) < 90) prey = aa;
+      }
+      land = !prey;
+    } else if (bar) {
+      goal = 'crack';
+      const side = standoffSide(bar.x);
+      const close = Math.abs(G.hx - bar.x) < 300;
+      tx = bar.x + side * (close ? 128 : 200);
+      ty = close ? 336 : 220;
+      land = false;
+      autoLandX = pickLandX(bar.x + (side > 0 ? 40 : -40));
+    } else if (G.cargo > 0) {
+      goal = 'return';
+      tx = BASE_X;
+      ty = GROUND - 12;
+      land = true;
+    } else {
+      const tank = liveNearest(tanks, 'hp');
+      const aa = liveNearest(aas, 'hp');
+      prey = tank && (!aa || Math.abs(tank.x - G.hx) <= Math.abs(aa.x - G.hx)) ? tank : aa;
+      if (prey) {
+        goal = 'hunt';
+        const side = standoffSide(prey.x);
+        tx = prey.x + side * 120;
+        ty = 348;
+      } else {
+        goal = 'return';
+        tx = BASE_X;
+        ty = GROUND - 12;
+        land = true;
+      }
+    }
+
+    if (goal === 'unload') {
+      autoCombat();
+      return;
+    }
+
+    if (goal === 'pickup' && prey && !G.landed) {
+      const side = standoffSide(prey.x);
+      autoSteer(prey.x + side * 120, 348, false);
+      if (wantShoot(prey.x, prey.y, true)) G.fireHold = true;
+      autoCombat();
+      autoDodge();
+      return;
+    }
+
+    autoSteer(tx, ty, land);
+
+    if (goal === 'crack' && bar) {
+      if (wantShoot(bar.x, GROUND - 20, true)) G.fireHold = true;
+    } else if (goal === 'hunt' && prey) {
+      if (wantShoot(prey.x, prey.y, true)) G.fireHold = true;
+    }
+
+    if (goal === 'pickup' && G.landed && Math.abs(G.hx - autoLandX) < 40) {
+      autoClearInput();
+      autoWait += STEP;
+      if (autoWait > 2.8 && !runner) keys.u = true;
+    } else if (goal === 'return' && onPad) {
+      autoClearInput();
+    } else {
+      autoWait = 0;
+    }
+
+    autoCombat();
+    const settling = land && Math.abs(G.hx - tx) < 55 && G.hy > terrainY(G.hx) - 62;
+    if (!settling && !(G.landed && (goal === 'pickup' || goal === 'return'))) autoDodge();
   }
 
   function wishDir() {
@@ -949,7 +1448,7 @@
     let r = keys.r;
     let u = keys.u;
     let d = keys.d;
-    if (inputSrc === 'ptr' && pointer.down) {
+    if (!autoOn && inputSrc === 'ptr' && pointer.down) {
       const px = pointer.x;
       const py = pointer.y;
       const hx = sx(G.hx);
@@ -1486,11 +1985,15 @@
   function update(dt) {
     G.clock += dt;
     G.t += dt;
+    if (autoOn) tickAutoFlow(dt);
     if (G.stop > 0) {
-      G.stop -= dt;
-      updateFx(dt);
-      audio.tickRotor(G.mode !== 'lose', G.thr);
-      return;
+      if (autoOn && autoSpeed >= 4 && G.mode === 'play') G.stop = 0;
+      else {
+        G.stop -= dt;
+        updateFx(dt);
+        audio.tickRotor(G.mode !== 'lose', G.thr);
+        return;
+      }
     }
     if (G.mode === 'title') {
       updateTitle(dt);
@@ -1503,6 +2006,7 @@
       audio.tickRotor(false, 0);
       return;
     }
+    if (autoOn && G.deadT <= 0) autoThink();
     if (G.deadT > 0) {
       G.deadT -= dt;
       updateTanks(dt);
@@ -2119,8 +2623,14 @@
     hideOverlay();
     hud();
     audio.start();
+    autoOvWait = 0;
+    autoStuck = 0;
+    autoWait = 0;
+    autoLandX = BASE_X + 80;
+    autoLastX = G.hx;
+    autoLastY = G.hy;
     toast(isFlak() ? '火网 · 高炮更密' : '救人 · 边哨', false, !isFlak());
-    setHint('飞向营房开火 · 降落接人 · 送回基地 H 坪', '');
+    setHint(autoOn ? '托管中 · 救人回营 · A 停下' : '飞向营房开火 · 降落接人 · 送回基地 H 坪', autoOn ? 'hot' : '');
     if (scoreEl) scoreEl.textContent = '0';
   }
 
@@ -2145,7 +2655,7 @@
     G.hy = 210;
     G.camX = BASE_X + 80;
     showOverlay('title', '救升', '降落救人，送回基地。舱位有限，坦克会碾人。别当成河袭——这是侧视救援，不是河道突围。');
-    setHint('方向飞 · 空格开火 · 降落接人 · 送回基地', '');
+    setHint(autoOn ? '自动托管 · 即将开局 · A 停下' : '方向飞 · 空格开火 · 降落接人 · 送回基地 · A 自动', autoOn ? 'hot' : '');
     hud();
   }
 
@@ -2164,31 +2674,43 @@
   function onKey(e, down) {
     const k = e.key;
     const code = e.code;
+    if (k === 'a' || k === 'A' || code === 'KeyA') {
+      e.preventDefault();
+      if (down && !e.repeat) toggleAuto();
+      return;
+    }
     const isMove = k === 'ArrowLeft' || k === 'ArrowRight' || k === 'ArrowUp' || k === 'ArrowDown'
-      || k === 'a' || k === 'A' || k === 'd' || k === 'D' || k === 'w' || k === 'W' || k === 's' || k === 'S';
+      || k === 'd' || k === 'D' || k === 'w' || k === 'W' || k === 's' || k === 'S';
     const space = k === ' ' || k === 'Spacebar' || code === 'Space';
 
-    if (k === 'ArrowLeft' || k === 'a' || k === 'A' || k === 'Left') {
-      keys.l = down;
-      if (down) inputSrc = 'key';
-    }
-    if (k === 'ArrowRight' || k === 'd' || k === 'D' || k === 'Right') {
-      keys.r = down;
-      if (down) inputSrc = 'key';
-    }
-    if (k === 'ArrowUp' || k === 'w' || k === 'W' || k === 'Up') {
-      keys.u = down;
-      if (down) inputSrc = 'key';
-    }
-    if (k === 'ArrowDown' || k === 's' || k === 'S' || k === 'Down') {
-      keys.d = down;
-      if (down) inputSrc = 'key';
+    if (!autoOn) {
+      if (k === 'ArrowLeft' || k === 'Left') {
+        keys.l = down;
+        if (down) inputSrc = 'key';
+      }
+      if (k === 'ArrowRight' || k === 'd' || k === 'D' || k === 'Right') {
+        keys.r = down;
+        if (down) inputSrc = 'key';
+      }
+      if (k === 'ArrowUp' || k === 'w' || k === 'W' || k === 'Up') {
+        keys.u = down;
+        if (down) inputSrc = 'key';
+      }
+      if (k === 'ArrowDown' || k === 's' || k === 'S' || k === 'Down') {
+        keys.d = down;
+        if (down) inputSrc = 'key';
+      }
+    } else if (!down) {
+      if (k === 'ArrowLeft' || k === 'Left') keys.l = false;
+      if (k === 'ArrowRight' || k === 'd' || k === 'D' || k === 'Right') keys.r = false;
+      if (k === 'ArrowUp' || k === 'w' || k === 'W' || k === 'Up') keys.u = false;
+      if (k === 'ArrowDown' || k === 's' || k === 'S' || k === 'Down') keys.d = false;
     }
 
     if (down && (isMove || space || k === 'Enter')) e.preventDefault();
 
     if (!down) {
-      if (space) G.fireHold = false;
+      if (space && !autoOn) G.fireHold = false;
       return;
     }
     if (k === 'm' || k === 'M') {
@@ -2200,6 +2722,7 @@
       restart();
       return;
     }
+    if (autoOn) return;
     if (k === '1' && G.mode === 'title') {
       audio.ensure();
       startGame('rescue');
@@ -2228,6 +2751,7 @@
     canvas.addEventListener('pointerdown', function (e) {
       audio.ensure();
       e.preventDefault();
+      if (autoOn) return;
       pointer.down = true;
       pointer.hover = true;
       pointer.id = e.pointerId;
@@ -2243,6 +2767,7 @@
       }
     });
     canvas.addEventListener('pointermove', function (e) {
+      if (autoOn) return;
       pointer.x = clamp(pointerVirtX(e), 0, VW);
       pointer.y = pointerVirtY(e);
       if (!pointer.down && e.pointerType === 'mouse') pointer.hover = true;
@@ -2266,6 +2791,7 @@
     if (!el) return;
     const set = function (v, e) {
       if (e) e.preventDefault();
+      if (autoOn) return;
       if (isFire) G.fireHold = v;
       else keys[key] = v;
       inputSrc = 'pad';
@@ -2273,6 +2799,7 @@
     };
     el.addEventListener('pointerdown', function (e) {
       audio.ensure();
+      if (autoOn) return;
       set(true, e);
       if (isFire && G.mode === 'play') fireGun();
       if (el.setPointerCapture) {
@@ -2297,13 +2824,17 @@
     let dt = t - last;
     last = t;
     if (dt > 0.05) dt = 0.05;
-    acc += dt;
+    const turbo = autoOn && autoSpeed >= 4 && G.mode === 'play';
+    if (turbo) G.stop = 0;
+    acc += dt * autoScale();
     let n = 0;
-    while (acc >= STEP && n < 5) {
+    const maxSteps = turbo ? 16 : 5;
+    while (acc >= STEP && n < maxSteps) {
       update(STEP);
       acc -= STEP;
       n += 1;
     }
+    if (acc > STEP * 4) acc = 0;
     draw();
   }
 
@@ -2315,6 +2846,9 @@
 
   loadBest();
   initMute();
+  autoSpeed = loadAutoSpeed();
+  syncSpeedUi();
+  syncAutoUi();
   goTitle();
   resize();
   bindPointer();
@@ -2354,6 +2888,12 @@
       audio.ensure();
       audio.setMuted(!audio.muted);
     });
+  }
+  if (btnAuto) btnAuto.addEventListener('click', toggleAuto);
+  if (speedEl) {
+    const onSpeed = function () { setAutoSpeed(speedEl.value); };
+    speedEl.addEventListener('input', onSpeed);
+    speedEl.addEventListener('change', onSpeed);
   }
 
   window.addEventListener('keydown', function (e) { onKey(e, true); });
