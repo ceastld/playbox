@@ -1587,7 +1587,7 @@
     "blurb": "在金字塔上跳，把格子全翻完。",
     "hue": 28,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/cube-hop/",
     "kind": "remake"
   },
@@ -1599,7 +1599,7 @@
     "blurb": "敲冰块往上爬，别掉下去。",
     "hue": 196,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/ice-peak/",
     "kind": "remake"
   },
@@ -1637,6 +1637,30 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/scram-run/",
+    "kind": "remake"
+  },
+  {
+    "n": 146,
+    "id": "berzerk-run",
+    "title": "狂廊",
+    "subtitle": "BZERK",
+    "blurb": "迷宫里边跑边打，别被机器人围住。",
+    "hue": 0,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/berzerk-run/",
+    "kind": "remake"
+  },
+  {
+    "n": 147,
+    "id": "time-loop",
+    "title": "时航",
+    "subtitle": "PILOT",
+    "blurb": "绕圈打飞机，穿越年代。",
+    "hue": 262,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/time-loop/",
     "kind": "remake"
   }
 ]
