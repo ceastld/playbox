@@ -17,9 +17,17 @@
   const KEY_MAX = 840;
   const BEST_KEY = 'playbox-kaboom-catch-best';
   const MUTE_KEY = 'playbox-kaboom-catch-mute';
-  const REDUCE = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const OPS_TITLE = '指针 / ← → 移动 · 漏接少一桶 · 暴雨列更多 · M 静音';
-  const OPS_PLAY = '指针移动 · ← → / A D 移动 · 漏接少一桶 · R 重开 · M 静音';
+  const AUTO_SPEED_KEY = 'playbox-kaboom-catch-auto-speed';
+  const SPEED_LABELS = ['', '慢', '中', '快', '极快'];
+  const AUTO_MAX_V = [0, 560, 780, 1200, 2800];
+  const AUTO_FOLLOW = [0, 9, 16, 32, 90];
+  const AUTO_SWAY = [0, 16, 10, 5, 0];
+  const hasDom = typeof document !== 'undefined';
+  const REDUCE = typeof window !== 'undefined' && window.matchMedia
+    ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    : false;
+  const OPS_TITLE = '指针 / ← → 移动 · A 自动 · 漏接少一桶 · 暴雨列更多 · M 静音';
+  const OPS_PLAY = '指针移动 · ← → / D 移动 · A 自动 · 漏接少一桶 · R 重开 · M 静音';
   const EXTRAS = [1000, 3000, 5000, 7000, 9000, 11000, 13000, 15000];
   const GROUPS = [
     { n: 10, pts: 1, fall: 228, drop: 0.78, walk: 168 },
@@ -32,30 +40,37 @@
     { n: 150, pts: 8, fall: 792, drop: 0.175, walk: 624 }
   ];
 
-  const canvas = document.getElementById('c');
-  const ctx = canvas.getContext('2d', { alpha: false });
-  const overlay = document.getElementById('overlay');
-  const panel = document.getElementById('panel');
-  const ovKicker = document.getElementById('ov-kicker');
-  const ovTitle = document.getElementById('ov-title');
-  const ovLead = document.getElementById('ov-lead');
-  const ovOps = document.getElementById('ov-ops');
-  const btnClassic = document.getElementById('btn-classic');
-  const btnStorm = document.getElementById('btn-storm');
-  const btnMute = document.getElementById('btn-mute');
-  const btnRetry = document.getElementById('btn-retry');
-  const scoreEl = document.getElementById('score');
-  const scoreBox = document.getElementById('score-box');
-  const scoreAdd = document.getElementById('score-add');
-  const bestEl = document.getElementById('best');
-  const comboEl = document.getElementById('combo');
-  const comboBox = document.getElementById('combo-box');
-  const stageLabel = document.getElementById('stage-label');
-  const tagLabel = document.getElementById('tag-label');
-  const waveLabel = document.getElementById('wave-label');
-  const pipsEl = document.getElementById('pips');
-  const toastEl = document.getElementById('toast');
-  const hintEl = document.getElementById('hint');
+  function el(id) {
+    return hasDom ? document.getElementById(id) : null;
+  }
+
+  const canvas = el('c');
+  const ctx = canvas ? canvas.getContext('2d', { alpha: false }) : null;
+  const overlay = el('overlay');
+  const panel = el('panel');
+  const ovKicker = el('ov-kicker');
+  const ovTitle = el('ov-title');
+  const ovLead = el('ov-lead');
+  const ovOps = el('ov-ops');
+  const btnClassic = el('btn-classic');
+  const btnStorm = el('btn-storm');
+  const btnMute = el('btn-mute');
+  const btnRetry = el('btn-retry');
+  const btnAuto = el('btn-auto');
+  const speedEl = el('speed');
+  const speedLab = el('speed-lab');
+  const scoreEl = el('score');
+  const scoreBox = el('score-box');
+  const scoreAdd = el('score-add');
+  const bestEl = el('best');
+  const comboEl = el('combo');
+  const comboBox = el('combo-box');
+  const stageLabel = el('stage-label');
+  const tagLabel = el('tag-label');
+  const waveLabel = el('wave-label');
+  const pipsEl = el('pips');
+  const toastEl = el('toast');
+  const hintEl = el('hint');
 
   const view = { w: 1, h: 1, dpr: 1, scale: 1, ox: 0, oy: 0 };
   const keys = { l: false, r: false };
@@ -119,6 +134,10 @@
   let addTok = 0;
   let last = 0;
   let acc = 0;
+  let autoOn = false;
+  let autoSpeed = 3;
+  let autoCommitX = 0;
+  let autoCommitT = 0;
 
   function clamp(v, a, b) {
     return v < a ? a : v > b ? b : v;
@@ -198,6 +217,7 @@
     muted: false,
     noiseBuf: null,
     ensure: function () {
+      if (!hasDom || typeof window === 'undefined') return;
       if (!this.ctx) {
         const AC = window.AudioContext || window.webkitAudioContext;
         if (!AC) return;
@@ -211,9 +231,11 @@
     setMuted: function (m) {
       this.muted = m;
       if (this.master) this.master.gain.value = m ? 0 : 0.34;
-      btnMute.textContent = m ? '静' : '声';
-      btnMute.classList.toggle('muted', m);
-      btnMute.setAttribute('aria-label', m ? '取消静音' : '静音');
+      if (btnMute) {
+        btnMute.textContent = m ? '静' : '声';
+        btnMute.classList.toggle('muted', m);
+        btnMute.setAttribute('aria-label', m ? '取消静音' : '静音');
+      }
       try {
         localStorage.setItem(MUTE_KEY, m ? '1' : '0');
       } catch (e) { /* ignore */ }
@@ -312,8 +334,26 @@
     }
   };
 
+  function loadAutoSpeed() {
+    try {
+      const n = parseInt(localStorage.getItem(AUTO_SPEED_KEY) || '3', 10);
+      if (!isFinite(n) || n < 1 || n > 4) return 3;
+      return n;
+    } catch (e) {
+      return 3;
+    }
+  }
+
+  function saveAutoSpeed(n) {
+    try {
+      localStorage.setItem(AUTO_SPEED_KEY, String(n));
+    } catch (e) { /* ignore */ }
+  }
+
+  autoSpeed = loadAutoSpeed();
+
   try {
-    if (localStorage.getItem(MUTE_KEY) === '1') audio.setMuted(true);
+    if (typeof localStorage !== 'undefined' && localStorage.getItem(MUTE_KEY) === '1') audio.setMuted(true);
   } catch (e) { /* ignore */ }
 
   function currentBest() {
@@ -360,28 +400,32 @@
     if (G.mode !== 'play' || n <= 0) return;
     G.score += n;
     considerBest();
-    scoreEl.textContent = String(G.score);
-    bestEl.textContent = String(currentBest());
-    scoreBox.classList.remove('flash');
-    void scoreBox.offsetWidth;
-    scoreBox.classList.add('flash');
+    if (scoreEl) scoreEl.textContent = String(G.score);
+    if (bestEl) bestEl.textContent = String(currentBest());
+    if (scoreBox) {
+      scoreBox.classList.remove('flash');
+      void scoreBox.offsetWidth;
+      scoreBox.classList.add('flash');
+    }
     addTok += 1;
     const tok = addTok;
-    scoreAdd.hidden = false;
-    scoreAdd.textContent = '+' + n;
-    scoreAdd.style.animation = 'none';
-    void scoreAdd.offsetWidth;
-    scoreAdd.style.animation = '';
-    setTimeout(function () {
-      if (tok === addTok) scoreAdd.hidden = true;
-    }, 700);
+    if (scoreAdd) {
+      scoreAdd.hidden = false;
+      scoreAdd.textContent = '+' + n;
+      scoreAdd.style.animation = 'none';
+      void scoreAdd.offsetWidth;
+      scoreAdd.style.animation = '';
+      setTimeout(function () {
+        if (tok === addTok && scoreAdd) scoreAdd.hidden = true;
+      }, 700);
+    }
     pop(x, y - 18, '+' + n, n >= 8 ? '#ffe36b' : '#ffd0b0');
     checkExtra();
   }
 
   function setComboHud() {
-    comboEl.textContent = '×' + G.combo;
-    if (G.combo >= 2) {
+    if (comboEl) comboEl.textContent = '×' + G.combo;
+    if (G.combo >= 2 && comboBox) {
       comboBox.classList.remove('hot');
       void comboBox.offsetWidth;
       comboBox.classList.add('hot');
@@ -389,27 +433,29 @@
   }
 
   function toast(msg, kind) {
+    G.toastT = 1.6;
+    if (!toastEl) return;
     toastEl.textContent = msg;
     toastEl.classList.toggle('warn', kind === 'warn');
     toastEl.classList.toggle('gold', kind === 'gold');
     toastEl.classList.remove('hidden');
-    G.toastT = 1.6;
   }
 
   function hideToast() {
-    toastEl.classList.add('hidden');
     G.toastT = 0;
+    if (toastEl) toastEl.classList.add('hidden');
   }
 
   function renderPips() {
+    if (!pipsEl) return;
     if (pips.length !== MAX_BUCKETS) {
       pipsEl.innerHTML = '';
       pips.length = 0;
       for (let i = 0; i < MAX_BUCKETS; i++) {
-        const el = document.createElement('i');
-        el.className = 'pip on';
-        pipsEl.appendChild(el);
-        pips.push(el);
+        const pip = document.createElement('i');
+        pip.className = 'pip on';
+        pipsEl.appendChild(pip);
+        pips.push(pip);
       }
     }
     for (let i = 0; i < MAX_BUCKETS; i++) {
@@ -420,26 +466,39 @@
   }
 
   function syncHud() {
-    scoreEl.textContent = String(G.score);
-    bestEl.textContent = String(currentBest());
-    comboEl.textContent = '×' + G.combo;
+    if (scoreEl) scoreEl.textContent = String(G.score);
+    if (bestEl) bestEl.textContent = String(currentBest());
+    if (comboEl) comboEl.textContent = '×' + G.combo;
     const g = groupNow();
     if (G.mode === 'title') {
-      stageLabel.textContent = '接弹';
-      stageLabel.className = '';
-      tagLabel.textContent = 'KABOOM';
-      tagLabel.className = '';
-      waveLabel.textContent = '—';
+      if (stageLabel) {
+        stageLabel.textContent = '接弹';
+        stageLabel.className = '';
+      }
+      if (tagLabel) {
+        tagLabel.textContent = 'KABOOM';
+        tagLabel.className = '';
+      }
+      if (waveLabel) waveLabel.textContent = '—';
     } else {
-      stageLabel.textContent = '第 ' + (G.group + 1) + ' 波';
-      stageLabel.className = G.group >= 5 ? 'hot' : (G.buckets === 1 ? 'warn' : '');
-      tagLabel.textContent = G.kind === 'storm' ? 'STORM' : 'CLASSIC';
-      tagLabel.className = G.buckets === 1 ? 'warn' : '';
-      waveLabel.textContent = g.pts + '分/弹';
+      if (stageLabel) {
+        stageLabel.textContent = '第 ' + (G.group + 1) + ' 波';
+        stageLabel.className = G.group >= 5 ? 'hot' : (G.buckets === 1 ? 'warn' : '');
+      }
+      if (tagLabel) {
+        tagLabel.textContent = G.kind === 'storm' ? 'STORM' : 'CLASSIC';
+        tagLabel.className = G.buckets === 1 ? 'warn' : '';
+      }
+      if (waveLabel) waveLabel.textContent = g.pts + '分/弹';
     }
-    if (G.mode === 'play') {
-      hintEl.textContent = G.buckets === 1 ? '最后一桶 · 别漏' : OPS_PLAY;
-      hintEl.className = G.buckets === 1 ? 'hint warn' : 'hint';
+    if (G.mode === 'play' && hintEl) {
+      if (autoOn) {
+        hintEl.textContent = G.buckets === 1 ? '自动 · 最后一桶' : '自动托管 · A 停下';
+        hintEl.className = G.buckets === 1 ? 'hint warn' : 'hint';
+      } else {
+        hintEl.textContent = G.buckets === 1 ? '最后一桶 · 别漏' : OPS_PLAY;
+        hintEl.className = G.buckets === 1 ? 'hint warn' : 'hint';
+      }
     }
     renderPips();
   }
@@ -551,6 +610,7 @@
     bombs.push({
       x: x,
       y: SPAWN_Y,
+      vx: 0,
       vy: fallSpeed(),
       fuse: Math.random() * TAU,
       sparkT: 0,
@@ -752,6 +812,253 @@
     }
   }
 
+  function catchHalf() {
+    return bucketW() * 0.5 - 5 + BOMB_R * 0.4;
+  }
+
+  function bombTimeToMouth(b) {
+    const vy = Math.max(8, b.vy || fallSpeed());
+    const extra = b.extraT || 0;
+    const n = G.buckets;
+    if (n <= 0) return extra + (GROUND - 6 + BOMB_R - b.y) / vy;
+    for (let i = n - 1; i >= 0; i--) {
+      const g = bucketGeom(i);
+      const yHit = g.y + 1 - BOMB_R;
+      const t = (yHit - b.y) / vy;
+      if (t >= -0.04) return extra + Math.max(0, t);
+    }
+    return extra + Math.max(0, (GROUND - 6 + BOMB_R - b.y) / vy);
+  }
+
+  function bombInterceptX(b, t) {
+    const vx = b.vx || 0;
+    return clamp(b.x + vx * Math.max(0, t - (b.extraT || 0)), pxMin(), pxMax());
+  }
+
+  function liveBombs() {
+    const out = [];
+    for (let i = 0; i < bombs.length; i++) {
+      if (bombs[i].blast >= 0) continue;
+      out.push(bombs[i]);
+    }
+    return out;
+  }
+
+  function ghostDrop() {
+    if (G.booming || G.lock > 0) return null;
+    const tx = colX(bomber.col);
+    const walk = Math.max(40, walkSpeed());
+    const tWalk = Math.abs(tx - bomber.x) / walk;
+    const tDrop = Math.max(0, bomber.dropCd) + tWalk;
+    return {
+      x: tx,
+      y: SPAWN_Y,
+      vx: 0,
+      vy: fallSpeed(),
+      blast: -1,
+      ghost: true,
+      extraT: tDrop
+    };
+  }
+
+  function threatList() {
+    const live = liveBombs();
+    const ghost = ghostDrop();
+    if (ghost) live.push(ghost);
+    const items = [];
+    for (let i = 0; i < live.length; i++) {
+      const b = live[i];
+      const t = bombTimeToMouth(b);
+      items.push({ b: b, t: t, x: bombInterceptX(b, t), ghost: !!b.ghost });
+    }
+    return items;
+  }
+
+  function autoMaxV() {
+    return AUTO_MAX_V[autoSpeed] || 1200;
+  }
+
+  function pickNearestItem(items, px, half) {
+    const vReach = Math.max(autoMaxV(), KEY_MAX, 980);
+    let best = null;
+    let bestT = 1e9;
+    let fallback = null;
+    let fbT = 1e9;
+    for (let i = 0; i < items.length; i++) {
+      const it = items[i];
+      if (it.ghost) continue;
+      if (it.t < fbT) {
+        fbT = it.t;
+        fallback = it;
+      }
+      const need = Math.max(0, Math.abs(it.x - px) - half * 0.88);
+      if (need / vReach <= it.t + 0.05 && it.t < bestT) {
+        bestT = it.t;
+        best = it;
+      }
+    }
+    return best || fallback;
+  }
+
+  function stormClusterX(items, urgent, half) {
+    const n = cols();
+    const dens = [];
+    for (let i = 0; i < n; i++) dens.push({ w: 0, xw: 0, minT: 1e9 });
+    for (let i = 0; i < items.length; i++) {
+      const it = items[i];
+      const col = nearestCol(it.x);
+      const w = (it.ghost ? 0.32 : 1) * (1.2 / (0.11 + it.t) + (it.t < 0.34 ? 2.6 : 0.55));
+      dens[col].w += w;
+      dens[col].xw += it.x * w;
+      if (it.t < dens[col].minT) dens[col].minT = it.t;
+    }
+    let best = -1;
+    let bestX = WORLD_W * 0.5;
+    for (let i = 0; i < n; i++) {
+      const a = dens[i];
+      const b = i + 1 < n ? dens[i + 1] : null;
+      const tw = a.w + (b ? b.w : 0);
+      if (tw > best) {
+        best = tw;
+        bestX = tw > 0 ? (a.xw + (b ? b.xw : 0)) / tw : colX(i);
+      }
+    }
+    if (urgent && urgent.t < 0.3 && Math.abs(bestX - urgent.x) > half * 0.92) {
+      return urgent.x;
+    }
+    return bestX;
+  }
+
+  function autoPickTarget() {
+    const lo = pxMin();
+    const hi = pxMax();
+    const half = catchHalf();
+    const items = threatList();
+    const nearest = pickNearestItem(items, G.px, half);
+    const real = [];
+    for (let i = 0; i < items.length; i++) if (!items[i].ghost) real.push(items[i]);
+
+    let target;
+    if (!real.length) {
+      const ghost = items.length ? items[0] : null;
+      const hunt = bomber.x + bomber.face * 36 + Math.sin(G.clock * 3.05) * 22;
+      target = ghost ? lerp(ghost.x, hunt, 0.28) : hunt;
+    } else if (G.kind === 'storm' && real.length >= 2) {
+      target = stormClusterX(items, nearest, half);
+    } else {
+      target = nearest ? nearest.x : bomber.x;
+    }
+
+    const urgent = nearest;
+    if (urgent && urgent.t < 0.42) {
+      if (autoCommitT > 0 && Math.abs(autoCommitX - urgent.x) < half * 1.2) {
+        target = autoCommitX;
+      } else {
+        target = urgent.t < 0.26 || G.kind !== 'storm' ? urgent.x : target;
+        if (Math.abs(target - urgent.x) > half * 0.9) target = urgent.x;
+        autoCommitX = target;
+        autoCommitT = 0.18;
+      }
+    }
+
+    const sway = AUTO_SWAY[autoSpeed] || 0;
+    const tLeft = urgent ? urgent.t : 1;
+    if (sway && tLeft > 0.72 && real.length) {
+      target += Math.sin(G.clock * 2.4) * sway;
+    } else if (!real.length && sway) {
+      target += Math.sin(G.clock * 2.15) * (sway * 0.7 + 8);
+    }
+    return clamp(target, lo, hi);
+  }
+
+  function autoSteer(dt) {
+    autoCommitT = Math.max(0, autoCommitT - dt);
+    const lo = pxMin();
+    const hi = pxMax();
+    if (G.booming) {
+      G.vx *= Math.exp(-dt * 8);
+      return;
+    }
+    const target = autoPickTarget();
+    const maxV = autoMaxV();
+    const follow = AUTO_FOLLOW[autoSpeed] || 32;
+    const half = catchHalf();
+    const items = liveBombs();
+    let tLeft = 1.2;
+    let landX = target;
+    for (let i = 0; i < items.length; i++) {
+      const t = bombTimeToMouth(items[i]);
+      if (t < tLeft) {
+        tLeft = t;
+        landX = bombInterceptX(items[i], t);
+      }
+    }
+    let cap = maxV * dt;
+    if (tLeft < 0.44) {
+      const need = Math.max(0, Math.abs(landX - G.px) - half * 0.72);
+      const panic = Math.max(maxV, need / Math.max(tLeft, 0.012));
+      cap = panic * dt;
+    }
+    if (autoSpeed >= 4 && (tLeft < 0.62 || !items.length)) {
+      G.vx = (target - G.px) / Math.max(dt, 0.001);
+      G.px = clamp(target, lo, hi);
+      return;
+    }
+    const dead = tLeft < 0.4 ? 2.4 : 6;
+    if (Math.abs(target - G.px) <= dead && tLeft < 0.52) {
+      G.vx *= Math.exp(-dt * 14);
+      if (Math.abs(G.vx) < 8) G.vx = 0;
+      return;
+    }
+    let nx = lerp(G.px, target, 1 - Math.exp(-follow * dt));
+    if (nx - G.px > cap) nx = G.px + cap;
+    else if (nx - G.px < -cap) nx = G.px - cap;
+    if (tLeft < 0.12) nx = G.px + clamp(target - G.px, -cap, cap);
+    G.vx = (nx - G.px) / Math.max(dt, 0.001);
+    G.px = clamp(nx, lo, hi);
+  }
+
+  function syncAutoUi() {
+    if (!btnAuto) return;
+    btnAuto.classList.toggle('on', autoOn);
+    btnAuto.setAttribute('aria-pressed', autoOn ? 'true' : 'false');
+    btnAuto.textContent = autoOn ? '停下' : '自动';
+    btnAuto.setAttribute('aria-label', autoOn ? '停止自动' : '自动');
+  }
+
+  function syncSpeedUi() {
+    if (!speedEl) return;
+    speedEl.value = String(autoSpeed);
+    if (speedLab) speedLab.textContent = SPEED_LABELS[autoSpeed];
+    speedEl.title = SPEED_LABELS[autoSpeed];
+    speedEl.setAttribute('aria-valuetext', SPEED_LABELS[autoSpeed]);
+  }
+
+  function setAutoSpeed(n) {
+    n = parseInt(n, 10);
+    if (!(n >= 1 && n <= 4)) n = 3;
+    autoSpeed = n;
+    saveAutoSpeed(autoSpeed);
+    syncSpeedUi();
+  }
+
+  function toggleAuto() {
+    autoOn = !autoOn;
+    keys.l = false;
+    keys.r = false;
+    autoCommitT = 0;
+    syncAutoUi();
+    if (autoOn) {
+      G.steer = 'auto';
+      audio.ensure();
+      if (G.mode === 'title') startRun('classic');
+      else if (G.mode === 'play') syncHud();
+    } else {
+      G.steer = pointer.over ? 'ptr' : 'key';
+      if (G.mode === 'play') syncHud();
+    }
+  }
+
   function updateBuckets(dt) {
     const lo = pxMin();
     const hi = pxMax();
@@ -770,7 +1077,9 @@
       G.px = lerp(G.px, clamp(target, lo, hi), 1 - Math.exp(-dt * 5.4));
       G.vx = (clamp(target, lo, hi) - G.px) / Math.max(dt, 0.001) * 0.15;
     } else if (G.mode === 'play') {
-      if (G.steer === 'ptr' && pointer.over) {
+      if (autoOn) {
+        autoSteer(dt);
+      } else if (G.steer === 'ptr' && pointer.over) {
         const nx = clamp(pointer.x, lo, hi);
         const k = 1 - Math.exp(-dt * 26);
         const prev = G.px;
@@ -818,6 +1127,7 @@
       if (G.booming) break;
       const b = bombs[i];
       b.vy = fall;
+      b.x += (b.vx || 0) * dt;
       b.y += b.vy * dt;
       b.fuse += dt * 18;
       b.sparkT -= dt;
@@ -940,7 +1250,8 @@
     G.tilt = 0;
     G.squash = [0, 0, 0];
     G.wet = [0, 0, 0];
-    G.steer = pointer.over ? 'ptr' : 'key';
+    G.steer = autoOn ? 'auto' : (pointer.over ? 'ptr' : 'key');
+    autoCommitT = 0;
     bomber.x = WORLD_W * 0.5;
     bomber.col = (cols() / 2) | 0;
     bomber.face = 1;
@@ -948,15 +1259,15 @@
     bomber.dropCd = 0.42;
     bomber.hold = true;
     clearField();
-    hideOverlay();
+    if (hasDom) hideOverlay();
     hideToast();
-    scoreEl.textContent = '0';
-    comboEl.textContent = '×0';
-    bestEl.textContent = String(currentBest());
+    if (scoreEl) scoreEl.textContent = '0';
+    if (comboEl) comboEl.textContent = '×0';
+    if (bestEl) bestEl.textContent = String(currentBest());
     audio.start();
     toast(G.kind === 'storm' ? '暴雨 · 十二列' : '经典 · 八列', G.kind === 'storm' ? 'gold' : '');
     syncHud();
-    canvas.focus();
+    if (canvas && canvas.focus) canvas.focus();
   }
 
   function endRun() {
@@ -975,33 +1286,38 @@
   }
 
   function hideOverlay() {
-    overlay.classList.add('hidden');
+    if (overlay) overlay.classList.add('hidden');
   }
 
   function showOverlay() {
+    if (!overlay || !panel) return;
     overlay.classList.remove('hidden');
     panel.classList.remove('win', 'lose');
     if (G.mode === 'title') {
-      ovKicker.textContent = 'KABOOM';
-      ovTitle.textContent = '接弹';
-      ovLead.innerHTML = '炸弹往下落，水桶往上接。<br />接得越稳越快，漏一发少一桶。';
-      ovOps.textContent = OPS_TITLE;
-      btnClassic.textContent = '经典';
-      btnStorm.textContent = '暴雨';
-      hintEl.textContent = '指针移动 · 接住炸弹 · R 重开';
-      hintEl.className = 'hint';
+      if (ovKicker) ovKicker.textContent = 'KABOOM';
+      if (ovTitle) ovTitle.textContent = '接弹';
+      if (ovLead) ovLead.innerHTML = '炸弹往下落，水桶往上接。<br />接得越稳越快，漏一发少一桶。';
+      if (ovOps) ovOps.textContent = OPS_TITLE;
+      if (btnClassic) btnClassic.textContent = '经典';
+      if (btnStorm) btnStorm.textContent = '暴雨';
+      if (hintEl) {
+        hintEl.textContent = '指针移动 · 接住炸弹 · A 自动 · R 重开';
+        hintEl.className = 'hint';
+      }
     } else {
       panel.classList.add(G.newBest ? 'win' : 'lose');
-      ovKicker.textContent = G.newBest ? 'RECORD' : 'KABOOM';
-      ovTitle.textContent = G.newBest ? '新纪录' : '炸了';
-      ovLead.textContent = '接住 ' + G.caughtAll + ' · 漏 ' + G.missed + ' · 最高连 ×' + G.maxCombo + ' · 第 ' + (G.group + 1) + ' 波 · ' + G.score + ' 分';
-      ovOps.textContent = OPS_PLAY;
-      btnClassic.textContent = G.kind === 'classic' ? '再接' : '经典';
-      btnStorm.textContent = G.kind === 'storm' ? '再接' : '暴雨';
-      hintEl.textContent = G.newBest ? '新纪录已写入' : '落地即炸 · R 再来';
-      hintEl.className = G.newBest ? 'hint hot' : 'hint warn';
+      if (ovKicker) ovKicker.textContent = G.newBest ? 'RECORD' : 'KABOOM';
+      if (ovTitle) ovTitle.textContent = G.newBest ? '新纪录' : '炸了';
+      if (ovLead) ovLead.textContent = '接住 ' + G.caughtAll + ' · 漏 ' + G.missed + ' · 最高连 ×' + G.maxCombo + ' · 第 ' + (G.group + 1) + ' 波 · ' + G.score + ' 分';
+      if (ovOps) ovOps.textContent = OPS_PLAY;
+      if (btnClassic) btnClassic.textContent = G.kind === 'classic' ? '再接' : '经典';
+      if (btnStorm) btnStorm.textContent = G.kind === 'storm' ? '再接' : '暴雨';
+      if (hintEl) {
+        hintEl.textContent = G.newBest ? '新纪录已写入' : '落地即炸 · R 再来';
+        hintEl.className = G.newBest ? 'hint hot' : 'hint warn';
+      }
     }
-    bestEl.textContent = String(currentBest());
+    if (bestEl) bestEl.textContent = String(currentBest());
   }
 
   function roundRect(x, y, w, h, r) {
@@ -1433,7 +1749,7 @@
     if (dt > 0.08) dt = 0.08;
     G.t = t;
     if (!G.paused) {
-      if (G.stop > 0 && !REDUCE) {
+      if (G.stop > 0 && !REDUCE && !(autoOn && autoSpeed >= 4)) {
         G.stop -= dt;
       } else {
         acc += dt;
@@ -1454,6 +1770,97 @@
     requestAnimationFrame(loop);
   }
 
+  function selfCheckAuto() {
+    function runKind(kind, seconds) {
+      const oldRand = Math.random;
+      let seed = kind === 'storm' ? 20260822 : 424242;
+      Math.random = function () {
+        seed = (seed * 1664525 + 1013904223) >>> 0;
+        return seed / 4294967296;
+      };
+      autoOn = true;
+      autoSpeed = 4;
+      startRun(kind);
+      G.lock = 0;
+      bomber.dropCd = 0;
+      let steps = 0;
+      const limit = Math.ceil(seconds * 60);
+      let reversals = 0;
+      let lastSign = 0;
+      let travel = 0;
+      let lastPx = G.px;
+      while (steps < limit && G.mode === 'play' && G.buckets > 0) {
+        let lowBomb = false;
+        for (let i = 0; i < bombs.length; i++) {
+          if (bombs[i].blast < 0 && bombs[i].y > 300) lowBomb = true;
+        }
+        updatePlay(STEP);
+        const dx = G.px - lastPx;
+        travel += Math.abs(dx);
+        const sign = dx > 0.7 ? 1 : dx < -0.7 ? -1 : 0;
+        if (lowBomb && sign && lastSign && sign !== lastSign) reversals += 1;
+        if (sign) lastSign = sign;
+        lastPx = G.px;
+        steps += 1;
+      }
+      Math.random = oldRand;
+      return {
+        kind: kind,
+        caught: G.caughtAll,
+        missed: G.missed,
+        reversals: reversals,
+        travel: travel,
+        mode: G.mode,
+        steps: steps
+      };
+    }
+
+    G.mode = 'play';
+    G.kind = 'classic';
+    G.buckets = 3;
+    G.px = 200;
+    G.booming = false;
+    G.lock = 0;
+    bombs.length = 0;
+    bombs.push({ x: 200, y: 120, vx: 90, vy: 300, blast: -1, fuse: 0, sparkT: 1 });
+    const tHit = bombTimeToMouth(bombs[0]);
+    const ix = bombInterceptX(bombs[0], tHit);
+    const expect = 200 + 90 * tHit;
+    if (Math.abs(ix - expect) > 2.5) {
+      throw new Error('intercept should follow velocity (got ' + ix.toFixed(1) + ', expect ' + expect.toFixed(1) + ')');
+    }
+
+    const classic = runKind('classic', 22);
+    if (classic.caught < 10) {
+      throw new Error('AI should catch bombs, not only wiggle (classic caught ' + classic.caught + ')');
+    }
+    if (classic.missed > 2) {
+      throw new Error('AI missed too many bombs (classic missed ' + classic.missed + ')');
+    }
+    if (classic.reversals > 28) {
+      throw new Error('AI wiggled under falling bombs (classic reversals ' + classic.reversals + ')');
+    }
+    if (classic.travel < 400) {
+      throw new Error('AI sat still (classic travel ' + Math.round(classic.travel) + ')');
+    }
+
+    const storm = runKind('storm', 18);
+    if (storm.caught < 8) {
+      throw new Error('AI should catch in 暴雨 (caught ' + storm.caught + ')');
+    }
+    if (storm.missed > 3) {
+      throw new Error('AI missed too many in 暴雨 (missed ' + storm.missed + ')');
+    }
+    if (storm.reversals > 36) {
+      throw new Error('AI wiggled in 暴雨 (reversals ' + storm.reversals + ')');
+    }
+  }
+
+  if (!hasDom) {
+    selfCheckAuto();
+    return;
+  }
+
   window.addEventListener('keydown', function (e) {
     if (e.code === 'ArrowLeft' || e.code === 'ArrowRight' || e.code === 'ArrowUp' || e.code === 'ArrowDown' || e.code === 'Space') {
       e.preventDefault();
@@ -1466,6 +1873,11 @@
     if (e.code === 'KeyR') {
       e.preventDefault();
       retry();
+      return;
+    }
+    if (e.code === 'KeyA') {
+      e.preventDefault();
+      if (!e.repeat) toggleAuto();
       return;
     }
     if (G.mode === 'title' || G.mode === 'lose') {
@@ -1481,7 +1893,11 @@
       }
       return;
     }
-    if (e.code === 'KeyA' || e.code === 'ArrowLeft') {
+    if (autoOn) {
+      if (e.code === 'ArrowLeft' || e.code === 'ArrowRight' || e.code === 'KeyD') e.preventDefault();
+      return;
+    }
+    if (e.code === 'ArrowLeft') {
       keys.l = true;
       G.steer = 'key';
     }
@@ -1492,12 +1908,12 @@
   });
 
   window.addEventListener('keyup', function (e) {
-    if (e.code === 'KeyA' || e.code === 'ArrowLeft') keys.l = false;
+    if (e.code === 'ArrowLeft') keys.l = false;
     if (e.code === 'KeyD' || e.code === 'ArrowRight') keys.r = false;
   });
 
   canvas.addEventListener('pointerdown', function (e) {
-    if (G.mode !== 'play') return;
+    if (G.mode !== 'play' || autoOn) return;
     e.preventDefault();
     audio.ensure();
     canvas.setPointerCapture(e.pointerId);
@@ -1515,7 +1931,7 @@
     pointer.x = w.x;
     pointer.y = w.y;
     pointer.over = true;
-    if (G.mode === 'play') G.steer = 'ptr';
+    if (G.mode === 'play' && !autoOn) G.steer = 'ptr';
   }, { passive: false });
 
   canvas.addEventListener('pointerup', function (e) {
@@ -1557,6 +1973,16 @@
   btnRetry.addEventListener('click', function () {
     retry();
   });
+  if (btnAuto) {
+    btnAuto.addEventListener('click', function () {
+      toggleAuto();
+    });
+  }
+  if (speedEl) {
+    speedEl.addEventListener('input', function () {
+      setAutoSpeed(parseInt(speedEl.value, 10));
+    });
+  }
 
   document.addEventListener('visibilitychange', function () {
     G.paused = document.hidden;
@@ -1577,6 +2003,8 @@
   bomber.x = colX(4);
   showOverlay();
   syncHud();
+  syncAutoUi();
+  syncSpeedUi();
   audio.setMuted(audio.muted);
   requestAnimationFrame(loop);
 })();
