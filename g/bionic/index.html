@@ -51,6 +51,12 @@
           <button type="button" id="mode-hook" aria-pressed="true">钩关</button>
           <button type="button" id="mode-net" aria-pressed="false">机网</button>
         </div>
+        <label class="speed-ctl" title="速度 慢 / 中 / 快 / 极快">
+          <span>速度</span>
+          <input type="range" id="speed" min="1" max="4" step="1" value="3" aria-label="速度" />
+          <b id="speed-lab">快</b>
+        </label>
+        <button type="button" id="btn-auto" title="A" aria-label="自动" aria-pressed="false">自动</button>
         <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
         <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
       </div>
@@ -75,7 +81,7 @@
           <p class="kicker" id="ov-kicker">BION</p>
           <h1 id="ov-title">仿生</h1>
           <p class="lead" id="ov-lead">没有跳跃。射出仿生臂钩住平台，荡过去或拉上去。开枪清敌，坠崖或血空丢命。关底是炮塔。</p>
-          <p class="ops" id="ov-ops">WASD / 方向 走瞄 · 空格开枪 · Shift/Z 钩臂 · R 重开 · M 静音</p>
+          <p class="ops" id="ov-ops">方向 / D 走瞄 · 空格开枪 · Shift/Z 钩臂 · A 自动 · R 重开 · M 静音</p>
           <div class="ov-actions" id="ov-start">
             <button type="button" id="btn-hook-start">钩关</button>
             <button type="button" id="btn-net-start">机网</button>
@@ -88,7 +94,7 @@
       </div>
     </div>
 
-    <footer class="hint" id="hint">没有跳跃 · Shift/Z 钩臂荡上去 · 空格开枪</footer>
+    <footer class="hint" id="hint">没有跳跃 · Shift/Z 钩臂荡上去 · 空格开枪 · A 自动</footer>
   </div>
   <script src="js/game.js"></script>
 </body>

@@ -30,7 +30,10 @@
   const DIE_T = 0.86;
   const BEST_KEY = 'playbox-bionic-best';
   const MUTE_KEY = 'playbox-bionic-mute';
-  const OPS = 'WASD / 方向 走瞄 · 空格开枪 · Shift/Z 钩臂 · R 重开 · M 静音';
+  const AUTO_SPEED_KEY = 'playbox-bionic-auto-speed';
+  const SPEED_LABELS = ['', '慢', '中', '快', '极快'];
+  const AUTO_SCALE = [1, 0.52, 0.78, 1, 3.4];
+  const OPS = '方向 / D 走瞄 · 空格开枪 · Shift/Z 钩臂 · A 自动 · R 重开 · M 静音';
 
   const MAG = [255, 61, 184];
   const CYN = [0, 240, 255];
@@ -202,6 +205,10 @@
     if (walkMul(true) <= walkMul(false)) throw new Error('net walk');
     if (HP_NET >= HP_HOOK) throw new Error('net hp');
     if (BEST_KEY !== 'playbox-bionic-best') throw new Error('best key');
+    if (AUTO_SPEED_KEY !== 'playbox-bionic-auto-speed') throw new Error('auto key');
+    if (AUTO_SCALE[3] !== 1 || AUTO_SCALE[4] <= AUTO_SCALE[3]) throw new Error('auto scale');
+    if (AUTO_SCALE[1] >= AUTO_SCALE[2] || AUTO_SCALE[2] >= AUTO_SCALE[3]) throw new Error('auto scale order');
+    if (SPEED_LABELS[3] !== '快' || SPEED_LABELS[4] !== '极快') throw new Error('speed labels');
     if (STAGES[0].w >= STAGES[1].w || STAGES[1].w >= STAGES[2].w) throw new Error('wider later');
     if (STAGES[0].hp >= STAGES[1].hp || STAGES[1].hp >= STAGES[2].hp) throw new Error('boss hp');
     if (typeof JUMP_V !== 'undefined') throw new Error('no jump');
@@ -296,6 +303,9 @@
   const modeNet = document.getElementById('mode-net');
   const btnMute = document.getElementById('btn-mute');
   const btnRetry = document.getElementById('btn-retry');
+  const btnAuto = document.getElementById('btn-auto');
+  const speedEl = document.getElementById('speed');
+  const speedLab = document.getElementById('speed-lab');
   const scoreEl = document.getElementById('score');
   const bestEl = document.getElementById('best');
   const scoreBox = document.getElementById('score-box');
@@ -329,6 +339,18 @@
 
   const keys = { l: false, r: false, u: false, d: false, fire: false };
   const demo = { l: false, r: true, u: false, d: false, fire: false };
+  const autoIn = { l: false, r: false, u: false, d: false, fire: false };
+  let autoOn = false;
+  let autoSpeed = 3;
+  let autoOvWait = 0;
+  let autoStuck = 0;
+  let autoLastX = 0;
+  let autoLastY = 0;
+  let autoWalkDir = 1;
+  let autoBackT = 0;
+  let autoHookCd = 0;
+  let autoGoalX = 80;
+  let autoGoalY = GY;
   const pips = [];
   const particles = [];
   const sparks = [];
@@ -392,19 +414,27 @@
   function maxHp() {
     return isNet() ? HP_NET : HP_HOOK;
   }
+  function autoPlaying() {
+    return autoOn && G.mode === 'play';
+  }
   function inL() {
+    if (autoPlaying()) return autoIn.l;
     return G.mode === 'title' ? demo.l : keys.l;
   }
   function inR() {
+    if (autoPlaying()) return autoIn.r;
     return G.mode === 'title' ? demo.r : keys.r;
   }
   function inU() {
+    if (autoPlaying()) return autoIn.u;
     return G.mode === 'title' ? demo.u : keys.u;
   }
   function inD() {
+    if (autoPlaying()) return autoIn.d;
     return G.mode === 'title' ? demo.d : keys.d;
   }
   function fireHeld() {
+    if (autoPlaying()) return autoIn.fire;
     return G.mode === 'title' ? demo.fire : keys.fire;
   }
 
@@ -587,6 +617,19 @@
     if (bestEl) bestEl.textContent = String(G.best);
   }
 
+  function loadAutoSpeed() {
+    try {
+      const n = parseInt(localStorage.getItem(AUTO_SPEED_KEY) || '3', 10);
+      if (!isFinite(n) || n < 1 || n > 4) return 3;
+      return n;
+    } catch (err) {
+      return 3;
+    }
+  }
+  function saveAutoSpeed(n) {
+    try { localStorage.setItem(AUTO_SPEED_KEY, String(n)); } catch (err) { /* ignore */ }
+  }
+
   function saveBest() {
     if (G.score <= G.best) return;
     G.best = G.score;
@@ -689,12 +732,18 @@
     }
     if (comboEl) comboEl.textContent = '×' + G.mult;
     if (comboBox) comboBox.classList.toggle('hot', G.combo >= 2 && playing());
-    if (G.mode === 'title') setHint(OPS, '');
+    if (autoOn) {
+      if (G.mode === 'title') setHint('自动托管 · 即将开局 · A 停下', 'hot');
+      else if (G.mode === 'lose') setHint('自动仍开着 · 即将再开 · A 停下', 'warn');
+      else if (G.mode === 'win') setHint('自动仍开着 · 即将再开 · A 停下', 'hot');
+      else if (G.boss && G.boss.active && !G.boss.dead) setHint('托管中 · 炮塔 · A 停下', 'hot');
+      else setHint('托管中 · 钩臂荡上去 · A 停下', 'hot');
+    } else if (G.mode === 'title') setHint(OPS, '');
     else if (G.mode === 'lose') setHint('R 重开 · 没有跳跃 · 钩臂荡上去', 'warn');
     else if (G.mode === 'win') setHint('炮塔已灭 · R 再来一局', 'hot');
     else if (G.lives === 1) setHint('最后一命 · Shift钩 · 空格射', 'warn');
     else if (G.boss && G.boss.active && !G.boss.dead) setHint('炮塔 · ' + spec.boss, 'hot');
-    else setHint('没有跳跃 · Shift/Z 钩臂荡上去 · 空格开枪', '');
+    else setHint('没有跳跃 · Shift/Z 钩臂荡上去 · 空格开枪 · A 自动', '');
     syncPips();
     syncModes();
   }
@@ -1247,6 +1296,11 @@
     G.arm = makeArm();
     G.player = makePlayer(G.checkX, G.checkY);
     G.player.squash = 0.86;
+    autoStuck = 0;
+    autoHookCd = 0;
+    autoBackT = 0;
+    autoLastX = G.checkX;
+    autoLastY = G.checkY;
     syncHud();
   }
 
@@ -1314,6 +1368,13 @@
     G.why = '';
     loadStage(1, false);
     hideOverlay();
+    autoOvWait = 0;
+    autoStuck = 0;
+    autoBackT = 0;
+    autoHookCd = 0;
+    autoWalkDir = 1;
+    autoLastX = G.player ? G.player.x : 64;
+    autoLastY = G.player ? G.player.y : GY;
     syncHud();
   }
 
@@ -1548,6 +1609,449 @@
       vx0: d.x * 40, vx1: d.x * 160, vy0: d.y * 20 - 30, vy1: d.y * 80,
       life: 0.1, r0: 0.8, r1: 1.8, rgb: GOLD, g: 0
     });
+  }
+
+  function clearAutoKeys() {
+    autoIn.l = false;
+    autoIn.r = false;
+    autoIn.u = false;
+    autoIn.d = false;
+    autoIn.fire = false;
+  }
+
+  function autoSteer(tx) {
+    autoIn.l = false;
+    autoIn.r = false;
+    const dx = tx - G.player.x;
+    if (dx > 8) {
+      autoIn.r = true;
+      autoWalkDir = 1;
+    } else if (dx < -8) {
+      autoIn.l = true;
+      autoWalkDir = -1;
+    }
+  }
+
+  function autoAimHook(tx, ty) {
+    const p = G.player;
+    const o = armOrigin();
+    const dx = tx - o.x;
+    const dy = ty - o.y;
+    autoIn.l = false;
+    autoIn.r = false;
+    autoIn.u = dy < -8;
+    autoIn.d = dy > 18;
+    if (dx > 6) p.face = 1;
+    else if (dx < -6) p.face = -1;
+  }
+
+  function autoAimToward(tx, ty) {
+    const o = armOrigin();
+    const dx = tx - o.x;
+    const dy = ty - o.y;
+    autoIn.l = dx < -10;
+    autoIn.r = dx > 10;
+    autoIn.u = dy < -8;
+    autoIn.d = dy > 16;
+    if (dx > 8) G.player.face = 1;
+    else if (dx < -8) G.player.face = -1;
+  }
+
+  function hookAimPoint(plat) {
+    const o = armOrigin();
+    let tx;
+    if (o.x < plat.x + 8) tx = plat.x + Math.min(24, plat.w * 0.35);
+    else if (o.x > plat.x + plat.w - 8) tx = plat.x + plat.w - Math.min(24, plat.w * 0.35);
+    else tx = clamp(o.x, plat.x + 10, plat.x + plat.w - 10);
+    return { x: tx, y: plat.y + (plat.base ? 8 : 5) };
+  }
+
+  function canHookPlat(plat) {
+    if (!plat || !G.player) return false;
+    const skip = G.player.grounded ? floorPlat() : null;
+    if (plat === skip) return false;
+    const o = armOrigin();
+    const t = hookAimPoint(plat);
+    const dx = t.x - o.x;
+    const dy = t.y - o.y;
+    const d = hypot(dx, dy);
+    if (d < 20 || d > ARM_MAX - 1) return false;
+    const hit = rayHit(o.x, o.y, o.x + (dx / d) * ARM_MAX, o.y + (dy / d) * ARM_MAX, skip);
+    return !!(hit && hit.plat === plat);
+  }
+
+  function pickHookPlat(dir, preferUp) {
+    const p = G.player;
+    const skip = p.grounded ? floorPlat() : null;
+    let best = null;
+    let bestS = -1e9;
+    let i, plat, t, dx, d, score, ahead;
+    for (i = 0; i < G.plats.length; i++) {
+      plat = G.plats[i];
+      if (plat === skip) continue;
+      if (!canHookPlat(plat)) continue;
+      t = hookAimPoint(plat);
+      dx = t.x - p.x;
+      d = hypot(dx, t.y - p.y);
+      ahead = dx * dir;
+      score = 0;
+      if (ahead > 6) score += 90 + ahead * 0.45;
+      else if (ahead > -36) score += 18;
+      else score -= 90;
+      if (plat.y < p.y - 10) score += preferUp ? 80 : 28;
+      if (plat.y > p.y + 24) score -= 24;
+      if (!plat.base) score += 18;
+      score -= d * 0.16;
+      if (score > bestS) {
+        bestS = score;
+        best = plat;
+      }
+    }
+    return best;
+  }
+
+  function groundBelow(x) {
+    let i, p;
+    for (i = 0; i < G.plats.length; i++) {
+      p = G.plats[i];
+      if (!p.base) continue;
+      if (x >= p.x + 6 && x <= p.x + p.w - 6) return p;
+    }
+    return null;
+  }
+
+  function autoShotThreat() {
+    const p = G.player;
+    let i, s, t;
+    for (i = 0; i < G.shots.length; i++) {
+      s = G.shots[i];
+      if (s.from !== 'e' || s.dead) continue;
+      if (Math.abs(s.y - (p.y - 12)) > 30) continue;
+      if (Math.abs(s.vx) < 8) {
+        if (Math.abs(s.x - p.x) < 48 && s.y < p.y + 4) return s;
+        continue;
+      }
+      t = (p.x - s.x) / s.vx;
+      if (t < 0 || t > 0.52) continue;
+      if (Math.abs((s.y + s.vy * t) - (p.y - 12)) < 22) return s;
+    }
+    return null;
+  }
+
+  function autoPick() {
+    const p = G.player;
+    let best = { x: Math.min(G.levelW - 40, p.x + 180), y: p.y, kind: 'go' };
+    let bestS = 40;
+    function consider(x, y, score, kind) {
+      if (score > bestS) {
+        bestS = score;
+        best = { x: x, y: y, kind: kind };
+      }
+    }
+    let i, u, e, d, pri, dx;
+    for (i = 0; i < G.pickups.length; i++) {
+      u = G.pickups[i];
+      if (u.taken) continue;
+      d = hypot(u.x - p.x, u.y - (p.y - 12));
+      if (d > 280) continue;
+      pri = u.kind === 'heart' && G.hp < maxHp() ? 940
+        : u.kind === 'heart' ? 180
+        : u.kind === 'rapid' && G.gun !== 'rapid' ? 760
+        : u.kind === 'rapid' ? 220
+        : 260;
+      if (u.x < p.x - 90) pri -= 280;
+      pri -= d * 0.45;
+      consider(u.x, u.y + 12, pri, 'loot');
+    }
+    for (i = 0; i < G.ents.length; i++) {
+      e = G.ents[i];
+      if (e.dead) continue;
+      dx = e.x - p.x;
+      if (dx < -110) continue;
+      d = hypot(dx, e.y - p.y);
+      if (d > 320) continue;
+      pri = 520 - d * 0.5;
+      if (dx > 0) pri += 40;
+      if (Math.abs(e.y - p.y) < 28) pri += 50;
+      if (e.kind === 'turret' || e.kind === 'nest') pri += 40;
+      consider(e.x - (dx >= 0 ? 70 : -70), e.y, pri, 'fight');
+    }
+    if (G.boss && G.boss.active && !G.boss.dead) {
+      consider(G.boss.x - 170, GY, 1120, 'boss');
+    } else {
+      consider(G.levelW - 48, GY, 640, 'exit');
+    }
+    return best;
+  }
+
+  function fireHookAt(tx, ty, grounded) {
+    if (autoHookCd > 0) return false;
+    const arm = G.arm;
+    if (!arm || arm.state !== 'idle') return false;
+    if (grounded) autoAimHook(tx, ty);
+    else autoAimToward(tx, ty);
+    tryHook();
+    autoHookCd = 0.42;
+    return true;
+  }
+
+  function autoThink() {
+    clearAutoKeys();
+    if (!autoOn || G.mode !== 'play') return;
+    const p = G.player;
+    const arm = G.arm;
+    if (!p || !arm || G.deadT > 0 || G.lock > 0) return;
+
+    const moved = hypot(p.x - autoLastX, p.y - autoLastY);
+    if (moved < 1.15) autoStuck += STEP;
+    else autoStuck = Math.max(0, autoStuck - STEP * 2);
+    autoLastX = p.x;
+    autoLastY = p.y;
+    if (autoBackT > 0) autoBackT -= STEP;
+    if (autoHookCd > 0) autoHookCd -= STEP;
+
+    const goal = autoPick();
+    autoGoalX = goal.x;
+    autoGoalY = goal.y;
+    let dir = autoWalkDir >= 0 ? 1 : -1;
+    if (autoBackT <= 0 && goal.x > p.x + 14) dir = 1;
+    else if (autoBackT <= 0 && goal.x < p.x - 14) dir = -1;
+    autoWalkDir = dir;
+
+    let i, e, close = null, closeD = 1e9, dx, dy, adx;
+    for (i = 0; i < G.ents.length; i++) {
+      e = G.ents[i];
+      if (e.dead) continue;
+      dx = e.x - p.x;
+      dy = e.y - p.y;
+      adx = Math.abs(dx);
+      if (adx > 240) continue;
+      const d = hypot(dx, dy);
+      if (d < closeD) {
+        closeD = d;
+        close = e;
+      }
+    }
+    if (G.boss && G.boss.active && !G.boss.dead) {
+      dx = G.boss.x - p.x;
+      dy = G.boss.y - p.y;
+      const bd = hypot(dx, dy);
+      if (bd < closeD + 20) close = G.boss;
+    }
+
+    const shot = autoShotThreat();
+    const wantJump = !!(shot && G.invuln <= 0) || autoStuck > 0.55;
+    let wantFire = false;
+
+    if (close) {
+      adx = Math.abs(close.x - p.x);
+      dy = close.y - p.y;
+      if (adx < 220 && Math.abs(dy) < 90) wantFire = true;
+      if (adx < 36 && Math.abs(dy) < 28) {
+        autoSteer(p.x + (close.x >= p.x ? -50 : 50));
+        autoIn.fire = true;
+        if (close.y < p.y - 16) autoIn.u = true;
+        if (wantJump && arm.state === 'idle' && p.grounded) {
+          fireHookAt(p.x + dir * 40, p.y - 90, true);
+        }
+        return;
+      }
+    }
+
+    if (arm.state === 'out' || arm.state === 'back') {
+      if (wantFire) autoIn.fire = true;
+      return;
+    }
+
+    if (arm.state === 'latch') {
+      const plat = arm.plat;
+      const climbIt = plat && !plat.base && (goal.y <= plat.y + 18 || plat.y < p.y - 8);
+      if (climbIt) {
+        autoIn.u = true;
+        const mid = plat.x + plat.w * 0.5;
+        if (p.x < plat.x + 12) autoIn.r = true;
+        else if (p.x > plat.x + plat.w - 12) autoIn.l = true;
+        else if (dir > 0) autoIn.r = true;
+        else autoIn.l = true;
+        if (wantFire) autoIn.fire = true;
+        return;
+      }
+      if (dir > 0) autoIn.r = true;
+      else autoIn.l = true;
+      if (arm.len > 86) autoIn.u = true;
+      const swingingOut = dir > 0 ? (arm.ang > 0.16 && arm.av > 0.15) : (arm.ang < -0.16 && arm.av < -0.15);
+      const land = platUnder(p.x + dir * 22, p.y + 12, plat) || platUnder(p.x, p.y + 16, plat);
+      const past = dir > 0 ? p.x > arm.ax + 8 : p.x < arm.ax - 8;
+      if ((land && swingingOut && land !== plat) || (swingingOut && past && standAt(p.x + dir * 20, GY))) {
+        tryHook();
+        autoHookCd = 0.18;
+      } else if (autoStuck > 0.9) {
+        tryHook();
+        autoHookCd = 0.22;
+      }
+      if (wantFire) autoIn.fire = true;
+      return;
+    }
+
+    if (!p.grounded) {
+      const plat = pickHookPlat(dir, true);
+      if (plat && (p.vy > 28 || p.y > GY - 24 || autoStuck > 0.18 || wantJump)) {
+        const t = hookAimPoint(plat);
+        fireHookAt(t.x, t.y, false);
+      } else {
+        autoSteer(autoGoalX);
+      }
+      if (wantFire) {
+        autoIn.fire = true;
+        if (close && close.y < p.y - 18) autoIn.u = true;
+      }
+      return;
+    }
+
+    const pit = pitAhead(p.x, p.y, dir);
+    const dropOk = pit && groundBelow(p.x + dir * 40);
+    const dropWanted = dropOk && goal.y >= p.y - 8;
+
+    if (pit && !dropWanted) {
+      const plat = pickHookPlat(dir, true);
+      if (plat) {
+        const t = hookAimPoint(plat);
+        fireHookAt(t.x, t.y, true);
+      } else if (wantJump) {
+        fireHookAt(p.x + dir * 50, p.y - 110, true);
+      } else {
+        autoSteer(p.x - dir * 24);
+      }
+      if (wantFire) autoIn.fire = true;
+      return;
+    }
+
+    if (wantJump && arm.state === 'idle') {
+      const plat = pickHookPlat(dir, true);
+      if (plat) {
+        const t = hookAimPoint(plat);
+        fireHookAt(t.x, t.y, true);
+        if (wantFire) autoIn.fire = true;
+        return;
+      }
+      fireHookAt(p.x + dir * 48, p.y - 100, true);
+    }
+
+    if (goal.y < p.y - 28 && arm.state === 'idle') {
+      const up = pickHookPlat(dir, true);
+      if (up && up.y < p.y - 10) {
+        const t = hookAimPoint(up);
+        if (Math.abs(t.x - p.x) < 70) {
+          fireHookAt(t.x, t.y, true);
+          if (wantFire) autoIn.fire = true;
+          return;
+        }
+        autoSteer(t.x);
+        if (wantFire) autoIn.fire = true;
+        return;
+      }
+    }
+
+    if (shot && G.invuln <= 0) {
+      autoSteer(p.x + (shot.x >= p.x ? -54 : 54));
+    } else if (autoBackT > 0) {
+      autoSteer(p.x - dir * 70);
+    } else {
+      autoSteer(goal.x);
+    }
+
+    if (wantFire) {
+      autoIn.fire = true;
+      if (close && close.y < p.y - 20 && Math.abs(close.x - p.x) < 140) {
+        autoIn.u = true;
+        autoIn.l = false;
+        autoIn.r = false;
+        if (close.x > p.x + 8) p.face = 1;
+        else if (close.x < p.x - 8) p.face = -1;
+      }
+    }
+
+    if (autoStuck > 1.15 && arm.state === 'idle') {
+      const plat = pickHookPlat(dir, true) || pickHookPlat(-dir, true);
+      if (plat) {
+        const t = hookAimPoint(plat);
+        fireHookAt(t.x, t.y, p.grounded);
+      }
+    }
+    if (autoStuck > 1.9) {
+      autoBackT = 0.4;
+      autoStuck = 0;
+      autoWalkDir *= -1;
+    }
+  }
+
+  function tickAutoFlow(dt) {
+    if (!autoOn) return;
+    if (G.mode === 'title') {
+      autoOvWait += dt;
+      if (autoOvWait >= (autoSpeed >= 3 ? 0.25 : 0.5)) {
+        autoOvWait = 0;
+        startGame(G.kind || 'hook');
+      }
+      return;
+    }
+    if (G.mode === 'lose' || G.mode === 'win') {
+      autoOvWait += dt;
+      if (autoOvWait >= (autoSpeed >= 3 ? 0.7 : 1.15)) {
+        autoOvWait = 0;
+        startGame(G.kind || 'hook');
+      }
+    }
+  }
+
+  function syncAutoUi() {
+    if (!btnAuto) return;
+    btnAuto.classList.toggle('on', autoOn);
+    btnAuto.setAttribute('aria-pressed', autoOn ? 'true' : 'false');
+    btnAuto.textContent = autoOn ? '停下' : '自动';
+    btnAuto.setAttribute('aria-label', autoOn ? '停止自动' : '自动');
+  }
+
+  function syncSpeedUi() {
+    if (speedEl) speedEl.value = String(autoSpeed);
+    if (speedLab) speedLab.textContent = SPEED_LABELS[autoSpeed];
+    if (speedEl) {
+      speedEl.title = SPEED_LABELS[autoSpeed];
+      speedEl.setAttribute('aria-valuetext', SPEED_LABELS[autoSpeed]);
+    }
+  }
+
+  function autoScale() {
+    if (!autoOn || G.mode !== 'play') return 1;
+    return AUTO_SCALE[autoSpeed] || 1;
+  }
+
+  function setAutoSpeed(n) {
+    n = parseInt(n, 10);
+    if (!isFinite(n) || n < 1 || n > 4) n = 3;
+    autoSpeed = n;
+    saveAutoSpeed(autoSpeed);
+    syncSpeedUi();
+  }
+
+  function toggleAuto() {
+    autoOn = !autoOn;
+    autoOvWait = 0;
+    autoStuck = 0;
+    autoBackT = 0;
+    autoHookCd = 0;
+    clearAutoKeys();
+    keys.l = false;
+    keys.r = false;
+    keys.u = false;
+    keys.d = false;
+    keys.fire = false;
+    syncAutoUi();
+    if (autoOn) {
+      audio.ensure();
+      if (G.mode === 'title') startGame(G.kind || 'hook');
+    }
+    syncHud();
   }
 
   function demoThink() {
@@ -1907,9 +2411,13 @@
   function update(dt) {
     G.clock += dt;
     G.t += dt;
+    if (autoOn) tickAutoFlow(dt);
     if (G.stop > 0) {
-      G.stop -= dt;
-      return;
+      if (autoOn && autoSpeed >= 4 && G.mode === 'play') G.stop = 0;
+      else {
+        G.stop -= dt;
+        return;
+      }
     }
     if (G.clearT > 0) {
       G.clearT -= dt;
@@ -1923,6 +2431,7 @@
       return;
     }
     if (G.mode === 'title') demoThink();
+    if (autoOn && G.mode === 'play' && G.deadT <= 0) autoThink();
     updatePlayer(dt);
     let i;
     for (i = 0; i < G.ents.length; i++) updateEnt(G.ents[i], dt);
@@ -2448,16 +2957,26 @@
   function onKey(e, down) {
     const k = e.key;
     const code = e.code;
+    if (k === 'a' || k === 'A' || code === 'KeyA') {
+      e.preventDefault();
+      if (down && !e.repeat) toggleAuto();
+      return;
+    }
+    if (e.target === speedEl) return;
     const isMove = k === 'ArrowLeft' || k === 'ArrowRight' || k === 'ArrowUp' || k === 'ArrowDown'
-      || k === 'a' || k === 'A' || k === 'd' || k === 'D' || k === 'w' || k === 'W' || k === 's' || k === 'S';
+      || k === 'd' || k === 'D' || k === 'w' || k === 'W' || k === 's' || k === 'S';
     const space = k === ' ' || k === 'Spacebar' || code === 'Space';
     const hook = k === 'z' || k === 'Z' || k === 'Shift' || code === 'ShiftLeft' || code === 'ShiftRight';
 
-    if (k === 'ArrowLeft' || k === 'a' || k === 'A' || k === 'Left') keys.l = down;
-    if (k === 'ArrowRight' || k === 'd' || k === 'D' || k === 'Right') keys.r = down;
-    if (k === 'ArrowUp' || k === 'w' || k === 'W' || k === 'Up') keys.u = down;
-    if (k === 'ArrowDown' || k === 's' || k === 'S' || k === 'Down') keys.d = down;
-    if (space) keys.fire = down;
+    if (!autoOn) {
+      if (k === 'ArrowLeft' || k === 'Left') keys.l = down;
+      if (k === 'ArrowRight' || k === 'd' || k === 'D' || k === 'Right') keys.r = down;
+      if (k === 'ArrowUp' || k === 'w' || k === 'W' || k === 'Up') keys.u = down;
+      if (k === 'ArrowDown' || k === 's' || k === 'S' || k === 'Down') keys.d = down;
+      if (space) keys.fire = down;
+    } else if (down && (isMove || space || hook)) {
+      e.preventDefault();
+    }
 
     if (down && (isMove || space || hook || k === 'Enter')) e.preventDefault();
     if (!down) return;
@@ -2480,11 +2999,11 @@
       return;
     }
     if (hook) {
-      if (!overlayOpen()) tryHook();
+      if (!overlayOpen() && !autoOn) tryHook();
       return;
     }
     if (space || k === 'Enter') {
-      if (overlayOpen()) {
+      if (overlayOpen() && !autoOn) {
         primaryAction();
         if (space) keys.fire = false;
         return;
@@ -2497,6 +3016,7 @@
       if (!el) return;
       const down = function (e) {
         e.preventDefault();
+        if (autoOn) return;
         audio.ensure();
         el.classList.add('held');
         on();
@@ -2519,6 +3039,7 @@
     if (hookBtn) {
       hookBtn.addEventListener('pointerdown', function (e) {
         e.preventDefault();
+        if (autoOn) return;
         audio.ensure();
         hookBtn.classList.add('held');
         if (!overlayOpen()) tryHook();
@@ -2538,7 +3059,7 @@
     canvas.addEventListener('pointerdown', function (e) {
       audio.ensure();
       e.preventDefault();
-      if (overlayOpen()) return;
+      if (overlayOpen() || autoOn) return;
       keys.fire = true;
     });
     canvas.addEventListener('pointerup', function () { keys.fire = false; });
@@ -2560,13 +3081,15 @@
     let dt = t - last;
     last = t;
     if (dt > 0.05) dt = 0.05;
-    acc += dt;
+    acc += dt * autoScale();
     let n = 0;
-    while (acc >= STEP && n < 5) {
+    const maxSteps = autoOn && autoSpeed >= 4 && G.mode === 'play' ? 16 : 5;
+    while (acc >= STEP && n < maxSteps) {
       update(STEP);
       acc -= STEP;
       n += 1;
     }
+    if (acc > STEP * 4) acc = 0;
     draw();
   }
 
@@ -2578,6 +3101,9 @@
 
   loadBest();
   initMute();
+  autoSpeed = loadAutoSpeed();
+  syncSpeedUi();
+  syncAutoUi();
   goTitle();
   resize();
   bindPointer();
@@ -2626,6 +3152,16 @@
       audio.ensure();
       audio.setMuted(!audio.muted);
     });
+  }
+  if (btnAuto) {
+    btnAuto.addEventListener('click', function () {
+      audio.ensure();
+      toggleAuto();
+    });
+  }
+  if (speedEl) {
+    speedEl.addEventListener('input', function () { setAutoSpeed(parseInt(speedEl.value, 10)); });
+    speedEl.addEventListener('change', function () { setAutoSpeed(parseInt(speedEl.value, 10)); });
   }
 
   window.addEventListener('keydown', function (e) { onKey(e, true); });
