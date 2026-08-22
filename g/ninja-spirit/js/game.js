@@ -31,7 +31,10 @@
   const DIE_T = 0.86;
   const BEST_KEY = 'playbox-ninja-spirit-best';
   const MUTE_KEY = 'playbox-ninja-spirit-mute';
-  const OPS = '方向键 / WASD 走 · ↑ 跳 · 空格斩并丢镖 · R 重开 · M 静音';
+  const AUTO_SPEED_KEY = 'playbox-ninja-spirit-auto-speed';
+  const SPEED_LABELS = ['', '慢', '中', '快', '极快'];
+  const AUTO_SCALE = [1, 0.52, 0.78, 1, 3.4];
+  const OPS = '方向键 / D 走 · ↑ 跳 · 空格斩并丢镖 · A 自动 · R 重开 · M 静音';
 
   const MAG = [255, 61, 184];
   const CYN = [0, 240, 255];
@@ -162,6 +165,9 @@
   function jumpHeight() {
     return (JUMP_V * JUMP_V) / (2 * GRAV);
   }
+  function airDist() {
+    return WALK * (2 * JUMP_V / GRAV);
+  }
   function spdMul(tide, stage) {
     return (tide ? 1.26 : 1) * (1 + Math.max(0, stage - 1) * 0.08);
   }
@@ -194,6 +200,10 @@
     if (SLASH_RANGE < 28) throw new Error('slash short');
     if (THROW_SPD < 200) throw new Error('throw slow');
     if (BEST_KEY !== 'playbox-ninja-spirit-best') throw new Error('best key');
+    if (AUTO_SPEED_KEY !== 'playbox-ninja-spirit-auto-speed') throw new Error('auto key');
+    if (AUTO_SCALE[3] !== 1 || AUTO_SCALE[4] <= AUTO_SCALE[3]) throw new Error('auto scale');
+    if (AUTO_SCALE[1] >= AUTO_SCALE[2] || AUTO_SCALE[2] >= AUTO_SCALE[3]) throw new Error('auto scale order');
+    if (SPEED_LABELS[3] !== '快' || SPEED_LABELS[4] !== '极快') throw new Error('speed labels');
     if (STAGES[0].w >= STAGES[1].w || STAGES[1].w >= STAGES[2].w) throw new Error('wider later');
     if (STAGES[0].hp >= STAGES[1].hp || STAGES[1].hp >= STAGES[2].hp) throw new Error('boss hp');
     let i, s;
@@ -283,6 +293,9 @@
   const modeTide = document.getElementById('mode-tide');
   const btnMute = document.getElementById('btn-mute');
   const btnRetry = document.getElementById('btn-retry');
+  const btnAuto = document.getElementById('btn-auto');
+  const speedEl = document.getElementById('speed');
+  const speedLab = document.getElementById('speed-lab');
   const scoreEl = document.getElementById('score');
   const bestEl = document.getElementById('best');
   const scoreBox = document.getElementById('score-box');
@@ -316,6 +329,15 @@
 
   const keys = { l: false, r: false, u: false, d: false, fire: false };
   const demo = { l: false, r: true, u: false, d: false, fire: false };
+  const autoIn = { l: false, r: false, u: false, d: false, fire: false };
+  let autoOn = false;
+  let autoSpeed = 3;
+  let autoOvWait = 0;
+  let autoStuck = 0;
+  let autoLastX = 0;
+  let autoLastY = 0;
+  let autoWalkDir = 1;
+  let autoBackT = 0;
   const pips = [];
   const particles = [];
   const sparks = [];
@@ -382,16 +404,23 @@
   function maxHp() {
     return isTide() ? HP_TIDE : HP_CUT;
   }
+  function autoPlaying() {
+    return autoOn && G.mode === 'play';
+  }
   function inL() {
+    if (autoPlaying()) return autoIn.l;
     return G.mode === 'title' ? demo.l : keys.l;
   }
   function inR() {
+    if (autoPlaying()) return autoIn.r;
     return G.mode === 'title' ? demo.r : keys.r;
   }
   function inU() {
+    if (autoPlaying()) return autoIn.u;
     return G.mode === 'title' ? demo.u : keys.u;
   }
   function fireHeld() {
+    if (autoPlaying()) return autoIn.fire;
     return G.mode === 'title' ? demo.fire : keys.fire;
   }
 
@@ -561,6 +590,19 @@
     }
   };
 
+  function loadAutoSpeed() {
+    try {
+      const n = parseInt(localStorage.getItem(AUTO_SPEED_KEY) || '3', 10);
+      if (!isFinite(n) || n < 1 || n > 4) return 3;
+      return n;
+    } catch (err) {
+      return 3;
+    }
+  }
+  function saveAutoSpeed(n) {
+    try { localStorage.setItem(AUTO_SPEED_KEY, String(n)); } catch (err) { /* ignore */ }
+  }
+
   function loadBest() {
     try {
       const n = parseInt(localStorage.getItem(BEST_KEY) || '0', 10);
@@ -673,12 +715,18 @@
     }
     if (comboEl) comboEl.textContent = '×' + G.mult;
     if (comboBox) comboBox.classList.toggle('hot', G.combo >= 2 && playing());
-    if (G.mode === 'title') setHint(OPS, '');
+    if (autoOn) {
+      if (G.mode === 'title') setHint('自动托管 · 即将开局 · A 停下', 'hot');
+      else if (G.mode === 'lose') setHint('自动仍开着 · 即将再开 · A 停下', 'warn');
+      else if (G.mode === 'win') setHint('自动仍开着 · 即将再开 · A 停下', 'hot');
+      else if (G.boss && G.boss.active && !G.boss.dead) setHint('托管中 · 守护者 ' + spec.boss + ' · A 停下', 'hot');
+      else setHint(isTide() ? '托管中 · 妖潮斩镖 · A 停下' : '托管中 · 斩关斩镖 · A 停下', 'hot');
+    } else if (G.mode === 'title') setHint(OPS, '');
     else if (G.mode === 'lose') setHint('R 重开 · 空格近斩远镖 · 魂分身同步出手', 'warn');
     else if (G.mode === 'win') setHint('守护者已灭 · R 再来一局', 'hot');
     else if (G.lives === 1) setHint('最后一命 · ↑跳 · 空格斩并丢镖', 'warn');
     else if (G.boss && G.boss.active && !G.boss.dead) setHint('守护者 · ' + spec.boss, 'hot');
-    else setHint('走跳过崖 · 空格近斩远镖 · 拾魂得分身', '');
+    else setHint('走跳过崖 · 空格近斩远镖 · 拾魂得分身 · A 自动', '');
     syncPips();
     syncModes();
   }
@@ -717,6 +765,7 @@
 
   function hitStop(sec) {
     if (REDUCE || G.mode === 'title') return;
+    if (autoOn && autoSpeed >= 4) return;
     G.stop = Math.max(G.stop, sec);
   }
 
@@ -1450,6 +1499,487 @@
     }
   }
 
+  function groundAt(x) {
+    let i, p;
+    for (i = 0; i < G.plats.length; i++) {
+      p = G.plats[i];
+      if (!p.base) continue;
+      if (x >= p.x - 2 && x <= p.x + p.w + 2) return GY;
+    }
+    return null;
+  }
+
+  function platCovering(x, floorY) {
+    let i, p;
+    for (i = 0; i < G.plats.length; i++) {
+      p = G.plats[i];
+      if (p.base) continue;
+      if (Math.abs(p.y - floorY) > 10) continue;
+      if (x >= p.x - 2 && x <= p.x + p.w + 2) return p;
+    }
+    return null;
+  }
+
+  function nextPit(x, dir) {
+    const out = { dist: 999, width: 0, edge: x, next: null };
+    const bases = [];
+    let i, p, cur = null, curI = -1;
+    for (i = 0; i < G.plats.length; i++) {
+      p = G.plats[i];
+      if (p.base) bases.push(p);
+    }
+    bases.sort(function (a, b) { return a.x - b.x; });
+    for (i = 0; i < bases.length; i++) {
+      p = bases[i];
+      if (x >= p.x - 2 && x <= p.x + p.w + 2) {
+        cur = p;
+        curI = i;
+        break;
+      }
+    }
+    if (!cur) {
+      out.dist = 0;
+      out.width = 80;
+      return out;
+    }
+    if (dir >= 0) {
+      out.edge = cur.x + cur.w;
+      out.dist = out.edge - x;
+      if (curI + 1 < bases.length) {
+        out.next = bases[curI + 1];
+        out.width = out.next.x - out.edge;
+      }
+    } else {
+      out.edge = cur.x;
+      out.dist = x - out.edge;
+      if (curI > 0) {
+        out.next = bases[curI - 1];
+        out.width = out.edge - (out.next.x + out.next.w);
+      }
+    }
+    return out;
+  }
+
+  function clearAutoKeys() {
+    autoIn.l = false;
+    autoIn.r = false;
+    autoIn.u = false;
+    autoIn.d = false;
+    autoIn.fire = false;
+  }
+
+  function autoSteer(tx) {
+    autoIn.l = false;
+    autoIn.r = false;
+    const dx = tx - G.player.x;
+    if (dx > 6) {
+      autoIn.r = true;
+      autoWalkDir = 1;
+    } else if (dx < -6) {
+      autoIn.l = true;
+      autoWalkDir = -1;
+    }
+  }
+
+  function autoFloor(y) {
+    if (y < (HY + MY) * 0.5) return HY;
+    if (y < (MY + GY) * 0.5) return MY;
+    return GY;
+  }
+
+  function autoSameBand(ay, by) {
+    return Math.abs(autoFloor(ay) - autoFloor(by)) <= 20;
+  }
+
+  function autoPitBetween(a, b) {
+    const dir = b >= a ? 1 : -1;
+    const pit = nextPit(a, dir);
+    if (!pit || pit.width <= 14) return false;
+    const lo = Math.min(a, b);
+    const hi = Math.max(a, b);
+    return pit.edge > lo - 2 && pit.edge < hi + 2;
+  }
+
+  function autoLive(e) {
+    return !!(e && !e.dead && e.y < GY + 10 && e.y > 40);
+  }
+
+  function autoIsFly(e) {
+    return !!(e && (e.kind === 'skull' || e.kind === 'bat' || e.kind === '天狗'));
+  }
+
+  function autoVertHit(e, p) {
+    if (!e || !p) return null;
+    const ey0 = e.y - e.h;
+    const ey1 = e.y;
+    function overlapAt(py, air) {
+      const by = py - (air ? 32 : 28);
+      const h = air ? 34 : 30;
+      return by < ey1 && by + h > ey0;
+    }
+    if (overlapAt(p.y, !p.grounded)) return 'now';
+    if (overlapAt(p.y - jumpHeight() * 0.72, true)) return 'jump';
+    return null;
+  }
+
+  function autoShotThreat() {
+    const p = G.player;
+    let i, s, t;
+    if (!p) return null;
+    for (i = 0; i < G.shots.length; i++) {
+      s = G.shots[i];
+      if (s.dead || s.from !== 'e') continue;
+      if (Math.abs(s.y - (p.y - 14)) > 28) continue;
+      if (s.vx === 0) {
+        if (Math.abs(s.x - p.x) < 40) return s;
+        continue;
+      }
+      t = (p.x - s.x) / s.vx;
+      if (t < 0 || t > 0.5) continue;
+      if (Math.abs(s.x + s.vx * t - p.x) < 22) return s;
+    }
+    return null;
+  }
+
+  function autoPick() {
+    const p = G.player;
+    let best = null;
+    let bestS = -1e9;
+    function consider(x, y, score, kind) {
+      if (score > bestS) {
+        bestS = score;
+        best = { x: x, y: y, kind: kind };
+      }
+    }
+    const goX = Math.min(G.levelW - 40, Math.max(p.x + 180, G.camX + VW * 0.68));
+    consider(goX, GY, 520, 'go');
+
+    let i, e, d, u, dx, pri;
+    if (G.hp <= 3 || (isTide() && G.hp <= 2)) {
+      for (i = 0; i < G.pickups.length; i++) {
+        u = G.pickups[i];
+        if (u.taken || u.kind !== 'heart') continue;
+        dx = u.x - p.x;
+        if (dx < -70) continue;
+        d = hypot(dx, u.y - (p.y - 12));
+        if (d > 240) continue;
+        pri = (G.hp <= 2 ? 900 : 640) - d * 0.5;
+        consider(u.x, u.y + 12, pri, 'heart');
+      }
+    }
+    if (G.spirits < SPIRIT_MAX) {
+      for (i = 0; i < G.pickups.length; i++) {
+        u = G.pickups[i];
+        if (u.taken || u.kind !== 'spirit') continue;
+        dx = u.x - p.x;
+        if (dx < -50 || dx > 220) continue;
+        d = hypot(dx, u.y - (p.y - 12));
+        if (d > 200) continue;
+        if (autoPitBetween(p.x, u.x) && autoFloor(u.y + 12) === GY) continue;
+        consider(u.x, u.y + 12, 700 - d * 0.45, 'spirit');
+      }
+    }
+    for (i = 0; i < G.ents.length; i++) {
+      e = G.ents[i];
+      if (!autoLive(e)) continue;
+      dx = e.x - p.x;
+      if (dx < 0 && autoPitBetween(p.x, e.x)) continue;
+      d = hypot(dx, e.y - p.y);
+      if (autoIsFly(e)) {
+        if (dx > -24 && dx < 120 && autoVertHit(e, p)) {
+          consider(e.x, e.y, 740 - Math.abs(dx) * 0.4, 'fly');
+        }
+        continue;
+      }
+      if (!autoSameBand(e.y, p.y) || Math.abs(e.y - p.y) > 46) continue;
+      if (dx < -48) continue;
+      pri = 920 - d * 0.5;
+      if (dx > 0) pri += 70;
+      consider(e.x, e.y, pri, 'fight');
+    }
+    const b = G.boss;
+    if (b && b.active && !b.dead) {
+      dx = b.x - p.x;
+      const side = dx >= 0 ? -1 : 1;
+      consider(b.x + side * 32, b.y, 1450, 'boss');
+    }
+    if (!best) consider(goX, GY, 50, 'go');
+    return best;
+  }
+
+  function autoThink() {
+    clearAutoKeys();
+    if (!autoOn || G.mode !== 'play') return;
+    const p = G.player;
+    if (!p || G.deadT > 0) return;
+
+    const moved = hypot(p.x - autoLastX, p.y - autoLastY);
+    if (moved < 0.7 && p.grounded && !G.slash) autoStuck += STEP;
+    else autoStuck = Math.max(0, autoStuck - STEP * 2);
+    autoLastX = p.x;
+    autoLastY = p.y;
+    if (autoBackT > 0) autoBackT -= STEP;
+
+    const reach = SLASH_RANGE;
+    const onPlat = p.grounded && p.y < GY - 24;
+    const plat = onPlat ? platCovering(p.x, autoFloor(p.y)) : null;
+    const goal = autoPick();
+    let seekX = goal.x;
+    let wantJump = false;
+    let wantFire = false;
+    let pitJump = false;
+    let hold = false;
+
+    let i, e, adx, dx, vert, close = null, closeD = 1e9;
+    for (i = 0; i < G.ents.length; i++) {
+      e = G.ents[i];
+      if (!autoLive(e)) continue;
+      dx = e.x - p.x;
+      adx = Math.abs(dx);
+      if (adx > reach + 200) continue;
+      if (dx < 0 && autoPitBetween(p.x, e.x)) continue;
+      vert = autoVertHit(e, p);
+      if (autoIsFly(e)) {
+        if (adx > reach + 28) continue;
+        if (!vert) continue;
+      } else if (!autoSameBand(e.y, p.y) || Math.abs(e.y - p.y) > 46) {
+        continue;
+      }
+      const d = hypot(dx, e.y - p.y);
+      if (d < closeD) {
+        closeD = d;
+        close = e;
+      }
+    }
+    const b = G.boss;
+    if (b && b.active && !b.dead) {
+      dx = b.x - p.x;
+      adx = Math.abs(dx);
+      if (adx < closeD + 10 && adx < 220) {
+        close = b;
+        closeD = adx;
+      }
+    }
+
+    const shot = autoShotThreat();
+    if (shot && G.invuln <= 0) wantJump = true;
+
+    if (close) {
+      dx = close.x - p.x;
+      adx = Math.abs(dx);
+      vert = autoVertHit(close, p);
+      if (dx > 4) p.face = 1;
+      else if (dx < -4) p.face = -1;
+      const flyer = autoIsFly(close) || close.kind === '天狗';
+      const now = vert === 'now' || (flyer && vert);
+      if (now && adx <= reach + 8) {
+        wantFire = true;
+        if (flyer && !onPlat && p.grounded && adx < 50) wantJump = true;
+        if (adx < 14 && !flyer && close.kind !== '鬼面' && close.kind !== '阎王') {
+          seekX = p.x + (dx > 0 ? -18 : 18);
+        } else if (adx > 34) seekX = close.x;
+        else {
+          seekX = p.x;
+          hold = true;
+        }
+      } else if (flyer && vert === 'jump' && adx <= reach + 24 && !onPlat) {
+        wantJump = true;
+        seekX = close.x;
+        if (adx <= reach + 10) wantFire = true;
+      } else if (!flyer && autoSameBand(close.y, p.y) && Math.abs(close.y - p.y) < 42) {
+        seekX = close.x;
+        if (adx < 200 && adx > 20 && (dx > 0 || adx < 50)) wantFire = true;
+      } else if (close.kind === '鬼面' || close.kind === '阎王' || close.kind === '天狗') {
+        seekX = close.x + (dx >= 0 ? -32 : 32);
+        if (adx < 80) wantFire = true;
+        if (close.kind === '天狗' && adx < 70 && p.grounded) wantJump = true;
+      }
+    }
+
+    if ((goal.kind === 'heart' || goal.kind === 'spirit' || goal.kind === 'fly')
+      && goal.y < p.y - 20 && !onPlat) {
+      const band = autoFloor(goal.y);
+      const up = platCovering(goal.x, band) || platCovering(p.x, MY);
+      if (up && Math.abs(p.x - (up.x + up.w * 0.5)) < up.w * 0.5 + 10) {
+        wantJump = true;
+        seekX = up.x + Math.min(up.w * 0.55, Math.max(12, goal.x - up.x));
+      }
+    }
+
+    if (onPlat && plat) {
+      const grabHere = (goal.kind === 'heart' || goal.kind === 'spirit')
+        && goal.x >= plat.x - 4 && goal.x <= plat.x + plat.w + 4;
+      const fightHere = close && autoVertHit(close, p) === 'now'
+        && Math.abs(close.x - p.x) <= reach + 8;
+      if (!grabHere) {
+        const end = plat.x + plat.w;
+        const fallT = Math.sqrt(2 * Math.max(24, plat.y ? (GY - plat.y) : (GY - MY)) / GRAV);
+        const dropLand = end + WALK * fallT + 12;
+        const jumpLand = end + airDist() - 6;
+        const dropDies = groundAt(end + 8) == null || groundAt(dropLand) == null;
+        const jumpOk = groundAt(jumpLand) != null;
+        seekX = end + 44;
+        hold = false;
+        if (fightHere) {
+          wantFire = true;
+          if (close.x > p.x + 4) p.face = 1;
+          else if (close.x < p.x - 4) p.face = -1;
+        }
+        if (dropDies && jumpOk && p.x > end - 10) {
+          wantJump = true;
+          pitJump = true;
+        } else if (!fightHere) {
+          wantJump = false;
+        }
+      }
+    }
+
+    if (autoBackT > 0 && !pitJump) seekX = p.x - 64;
+
+    if (!hold) autoSteer(seekX);
+    else {
+      autoIn.l = false;
+      autoIn.r = false;
+    }
+
+    const dir = autoIn.r ? 1 : autoIn.l ? -1 : 1;
+    const pit = nextPit(p.x, dir);
+    const nearEnd = p.x > G.levelW - 90 || p.x < 36;
+    if (!onPlat && pit.width > 14 && pit.dist < 110 && !nearEnd) {
+      const cover = platCovering(pit.edge + 8, MY) || platCovering(p.x, MY)
+        || (pit.next ? platCovering(pit.next.x + 8, MY) : null);
+      const tooWide = pit.width > airDist() * 0.88;
+      if (tooWide && cover && p.x < pit.edge + 4) {
+        if (p.x >= cover.x - 6 && p.x <= cover.x + cover.w + 6) {
+          wantJump = true;
+          seekX = cover.x + cover.w * 0.55;
+          autoSteer(seekX);
+        } else if (cover.x > p.x) {
+          autoSteer(cover.x + 20);
+        }
+        if (pit.dist < 28) wantFire = false;
+      } else {
+        if (pit.dist < 100) wantFire = false;
+        if (dir < 0) {
+          autoSteer(p.x + 40);
+        } else {
+          const air = airDist();
+          const lead = clamp(air - pit.width - 8, 10, 36);
+          if (pit.dist < lead) {
+            wantJump = true;
+            pitJump = true;
+            wantFire = false;
+            autoSteer(p.x + 90);
+          }
+        }
+      }
+    }
+
+    if (!p.grounded && autoBackT <= 0) {
+      autoIn.r = true;
+      autoIn.l = false;
+      if (groundAt(p.x) == null || groundAt(p.x + 28) == null) {
+        wantJump = true;
+        pitJump = true;
+      }
+    }
+
+    if (autoStuck > 0.4) {
+      if (onPlat && plat) {
+        autoSteer(plat.x + plat.w + 52);
+      } else if (pit.width > 14 && pit.dist < 80 && !nearEnd) {
+        autoSteer(p.x + 90);
+        wantJump = true;
+        pitJump = true;
+      } else {
+        wantJump = true;
+        autoSteer(p.x + 100);
+      }
+    }
+    if (autoStuck > 1.1) {
+      autoSteer(p.x + 140);
+      autoWalkDir = 1;
+      autoStuck = 0.2;
+      if (!(pit.width > 14 && pit.dist < 80 && !nearEnd)) wantJump = true;
+    }
+
+    if (wantJump) autoIn.u = true;
+    if (pitJump) wantFire = false;
+    autoIn.fire = wantFire && !G.fireEdge;
+  }
+
+  function tickAutoFlow(dt) {
+    if (!autoOn) return;
+    if (G.mode === 'title') {
+      autoOvWait += dt;
+      if (autoOvWait >= (autoSpeed >= 3 ? 0.25 : 0.5)) {
+        autoOvWait = 0;
+        startGame(G.kind || 'cut');
+      }
+      return;
+    }
+    if (G.mode === 'lose' || G.mode === 'win') {
+      autoOvWait += dt;
+      if (autoOvWait >= (autoSpeed >= 3 ? 0.7 : 1.15)) {
+        autoOvWait = 0;
+        startGame(G.kind || 'cut');
+      }
+    }
+  }
+
+  function syncAutoUi() {
+    if (!btnAuto) return;
+    btnAuto.classList.toggle('on', autoOn);
+    btnAuto.setAttribute('aria-pressed', autoOn ? 'true' : 'false');
+    btnAuto.textContent = autoOn ? '停下' : '自动';
+    btnAuto.setAttribute('aria-label', autoOn ? '停止自动' : '自动');
+  }
+
+  function syncSpeedUi() {
+    if (speedEl) speedEl.value = String(autoSpeed);
+    if (speedLab) speedLab.textContent = SPEED_LABELS[autoSpeed];
+    if (speedEl) {
+      speedEl.title = SPEED_LABELS[autoSpeed];
+      speedEl.setAttribute('aria-valuetext', SPEED_LABELS[autoSpeed]);
+    }
+  }
+
+  function autoScale() {
+    if (!autoOn || G.mode !== 'play') return 1;
+    return AUTO_SCALE[autoSpeed] || 1;
+  }
+
+  function setAutoSpeed(n) {
+    n = parseInt(n, 10);
+    if (!isFinite(n) || n < 1 || n > 4) n = 3;
+    autoSpeed = n;
+    saveAutoSpeed(autoSpeed);
+    syncSpeedUi();
+  }
+
+  function toggleAuto() {
+    autoOn = !autoOn;
+    autoOvWait = 0;
+    autoStuck = 0;
+    autoBackT = 0;
+    clearAutoKeys();
+    keys.l = false;
+    keys.r = false;
+    keys.u = false;
+    keys.d = false;
+    keys.fire = false;
+    syncAutoUi();
+    if (autoOn) {
+      audio.ensure();
+      if (G.mode === 'title') startGame(G.kind || 'cut');
+    }
+    syncHud();
+  }
+
+  function isAutoKey(e) {
+    return e.code === 'KeyA' || e.key === 'a' || e.key === 'A';
+  }
+
   function updatePlayer(dt) {
     const p = G.player;
     if (G.deadT > 0) {
@@ -1894,10 +2424,12 @@
   function update(dt) {
     G.clock += dt;
     G.t += dt;
-    if (G.stop > 0) {
+    if (autoOn) tickAutoFlow(dt);
+    if (G.stop > 0 && !(autoOn && autoSpeed >= 4 && G.mode === 'play')) {
       G.stop -= dt;
       return;
     }
+    if (autoOn && autoSpeed >= 4) G.stop = 0;
     if (G.clearT > 0) {
       G.clearT -= dt;
       updateCam(dt);
@@ -1909,6 +2441,7 @@
       updateFx(dt);
       return;
     }
+    if (autoOn && G.mode === 'play' && G.deadT <= 0) autoThink();
     if (G.mode === 'title') demoThink();
     updatePlayer(dt);
     updateSlash(dt);
@@ -2557,15 +3090,29 @@
   function onKey(e, down) {
     const k = e.key;
     const code = e.code;
+    if (isAutoKey(e)) {
+      if (down && !e.repeat) {
+        audio.ensure();
+        toggleAuto();
+      }
+      e.preventDefault();
+      return;
+    }
+    if (e.target === speedEl) return;
+
     const isMove = k === 'ArrowLeft' || k === 'ArrowRight' || k === 'ArrowUp' || k === 'ArrowDown'
-      || k === 'a' || k === 'A' || k === 'd' || k === 'D' || k === 'w' || k === 'W' || k === 's' || k === 'S';
+      || k === 'd' || k === 'D' || k === 'w' || k === 'W' || k === 's' || k === 'S';
     const space = k === ' ' || k === 'Spacebar' || code === 'Space';
 
-    if (k === 'ArrowLeft' || k === 'a' || k === 'A' || k === 'Left') keys.l = down;
-    if (k === 'ArrowRight' || k === 'd' || k === 'D' || k === 'Right') keys.r = down;
-    if (k === 'ArrowUp' || k === 'w' || k === 'W' || k === 'Up') keys.u = down;
-    if (k === 'ArrowDown' || k === 's' || k === 'S' || k === 'Down') keys.d = down;
-    if (space) keys.fire = down;
+    if (!autoOn) {
+      if (k === 'ArrowLeft' || k === 'Left') keys.l = down;
+      if (k === 'ArrowRight' || k === 'd' || k === 'D' || k === 'Right') keys.r = down;
+      if (k === 'ArrowUp' || k === 'w' || k === 'W' || k === 'Up') keys.u = down;
+      if (k === 'ArrowDown' || k === 's' || k === 'S' || k === 'Down') keys.d = down;
+      if (space) keys.fire = down;
+    } else if (down && (isMove || space)) {
+      e.preventDefault();
+    }
 
     if (down && (isMove || space || k === 'Enter')) e.preventDefault();
     if (!down) return;
@@ -2601,6 +3148,7 @@
       if (!el) return;
       const down = function (e) {
         e.preventDefault();
+        if (autoOn) return;
         audio.ensure();
         el.classList.add('held');
         on();
@@ -2626,7 +3174,7 @@
     canvas.addEventListener('pointerdown', function (e) {
       audio.ensure();
       e.preventDefault();
-      if (overlayOpen()) return;
+      if (overlayOpen() || autoOn) return;
       keys.fire = true;
     });
     canvas.addEventListener('pointerup', function () { keys.fire = false; });
@@ -2648,13 +3196,17 @@
     let dt = t - last;
     last = t;
     if (dt > 0.05) dt = 0.05;
-    acc += dt;
+    const turbo = autoOn && autoSpeed >= 4 && G.mode === 'play';
+    if (turbo) G.stop = 0;
+    acc += dt * autoScale();
     let n = 0;
-    while (acc >= STEP && n < 5) {
+    const maxSteps = turbo ? 16 : 5;
+    while (acc >= STEP && n < maxSteps) {
       update(STEP);
       acc -= STEP;
       n += 1;
     }
+    if (acc > STEP * 4) acc = 0;
     draw();
   }
 
@@ -2666,6 +3218,9 @@
 
   loadBest();
   initMute();
+  autoSpeed = loadAutoSpeed();
+  syncSpeedUi();
+  syncAutoUi();
   goTitle();
   resize();
   bindPointer();
@@ -2714,6 +3269,16 @@
       audio.ensure();
       audio.setMuted(!audio.muted);
     });
+  }
+  if (btnAuto) {
+    btnAuto.addEventListener('click', function () {
+      audio.ensure();
+      toggleAuto();
+    });
+  }
+  if (speedEl) {
+    speedEl.addEventListener('input', function () { setAutoSpeed(parseInt(speedEl.value, 10)); });
+    speedEl.addEventListener('change', function () { setAutoSpeed(parseInt(speedEl.value, 10)); });
   }
 
   window.addEventListener('keydown', function (e) { onKey(e, true); });
