@@ -920,7 +920,7 @@
     "blurb": "在节拍上拧开塞子。",
     "hue": 22,
     "tag": "塞",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/cork-pop/"
   },
   {
@@ -942,7 +942,7 @@
     "blurb": "只留一只铃响，按掉其余。",
     "hue": 55,
     "tag": "铃",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/bell-mute/"
   },
   {
@@ -953,7 +953,7 @@
     "blurb": "滚露珠合成一颗大的。",
     "hue": 175,
     "tag": "露",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/dew-collect/"
   },
   {
@@ -986,7 +986,7 @@
     "blurb": "用灰写字，风会吹散。",
     "hue": 20,
     "tag": "灰",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/ash-write/"
   },
   {
@@ -997,7 +997,7 @@
     "blurb": "先转笼子再插对的钥匙。",
     "hue": 45,
     "tag": "钥",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/cage-key/"
   },
   {
@@ -1008,7 +1008,7 @@
     "blurb": "跟着你敲的脉搏开门。",
     "hue": 335,
     "tag": "脉",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/pulse-gate/"
   },
   {

@@ -816,5 +816,38 @@
     "tag": "折",
     "dir": "g/fold-crane/",
     "url": "./g/fold-crane/"
+  },
+  {
+    "n": 84,
+    "id": "cork-pop",
+    "title": "启塞",
+    "subtitle": "CORK",
+    "blurb": "在节拍上拧开塞子。",
+    "hue": 22,
+    "tag": "塞",
+    "dir": "g/cork-pop/",
+    "url": "./g/cork-pop/"
+  },
+  {
+    "n": 86,
+    "id": "bell-mute",
+    "title": "止铃",
+    "subtitle": "MUTE",
+    "blurb": "只留一只铃响，按掉其余。",
+    "hue": 55,
+    "tag": "铃",
+    "dir": "g/bell-mute/",
+    "url": "./g/bell-mute/"
+  },
+  {
+    "n": 87,
+    "id": "dew-collect",
+    "title": "采露",
+    "subtitle": "DEW",
+    "blurb": "滚露珠合成一颗大的。",
+    "hue": 175,
+    "tag": "露",
+    "dir": "g/dew-collect/",
+    "url": "./g/dew-collect/"
   }
 ]
