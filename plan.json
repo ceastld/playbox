@@ -3171,7 +3171,7 @@
     "blurb": "盔甲骑士闯关，被打中就剩内裤。",
     "hue": 6,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/ghosts-goblins/",
     "kind": "remake"
   },
@@ -3183,7 +3183,7 @@
     "blurb": "喷火清巢，别被异形拖进管道。",
     "hue": 132,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/aliens/",
     "kind": "remake"
   },
@@ -3195,7 +3195,7 @@
     "blurb": "准星扫射，蹲下躲开对面的弹雨。",
     "hue": 88,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/cabal/",
     "kind": "remake"
   },
@@ -3207,7 +3207,7 @@
     "blurb": "海空连射，把编队和舰炮打穿。",
     "hue": 198,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/capcom-1941/",
     "kind": "remake"
   },
@@ -3221,6 +3221,54 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/snow-bros/",
+    "kind": "remake"
+  },
+  {
+    "n": 278,
+    "id": "pang",
+    "title": "穿球",
+    "subtitle": "PANG",
+    "blurb": "叉破气球，别被掉下来的球砸到。",
+    "hue": 186,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/pang/",
+    "kind": "remake"
+  },
+  {
+    "n": 279,
+    "id": "bionic",
+    "title": "仿生",
+    "subtitle": "BION",
+    "blurb": "甩臂钩墙，把机兵从平台上拽下来。",
+    "hue": 118,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/bionic/",
+    "kind": "remake"
+  },
+  {
+    "n": 280,
+    "id": "forgotten-worlds",
+    "title": "忘界",
+    "subtitle": "FORG",
+    "blurb": "旋转射击，把地上的炮台打穿。",
+    "hue": 28,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/forgotten-worlds/",
+    "kind": "remake"
+  },
+  {
+    "n": 281,
+    "id": "excitebike",
+    "title": "越野",
+    "subtitle": "BIKE",
+    "blurb": "压车过坡，别在泥里把引擎烧红。",
+    "hue": 14,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/excitebike/",
     "kind": "remake"
   }
 ]

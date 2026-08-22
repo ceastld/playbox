@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#05080c" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>卡巴 · CABAL</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2305080c'/%3E%3Crect x='2' y='2' width='28' height='28' rx='4' fill='%230a1408' stroke='%23c6ff3d' stroke-width='1.3'/%3E%3Cpath d='M6 18 L16 10 L26 18' fill='%23142810'/%3E%3Crect x='8' y='14' width='6' height='8' fill='%233a4a22'/%3E%3Crect x='18' y='13' width='7' height='9' fill='%232a3a1c'/%3E%3Ccircle cx='16' cy='12' r='4.4' fill='none' stroke='%23c6ff3d' stroke-width='1.2'/%3E%3Crect x='13' y='21' width='4' height='6' rx='.5' fill='%234a6230'/%3E%3Ccircle cx='15' cy='20' r='1.4' fill='%23d6a87e'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>卡巴</b>
+        <span>CABAL</span>
+      </div>
+      <div class="status">
+        <div class="scores" aria-live="polite">
+          <div class="score" id="score-box">
+            <em>分数</em>
+            <b id="score">0</b>
+            <span id="score-add" class="score-add" hidden>+0</span>
+          </div>
+          <div class="score best">
+            <em>最高</em>
+            <b id="best">0</b>
+          </div>
+          <div class="score combo" id="combo-box">
+            <em>连击</em>
+            <b id="combo">×1</b>
+          </div>
+        </div>
+        <div class="row">
+          <span id="stage-label">前线</span>
+          <span id="tag-label">哨所</span>
+          <span id="nade-label">雷 4</span>
+          <div class="fill" id="hp-wrap" title="体力">
+            <em>体</em>
+            <div class="fill-track" aria-hidden="true"><i id="hp-bar"></i></div>
+          </div>
+          <span class="lives" id="lives" aria-label="剩余性命"></span>
+          <span class="pips" id="pips" aria-label="手雷"></span>
+        </div>
+      </div>
+      <div class="tools">
+        <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
+        <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <canvas id="c" tabindex="0" role="application" aria-label="卡巴，战壕里左右挪位，准星点杀，蹲下躲弹，手雷掀屋"></canvas>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden"></div>
+      <div id="pad" class="pad">
+        <div class="pad-cluster">
+          <button type="button" id="btn-left" aria-label="左移">左</button>
+          <button type="button" id="btn-right" aria-label="右移">右</button>
+          <button type="button" id="btn-duck" aria-label="蹲下">蹲</button>
+        </div>
+        <div class="pad-cluster">
+          <button type="button" id="btn-fire" aria-label="开火">射</button>
+          <button type="button" id="btn-nade" aria-label="手雷">雷</button>
+        </div>
+      </div>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">CABAL</p>
+          <h1 id="ov-title">卡巴</h1>
+          <p class="lead" id="ov-lead">士兵站在战壕。左右挪位，准星点杀。蹲下躲弹，手雷掀屋。打掉掩体，再干首领。</p>
+          <p class="ops" id="ov-ops">← → / AD 移动 · 鼠标或 IJKL 瞄准 · 空格射击 · Shift/Z 手雷 · ↓ 蹲 · R 重开 · M 静音</p>
+          <div class="ov-actions" id="ov-start">
+            <button type="button" id="btn-front">前线</button>
+            <button type="button" id="btn-rain">弹雨</button>
+          </div>
+          <div class="ov-actions gone" id="ov-end">
+            <button type="button" id="ov-again">再来</button>
+            <button type="button" id="ov-menu">换模式</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">← → 移动 · 鼠标 / IJKL 瞄准 · 空格射击 · Shift 手雷 · ↓ 蹲 · R 重开 · M 静音</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>

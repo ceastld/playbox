@@ -3032,5 +3032,53 @@
     "dir": "g/magic-sword/",
     "url": "./g/magic-sword/",
     "kind": "remake"
+  },
+  {
+    "n": 273,
+    "id": "ghosts-goblins",
+    "title": "魔堡",
+    "subtitle": "GHOST",
+    "blurb": "盔甲骑士闯关，被打中就剩内裤。",
+    "hue": 6,
+    "tag": "复刻",
+    "dir": "g/ghosts-goblins/",
+    "url": "./g/ghosts-goblins/",
+    "kind": "remake"
+  },
+  {
+    "n": 274,
+    "id": "aliens",
+    "title": "异形",
+    "subtitle": "ALIEN",
+    "blurb": "喷火清巢，别被异形拖进管道。",
+    "hue": 132,
+    "tag": "复刻",
+    "dir": "g/aliens/",
+    "url": "./g/aliens/",
+    "kind": "remake"
+  },
+  {
+    "n": 275,
+    "id": "cabal",
+    "title": "卡巴",
+    "subtitle": "CABAL",
+    "blurb": "准星扫射，蹲下躲开对面的弹雨。",
+    "hue": 88,
+    "tag": "复刻",
+    "dir": "g/cabal/",
+    "url": "./g/cabal/",
+    "kind": "remake"
+  },
+  {
+    "n": 276,
+    "id": "capcom-1941",
+    "title": "反击",
+    "subtitle": "1941",
+    "blurb": "海空连射，把编队和舰炮打穿。",
+    "hue": 198,
+    "tag": "复刻",
+    "dir": "g/capcom-1941/",
+    "url": "./g/capcom-1941/",
+    "kind": "remake"
   }
 ]
