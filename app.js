@@ -14,7 +14,7 @@
 
   let games = [];
   let filter = "picks";
-  const PICKS = ["mirror-step", "echo-ping", "melt-core", "tide-trace", "ghost-jump", "beat-blade", "pebble-skip", "fold-crane", "dice-lock", "night-gate", "fuse-cut", "yarn-ball"];
+  const PICKS = ["twenty48", "mirror-step", "echo-ping", "melt-core", "tide-trace", "ghost-jump", "beat-blade", "pebble-skip", "fold-crane", "dice-lock", "night-gate", "fuse-cut", "yarn-ball"];
   const FAMILIES = [
     { id: "picks", title: "精选", hint: "从这儿开始，这几款最好上手" },
     { id: "remake", title: "复刻", hint: "经典重做，手感对齐原版", kind: "remake" },

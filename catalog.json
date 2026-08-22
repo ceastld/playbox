@@ -992,5 +992,17 @@
     "tag": "门",
     "dir": "g/night-gate/",
     "url": "./g/night-gate/"
+  },
+  {
+    "n": 101,
+    "id": "twenty48",
+    "title": "2048",
+    "subtitle": "TILES",
+    "blurb": "滑动合并，合到 2048。",
+    "hue": 36,
+    "tag": "复刻",
+    "dir": "g/twenty48/",
+    "url": "./g/twenty48/",
+    "kind": "remake"
   }
 ]
