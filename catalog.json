@@ -3392,5 +3392,17 @@
     "dir": "g/donpachi/",
     "url": "./g/donpachi/",
     "kind": "remake"
+  },
+  {
+    "n": 303,
+    "id": "gunbird",
+    "title": "枪鸟",
+    "subtitle": "GBRD",
+    "blurb": "纵版扫射，把空中编队打散。",
+    "hue": 18,
+    "tag": "复刻",
+    "dir": "g/gunbird/",
+    "url": "./g/gunbird/",
+    "kind": "remake"
   }
 ]

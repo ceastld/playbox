@@ -3531,7 +3531,7 @@
     "blurb": "纵版扫射，把空中编队打散。",
     "hue": 18,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/gunbird/",
     "kind": "remake"
   },
@@ -3581,6 +3581,18 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/baraduke/",
+    "kind": "remake"
+  },
+  {
+    "n": 308,
+    "id": "r-type2",
+    "title": "武装2",
+    "subtitle": "RT2",
+    "blurb": "蓄力波炮，把机械要塞打穿。",
+    "hue": 200,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/r-type2/",
     "kind": "remake"
   }
 ]

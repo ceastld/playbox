@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#160806" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>枪鸟 · GBRD</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23160806'/%3E%3Cpath d='M6 20c6-10 10-14 10-14s2 6 8 12c-6 1-10 4-14 8-1-3-3-5-4-6z' fill='%23ff6b3d'/%3E%3Cpath d='M16 8l3 7 8 1-6 5 2 8-7-5-7 5 2-8-6-5 8-1z' fill='%23ffe36b'/%3E%3Cpath d='M16 12l1.6 4 4.2.4-3.2 2.8.9 4.2-3.5-2.6-3.5 2.6.9-4.2-3.2-2.8 4.2-.4z' fill='%23fff4e8'/%3E%3Cpath d='M14 22h4v6h-4z' fill='%2300e8d4'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>枪鸟</b>
+        <span>GBRD</span>
+      </div>
+      <div class="status">
+        <div class="scores" aria-live="polite">
+          <div class="score" id="score-box">
+            <em>分数</em>
+            <b id="score">0</b>
+            <span id="score-add" class="score-add" hidden>+0</span>
+          </div>
+          <div class="score best">
+            <em>最高</em>
+            <b id="best">0</b>
+          </div>
+        </div>
+        <div class="row">
+          <span id="stage-label">第 1 关</span>
+          <span id="tag-label">空战</span>
+          <span id="hero-label" class="hero">羽散</span>
+          <span id="pwr-label" class="pwr">羽</span>
+          <span id="bomb-label" class="bombs">爆 ×3</span>
+          <span id="combo-label" class="combo" hidden>连击</span>
+          <span class="pips" id="pips" aria-label="剩余生命"></span>
+        </div>
+      </div>
+      <div class="tools">
+        <button type="button" id="btn-bomb" title="Shift / Z" aria-label="爆弹">爆</button>
+        <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
+        <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <canvas id="c" tabindex="0" role="application" aria-label="枪鸟游戏区，纵向卷轴，空格射击，Shift 扔角色爆弹"></canvas>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden"></div>
+      <div id="pad" class="pad">
+        <button type="button" id="btn-pad" aria-label="爆弹">爆</button>
+      </div>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">GBRD</p>
+          <h1 id="ov-title">枪鸟</h1>
+          <p class="lead" id="ov-lead">纵向卷轴。选角色：羽散扇形金羽，钢翼贯穿光刃。Shift 扔专属爆弹。关关有 Boss。</p>
+          <p class="ops" id="ov-ops">方向 / WASD 移动 · 空格开火 · Shift / Z 爆弹 · R 重开 · M 静音</p>
+          <div class="ov-chars" id="ov-chars">
+            <button type="button" id="btn-spread" class="char on" aria-pressed="true">羽散<span>扇形金羽 · 凤凰爆</span></button>
+            <button type="button" id="btn-laser" class="char" aria-pressed="false">钢翼<span>贯穿光刃 · 钢炮爆</span></button>
+          </div>
+          <div class="ov-actions" id="ov-start">
+            <button type="button" id="btn-raid">空战</button>
+            <button type="button" id="btn-storm">密弹</button>
+          </div>
+          <div class="ov-actions gone" id="ov-end">
+            <button type="button" id="ov-retry">再来</button>
+            <button type="button" id="ov-modes">换模式</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">选角色 · 空格开火 · Shift 爆弹 · 捡 羽/爆</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>
