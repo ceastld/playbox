@@ -2084,5 +2084,17 @@
     "dir": "g/green-raid/",
     "url": "./g/green-raid/",
     "kind": "remake"
+  },
+  {
+    "n": 197,
+    "id": "star-force",
+    "title": "星力",
+    "subtitle": "FORCE",
+    "blurb": "地上那层也能轰。",
+    "hue": 210,
+    "tag": "复刻",
+    "dir": "g/star-force/",
+    "url": "./g/star-force/",
+    "kind": "remake"
   }
 ]

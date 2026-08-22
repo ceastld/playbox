@@ -2259,7 +2259,7 @@
     "blurb": "地上那层也能轰。",
     "hue": 210,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/star-force/",
     "kind": "remake"
   },
@@ -2273,6 +2273,18 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/pooyan/",
+    "kind": "remake"
+  },
+  {
+    "n": 199,
+    "id": "mr-do",
+    "title": "推球",
+    "subtitle": "DO",
+    "blurb": "推球砸怪，挖出樱桃。",
+    "hue": 18,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/mr-do/",
     "kind": "remake"
   }
 ]
