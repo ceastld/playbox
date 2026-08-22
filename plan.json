@@ -1110,5 +1110,41 @@
     "status": "shipped",
     "dir": "g/twenty48/",
     "kind": "remake"
+  },
+  {
+    "n": 102,
+    "id": "snake",
+    "title": "贪吃蛇",
+    "subtitle": "SNAKE",
+    "blurb": "撞墙就死，吃到变长。",
+    "hue": 142,
+    "tag": "复刻",
+    "status": "shipped",
+    "dir": "g/snake/",
+    "kind": "remake"
+  },
+  {
+    "n": 103,
+    "id": "minesweeper",
+    "title": "扫雷",
+    "subtitle": "MINES",
+    "blurb": "翻开数字，标出地雷。",
+    "hue": 198,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/minesweeper/",
+    "kind": "remake"
+  },
+  {
+    "n": 104,
+    "id": "tetris",
+    "title": "俄罗斯方块",
+    "subtitle": "TETRIS",
+    "blurb": "七种方块，消行得分。",
+    "hue": 312,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/tetris/",
+    "kind": "remake"
   }
 ]
