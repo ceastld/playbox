@@ -733,7 +733,7 @@
     "blurb": "锁住骰面组成密码。",
     "hue": 16,
     "tag": "骰",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/dice-lock/"
   },
   {
@@ -799,7 +799,7 @@
     "blurb": "两边配重，让两边同时落地。",
     "hue": 215,
     "tag": "轮",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/pulley-two/"
   },
   {

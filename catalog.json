@@ -615,5 +615,15 @@
     "hue": 8,
     "tag": "汽",
     "dir": "g/steam-valve/"
+  },
+  {
+    "n": 67,
+    "id": "dice-lock",
+    "title": "锁骰",
+    "subtitle": "DICE",
+    "blurb": "锁住骰面组成密码。",
+    "hue": 16,
+    "tag": "骰",
+    "dir": "g/dice-lock/"
   }
 ]

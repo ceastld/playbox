@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#05030c" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>锁骰 · DICE</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2305030c'/%3E%3Crect x='7' y='11' width='18' height='18' rx='3' fill='%23120818' stroke='%2300f0ff' stroke-width='1.5'/%3E%3Ccircle cx='16' cy='20' r='1.5' fill='%23ffe36b'/%3E%3Ccircle cx='11.6' cy='15.6' r='1.3' fill='%23ff3db8'/%3E%3Ccircle cx='20.4' cy='24.4' r='1.3' fill='%23ff3db8'/%3E%3Cpath d='M11 11v-2.2a5 5 0 0 1 10 0V11' fill='none' stroke='%23ff3db8' stroke-width='1.5'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>锁骰</b>
+        <span>DICE</span>
+      </div>
+      <div class="status">
+        <span id="stage-label">十锁</span>
+        <div class="row">
+          <div class="fill" id="code-wrap" title="已锁">
+            <em>码</em>
+            <div class="fill-track" aria-hidden="true"><i id="code-bar"></i></div>
+            <b id="code-num">0/2</b>
+          </div>
+          <div class="fill time" id="time-wrap" title="时限">
+            <em>时</em>
+            <div class="fill-track" aria-hidden="true"><i id="time-bar"></i></div>
+          </div>
+          <span class="pips" id="pips" aria-label="剩余性命"></span>
+        </div>
+      </div>
+      <div class="tools">
+        <button type="button" id="btn-lock" title="空格" aria-label="锁住">锁</button>
+        <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
+        <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <canvas id="c" aria-label="锁骰金库"></canvas>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden"></div>
+      <div id="pad" class="pad">
+        <button type="button" id="btn-prev" aria-label="上一枚">◀</button>
+        <button type="button" id="btn-pad-lock" aria-label="锁住">锁</button>
+        <button type="button" id="btn-next" aria-label="下一枚">▶</button>
+      </div>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">DICE</p>
+          <h1 id="ov-title">锁骰</h1>
+          <p class="lead" id="ov-lead">骰子在转。对准密码那一面，<br />停稳再锁住，组成开库密码。</p>
+          <p class="ops" id="ov-ops">点骰锁定 · ← → 选 · 空格锁 · 1–5 · M 静音</p>
+          <button type="button" id="ov-btn">开锁</button>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">对准点数 · 停稳再锁</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>
