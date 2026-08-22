@@ -810,7 +810,7 @@
     "blurb": "倒到水位线，洒出来重来。",
     "hue": 10,
     "tag": "斟",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/tea-pour/"
   },
   {
@@ -821,7 +821,7 @@
     "blurb": "滑动梳齿解开缠线。",
     "hue": 300,
     "tag": "梳",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/comb-teeth/"
   },
   {
@@ -898,7 +898,7 @@
     "blurb": "拉开间隙让火花跳到目标。",
     "hue": 14,
     "tag": "火",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/spark-gap/"
   },
   {
@@ -909,7 +909,7 @@
     "blurb": "石头你离开后会沉。",
     "hue": 198,
     "tag": "涉",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/river-ford/"
   },
   {

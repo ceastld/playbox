@@ -705,5 +705,25 @@
     "hue": 320,
     "tag": "拍",
     "dir": "g/echo-clap/"
+  },
+  {
+    "n": 74,
+    "id": "tea-pour",
+    "title": "斟茶",
+    "subtitle": "POUR",
+    "blurb": "倒到水位线，洒出来重来。",
+    "hue": 10,
+    "tag": "斟",
+    "dir": "g/tea-pour/"
+  },
+  {
+    "n": 75,
+    "id": "comb-teeth",
+    "title": "梳齿",
+    "subtitle": "COMB",
+    "blurb": "滑动梳齿解开缠线。",
+    "hue": 300,
+    "tag": "梳",
+    "dir": "g/comb-teeth/"
   }
 ]
