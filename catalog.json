@@ -3092,5 +3092,41 @@
     "dir": "g/snow-bros/",
     "url": "./g/snow-bros/",
     "kind": "remake"
+  },
+  {
+    "n": 278,
+    "id": "pang",
+    "title": "穿球",
+    "subtitle": "PANG",
+    "blurb": "叉破气球，别被掉下来的球砸到。",
+    "hue": 186,
+    "tag": "复刻",
+    "dir": "g/pang/",
+    "url": "./g/pang/",
+    "kind": "remake"
+  },
+  {
+    "n": 280,
+    "id": "forgotten-worlds",
+    "title": "忘界",
+    "subtitle": "FORG",
+    "blurb": "旋转射击，把地上的炮台打穿。",
+    "hue": 28,
+    "tag": "复刻",
+    "dir": "g/forgotten-worlds/",
+    "url": "./g/forgotten-worlds/",
+    "kind": "remake"
+  },
+  {
+    "n": 281,
+    "id": "excitebike",
+    "title": "越野",
+    "subtitle": "BIKE",
+    "blurb": "压车过坡，别在泥里把引擎烧红。",
+    "hue": 14,
+    "tag": "复刻",
+    "dir": "g/excitebike/",
+    "url": "./g/excitebike/",
+    "kind": "remake"
   }
 ]

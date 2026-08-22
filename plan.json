@@ -3231,7 +3231,7 @@
     "blurb": "叉破气球，别被掉下来的球砸到。",
     "hue": 186,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/pang/",
     "kind": "remake"
   },
@@ -3255,7 +3255,7 @@
     "blurb": "旋转射击，把地上的炮台打穿。",
     "hue": 28,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/forgotten-worlds/",
     "kind": "remake"
   },
@@ -3267,7 +3267,7 @@
     "blurb": "压车过坡，别在泥里把引擎烧红。",
     "hue": 14,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/excitebike/",
     "kind": "remake"
   },
@@ -3281,6 +3281,42 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/splatterhouse/",
+    "kind": "remake"
+  },
+  {
+    "n": 283,
+    "id": "ninja-spirit",
+    "title": "忍魂",
+    "subtitle": "SPIR",
+    "blurb": "化身三忍，把关卡里的妖切开。",
+    "hue": 348,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/ninja-spirit/",
+    "kind": "remake"
+  },
+  {
+    "n": 284,
+    "id": "toki",
+    "title": "猿人",
+    "subtitle": "TOKI",
+    "blurb": "吐火跳跃，把女友从巫师手里救回。",
+    "hue": 32,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/toki/",
+    "kind": "remake"
+  },
+  {
+    "n": 285,
+    "id": "kiwi",
+    "title": "奇异",
+    "subtitle": "KIWI",
+    "blurb": "弹跳射弹，把伙伴从关卡里救出来。",
+    "hue": 72,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/kiwi/",
     "kind": "remake"
   }
 ]
