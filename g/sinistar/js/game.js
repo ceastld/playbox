@@ -34,7 +34,12 @@
   const EXTRA_LIFE = 12000;
   const BEST_KEY = 'playbox-sinistar-best';
   const MUTE_KEY = 'playbox-sinistar-mute';
-  const OPS = '← → / A D 转向 · W / ↑ 推进 · 空格开火 · C 星弹 · R 重开 · M 静音';
+  const AUTO_SPEED_KEY = 'playbox-sinistar-auto-speed';
+  const SPEED_LABELS = ['', '慢', '中', '快', '极快'];
+  const AUTO_SCALE = [1, 1, 2, 4, 10];
+  const AUTO_START_WAIT = [0, 0.55, 0.38, 0.2, 0.06];
+  const AUTO_RETRY_WAIT = [0, 1.2, 0.9, 0.65, 0.32];
+  const OPS = '← → 转向 · W / ↑ 推进 · 空格开火 · C 星弹 · A 自动 · R 重开 · M 静音';
   const REDUCE = typeof window !== 'undefined' && window.matchMedia
     ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
     : false;
@@ -89,6 +94,9 @@
   const padThrust = document.getElementById('pad-thrust');
   const padFire = document.getElementById('pad-fire');
   const padBomb = document.getElementById('pad-bomb');
+  const btnAuto = document.getElementById('btn-auto');
+  const speedEl = document.getElementById('speed');
+  const speedLab = document.getElementById('speed-lab');
 
   let W = 1;
   let H = 1;
@@ -103,6 +111,12 @@
 
   const keys = { l: false, r: false, u: false, d: false, fire: false, bomb: false };
   const pointer = { down: false, aim: 0, id: null, bomb: false };
+  let autoOn = false;
+  let autoSpeed = 3;
+  let autoOvWait = 0;
+  let autoGoal = null;
+  let autoFire = false;
+  let autoBomb = false;
   const pips = [];
   const particles = [];
   const sparks = [];
@@ -415,6 +429,28 @@
     } catch (err) { /* ignore */ }
   }
 
+  function loadAutoSpeed() {
+    try {
+      const n = parseInt(localStorage.getItem(AUTO_SPEED_KEY) || '3', 10);
+      if (!isFinite(n) || n < 1 || n > 4) return 3;
+      return n;
+    } catch (err) {
+      return 3;
+    }
+  }
+
+  function saveAutoSpeed(n) {
+    try {
+      localStorage.setItem(AUTO_SPEED_KEY, String(n));
+    } catch (err) { /* ignore */ }
+  }
+
+  function autoScale() {
+    if (!autoOn) return 1;
+    if (G.mode === 'play') return AUTO_SCALE[autoSpeed] || 1;
+    return 1;
+  }
+
   function addScore(n) {
     if (G.mode !== 'play' || n <= 0) return;
     G.score += n;
@@ -531,7 +567,13 @@
         comboEl.hidden = true;
       }
     }
-    if (G.mode === 'title') setHint(OPS, '');
+    if (autoOn && G.mode === 'play') {
+      setHint('自动托管 · 凿矿取晶 · 星弹打脸 · A 停下', G.sini.live ? 'warn' : '');
+    } else if (autoOn && G.mode === 'title') {
+      setHint('自动托管 · 即将开局 · A 停下');
+    } else if (autoOn && (G.mode === 'lose' || G.mode === 'win')) {
+      setHint('自动仍开着 · 即将再来 · A 停下', G.mode === 'win' ? 'hot' : 'warn');
+    } else if (G.mode === 'title') setHint(OPS, '');
     else if (G.mode === 'lose') setHint('R 重开 · 战士撞击或被吞即扣命', 'warn');
     else if (G.mode === 'win') setHint('星吞粉碎 · R 再来', 'hot');
     else if (G.sini.live) setHint('它活了 · C 星弹打脸 · 别被吞', 'warn');
@@ -571,6 +613,7 @@
 
   function hitStop(sec) {
     if (REDUCE || G.mode !== 'play') return;
+    if (autoOn && autoSpeed >= 3) return;
     G.stop = Math.max(G.stop, sec);
   }
 
@@ -886,6 +929,8 @@
     G.stop = 0;
     G.zoneWait = 0;
     G.why = '';
+    autoOvWait = 0;
+    autoGoal = null;
     if (scoreEl) scoreEl.textContent = '0';
     clearField();
     resetShip(true);
@@ -1168,6 +1213,411 @@
     return best;
   }
 
+  function nearestWarrior(x, y) {
+    let best = null;
+    let bestD = 1e9;
+    for (let i = 0; i < G.warriors.length; i++) {
+      const w = G.warriors[i];
+      if (!w.alive) continue;
+      const d = wrapDist(x, y, w.x, w.y).d;
+      if (d < bestD) {
+        bestD = d;
+        best = w;
+      }
+    }
+    return best;
+  }
+
+  function workerNearCrystal(c, slack) {
+    if (!c) return null;
+    let best = null;
+    let bestD = 1e9;
+    for (let i = 0; i < G.workers.length; i++) {
+      const w = G.workers[i];
+      if (!w.alive || w.carry) continue;
+      const d = wrapDist(w.x, w.y, c.x, c.y).d;
+      if (d < bestD) {
+        bestD = d;
+        best = w;
+      }
+    }
+    if (best && bestD < slack) return best;
+    return null;
+  }
+
+  function facingErrTo(x, y) {
+    const w = wrapDist(x, y, G.ship.x, G.ship.y);
+    const desired = Math.atan2(w.dx, -w.dy);
+    return { err: angNorm(desired - G.ship.ang), d: w.d, dx: w.dx, dy: w.dy };
+  }
+
+  function shotClearsCrystal(alongMax) {
+    const ca = Math.sin(G.ship.ang);
+    const sa = -Math.cos(G.ship.ang);
+    for (let i = 0; i < G.crystals.length; i++) {
+      const c = G.crystals[i];
+      if (!c.alive) continue;
+      const w = wrapDist(c.x, c.y, G.ship.x, G.ship.y);
+      const along = w.dx * ca + w.dy * sa;
+      if (along < 8 || along > alongMax) continue;
+      const px = w.dx - ca * along;
+      const py = w.dy - sa * along;
+      if (hypot(px, py) < CRYSTAL_R + 10) return false;
+    }
+    return true;
+  }
+
+  function inShotCone(ent, rad, maxD) {
+    if (!ent || !ent.alive) return false;
+    const leadT = Math.min(0.28, wrapDist(ent.x, ent.y, G.ship.x, G.ship.y).d / SHOT_V);
+    const tx = wrap(ent.x + (ent.vx || 0) * leadT, WW);
+    const ty = wrap(ent.y + (ent.vy || 0) * leadT, WH);
+    const f = facingErrTo(tx, ty);
+    if (f.d > maxD || f.d < rad + 6) return false;
+    if (Math.abs(f.err) > (rad > 20 ? 0.32 : 0.22)) return false;
+    if (!shotClearsCrystal(f.d - rad)) return false;
+    return true;
+  }
+
+  function clearPlayerMotion() {
+    keys.l = false;
+    keys.r = false;
+    keys.u = false;
+    keys.d = false;
+    keys.fire = false;
+    keys.bomb = false;
+    pointer.down = false;
+    pointer.id = null;
+    autoFire = false;
+    autoBomb = false;
+    if (padCcw) padCcw.classList.remove('on');
+    if (padCw) padCw.classList.remove('on');
+    if (padThrust) padThrust.classList.remove('on');
+    if (padFire) padFire.classList.remove('on');
+    if (padBomb) padBomb.classList.remove('on');
+  }
+
+  function syncAutoUi() {
+    if (!btnAuto) return;
+    btnAuto.classList.toggle('on', autoOn);
+    btnAuto.setAttribute('aria-pressed', autoOn ? 'true' : 'false');
+    btnAuto.textContent = autoOn ? '停下' : '自动';
+    btnAuto.setAttribute('aria-label', autoOn ? '停止自动' : '自动');
+  }
+
+  function syncSpeedUi() {
+    if (!speedEl || !speedLab) return;
+    speedEl.value = String(autoSpeed);
+    speedLab.textContent = SPEED_LABELS[autoSpeed];
+    speedEl.title = SPEED_LABELS[autoSpeed];
+    speedEl.setAttribute('aria-valuetext', SPEED_LABELS[autoSpeed]);
+  }
+
+  function toggleAuto() {
+    autoOn = !autoOn;
+    autoOvWait = 0;
+    autoGoal = null;
+    clearPlayerMotion();
+    syncAutoUi();
+    if (!autoOn) {
+      syncHud();
+      return;
+    }
+    audio.ensure();
+    syncHud();
+  }
+
+  function setAutoSpeed(n) {
+    n = parseInt(n, 10);
+    if (!(n >= 1 && n <= 4)) n = 3;
+    autoSpeed = n;
+    saveAutoSpeed(autoSpeed);
+    syncSpeedUi();
+  }
+
+  function autoPickGoal() {
+    const ship = G.ship;
+    let best = null;
+    let bestS = -1e12;
+
+    function consider(kind, ref, x, y, hold, score) {
+      if (score > bestS) {
+        bestS = score;
+        best = { kind: kind, ref: ref, x: x, y: y, hold: hold };
+      }
+    }
+
+    if (autoGoal) {
+      if (autoGoal.ref && autoGoal.ref.alive === false) autoGoal = null;
+      else if (autoGoal.kind === 'sini' && !G.sini.live && G.sini.pieces <= 0) autoGoal = null;
+    }
+
+    for (let i = 0; i < G.crystals.length; i++) {
+      const c = G.crystals[i];
+      if (!c.alive) continue;
+      const d = wrapDist(ship.x, ship.y, c.x, c.y).d;
+      let s = 1400 - d;
+      const thief = workerNearCrystal(c, d + 40);
+      if (thief) s += 220;
+      if (d < 90) s += 360;
+      if (autoGoal && autoGoal.kind === 'crystal' && autoGoal.ref === c) s += 80;
+      consider('crystal', c, wrap(c.x + c.vx * 0.12, WW), wrap(c.y + c.vy * 0.12, WH), 0, s);
+    }
+
+    for (let i = 0; i < G.workers.length; i++) {
+      const w = G.workers[i];
+      if (!w.alive || !w.carry) continue;
+      const d = wrapDist(ship.x, ship.y, w.x, w.y).d;
+      let s = 980 - d * 0.85;
+      if (autoGoal && autoGoal.kind === 'worker' && autoGoal.ref === w) s += 70;
+      consider('worker', w, w.x, w.y, 70, s);
+    }
+
+    const needBombs = G.bombs < (G.sini.live ? 4 : 6);
+    if (needBombs || !best || best.kind !== 'crystal') {
+      for (let i = 0; i < G.rocks.length; i++) {
+        const r = G.rocks[i];
+        if (!r.alive) continue;
+        const d = wrapDist(ship.x, ship.y, r.x, r.y).d;
+        let s = (needBombs ? 720 : 380) - d * 0.45 + (2 - r.size) * 40;
+        if (autoGoal && autoGoal.kind === 'rock' && autoGoal.ref === r) s += 90;
+        consider('rock', r, r.x, r.y, r.r + 78, s);
+      }
+    }
+
+    if (G.bombs > 0 && (G.sini.live || G.sini.pieces >= 2)) {
+      const d = wrapDist(ship.x, ship.y, G.sini.x, G.sini.y).d;
+      const hold = G.sini.live ? 240 : 150;
+      let s = (G.sini.live ? 860 : 520) - Math.abs(d - hold) * 0.7;
+      if (G.bombs >= 4) s += 160;
+      consider('sini', G.sini, G.sini.x, G.sini.y, hold, s);
+    }
+
+    const war = nearestWarrior(ship.x, ship.y);
+    if (war) {
+      const d = wrapDist(ship.x, ship.y, war.x, war.y).d;
+      if (d < 280) {
+        consider('warrior', war, war.x, war.y, 130, 340 - d * 0.4);
+      }
+    }
+
+    if (autoGoal && best && autoGoal.kind === best.kind && autoGoal.ref === best.ref) {
+      return best;
+    }
+    if (autoGoal && autoGoal.ref && (autoGoal.ref.alive !== false) && best) {
+      const stick = autoGoal.kind === 'crystal' ? 140 : 90;
+      const dOld = wrapDist(ship.x, ship.y, autoGoal.x, autoGoal.y).d;
+      if (dOld < 420 && bestS < 700) {
+        autoGoal.x = autoGoal.ref.x;
+        autoGoal.y = autoGoal.ref.y;
+        return autoGoal;
+      }
+      if (bestS < stick) return autoGoal;
+    }
+    return best;
+  }
+
+  function autoSteer(tx, ty, holdR, fleeX, fleeY, panic) {
+    const ship = G.ship;
+    const w = wrapDist(tx, ty, ship.x, ship.y);
+    const d = Math.max(0.001, w.d);
+    const nx = w.dx / d;
+    const ny = w.dy / d;
+    const spd = hypot(ship.vx, ship.vy);
+    const closing = ship.vx * nx + ship.vy * ny;
+
+    let faceX = nx;
+    let faceY = ny;
+    if (panic > 0.55) {
+      faceX = fleeX;
+      faceY = fleeY;
+    }
+    const fln = hypot(faceX, faceY) || 1;
+    faceX /= fln;
+    faceY /= fln;
+
+    const desired = Math.atan2(faceX, -faceY);
+    const errA = angNorm(desired - ship.ang);
+    if (errA > 0.07) keys.r = true;
+    else if (errA < -0.07) keys.l = true;
+
+    const aligned = Math.abs(errA) < (panic > 0.45 ? 0.9 : 0.42);
+    const thrustAlign = Math.abs(errA) < (d > 180 ? 1.05 : 0.7);
+    const tooFast = holdR > 0 && d < holdR + 18 && closing > 85;
+    const overshoot = holdR <= 0 && d < 52 && closing > 64 && spd > 80;
+    if (overshoot || tooFast) {
+      const velH = Math.atan2(ship.vx, -ship.vy);
+      if (Math.abs(angNorm(velH - ship.ang)) < 0.55) keys.d = true;
+    } else if (holdR > 0 && d < holdR + 10 && d > holdR - 18 && aligned) {
+      if (spd < 70) keys.u = true;
+    } else if (aligned || thrustAlign) {
+      if (!(holdR > 0 && d < holdR - 8 && closing > 20)) keys.u = true;
+    }
+  }
+
+  function autoThink() {
+    autoFire = false;
+    autoBomb = false;
+    keys.l = false;
+    keys.r = false;
+    keys.u = false;
+    keys.d = false;
+    keys.fire = false;
+    keys.bomb = false;
+    pointer.down = false;
+    if (G.mode !== 'play' || G.deadT > 0) return;
+
+    const ship = G.ship;
+    let fleeX = 0;
+    let fleeY = 0;
+    let panic = 0;
+
+    for (let i = 0; i < G.warriors.length; i++) {
+      const w = G.warriors[i];
+      if (!w.alive) continue;
+      const dist = wrapDist(ship.x, ship.y, w.x, w.y);
+      if (dist.d < 240 && dist.d > 0.001) {
+        const k = (240 - dist.d) / 240;
+        fleeX -= (dist.dx / dist.d) * k * 1.6;
+        fleeY -= (dist.dy / dist.d) * k * 1.6;
+        panic = Math.max(panic, k);
+      }
+    }
+    for (let i = 0; i < G.wShots.length; i++) {
+      const s = G.wShots[i];
+      if (!s.alive) continue;
+      const dist = wrapDist(ship.x, ship.y, s.x, s.y);
+      const relVx = s.vx - ship.vx;
+      const relVy = s.vy - ship.vy;
+      const relSpd2 = relVx * relVx + relVy * relVy;
+      let tHit = 0;
+      if (relSpd2 > 1) tHit = -(dist.dx * relVx + dist.dy * relVy) / relSpd2;
+      tHit = clamp(tHit, 0, 0.7);
+      const cx = dist.dx + relVx * tHit;
+      const cy = dist.dy + relVy * tHit;
+      const miss = hypot(cx, cy);
+      if (tHit > 0 && tHit < 0.55 && miss < 28) {
+        const k = (0.55 - tHit) / 0.55;
+        const mx = miss > 1 ? -cx / miss : -dist.dx;
+        const my = miss > 1 ? -cy / miss : -dist.dy;
+        fleeX += mx * k * 2.2;
+        fleeY += my * k * 2.2;
+        panic = Math.max(panic, 0.55 + k * 0.45);
+      }
+    }
+    if (G.sini.live) {
+      const dist = wrapDist(ship.x, ship.y, G.sini.x, G.sini.y);
+      if (dist.d < 320 && dist.d > 0.001) {
+        const k = (320 - dist.d) / 320;
+        fleeX -= (dist.dx / dist.d) * k * 2.4;
+        fleeY -= (dist.dy / dist.d) * k * 2.4;
+        panic = Math.max(panic, dist.d < 170 ? 0.92 : k * 0.85);
+      }
+    }
+    for (let i = 0; i < G.workers.length; i++) {
+      const w = G.workers[i];
+      if (!w.alive) continue;
+      const dist = wrapDist(ship.x, ship.y, w.x, w.y);
+      if (dist.d < 56 && dist.d > 0.001) {
+        const k = (56 - dist.d) / 56;
+        fleeX -= (dist.dx / dist.d) * k * 0.7;
+        fleeY -= (dist.dy / dist.d) * k * 0.7;
+        panic = Math.max(panic, k * 0.28);
+      }
+    }
+    const fl = hypot(fleeX, fleeY);
+    if (fl > 0.001) {
+      fleeX /= fl;
+      fleeY /= fl;
+    }
+
+    let goal = autoPickGoal();
+    if (goal) autoGoal = goal;
+    let tx = ship.x + Math.sin(ship.ang) * 80;
+    let ty = ship.y - Math.cos(ship.ang) * 80;
+    let holdR = 0;
+    if (goal) {
+      tx = goal.x;
+      ty = goal.y;
+      holdR = goal.hold || 0;
+    }
+    if (panic > 0.5) {
+      tx = wrap(ship.x + fleeX * 260, WW);
+      ty = wrap(ship.y + fleeY * 260, WH);
+      holdR = 0;
+    } else if (fl > 0.001) {
+      tx = wrap(tx + fleeX * panic * 140, WW);
+      ty = wrap(ty + fleeY * panic * 140, WH);
+    }
+    autoSteer(tx, ty, holdR, fleeX, fleeY, panic);
+
+    let crystalClose = false;
+    for (let i = 0; i < G.crystals.length; i++) {
+      const c = G.crystals[i];
+      if (!c.alive) continue;
+      if (wrapDist(ship.x, ship.y, c.x, c.y).d < 42) {
+        crystalClose = true;
+        break;
+      }
+    }
+    if (!crystalClose) {
+      const range = SHOT_V * SHOT_LIFE * 0.92;
+      for (let i = 0; i < G.rocks.length; i++) {
+        if (inShotCone(G.rocks[i], G.rocks[i].r, range)) {
+          autoFire = true;
+          break;
+        }
+      }
+      if (!autoFire) {
+        for (let i = 0; i < G.workers.length; i++) {
+          const w = G.workers[i];
+          if (!w.alive) continue;
+          if ((w.carry || wrapDist(ship.x, ship.y, w.x, w.y).d < 160) && inShotCone(w, WORKER_R, range)) {
+            autoFire = true;
+            break;
+          }
+        }
+      }
+      if (!autoFire) {
+        for (let i = 0; i < G.warriors.length; i++) {
+          if (inShotCone(G.warriors[i], WARRIOR_R, range)) {
+            autoFire = true;
+            break;
+          }
+        }
+      }
+      if (!autoFire && goal && (goal.kind === 'rock' || goal.kind === 'worker' || goal.kind === 'warrior') && goal.ref && goal.ref.alive !== false) {
+        const f = facingErrTo(goal.ref.x, goal.ref.y);
+        const rad = goal.kind === 'rock' ? goal.ref.r : goal.kind === 'worker' ? WORKER_R : WARRIOR_R;
+        if (Math.abs(f.err) < 0.3 && f.d < range && f.d > rad + 8 && shotClearsCrystal(f.d)) autoFire = true;
+      }
+    }
+    if (G.bombs > 0 && (G.sini.live || G.sini.pieces > 0) && G.zoneWait <= 0) {
+      autoBomb = true;
+    }
+    keys.fire = autoFire;
+    keys.bomb = autoBomb;
+  }
+
+  function tickAutoFlow(dt) {
+    if (!autoOn) return;
+    if (G.mode === 'title') {
+      autoOvWait += dt;
+      if (autoOvWait >= (AUTO_START_WAIT[autoSpeed] || 0.2)) {
+        autoOvWait = 0;
+        startGame(G.kind === 'frenzy' ? 'frenzy' : 'camp');
+      }
+      return;
+    }
+    if (G.mode === 'lose' || G.mode === 'win') {
+      autoOvWait += dt;
+      if (autoOvWait >= (AUTO_RETRY_WAIT[autoSpeed] || 0.7)) {
+        autoOvWait = 0;
+        startGame(G.kind);
+      }
+    }
+  }
+
   function steerTo(ent, tx, ty, spd, turn, dt) {
     const w = wrapDist(tx, ty, ent.x, ent.y);
     const desired = Math.atan2(w.dx, -w.dy);
@@ -1183,7 +1633,7 @@
     if (G.deadT > 0) return;
     let thrusting = false;
     let reversing = false;
-    if (pointer.down && !overlayOpen()) {
+    if (!autoOn && pointer.down && !overlayOpen()) {
       const err = angNorm(pointer.aim - ship.ang);
       ship.ang += clamp(err, -ROT * 1.25 * dt, ROT * 1.25 * dt);
       if (Math.abs(err) < 0.55) thrusting = true;
@@ -1199,7 +1649,7 @@
       G.thrustT -= dt;
       if (G.thrustT <= 0) {
         G.thrustT = 0.07;
-        audio.thrust();
+        if (!(autoOn && autoSpeed >= 4)) audio.thrust();
       }
       if (!REDUCE) {
         const bx = ship.x - Math.sin(ship.ang) * 12;
@@ -1663,6 +2113,7 @@
     G.bombCd = Math.max(0, G.bombCd - dt);
     G.invuln = Math.max(0, G.invuln - dt);
     G.ready = Math.max(0, G.ready - dt);
+    if (autoOn) autoThink();
     updatePlayer(dt);
     updateCam();
     updateRocks(dt);
@@ -1673,7 +2124,7 @@
     updateShots(dt);
     updateBombs(dt);
     updateWShots(dt);
-    if ((keys.fire || pointer.down) && G.mode === 'play' && !overlayOpen() && G.deadT <= 0) fire();
+    if ((keys.fire || (!autoOn && pointer.down)) && G.mode === 'play' && !overlayOpen() && G.deadT <= 0) fire();
     if (keys.bomb && G.mode === 'play' && !overlayOpen()) fireBomb();
     if (G.mode === 'play' && G.deadT <= 0) {
       collideShots();
@@ -1709,6 +2160,7 @@
   function update(dt) {
     G.t += dt;
     G.clock += dt;
+    tickAutoFlow(dt);
 
     if (G.stop > 0) {
       G.stop -= dt;
@@ -1717,7 +2169,7 @@
     }
 
     if (G.mode === 'title') {
-      if (!(keys.l || keys.r || pointer.down)) G.ship.ang += 0.32 * dt;
+      if (autoOn || !(keys.l || keys.r || pointer.down)) G.ship.ang += 0.32 * dt;
       else updatePlayer(dt);
       updateCam();
       updateRocks(dt);
@@ -2020,7 +2472,7 @@
     ctx.save();
     ctx.translate(sx(vx), sy(vy));
     ctx.rotate(ship.ang);
-    if (keys.u || (pointer.down && !overlayOpen())) {
+    if (keys.u || (!autoOn && pointer.down && !overlayOpen())) {
       ctx.fillStyle = rgba(GOLD, 0.55 + 0.35 * Math.sin(G.t * 28));
       ctx.beginPath();
       ctx.moveTo(-4 * scale, 8 * scale);
@@ -2319,39 +2771,59 @@
   function onKey(e, down) {
     const k = e.key;
     const code = e.code;
+    if (k === 'a' || k === 'A' || code === 'KeyA') {
+      e.preventDefault();
+      if (down && !e.repeat) toggleAuto();
+      return;
+    }
     const space = k === ' ' || k === 'Spacebar' || code === 'Space';
-    const left = k === 'ArrowLeft' || k === 'Left' || k === 'a' || k === 'A' || code === 'KeyA';
+    const left = k === 'ArrowLeft' || k === 'Left';
     const right = k === 'ArrowRight' || k === 'Right' || k === 'd' || k === 'D' || code === 'KeyD';
     const up = k === 'ArrowUp' || k === 'Up' || k === 'w' || k === 'W' || code === 'KeyW';
     const dn = k === 'ArrowDown' || k === 'Down' || k === 's' || k === 'S' || code === 'KeyS';
     const bomb = k === 'c' || k === 'C' || k === 'x' || k === 'X' || code === 'KeyC' || code === 'KeyX';
 
     if (left) {
-      keys.l = down;
       if (down) e.preventDefault();
+      if (autoOn) {
+        if (!down) keys.l = false;
+        return;
+      }
+      keys.l = down;
       return;
     }
     if (right) {
-      keys.r = down;
       if (down) e.preventDefault();
+      if (autoOn) {
+        if (!down) keys.r = false;
+        return;
+      }
+      keys.r = down;
       return;
     }
     if (up) {
-      keys.u = down;
       if (down) e.preventDefault();
-      if (!down) return;
+      if (autoOn) {
+        if (!down) keys.u = false;
+        return;
+      }
+      keys.u = down;
       return;
     }
     if (dn) {
-      keys.d = down;
       if (down) e.preventDefault();
+      if (autoOn) {
+        if (!down) keys.d = false;
+        return;
+      }
+      keys.d = down;
       return;
     }
     if (space) {
-      keys.fire = down;
+      keys.fire = down && !autoOn;
       if (down) e.preventDefault();
     }
-    if (bomb) keys.bomb = down;
+    if (bomb) keys.bomb = down && !autoOn;
 
     if (!down) {
       if (space) keys.fire = false;
@@ -2376,6 +2848,10 @@
       startGame('frenzy');
       return;
     }
+    if (autoOn) {
+      if ((space || k === 'Enter') && overlayOpen()) primaryAction();
+      return;
+    }
     if (bomb) {
       fireBomb();
       e.preventDefault();
@@ -2397,6 +2873,7 @@
       e.preventDefault();
       e.stopPropagation();
       audio.ensure();
+      if (autoOn) return;
       if (padsEl) {
         padsEl.classList.add('show');
         padsEl.setAttribute('aria-hidden', 'false');
@@ -2431,6 +2908,7 @@
     if (!canvas) return;
     canvas.addEventListener('pointerdown', function (e) {
       audio.ensure();
+      if (autoOn) return;
       if (e.pointerType === 'touch') {
         if (padsEl) {
           padsEl.classList.add('show');
@@ -2478,13 +2956,17 @@
     let dt = t - last;
     last = t;
     if (dt > 0.05) dt = 0.05;
-    acc += dt;
+    if (autoOn && autoSpeed >= 3 && G.mode === 'play') G.stop = 0;
+    const scaleN = autoScale();
+    acc += dt * scaleN;
     let n = 0;
-    while (acc >= STEP && n < 5) {
+    const maxSteps = scaleN >= 8 ? 48 : scaleN >= 4 ? 24 : 12;
+    while (acc >= STEP && n < maxSteps) {
       update(STEP);
       acc -= STEP;
       n += 1;
     }
+    if (acc >= STEP) acc = 0;
     draw();
   }
 
@@ -2497,6 +2979,9 @@
   seedStars();
   loadBest();
   initMute();
+  autoSpeed = loadAutoSpeed();
+  syncSpeedUi();
+  syncAutoUi();
   goTitle();
   resize();
   bindPads();
@@ -2525,6 +3010,15 @@
       audio.setMuted(!audio.muted);
     });
   }
+  if (btnAuto) btnAuto.addEventListener('click', function () { toggleAuto(); });
+  if (speedEl) {
+    speedEl.addEventListener('input', function () {
+      setAutoSpeed(parseInt(speedEl.value, 10));
+    });
+    speedEl.addEventListener('change', function () {
+      setAutoSpeed(parseInt(speedEl.value, 10));
+    });
+  }
 
   window.addEventListener('keydown', function (e) { onKey(e, true); });
   window.addEventListener('keyup', function (e) { onKey(e, false); });
@@ -2539,6 +3033,10 @@
       keys.fire = false;
       keys.bomb = false;
       pointer.down = false;
+      if (!autoOn) {
+        autoFire = false;
+        autoBomb = false;
+      }
     }
   });
 
