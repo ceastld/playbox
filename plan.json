@@ -3399,7 +3399,7 @@
     "blurb": "直升机扫射，把公路车队炸开。",
     "hue": 92,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/silkworm/",
     "kind": "remake"
   },
@@ -3411,7 +3411,7 @@
     "blurb": "透视管里开火，把编队撕开。",
     "hue": 196,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/axelay/",
     "kind": "remake"
   },
@@ -3437,6 +3437,30 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/space-harrier/",
+    "kind": "remake"
+  },
+  {
+    "n": 296,
+    "id": "super-contra",
+    "title": "超魂",
+    "subtitle": "SCTR",
+    "blurb": "机枪扫射，把前线碉堡打穿。",
+    "hue": 140,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/super-contra/",
+    "kind": "remake"
+  },
+  {
+    "n": 297,
+    "id": "chase-hq",
+    "title": "追缉",
+    "subtitle": "CHASE",
+    "blurb": "油门追车，把目标撞停。",
+    "hue": 12,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/chase-hq/",
     "kind": "remake"
   }
 ]

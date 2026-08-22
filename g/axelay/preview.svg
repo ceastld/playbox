@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" fill="#04141c"/>
+  <rect x="4" y="4" width="56" height="56" rx="10" fill="#02080c"/>
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#061828"/>
+      <stop offset="1" stop-color="#0a3048"/>
+    </linearGradient>
+  </defs>
+  <rect x="6" y="6" width="52" height="22" fill="url(#sky)"/>
+  <g fill="none" stroke="#00c4ff" stroke-width="1.05" stroke-linejoin="round">
+    <path d="M8 58 L26 28 H38 L56 58"/>
+    <path d="M14 58 L28 32 H36 L50 58"/>
+    <path d="M26 28 H38"/>
+    <path d="M22 36 H42"/>
+    <path d="M18 44 H46"/>
+    <path d="M12 52 H52"/>
+  </g>
+  <path d="M32 28 L24 58 H40 Z" fill="#00c4ff" opacity=".08"/>
+  <path d="M26 28 L18 44 L22 36 Z" fill="#5ce8ff" opacity=".14"/>
+  <path d="M38 28 L46 44 L42 36 Z" fill="#5ce8ff" opacity=".14"/>
+  <path d="M32 40 L29.2 50 H34.8 Z" fill="#00d4ff"/>
+  <path d="M30.2 45 H33.8" stroke="#ff3db8" stroke-width=".8"/>
+  <path d="M29.4 47 L26.6 50 H29.2 Z" fill="#5ce8ff"/>
+  <path d="M34.6 47 L37.4 50 H34.8 Z" fill="#5ce8ff"/>
+  <g fill="none" stroke="#ff3db8" stroke-width=".9">
+    <polygon points="16,16 18.4,14.6 20.8,16 20.8,18.6 18.4,20 16,18.6"/>
+    <polygon points="43.2,14 45.6,12.6 48,14 48,16.6 45.6,18 43.2,16.6"/>
+  </g>
+  <circle cx="18.4" cy="17.3" r="1" fill="#ff3db8"/>
+  <circle cx="45.6" cy="15.3" r=".9" fill="#ff3db8"/>
+  <circle cx="32" cy="12" r="1.1" fill="#ffe36b"/>
+  <circle cx="10" cy="10" r=".55" fill="#5ce8ff"/>
+  <circle cx="52" cy="9" r=".5" fill="#ffe36b"/>
+  <circle cx="40" cy="8" r=".4" fill="#00c4ff"/>
+</svg>

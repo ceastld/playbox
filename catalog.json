@@ -3248,5 +3248,29 @@
     "dir": "g/gunstar/",
     "url": "./g/gunstar/",
     "kind": "remake"
+  },
+  {
+    "n": 292,
+    "id": "silkworm",
+    "title": "蚕战",
+    "subtitle": "SILK",
+    "blurb": "直升机扫射，把公路车队炸开。",
+    "hue": 92,
+    "tag": "复刻",
+    "dir": "g/silkworm/",
+    "url": "./g/silkworm/",
+    "kind": "remake"
+  },
+  {
+    "n": 293,
+    "id": "axelay",
+    "title": "轴射",
+    "subtitle": "AXEL",
+    "blurb": "透视管里开火，把编队撕开。",
+    "hue": 196,
+    "tag": "复刻",
+    "dir": "g/axelay/",
+    "url": "./g/axelay/",
+    "kind": "remake"
   }
 ]
