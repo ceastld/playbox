@@ -11,6 +11,10 @@ var SPEED_STEP = 12;
 var SCORE_PER = 1;
 var SWIPE_MIN = 24;
 var BEST_KEY = 'playbox-snake-best';
+var AUTO_SPEED_KEY = 'playbox-snake-auto-speed';
+var AUTO_MS = [0, 160, 90, 45, 16];
+var SPEED_LABELS = ['', '慢', '中', '快', '极快'];
+var AUTO_DIRS = ['up', 'left', 'down', 'right'];
 
 var DIRS = {
   left: { c: -1, r: 0 },
@@ -21,7 +25,7 @@ var DIRS = {
 var OPP = { left: 'right', right: 'left', up: 'down', down: 'up' };
 var KEY_DIR = {
   ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down',
-  KeyA: 'left', KeyD: 'right', KeyW: 'up', KeyS: 'down'
+  KeyD: 'right', KeyW: 'up', KeyS: 'down'
 };
 
 function midC() { return (COLS / 2) | 0; }
@@ -155,6 +159,200 @@ function step(state) {
   return state;
 }
 
+function cellKey(c, r) {
+  return c + ',' + r;
+}
+
+function occupyMask(snake, allowTail, startC, startR) {
+  var blocked = {};
+  var n = snake.length;
+  var end = allowTail ? n - 1 : n;
+  var i;
+  if (end < 0) end = 0;
+  for (i = 0; i < end; i++) blocked[cellKey(snake[i].c, snake[i].r)] = 1;
+  if (startC !== undefined) delete blocked[cellKey(startC, startR)];
+  return blocked;
+}
+
+function bfsPath(blocked, sc, sr, gc, gr) {
+  if (sc === gc && sr === gr) return [];
+  if (!inBounds(gc, gr) || !inBounds(sc, sr)) return null;
+  var q = [sc, sr];
+  var qi = 0;
+  var cameC = {};
+  var cameR = {};
+  var seen = {};
+  seen[cellKey(sc, sr)] = 1;
+  var i, d, nc, nr, k, pc, pr, path, prevC;
+  while (qi < q.length) {
+    var c = q[qi++];
+    var r = q[qi++];
+    for (i = 0; i < 4; i++) {
+      d = DIRS[AUTO_DIRS[i]];
+      nc = c + d.c;
+      nr = r + d.r;
+      if (!inBounds(nc, nr)) continue;
+      k = cellKey(nc, nr);
+      if (seen[k] || blocked[k]) continue;
+      seen[k] = 1;
+      cameC[k] = c;
+      cameR[k] = r;
+      if (nc === gc && nr === gr) {
+        path = [];
+        pc = nc;
+        pr = nr;
+        while (pc !== sc || pr !== sr) {
+          path.push({ c: pc, r: pr });
+          k = cellKey(pc, pr);
+          prevC = cameC[k];
+          pr = cameR[k];
+          pc = prevC;
+        }
+        path.reverse();
+        return path;
+      }
+      q.push(nc, nr);
+    }
+  }
+  return null;
+}
+
+function findPath(snake, gc, gr, allowTail) {
+  var head = snake[0];
+  if (!head) return null;
+  return bfsPath(occupyMask(snake, allowTail, head.c, head.r), head.c, head.r, gc, gr);
+}
+
+function isSafeMove(snake, food, c, r) {
+  if (!inBounds(c, r)) return false;
+  var hit = bodyIndex(snake, c, r);
+  if (hit === -1) return true;
+  var isTail = hit === snake.length - 1;
+  var eating = !!(food && food.c === c && food.r === r);
+  return isTail && !eating;
+}
+
+function virtualAfterPath(snake, food, path) {
+  var body = copySnake(snake);
+  var i, p, eating, hit, isTail;
+  for (i = 0; i < path.length; i++) {
+    p = path[i];
+    eating = !!(food && food.c === p.c && food.r === p.r);
+    if (!inBounds(p.c, p.r)) return null;
+    hit = bodyIndex(body, p.c, p.r);
+    if (hit !== -1) {
+      isTail = hit === body.length - 1;
+      if (!(isTail && !eating)) return null;
+    }
+    body.unshift({ c: p.c, r: p.r });
+    if (!eating) body.pop();
+  }
+  return body;
+}
+
+function tailReachable(snake) {
+  if (!snake || !snake.length) return false;
+  if (snake.length === 1) return true;
+  var tail = snake[snake.length - 1];
+  var path = findPath(snake, tail.c, tail.r, true);
+  return path !== null;
+}
+
+function floodFrom(snake, food, nc, nr) {
+  var eating = !!(food && food.c === nc && food.r === nr);
+  var blocked = occupyMask(snake, !eating, nc, nr);
+  var q = [nc, nr];
+  var qi = 0;
+  var seen = {};
+  seen[cellKey(nc, nr)] = 1;
+  var count = 0;
+  var i, d, cc, rr, k;
+  while (qi < q.length) {
+    var c = q[qi++];
+    var r = q[qi++];
+    count++;
+    for (i = 0; i < 4; i++) {
+      d = DIRS[AUTO_DIRS[i]];
+      cc = c + d.c;
+      rr = r + d.r;
+      if (!inBounds(cc, rr)) continue;
+      k = cellKey(cc, rr);
+      if (seen[k] || blocked[k]) continue;
+      seen[k] = 1;
+      q.push(cc, rr);
+    }
+  }
+  return count;
+}
+
+function chooseAutoDir(state) {
+  if (!state || !state.alive || state.won) return null;
+  var snake = state.snake;
+  if (!snake || !snake.length) return null;
+  var head = snake[0];
+  var food = state.food;
+  var cur = state.dir;
+  var forbidden = OPP[cur];
+  var i, name, n, virt, fpath, after, tpath, space;
+  var foodBest = null;
+  var foodBestDist = 1e9;
+  var foodBestSpace = -1;
+  var tailBest = null;
+  var tailBestLen = -1;
+  var spaceBest = null;
+  var spaceBestN = -1;
+
+  for (i = 0; i < 4; i++) {
+    name = AUTO_DIRS[i];
+    if (!name || name === forbidden || !DIRS[name]) continue;
+    n = { c: head.c + DIRS[name].c, r: head.r + DIRS[name].r };
+    if (!isSafeMove(snake, food, n.c, n.r)) continue;
+    virt = virtualAfterPath(snake, food, [n]);
+    if (!virt) continue;
+    space = floodFrom(snake, food, n.c, n.r);
+    if (space > spaceBestN || (space === spaceBestN && name === cur)) {
+      spaceBestN = space;
+      spaceBest = name;
+    }
+
+    tpath = findPath(virt, virt[virt.length - 1].c, virt[virt.length - 1].r, true);
+    if (tpath !== null) {
+      var tlen = tpath.length;
+      if (name === cur) tlen += 1;
+      if (tlen > tailBestLen) {
+        tailBestLen = tlen;
+        tailBest = name;
+      }
+    }
+
+    if (!food) continue;
+    if (n.c === food.c && n.r === food.r) {
+      if (tpath !== null) {
+        if (0 < foodBestDist || (0 === foodBestDist && space > foodBestSpace)) {
+          foodBestDist = 0;
+          foodBestSpace = space;
+          foodBest = name;
+        }
+      }
+      continue;
+    }
+    fpath = findPath(virt, food.c, food.r, true);
+    if (!fpath) continue;
+    after = virtualAfterPath(virt, food, fpath);
+    if (!after || tpath === null) continue;
+    if (!tailReachable(after)) continue;
+    if (fpath.length < foodBestDist || (fpath.length === foodBestDist && space > foodBestSpace)) {
+      foodBestDist = fpath.length;
+      foodBestSpace = space;
+      foodBest = name;
+    }
+  }
+
+  if (foodBest) return foodBest;
+  if (tailBest) return tailBest;
+  return spaceBest;
+}
+
 function lerp(a, b, t) {
   return a + (b - a) * t;
 }
@@ -165,7 +363,7 @@ function clamp(v, a, b) {
 
 /* ---- logic self-check (runs in node and browser) ---- */
 function selfCheck() {
-  var i, s, n;
+  var i, s, n, ad, ag, autoState, autoTicks, hc, hr, dist, autoFails, fp;
 
   s = freshState(function () { return 0; });
   if (s.snake.length !== 3) throw new Error('start length 3');
@@ -307,6 +505,77 @@ function selfCheck() {
     seen[s.food.c + ',' + s.food.r] = 1;
     if (bodyIndex(s.snake, s.food.c, s.food.r) !== -1) throw new Error('start food overlap');
   }
+
+  s = freshState(function () { return 0; });
+  s.food = { c: s.snake[0].c + 1, r: s.snake[0].r };
+  ad = chooseAutoDir(s);
+  if (ad !== 'right') throw new Error('auto eats food in front');
+
+  s = freshState(function () { return 0; });
+  s.snake = [{ c: 0, r: 8 }, { c: 0, r: 9 }, { c: 0, r: 10 }];
+  s.prev = copySnake(s.snake);
+  s.dir = 'up';
+  s.food = { c: COLS - 1, r: 8 };
+  fp = findPath(s.snake, COLS - 1, 8, true);
+  if (!fp || !fp.length) throw new Error('path across board');
+  if (fp[0].c < 0 || fp[0].c >= COLS || fp[0].r < 0 || fp[0].r >= ROWS) {
+    throw new Error('path left the board');
+  }
+  if (fp[0].c === COLS - 1) throw new Error('path wrapped through the wall');
+  ad = chooseAutoDir(s);
+  if (ad === 'left') throw new Error('auto must not wrap through left wall');
+  if (ad !== 'right') throw new Error('auto should run along the row to food');
+
+  s = freshState(function () { return 0; });
+  s.snake = [{ c: 0, r: 0 }, { c: 1, r: 0 }, { c: 2, r: 0 }];
+  s.prev = copySnake(s.snake);
+  s.dir = 'left';
+  s.food = { c: 0, r: 10 };
+  ad = chooseAutoDir(s);
+  if (ad === 'left' || ad === 'up') throw new Error('auto must not hit corner walls');
+  if (ad === 'right') throw new Error('auto 180 into neck');
+  if (ad !== 'down') throw new Error('corner only has down');
+
+  s = freshState(function () { return 0; });
+  s.dir = 'right';
+  for (i = 0; i < 30; i++) {
+    ad = chooseAutoDir(s);
+    if (ad === OPP[s.dir]) throw new Error('auto never reverse 180');
+    if (ad) queueTurn(s, ad);
+    hc = s.snake[0].c;
+    hr = s.snake[0].r;
+    step(s);
+    if (!s.alive) throw new Error('auto should live the opening');
+    dist = Math.abs(s.snake[0].c - hc) + Math.abs(s.snake[0].r - hr);
+    if (dist !== 1) throw new Error('auto head moves one cell');
+  }
+
+  autoFails = 0;
+  for (ag = 0; ag < 4; ag++) {
+    autoState = freshState(Math.random);
+    autoTicks = 0;
+    while (autoState.alive && !autoState.won && autoTicks < 2500 && autoState.score < 20) {
+      hc = autoState.snake[0].c;
+      hr = autoState.snake[0].r;
+      ad = chooseAutoDir(autoState);
+      if (ad === OPP[autoState.dir]) throw new Error('auto 180 during play');
+      if (ad && !isSafeMove(
+        autoState.snake,
+        autoState.food,
+        autoState.snake[0].c + DIRS[ad].c,
+        autoState.snake[0].r + DIRS[ad].r
+      )) throw new Error('auto picked an unsafe cell');
+      if (ad) queueTurn(autoState, ad);
+      step(autoState);
+      autoTicks++;
+      if (autoState.alive) {
+        dist = Math.abs(autoState.snake[0].c - hc) + Math.abs(autoState.snake[0].r - hr);
+        if (dist !== 1) throw new Error('auto tunneled or wrapped');
+      }
+    }
+    if (!autoState.won && autoState.score < 20) autoFails += 1;
+  }
+  if (autoFails > 1) throw new Error('auto should routinely score 20+');
 }
 
 selfCheck();
@@ -322,6 +591,20 @@ function loadBest() {
 
 function saveBest(n) {
   try { localStorage.setItem(BEST_KEY, String(n)); } catch (e) { /* ignore */ }
+}
+
+function loadAutoSpeed() {
+  try {
+    var n = parseInt(localStorage.getItem(AUTO_SPEED_KEY) || '3', 10);
+    if (!isFinite(n) || n < 1 || n > 4) return 3;
+    return n;
+  } catch (e) {
+    return 3;
+  }
+}
+
+function saveAutoSpeed(n) {
+  try { localStorage.setItem(AUTO_SPEED_KEY, String(n)); } catch (e) { /* ignore */ }
 }
 
 /* ---- audio (Web Audio, no files) ---- */
@@ -385,10 +668,15 @@ var scoreBox = document.getElementById('score-box');
 var scoreAdd = document.getElementById('score-add');
 var btnMute = document.getElementById('btn-mute');
 var btnRetry = document.getElementById('btn-retry');
+var btnAuto = document.getElementById('btn-auto');
+var speedEl = document.getElementById('speed');
+var speedLab = document.getElementById('speed-lab');
 var ctx = canvas.getContext('2d');
 var motionQ = window.matchMedia('(prefers-reduced-motion: reduce)');
 
 var best = loadBest();
+var autoOn = false;
+var autoSpeed = loadAutoSpeed();
 var state = freshState(Math.random);
 var acc = 0;
 var lastTs = 0;
@@ -410,6 +698,42 @@ function overlayOpen() {
 
 function playing() {
   return state.alive && !state.won && overlayMode === null;
+}
+
+function tickInterval() {
+  if (autoOn) return AUTO_MS[autoSpeed] || AUTO_MS[3];
+  return state.tickMs;
+}
+
+function autoSnap() {
+  return autoOn && autoSpeed === 4;
+}
+
+function syncAutoUI() {
+  btnAuto.classList.toggle('on', autoOn);
+  btnAuto.setAttribute('aria-pressed', autoOn ? 'true' : 'false');
+  btnAuto.setAttribute('aria-label', autoOn ? '关闭自动' : '自动');
+  speedEl.value = String(autoSpeed);
+  speedEl.setAttribute('aria-valuetext', SPEED_LABELS[autoSpeed]);
+  speedLab.textContent = SPEED_LABELS[autoSpeed];
+}
+
+function setAutoSpeed(n) {
+  n = n | 0;
+  if (n < 1) n = 1;
+  if (n > 4) n = 4;
+  autoSpeed = n;
+  acc = 0;
+  saveAutoSpeed(autoSpeed);
+  syncAutoUI();
+}
+
+function toggleAuto() {
+  autoOn = !autoOn;
+  acc = 0;
+  syncAutoUI();
+  if (autoOn && !muted) audioCtx();
+  if (!overlayOpen()) canvas.focus({ preventScroll: true });
 }
 
 function hideOverlay() {
@@ -481,8 +805,13 @@ function newGame() {
   state = freshState(Math.random);
   acc = 0;
   lastTs = performance.now();
-  headPopUntil = lastTs + 180;
-  foodPopUntil = lastTs + 220;
+  if (autoSnap()) {
+    headPopUntil = 0;
+    foodPopUntil = 0;
+  } else {
+    headPopUntil = lastTs + 180;
+    foodPopUntil = lastTs + 220;
+  }
   eatFlashUntil = 0;
   overlayMode = null;
   overlayEl.classList.add('hidden');
@@ -494,6 +823,10 @@ function newGame() {
 }
 
 function applyTick(now) {
+  if (autoOn) {
+    var ad = chooseAutoDir(state);
+    if (ad) queueTurn(state, ad);
+  }
   var before = state.score;
   var wasAlive = state.alive;
   step(state);
@@ -507,10 +840,16 @@ function applyTick(now) {
     if (wasAlive) dieFx();
     return;
   }
-  headPopUntil = now + Math.min(160, state.tickMs * 0.9);
+  if (autoSnap()) {
+    headPopUntil = 0;
+  } else {
+    headPopUntil = now + Math.min(160, tickInterval() * 0.9);
+  }
   if (state.score > before) {
-    eatFlashUntil = now + 180;
-    foodPopUntil = now + 240;
+    if (!autoSnap()) {
+      eatFlashUntil = now + 180;
+      foodPopUntil = now + 240;
+    }
     persistBest();
     updateScoreUI(state.score - before);
     sfx.eat();
@@ -792,8 +1131,8 @@ function render(now) {
 
   var L = cellLayout();
   var t = 1;
-  if (playing() && !reduceMotion()) {
-    t = clamp(acc / Math.max(1, state.tickMs), 0, 1);
+  if (playing() && !reduceMotion() && !autoSnap()) {
+    t = clamp(acc / Math.max(1, tickInterval()), 0, 1);
   }
 
   ctx.fillStyle = '#05080a';
@@ -823,14 +1162,23 @@ function frame(now) {
   lastTs = now;
   if (dt > 80) dt = 80;
   if (playing()) {
-    acc += dt;
-    var guard = 0;
-    while (acc >= state.tickMs && playing() && guard < 5) {
-      acc -= state.tickMs;
-      guard += 1;
-      applyTick(now);
+    if (autoSnap()) {
+      acc += dt;
+      if (acc >= AUTO_MS[4]) {
+        acc = 0;
+        applyTick(now);
+      }
+    } else {
+      var interval = tickInterval();
+      acc += dt;
+      var guard = 0;
+      while (acc >= interval && playing() && guard < 5) {
+        acc -= interval;
+        guard += 1;
+        applyTick(now);
+      }
+      if (!playing()) acc = 0;
     }
-    if (!playing()) acc = 0;
   }
   render(now);
 }
@@ -844,7 +1192,7 @@ function toggleMute() {
 }
 
 function onDir(d) {
-  if (!d || overlayOpen()) return;
+  if (!d || overlayOpen() || autoOn) return;
   if (!muted) audioCtx();
   queueTurn(state, d);
 }
@@ -946,11 +1294,17 @@ window.addEventListener('keydown', function (e) {
     toggleMute();
     return;
   }
+  if (key === 'a' || key === 'A' || code === 'KeyA') {
+    e.preventDefault();
+    toggleAuto();
+    return;
+  }
   if (key === 'r' || key === 'R' || code === 'KeyR') {
     e.preventDefault();
     newGame();
     return;
   }
+  if (e.target && (e.target === speedEl || e.target.tagName === 'INPUT')) return;
   var dir = KEY_DIR[key] || KEY_DIR[code];
   if (dir) {
     e.preventDefault();
@@ -960,6 +1314,10 @@ window.addEventListener('keydown', function (e) {
 });
 
 btnMute.addEventListener('click', toggleMute);
+btnAuto.addEventListener('click', function () { toggleAuto(); });
+speedEl.addEventListener('input', function () {
+  setAutoSpeed(parseInt(speedEl.value, 10));
+});
 btnRetry.addEventListener('click', function () { newGame(); });
 ovRetry.addEventListener('click', function () { newGame(); });
 
@@ -975,6 +1333,7 @@ window.addEventListener('resize', function () { resize(); });
 if (motionQ.addEventListener) motionQ.addEventListener('change', function () { /* snap next frame */ });
 
 bestEl.textContent = String(best);
+syncAutoUI();
 newGame();
 requestAnimationFrame(frame);
 
