@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#05030c" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>跳火 · SPARK</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2305030c'/%3E%3Ccircle cx='8' cy='16' r='3.2' fill='%23ff3db8'/%3E%3Ccircle cx='24' cy='16' r='3.2' fill='%2300f0ff'/%3E%3Cpath d='M11 16l2.2-3 2 5 2.4-4.2 2.2 2.6 2.2-.4' fill='none' stroke='%23ffe36b' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='18' cy='16' r='1.7' fill='%23ffe36b'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>跳火</b>
+        <span>SPARK</span>
+      </div>
+      <div class="status">
+        <div class="fill" id="fill-wrap" title="间隙">
+          <em>隙</em>
+          <div class="fill-track" aria-hidden="true">
+            <i id="fill-bar"></i>
+          </div>
+          <b id="fill-num">—</b>
+        </div>
+        <div class="row">
+          <span id="stage-label">第 1 隙</span>
+          <span id="gold-label">金 —</span>
+          <span id="time-label">—</span>
+          <span class="pips" id="pips" aria-label="剩余性命"></span>
+        </div>
+      </div>
+      <div class="tools">
+        <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
+        <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <canvas id="c" aria-label="拉开电极让火花跳到金珠"></canvas>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden"></div>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">SPARK</p>
+          <h1 id="ov-title">跳火</h1>
+          <p class="lead" id="ov-lead">拉开电极，让火花穿过金珠。<br />粉柱会偷火。拉太远火花会熄。</p>
+          <p class="ops" id="ov-ops">拖动电极 · WASD / 方向键 · Shift 微调 · M 静音</p>
+          <button type="button" id="ov-btn">开跳</button>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">拉开间隙 · 火花跳到金珠</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>

@@ -865,7 +865,7 @@
     "blurb": "刷湿气让青苔连到门。",
     "hue": 110,
     "tag": "苔",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/moss-grow/"
   },
   {
@@ -898,7 +898,7 @@
     "blurb": "拉开间隙让火花跳到目标。",
     "hue": 14,
     "tag": "火",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/spark-gap/"
   },
   {
@@ -942,7 +942,7 @@
     "blurb": "只留一只铃响，按掉其余。",
     "hue": 55,
     "tag": "铃",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/bell-mute/"
   },
   {
@@ -953,7 +953,7 @@
     "blurb": "滚露珠合成一颗大的。",
     "hue": 175,
     "tag": "露",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/dew-collect/"
   },
   {

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#05030c" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>青苔 · MOSS</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2305030c'/%3E%3Crect x='4' y='4' width='24' height='24' rx='3' fill='%23120818' stroke='%2300f0ff' stroke-width='1.2'/%3E%3Cpath d='M6 26 C8 20 10 22 12 16 C14 12 16 14 18 11 C20 18 22 16 26 14 V26 Z' fill='%2300c8a0'/%3E%3Cpath d='M6 26 C9 21 12 18 16 14' fill='none' stroke='%2300f0ff' stroke-width='1.1' stroke-linecap='round'/%3E%3Crect x='20' y='6' width='6' height='8' rx='1.2' fill='%2305030c' stroke='%2300f0ff' stroke-width='1.1'/%3E%3Cpath d='M23 8.2 v3.4' stroke='%23ffe36b' stroke-width='.8'/%3E%3Ccircle cx='10' cy='22' r='1.4' fill='%23ff3db8' opacity='.85'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>青苔</b>
+        <span>MOSS</span>
+      </div>
+      <div class="status">
+        <div class="fill" id="fill-wrap" title="露">
+          <em>露</em>
+          <div class="fill-track" aria-hidden="true">
+            <i id="fill-bar"></i>
+          </div>
+          <b id="fill-num">100</b>
+        </div>
+        <div class="row">
+          <span id="stage-label">十面</span>
+          <span id="dist-label">连到门</span>
+          <span id="time-label">—</span>
+          <span class="pips" id="pips" aria-label="剩余性命"></span>
+        </div>
+      </div>
+      <div class="tools">
+        <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
+        <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <canvas id="c" aria-label="刷湿气让青苔连到门"></canvas>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden"></div>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">MOSS</p>
+          <h1 id="ov-title">青苔</h1>
+          <p class="lead" id="ov-lead">石墙太干。刷一层湿气，让墙角那簇青苔爬到门上。</p>
+          <p class="ops" id="ov-ops">WASD / 方向键移刷 · 空格喷湿 · 按住拖动 · M 静音</p>
+          <button type="button" id="ov-btn">开潮</button>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">刷湿气 · 青苔沿湿处爬 · 连到门</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>

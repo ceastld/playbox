@@ -772,5 +772,27 @@
     "tag": "纱",
     "dir": "g/veil-lift/",
     "url": "./g/veil-lift/"
+  },
+  {
+    "n": 79,
+    "id": "moss-grow",
+    "title": "青苔",
+    "subtitle": "MOSS",
+    "blurb": "刷湿气让青苔连到门。",
+    "hue": 110,
+    "tag": "苔",
+    "dir": "g/moss-grow/",
+    "url": "./g/moss-grow/"
+  },
+  {
+    "n": 82,
+    "id": "spark-gap",
+    "title": "跳火",
+    "subtitle": "SPARK",
+    "blurb": "拉开间隙让火花跳到目标。",
+    "hue": 14,
+    "tag": "火",
+    "dir": "g/spark-gap/",
+    "url": "./g/spark-gap/"
   }
 ]
