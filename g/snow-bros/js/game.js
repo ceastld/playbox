@@ -30,6 +30,9 @@ var STEP = 1 / 60;
 var TAU = Math.PI * 2;
 var BEST_KEY = 'playbox-snow-bros-best';
 var MUTE_KEY = 'playbox-snow-bros-mute';
+var AUTO_SPEED_KEY = 'playbox-snow-bros-auto-speed';
+var SPEED_LABELS = ['', '慢', '中', '快', '极快'];
+var AUTO_SCALE = [1, 0.52, 0.78, 1, 3.4];
 
 var CYN = [0, 240, 255];
 var MAG = [255, 61, 184];
@@ -305,6 +308,20 @@ function ballTop(foe) {
   return foe.y - foe.r * 2 + 3;
 }
 
+function loadAutoSpeed() {
+  try {
+    var n = parseInt(localStorage.getItem(AUTO_SPEED_KEY) || '3', 10);
+    if (!isFinite(n) || n < 1 || n > 4) return 3;
+    return n;
+  } catch (err) {
+    return 3;
+  }
+}
+
+function saveAutoSpeed(n) {
+  try { localStorage.setItem(AUTO_SPEED_KEY, String(n)); } catch (err) { /* ignore */ }
+}
+
 function mirrorX(x) {
   return WORLD_W - x;
 }
@@ -421,6 +438,9 @@ function selfCheck() {
   if (ROOMS[7].boss !== true) throw new Error('final boss');
   if (LIVES !== 3) throw new Error('3 lives');
   if (BEST_KEY !== 'playbox-snow-bros-best') throw new Error('best key');
+  if (AUTO_SPEED_KEY !== 'playbox-snow-bros-auto-speed') throw new Error('auto speed key');
+  if (loadAutoSpeed() < 1 || loadAutoSpeed() > 4) throw new Error('auto speed range');
+  if (SPEED_LABELS[3] !== '快') throw new Error('default speed label');
   if (packNeed('walker', false) !== 3) throw new Error('walker pack');
   if (packNeed('walker', true) !== 2) throw new Error('avalanche pack');
   if (packNeed('boss', false) !== 8) throw new Error('boss pack');
@@ -536,6 +556,9 @@ var btnRooms = document.getElementById('btn-rooms');
 var btnAvalanche = document.getElementById('btn-avalanche');
 var btnMute = document.getElementById('btn-mute');
 var btnRetry = document.getElementById('btn-retry');
+var btnAuto = document.getElementById('btn-auto');
+var speedEl = document.getElementById('speed');
+var speedLab = document.getElementById('speed-lab');
 var btnLeft = document.getElementById('btn-left');
 var btnRight = document.getElementById('btn-right');
 var btnJump = document.getElementById('btn-jump');
@@ -571,6 +594,13 @@ var rings = [];
 var flakes = [];
 
 var keys = { l: false, r: false, u: false, toss: false };
+var autoOn = false;
+var autoSpeed = loadAutoSpeed();
+var autoOvWait = 0;
+var autoStuck = 0;
+var autoLastX = 56;
+var autoLastY = FLOOR_Y;
+var autoWalkDir = 1;
 
 var G = {
   mode: 'title',
@@ -1015,8 +1045,10 @@ function showTitle() {
   ovKicker.textContent = 'SNOW';
   ovTitle.textContent = '雪兄';
   ovLead.textContent = '跳上平台扔雪，把怪一层层裹成雪球，再踢出去碾碎一路。碰到没裹住的怪会丢命。';
-  ovOps.textContent = '← → / A D 走 · 上 / W 跳 · 空格扔雪 · 触屏左 跳 抛 右 · R 重开 · M 静音';
-  hintEl.textContent = '扔雪裹怪 · 踢雪球碾过去 · 可踩在雪球上 · 碰到没裹住的怪丢命';
+  ovOps.textContent = '← → / D 走 · 上 / W 跳 · 空格扔雪 · A 自动 · 触屏左 跳 抛 右 · R 重开 · M 静音';
+  hintEl.textContent = autoOn
+    ? '托管中 · 即将开局 · A 停下'
+    : '扔雪裹怪 · 踢雪球碾过去 · 可踩在雪球上 · A 自动 · 碰到没裹住的怪丢命';
   loadRoom(1, true);
 }
 
@@ -1139,8 +1171,14 @@ function startRun(kind) {
   G.player = makePlayer();
   hideOverlay();
   G.mode = 'play';
+  autoOvWait = 0;
+  autoStuck = 0;
+  clearAutoKeys();
   loadRoom(1, false);
+  autoLastX = G.player.x;
+  autoLastY = G.player.y;
   hudPlay();
+  if (autoOn) hintEl.textContent = '托管中 · 扔雪裹怪 · 踢雪球 · A 停下';
   audio.start();
   try {
     if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
@@ -1703,11 +1741,350 @@ function tickHurt() {
   }
 }
 
+/* ---- autoplay ---- */
+function clearAutoKeys() {
+  keys.l = false;
+  keys.r = false;
+  keys.u = false;
+  keys.toss = false;
+}
+
+function autoSameY(a, b) {
+  return Math.abs(a - b) <= 16;
+}
+
+function autoKickDir(ball) {
+  var i, o, left = 0, right = 0;
+  for (i = 0; i < G.foes.length; i++) {
+    o = G.foes[i];
+    if (o.dead || o === ball || (o.packed && o.rolling)) continue;
+    if (Math.abs(o.y - ball.y) > 48) continue;
+    if (o.x < ball.x) left += 1;
+    else right += 1;
+  }
+  if (left === 0 && right === 0) return ball.x < WORLD_W * 0.5 ? 1 : -1;
+  return right >= left ? 1 : -1;
+}
+
+function autoPickTarget(p) {
+  var i, e, best = null, bestS = 1e9, score, dy, dx;
+  for (i = 0; i < G.foes.length; i++) {
+    e = G.foes[i];
+    if (e.dead) continue;
+    dx = Math.abs(e.x - p.x);
+    dy = Math.abs(e.y - p.y);
+    score = dx + dy * 1.7;
+    if (e.packed && e.rolling) score += 90;
+    else if (e.packed) {
+      score -= 140;
+      if (e.thaw < 1.5) score -= 80;
+      if (autoSameY(p.y, e.y)) score -= 50;
+    } else {
+      score -= e.pack * 10;
+      if (e.k === 'boss') score -= 24;
+      if (e.angry > 0) score -= 16;
+      if (autoSameY(p.y, e.y)) score -= 36;
+      if (e.k === 'flyer' && dy < 50) score -= 18;
+    }
+    if (score < bestS) {
+      bestS = score;
+      best = e;
+    }
+  }
+  return best;
+}
+
+function autoNearestLoot(p) {
+  var i, o, best = null, d, bestD = 1e9;
+  for (i = 0; i < G.loot.length; i++) {
+    o = G.loot[i];
+    d = Math.abs(o.x - p.x) + Math.abs(o.y - p.y);
+    if (d < bestD) {
+      bestD = d;
+      best = o;
+    }
+  }
+  return best;
+}
+
+function autoDanger(p) {
+  var i, e, d, best = null, bestD = 40;
+  for (i = 0; i < G.foes.length; i++) {
+    e = G.foes[i];
+    if (e.dead || e.packed) continue;
+    if (e.k === 'flyer') {
+      if (Math.abs(p.y - e.y) > 26) continue;
+    } else if (!autoSameY(p.y, e.y)) continue;
+    d = Math.abs(p.x - e.x);
+    if (d < bestD) {
+      bestD = d;
+      best = e;
+    }
+  }
+  return best;
+}
+
+function autoPlatGap(a, b) {
+  if (b.x > a.x + a.w) return b.x - (a.x + a.w);
+  if (a.x > b.x + b.w) return a.x - (b.x + b.w);
+  return 0;
+}
+
+function autoNav(p, destX, destY) {
+  var here = platAt(G.plats, p.x, p.y, 5);
+  var hy = here ? here.y : p.y;
+  var destPlat = platAt(G.plats, destX, destY, 8);
+  var i, pl, best, bestS, jx, gap, jump = false, tx = destX, dir;
+
+  if (Math.abs(hy - destY) <= 14) {
+    if (here && destPlat && destPlat !== here) {
+      gap = autoPlatGap(here, destPlat);
+      if (gap > 72) {
+        tx = destX > p.x ? here.x + here.w + 10 : here.x - 10;
+      } else {
+        tx = destX;
+        dir = destX > p.x ? 1 : -1;
+        if (onEdge(G.plats, p.x, p.y, dir)) jump = true;
+      }
+    }
+    return { tx: tx, jump: jump };
+  }
+
+  if (destY < hy - 10) {
+    best = null;
+    bestS = 1e9;
+    for (i = 0; i < G.plats.length; i++) {
+      pl = G.plats[i];
+      if (pl.y >= hy - 10) continue;
+      if (hy - pl.y > 76) continue;
+      jx = clamp(p.x, pl.x + 12, pl.x + pl.w - 12);
+      gap = Math.abs(pl.y - destY) + Math.abs(jx - p.x) * 0.2;
+      if (destPlat && Math.abs(pl.y - destPlat.y) < 8) gap -= 30;
+      if (xOnPlat(pl, destX, 6)) gap -= 22;
+      if (xOnPlat(pl, p.x, 4)) gap -= 12;
+      if (gap < bestS) {
+        bestS = gap;
+        best = pl;
+      }
+    }
+    if (best) {
+      jx = clamp(p.x, best.x + 10, best.x + best.w - 10);
+      if (xOnPlat(best, p.x, 6)) {
+        jump = true;
+        tx = clamp(destX, best.x + 8, best.x + best.w - 8);
+      } else {
+        tx = jx;
+        if (Math.abs(p.x - jx) < 24) jump = true;
+      }
+    }
+    return { tx: tx, jump: jump };
+  }
+
+  if (here && here.y < FLOOR_Y - 4) {
+    if (xOnPlat(here, destX, 8)) {
+      tx = (here.x + here.w - p.x) <= (p.x - here.x) ? here.x + here.w + 10 : here.x - 10;
+    } else {
+      tx = destX > here.x + here.w * 0.5 ? here.x + here.w + 10 : here.x - 10;
+    }
+  }
+  return { tx: tx, jump: false };
+}
+
+function autoSteer(p, tx) {
+  if (tx < p.x - 4) keys.l = true;
+  else if (tx > p.x + 4) keys.r = true;
+}
+
+function autoFace(p, x) {
+  if (x < p.x - 2) keys.l = true;
+  else if (x > p.x + 2) keys.r = true;
+}
+
+function tickAuto() {
+  var p = G.player;
+  var t, nav, danger, loot, dx, adx, dy, dir, kdir, standX, toss = false, jump = false;
+  var liveSnow, i;
+
+  clearAutoKeys();
+  if (!autoOn || G.mode !== 'play') return;
+  if (p.deadT > 0 || p.state === 'dead') return;
+
+  if (Math.abs(p.x - autoLastX) < 1.6 && Math.abs(p.y - autoLastY) < 1.6) autoStuck += STEP;
+  else autoStuck = 0;
+  autoLastX = p.x;
+  autoLastY = p.y;
+
+  t = autoPickTarget(p);
+  danger = p.inv > 0.12 ? null : autoDanger(p);
+
+  if (danger && Math.abs(p.x - danger.x) < 34) {
+    jump = true;
+    dir = p.x < danger.x ? -1 : 1;
+    if (Math.abs(p.x - danger.x) < 18) {
+      autoSteer(p, p.x + dir * 40);
+    } else if (p.face === (danger.x >= p.x ? 1 : -1)) {
+      toss = true;
+    } else {
+      autoFace(p, danger.x);
+    }
+    if (jump) G.jumpBuf = BUFFER;
+    if (toss) {
+      keys.toss = true;
+      G.tossBuf = BUFFER;
+    }
+    if (autoStuck > 0.7) autoSteer(p, p.x + autoWalkDir * 50);
+    return;
+  }
+
+  if (!t) {
+    loot = autoNearestLoot(p);
+    if (loot) {
+      nav = autoNav(p, loot.x, loot.y);
+      autoSteer(p, nav.tx);
+      if (nav.jump) G.jumpBuf = BUFFER;
+    } else if (autoStuck > 0.4) {
+      G.jumpBuf = BUFFER;
+      autoSteer(p, p.x + autoWalkDir * 80);
+    }
+    return;
+  }
+
+  dx = t.x - p.x;
+  adx = Math.abs(dx);
+  dy = t.y - p.y;
+  dir = dx >= 0 ? 1 : -1;
+
+  if (t.packed && !t.rolling) {
+    kdir = autoKickDir(t);
+    standX = t.x - kdir * (t.r + 16);
+    if (autoSameY(p.y, t.y) && (canKick(p, t) || adx < 28)) {
+      autoSteer(p, t.x + kdir * 20);
+    } else {
+      nav = autoNav(p, standX, t.y);
+      autoSteer(p, nav.tx);
+      if (nav.jump) jump = true;
+    }
+    if (adx < 78 && (p.face === kdir || p.face === dir)) toss = true;
+  } else if (t.packed && t.rolling && autoSameY(p.y, t.y) && adx < 36 && sign(t.vx) !== dir) {
+    autoSteer(p, t.x);
+  } else {
+    nav = autoNav(p, t.x, t.y);
+    if (t.k === 'flyer' && t.y < p.y - 18 && adx < 64) jump = true;
+    if (!autoSameY(p.y, t.y) && dy < -20 && dy > -80 && adx < 70) jump = true;
+
+    if (autoSameY(p.y, t.y) || (t.k === 'flyer' && Math.abs(p.y - t.y) < 52)) {
+      if (!t.packed && adx < 32) {
+        jump = true;
+        autoSteer(p, t.x + dir * 46);
+        if (p.face === dir) toss = true;
+      } else if (!t.packed && adx < 86) {
+        if (p.face !== dir) autoFace(p, t.x);
+        else {
+          toss = true;
+          if (adx > 62) autoSteer(p, t.x);
+        }
+      } else {
+        autoSteer(p, nav.tx);
+        if (p.face === dir && adx < 110) toss = true;
+      }
+    } else {
+      autoSteer(p, nav.tx);
+      if (p.face === dir && adx < 96 && Math.abs(dy) < 70) toss = true;
+    }
+    if (nav.jump) jump = true;
+  }
+
+  liveSnow = 0;
+  for (i = 0; i < G.snow.length; i++) if (!G.snow[i].dead) liveSnow += 1;
+  if (toss && liveSnow < MAX_SNOW) {
+    keys.toss = true;
+    G.tossBuf = BUFFER;
+  }
+  if (jump || autoStuck > 0.55) G.jumpBuf = BUFFER;
+  if (autoStuck > 1.15) {
+    autoWalkDir *= -1;
+    autoSteer(p, p.x + autoWalkDir * 90);
+    autoStuck = 0.4;
+  }
+}
+
+function tickAutoFlow(dt) {
+  if (!autoOn) return;
+  if (G.mode === 'title') {
+    autoOvWait += dt;
+    if (autoOvWait >= (autoSpeed >= 3 ? 0.25 : 0.5)) {
+      autoOvWait = 0;
+      startRun('rooms');
+    }
+    return;
+  }
+  if (G.mode === 'over') {
+    autoOvWait += dt;
+    if (autoOvWait >= (autoSpeed >= 3 ? 0.7 : 1.15)) {
+      autoOvWait = 0;
+      startRun(G.kind || 'rooms');
+    }
+  }
+}
+
+function autoScale() {
+  if (!autoOn || G.mode !== 'play') return 1;
+  return AUTO_SCALE[autoSpeed] || 1;
+}
+
+function syncAutoUi() {
+  btnAuto.classList.toggle('on', autoOn);
+  btnAuto.setAttribute('aria-pressed', autoOn ? 'true' : 'false');
+  btnAuto.textContent = autoOn ? '停下' : '自动';
+  btnAuto.setAttribute('aria-label', autoOn ? '停止自动' : '自动');
+}
+
+function syncSpeedUi() {
+  speedEl.value = String(autoSpeed);
+  speedLab.textContent = SPEED_LABELS[autoSpeed];
+  speedEl.title = SPEED_LABELS[autoSpeed];
+  speedEl.setAttribute('aria-valuetext', SPEED_LABELS[autoSpeed]);
+}
+
+function toggleAuto() {
+  autoOn = !autoOn;
+  autoOvWait = 0;
+  autoStuck = 0;
+  clearAutoKeys();
+  G.jumpBuf = 0;
+  G.tossBuf = 0;
+  syncAutoUi();
+  if (autoOn) {
+    audio.ensure();
+    if (G.mode === 'title') startRun('rooms');
+    else if (G.mode === 'over') startRun(G.kind || 'rooms');
+  } else if (G.mode === 'title') {
+    hintEl.textContent = '扔雪裹怪 · 踢雪球碾过去 · 可踩在雪球上 · A 自动 · 碰到没裹住的怪丢命';
+  }
+  if (G.mode === 'play') {
+    hudPlay();
+    hintEl.textContent = autoOn ? '托管中 · 扔雪裹怪 · 踢雪球 · A 停下' : '扔雪裹怪 · 踢雪球碾过去 · 可踩在雪球上 · A 自动 · 碰到没裹住的怪丢命';
+  }
+}
+
+function setAutoSpeed(n) {
+  n = parseInt(n, 10);
+  if (!isFinite(n) || n < 1 || n > 4) n = 3;
+  autoSpeed = n;
+  saveAutoSpeed(autoSpeed);
+  syncSpeedUi();
+}
+
+function isAutoKey(e) {
+  return e.code === 'KeyA' || e.key === 'a' || e.key === 'A';
+}
+
 function tick(dt) {
   var i;
   G.clock += dt;
   if (G.jumpBuf > 0) G.jumpBuf -= dt;
   if (G.tossBuf > 0) G.tossBuf -= dt;
+  if (autoOn) tickAutoFlow(dt);
   if (G.combo > 0) {
     G.comboAge += dt;
     for (i = 0; i < G.foes.length; i++) {
@@ -1725,6 +2102,7 @@ function tick(dt) {
   }
 
   tickFx(dt);
+  if (autoOn && G.mode === 'play') tickAuto();
   tickPlayer(dt);
   tickSnow(dt);
   tickFoes(dt);
@@ -2168,19 +2546,24 @@ function draw() {
 }
 
 function frame(ts) {
-  var dt, steps;
+  var dt, steps, turbo, scale, maxSteps;
   if (!lastTs) lastTs = ts;
   dt = (ts - lastTs) / 1000;
   lastTs = ts;
   if (dt > 0.08) dt = 0.08;
   if (!hidden) {
-    if (G.stop > 0) {
+    turbo = autoOn && autoSpeed >= 4 && G.mode === 'play';
+    if (G.stop > 0 && !turbo) {
       G.stop -= dt;
       tickFx(dt);
+      if (autoOn && G.mode !== 'play') tickAutoFlow(dt);
     } else {
-      acc += dt;
+      if (turbo) G.stop = 0;
+      scale = autoScale();
+      acc += dt * scale;
       steps = 0;
-      while (acc >= STEP && steps < 5) {
+      maxSteps = turbo ? 16 : 5;
+      while (acc >= STEP && steps < maxSteps) {
         tick(STEP);
         acc -= STEP;
         steps++;
@@ -2196,6 +2579,7 @@ function frame(ts) {
 function bindPad(el, setter) {
   function down(ev) {
     ev.preventDefault();
+    if (autoOn) return;
     setter(true);
     el.classList.add('held');
     audio.ensure();
@@ -2228,7 +2612,7 @@ bindPad(btnThrow, function (v) {
 
 function keyOn(e, down) {
   var k = e.code;
-  if (k === 'ArrowLeft' || k === 'KeyA') { keys.l = down; e.preventDefault(); }
+  if (k === 'ArrowLeft') { keys.l = down; e.preventDefault(); }
   else if (k === 'ArrowRight' || k === 'KeyD') { keys.r = down; e.preventDefault(); }
   else if (k === 'ArrowUp' || k === 'KeyW') {
     keys.u = down;
@@ -2242,7 +2626,19 @@ function keyOn(e, down) {
 }
 
 window.addEventListener('keydown', function (e) {
+  if (isAutoKey(e)) {
+    if (e.repeat) return;
+    audio.ensure();
+    toggleAuto();
+    e.preventDefault();
+    return;
+  }
+  if (e.target === speedEl) return;
   if (e.repeat) {
+    if (autoOn) {
+      e.preventDefault();
+      return;
+    }
     if (e.code === 'KeyR' || e.code === 'KeyM') { e.preventDefault(); return; }
     keyOn(e, true);
     return;
@@ -2282,15 +2678,35 @@ window.addEventListener('keydown', function (e) {
       return;
     }
   }
+  if (autoOn) {
+    if (
+      e.code === 'ArrowLeft' || e.code === 'ArrowRight' || e.code === 'ArrowUp' ||
+      e.code === 'ArrowDown' || e.code === 'Space' || e.code === 'KeyD' ||
+      e.code === 'KeyS' || e.code === 'KeyW' || e.key === ' '
+    ) {
+      e.preventDefault();
+    }
+    return;
+  }
   keyOn(e, true);
 }, true);
 
-window.addEventListener('keyup', function (e) { keyOn(e, false); }, true);
+window.addEventListener('keyup', function (e) {
+  if (isAutoKey(e)) {
+    e.preventDefault();
+    return;
+  }
+  if (autoOn) return;
+  keyOn(e, false);
+}, true);
 
 btnMute.addEventListener('click', function () {
   audio.ensure();
   audio.setMuted(!audio.muted);
 });
+btnAuto.addEventListener('click', function () { toggleAuto(); });
+speedEl.addEventListener('input', function () { setAutoSpeed(parseInt(speedEl.value, 10)); });
+speedEl.addEventListener('change', function () { setAutoSpeed(parseInt(speedEl.value, 10)); });
 btnRetry.addEventListener('click', function () {
   audio.ensure();
   retry();
@@ -2334,6 +2750,8 @@ document.addEventListener('visibilitychange', function () {
 
 bestEl.textContent = String(G.bestR);
 renderPips();
+syncAutoUi();
+syncSpeedUi();
 showTitle();
 resize();
 hudPlay();
