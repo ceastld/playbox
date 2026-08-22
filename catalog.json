@@ -3416,5 +3416,53 @@
     "dir": "g/power-drift/",
     "url": "./g/power-drift/",
     "kind": "remake"
+  },
+  {
+    "n": 305,
+    "id": "aleste",
+    "title": "阿莱",
+    "subtitle": "ALST",
+    "blurb": "纵版扫射，把机甲编队打穿。",
+    "hue": 158,
+    "tag": "复刻",
+    "dir": "g/aleste/",
+    "url": "./g/aleste/",
+    "kind": "remake"
+  },
+  {
+    "n": 306,
+    "id": "cotton",
+    "title": "魔棉",
+    "subtitle": "COTT",
+    "blurb": "骑扫帚扫射，把魔弹打散。",
+    "hue": 328,
+    "tag": "复刻",
+    "dir": "g/cotton/",
+    "url": "./g/cotton/",
+    "kind": "remake"
+  },
+  {
+    "n": 307,
+    "id": "baraduke",
+    "title": "巴拉",
+    "subtitle": "BARA",
+    "blurb": "地下扫射，把胶囊外星人救出来。",
+    "hue": 188,
+    "tag": "复刻",
+    "dir": "g/baraduke/",
+    "url": "./g/baraduke/",
+    "kind": "remake"
+  },
+  {
+    "n": 308,
+    "id": "r-type2",
+    "title": "武装2",
+    "subtitle": "RT2",
+    "blurb": "蓄力波炮，把机械要塞打穿。",
+    "hue": 200,
+    "tag": "复刻",
+    "dir": "g/r-type2/",
+    "url": "./g/r-type2/",
+    "kind": "remake"
   }
 ]

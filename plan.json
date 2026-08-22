@@ -3555,7 +3555,7 @@
     "blurb": "纵版扫射，把机甲编队打穿。",
     "hue": 158,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/aleste/",
     "kind": "remake"
   },
@@ -3567,7 +3567,7 @@
     "blurb": "骑扫帚扫射，把魔弹打散。",
     "hue": 328,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/cotton/",
     "kind": "remake"
   },
@@ -3579,7 +3579,7 @@
     "blurb": "地下扫射，把胶囊外星人救出来。",
     "hue": 188,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/baraduke/",
     "kind": "remake"
   },
@@ -3591,7 +3591,7 @@
     "blurb": "蓄力波炮，把机械要塞打穿。",
     "hue": 200,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/r-type2/",
     "kind": "remake"
   },
@@ -3605,6 +3605,54 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/batsugun/",
+    "kind": "remake"
+  },
+  {
+    "n": 310,
+    "id": "dogyuun",
+    "title": "土枪",
+    "subtitle": "DOGY",
+    "blurb": "双机扫射，把地面装甲打穿。",
+    "hue": 34,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/dogyuun/",
+    "kind": "remake"
+  },
+  {
+    "n": 311,
+    "id": "truxton",
+    "title": "达鲁",
+    "subtitle": "TRUX",
+    "blurb": "纵版扫射，把魔神编队打散。",
+    "hue": 272,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/truxton/",
+    "kind": "remake"
+  },
+  {
+    "n": 312,
+    "id": "progear",
+    "title": "齿轮",
+    "subtitle": "PROG",
+    "blurb": "横扫齿轮要塞，把弹幕打穿。",
+    "hue": 44,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/progear/",
+    "kind": "remake"
+  },
+  {
+    "n": 313,
+    "id": "esprade",
+    "title": "超光",
+    "subtitle": "ESPR",
+    "blurb": "近身擦弹，把光核打爆。",
+    "hue": 300,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/esprade/",
     "kind": "remake"
   }
 ]
