@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" fill="#05030c"/>
+  <rect x="14" y="6" width="28" height="52" rx="4" fill="#120814" stroke="#ff3db8" stroke-width="1.3"/>
+  <g opacity=".12" fill="#d14cff">
+    <path d="M16 8h24v48H16z"/>
+  </g>
+  <g>
+    <rect x="17" y="45" width="5.4" height="5.4" rx="1.1" fill="#4d8aff"/>
+    <rect x="22.6" y="45" width="5.4" height="5.4" rx="1.1" fill="#4d8aff"/>
+    <rect x="28.2" y="45" width="5.4" height="5.4" rx="1.1" fill="#ffe36b"/>
+    <rect x="33.8" y="45" width="5.4" height="5.4" rx="1.1" fill="#ffe36b"/>
+    <rect x="17" y="39.4" width="5.4" height="5.4" rx="1.1" fill="#4d8aff"/>
+    <rect x="22.6" y="39.4" width="5.4" height="5.4" rx="1.1" fill="#ff3db8"/>
+    <rect x="28.2" y="39.4" width="5.4" height="5.4" rx="1.1" fill="#ffe36b"/>
+    <rect x="33.8" y="39.4" width="5.4" height="5.4" rx="1.1" fill="#ffe36b"/>
+    <rect x="22.6" y="33.8" width="5.4" height="5.4" rx="1.1" fill="#ff3db8"/>
+    <rect x="28.2" y="33.8" width="5.4" height="5.4" rx="1.1" fill="#ff3db8"/>
+    <rect x="33.8" y="33.8" width="5.4" height="5.4" rx="1.1" fill="#3dff88"/>
+    <rect x="28.2" y="28.2" width="5.4" height="5.4" rx="1.1" fill="#3dff88"/>
+    <rect x="33.8" y="28.2" width="5.4" height="5.4" rx="1.1" fill="#3dff88"/>
+  </g>
+  <g>
+    <rect x="22.6" y="12" width="5.4" height="5.4" rx="1.1" fill="#d14cff"/>
+    <rect x="17" y="17.6" width="5.4" height="5.4" rx="1.1" fill="#d14cff"/>
+    <rect x="22.6" y="17.6" width="5.4" height="5.4" rx="1.1" fill="#d14cff"/>
+    <rect x="28.2" y="17.6" width="5.4" height="5.4" rx="1.1" fill="#d14cff"/>
+  </g>
+  <rect x="45" y="10" width="14" height="16" rx="3" fill="#0a0814" stroke="#00f0ff" stroke-width="1"/>
+  <rect x="48.2" y="13.4" width="3.4" height="3.4" rx=".7" fill="#2de8f0"/>
+  <rect x="51.8" y="13.4" width="3.4" height="3.4" rx=".7" fill="#2de8f0"/>
+  <rect x="48.2" y="17" width="3.4" height="3.4" rx=".7" fill="#2de8f0"/>
+  <rect x="51.8" y="17" width="3.4" height="3.4" rx=".7" fill="#2de8f0"/>
+  <rect x="14" y="6" width="28" height="52" rx="4" fill="none" stroke="#d14cff" stroke-width=".55" opacity=".5"/>
+</svg>

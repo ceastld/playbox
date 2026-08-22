@@ -1028,5 +1028,17 @@
     "dir": "g/minesweeper/",
     "url": "./g/minesweeper/",
     "kind": "remake"
+  },
+  {
+    "n": 104,
+    "id": "tetris",
+    "title": "俄罗斯方块",
+    "subtitle": "TETRIS",
+    "blurb": "七种方块，消行得分。",
+    "hue": 312,
+    "tag": "复刻",
+    "dir": "g/tetris/",
+    "url": "./g/tetris/",
+    "kind": "remake"
   }
 ]
