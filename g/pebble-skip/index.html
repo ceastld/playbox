@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#05030c" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>打水漂 · SKIP</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2305030c'/%3E%3Cpath d='M0 22h32' stroke='%2300f0ff' stroke-width='1.4'/%3E%3Cellipse cx='10' cy='22' rx='5' ry='1.6' fill='none' stroke='%23ff3db8' stroke-width='1.2'/%3E%3Cellipse cx='18' cy='22' rx='7' ry='2.1' fill='none' stroke='%2300f0ff' stroke-width='1'/%3E%3Ccircle cx='7' cy='18' r='2.1' fill='%23ffe36b'/%3E%3Cpath d='M22 20h8v8H22z' fill='%23120818' stroke='%23ffe36b' stroke-width='1.1'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>打水漂</b>
+        <span>SKIP</span>
+      </div>
+      <div class="status">
+        <span id="stage-label">十矶</span>
+        <div class="row">
+          <span id="power-label">擦水连跳</span>
+          <span class="pips" id="pips" aria-label="剩余石子"></span>
+        </div>
+      </div>
+      <div class="tools">
+        <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
+        <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <canvas id="c" aria-label="打水漂到对岸"></canvas>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden"></div>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">SKIP</p>
+          <h1 id="ov-title">打水漂</h1>
+          <p class="lead" id="ov-lead">按住瞄准，松手让石子擦着水面连跳，落到对岸金矶。<br />抛得太陡会沉，太猛会跳过头。</p>
+          <p class="ops" id="ov-ops">拖动画布瞄准松手 · W/S 调角 · A/D 力度 · 空格抛出 · M 静音</p>
+          <button type="button" id="ov-btn">抛石</button>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">按住瞄准 · 贴着水面松手</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>

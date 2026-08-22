@@ -645,7 +645,7 @@
     "blurb": "三根引线，剪掉假的那根。",
     "hue": 12,
     "tag": "剪",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/fuse-cut/"
   },
   {
@@ -656,7 +656,7 @@
     "blurb": "转圆盘对上今夜月相。",
     "hue": 255,
     "tag": "月",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/moon-phase/"
   },
   {
@@ -667,7 +667,7 @@
     "blurb": "按住瞄准，松手打水漂到对岸。",
     "hue": 195,
     "tag": "漂",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/pebble-skip/"
   },
   {
@@ -678,7 +678,7 @@
     "blurb": "灯笼上浮，别让它们撞到一起。",
     "hue": 40,
     "tag": "灯",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/lantern-float/"
   },
   {
@@ -689,7 +689,7 @@
     "blurb": "印落下前把图案对齐纸。",
     "hue": 350,
     "tag": "印",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/stamp-align/"
   },
   {
@@ -700,7 +700,7 @@
     "blurb": "擦出刚够看见出口的一块。",
     "hue": 170,
     "tag": "雾",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/fog-wipe/"
   },
   {
@@ -711,7 +711,7 @@
     "blurb": "压弹簧到高度，松手弹到平台。",
     "hue": 140,
     "tag": "弹",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/coil-spring/"
   },
   {
@@ -722,7 +722,7 @@
     "blurb": "按重量把鸟分到不同树枝。",
     "hue": 95,
     "tag": "栖",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/bird-perch/"
   },
   {
@@ -733,7 +733,7 @@
     "blurb": "锁住骰面组成密码。",
     "hue": 16,
     "tag": "骰",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/dice-lock/"
   },
   {
@@ -744,7 +744,7 @@
     "blurb": "按顺序开阀，压力到红就炸。",
     "hue": 8,
     "tag": "汽",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/steam-valve/"
   },
   {

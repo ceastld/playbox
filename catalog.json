@@ -525,5 +525,55 @@
     "hue": 188,
     "tag": "波",
     "dir": "g/ripple-step/"
+  },
+  {
+    "n": 59,
+    "id": "fuse-cut",
+    "title": "剪引",
+    "subtitle": "FUSE",
+    "blurb": "三根引线，剪掉假的那根。",
+    "hue": 12,
+    "tag": "剪",
+    "dir": "g/fuse-cut/"
+  },
+  {
+    "n": 60,
+    "id": "moon-phase",
+    "title": "月相",
+    "subtitle": "MOON",
+    "blurb": "转圆盘对上今夜月相。",
+    "hue": 255,
+    "tag": "月",
+    "dir": "g/moon-phase/"
+  },
+  {
+    "n": 61,
+    "id": "pebble-skip",
+    "title": "打水漂",
+    "subtitle": "SKIP",
+    "blurb": "按住瞄准，松手打水漂到对岸。",
+    "hue": 195,
+    "tag": "漂",
+    "dir": "g/pebble-skip/"
+  },
+  {
+    "n": 62,
+    "id": "lantern-float",
+    "title": "放灯",
+    "subtitle": "LANTERN",
+    "blurb": "灯笼上浮，别让它们撞到一起。",
+    "hue": 40,
+    "tag": "灯",
+    "dir": "g/lantern-float/"
+  },
+  {
+    "n": 63,
+    "id": "stamp-align",
+    "title": "盖印",
+    "subtitle": "STAMP",
+    "blurb": "印落下前把图案对齐纸。",
+    "hue": 350,
+    "tag": "印",
+    "dir": "g/stamp-align/"
   }
 ]

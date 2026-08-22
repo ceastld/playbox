@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#05030c" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>放灯 · LANTERN</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2305030c'/%3E%3Ccircle cx='22' cy='7' r='4.2' fill='none' stroke='%2300f0ff' stroke-width='1.4'/%3E%3Cpath d='M10 26l3.2-12h5.6L22 26z' fill='%2312081c' stroke='%23ff3db8' stroke-width='1.4'/%3E%3Cpath d='M11.4 22h9.2' stroke='%2300f0ff' stroke-width='1.1'/%3E%3Ccircle cx='16' cy='17.4' r='1.6' fill='%23ffe36b'/%3E%3Cpath d='M16 26v3' stroke='%23ff3db8' stroke-width='1.2' stroke-linecap='round'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>放灯</b>
+        <span>LANTERN</span>
+      </div>
+      <div class="status">
+        <div class="fill" id="fill-wrap" title="入月">
+          <em>月</em>
+          <div class="fill-track" aria-hidden="true">
+            <i id="fill-bar"></i>
+          </div>
+          <b id="fill-num">0/2</b>
+        </div>
+        <div class="row">
+          <span id="stage-label">第 1 河</span>
+          <span id="left-label">在空 0</span>
+          <span class="pips" id="pips" aria-label="剩余性命"></span>
+        </div>
+      </div>
+      <div class="tools">
+        <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
+        <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <canvas id="c" aria-label="放灯上天"></canvas>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden"></div>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">LANTERN</p>
+          <h1 id="ov-title">放灯</h1>
+          <p class="lead" id="ov-lead">灯笼会自己往上飘。把风钻进缝里，<br />别让纸灯碰到一起。</p>
+          <p class="ops" id="ov-ops">WASD / 方向键吹风 · 按住拖动 · M 静音</p>
+          <button type="button" id="ov-btn">放灯</button>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">站到两灯中间 · 风会推开它们</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>
