@@ -13,6 +13,9 @@ var HEX_DIRS = [
 var LONG_MS = 400;
 var MOVE_PX = 12;
 var TIME_CAP = 999;
+var AUTO_SPEED_KEY = 'playbox-hex-mines-auto-speed';
+var AUTO_DELAY = [0, 300, 140, 50, 16];
+var AUTO_SPEED_NAME = ['', '慢', '中', '快', '极快'];
 var SQRT3 = Math.sqrt(3);
 var NUM_COL = ['', '#4db8ff', '#3dff9a', '#ff5d7a', '#8b7cff', '#ff7a3d', '#00e0d0'];
 
@@ -304,6 +307,235 @@ function freezeTimer(game) {
   game.seconds = currentSeconds(game);
 }
 
+/* ---------- auto solver (never peeks cell.mine) ---------- */
+
+function neighborState(game, i) {
+  var ns = neighbors(game, i);
+  var hidden = [];
+  var flags = 0;
+  var k;
+  for (k = 0; k < ns.length; k++) {
+    var c = game.cells[ns[k]];
+    if (c.flag) flags += 1;
+    else if (!c.open) hidden.push(ns[k]);
+  }
+  return { hidden: hidden, flags: flags };
+}
+
+function cubeDist(cell) {
+  return (Math.abs(cell.q) + Math.abs(cell.r) + Math.abs(cell.q + cell.r)) / 2;
+}
+
+function firstMoveIndex(game) {
+  var n = game.cells.length;
+  var best = -1;
+  var bestD = 1e9;
+  var i;
+  var c;
+  var d;
+  for (i = 0; i < n; i++) {
+    c = game.cells[i];
+    if (c.open || c.flag) continue;
+    d = cubeDist(c);
+    if (d < bestD || (d === bestD && (best < 0 || i < best))) {
+      bestD = d;
+      best = i;
+    }
+  }
+  return best;
+}
+
+function edgeRank(game, i) {
+  var nbs = neighbors(game, i).length;
+  if (nbs <= 3) return 0;
+  if (nbs <= 4) return 1;
+  return 2;
+}
+
+function hiddenUnflagged(game) {
+  var n = game.cells.length;
+  var out = [];
+  var i;
+  for (i = 0; i < n; i++) {
+    var c = game.cells[i];
+    if (!c.open && !c.flag) out.push(i);
+  }
+  return out;
+}
+
+function hiddenSet(arr) {
+  var o = {};
+  var i;
+  for (i = 0; i < arr.length; i++) o[arr[i]] = 1;
+  return o;
+}
+
+function pickSubsetMove(game) {
+  var n = game.cells.length;
+  var cons = [];
+  var i;
+  var cell;
+  var st;
+  var rest;
+  var a;
+  var b;
+  var setA;
+  var extra;
+  var k;
+  var restDiff;
+  for (i = 0; i < n; i++) {
+    cell = game.cells[i];
+    if (!cell.open || cell.adj === 0) continue;
+    st = neighborState(game, i);
+    rest = cell.adj - st.flags;
+    if (st.hidden.length === 0 || rest < 0 || rest > st.hidden.length) continue;
+    cons.push({ hidden: st.hidden, rest: rest });
+  }
+  for (a = 0; a < cons.length; a++) {
+    setA = hiddenSet(cons[a].hidden);
+    for (b = 0; b < cons.length; b++) {
+      if (a === b || cons[a].hidden.length > cons[b].hidden.length) continue;
+      extra = [];
+      for (k = 0; k < cons[b].hidden.length; k++) {
+        if (!setA[cons[b].hidden[k]]) extra.push(cons[b].hidden[k]);
+      }
+      if (extra.length !== cons[b].hidden.length - cons[a].hidden.length) continue;
+      if (!extra.length) continue;
+      restDiff = cons[b].rest - cons[a].rest;
+      if (restDiff === 0) return { type: 'open', i: extra[0] };
+      if (restDiff === extra.length) return { type: 'flag', i: extra[0] };
+    }
+  }
+  return null;
+}
+
+function pickAutoMove(game) {
+  if (game.status !== 'play') return null;
+  var n = game.cells.length;
+  var i;
+  var k;
+  var cell;
+  var st;
+  var rest;
+
+  if (game.opened === 0) {
+    i = firstMoveIndex(game);
+    if (i >= 0) return { type: 'open', i: i };
+    return null;
+  }
+
+  var flagI = -1;
+  var chordI = -1;
+  var certainMine = {};
+
+  for (i = 0; i < n; i++) {
+    cell = game.cells[i];
+    if (!cell.open || cell.adj === 0) continue;
+    st = neighborState(game, i);
+    rest = cell.adj - st.flags;
+    if (rest > 0 && st.hidden.length === rest) {
+      for (k = 0; k < st.hidden.length; k++) certainMine[st.hidden[k]] = 1;
+      if (flagI < 0) flagI = st.hidden[0];
+    }
+    if (st.flags === cell.adj && st.hidden.length > 0 && chordI < 0) {
+      chordI = i;
+    }
+  }
+
+  if (flagI >= 0) return { type: 'flag', i: flagI };
+  if (chordI >= 0) return { type: 'chord', i: chordI };
+
+  var sub = pickSubsetMove(game);
+  if (sub) return sub;
+
+  var hidden = hiddenUnflagged(game);
+  if (!hidden.length) return null;
+  var left = remaining(game);
+  if (left <= 0) return { type: 'open', i: hidden[0] };
+  if (left === hidden.length) return { type: 'flag', i: hidden[0] };
+
+  var bestI = -1;
+  var bestP = Infinity;
+  var bestEdge = 9;
+  var hasFrontier = false;
+
+  for (k = 0; k < hidden.length; k++) {
+    i = hidden[k];
+    if (certainMine[i]) continue;
+    var p = Infinity;
+    var markedMine = false;
+    var hasNum = false;
+    var ns = neighbors(game, i);
+    var t;
+    for (t = 0; t < ns.length; t++) {
+      var nb = game.cells[ns[t]];
+      if (!nb.open || nb.adj === 0) continue;
+      st = neighborState(game, ns[t]);
+      if (!st.hidden.length) continue;
+      hasNum = true;
+      var lp = (nb.adj - st.flags) / st.hidden.length;
+      if (lp >= 1) {
+        markedMine = true;
+        break;
+      }
+      if (lp < p) p = lp;
+    }
+    if (markedMine) continue;
+    if (!hasNum) continue;
+    hasFrontier = true;
+    var edge = edgeRank(game, i);
+    if (p < bestP || (p === bestP && (edge < bestEdge || (edge === bestEdge && i < bestI)))) {
+      bestP = p;
+      bestEdge = edge;
+      bestI = i;
+    }
+  }
+
+  if (!hasFrontier) {
+    for (k = 0; k < hidden.length; k++) {
+      i = hidden[k];
+      if (certainMine[i]) continue;
+      var eg = edgeRank(game, i);
+      if (eg < bestEdge || (eg === bestEdge && (bestI < 0 || i < bestI))) {
+        bestEdge = eg;
+        bestI = i;
+        bestP = left / hidden.length;
+      }
+    }
+  }
+
+  if (bestI < 0) return { type: 'flag', i: hidden[0] };
+  return { type: 'open', i: bestI };
+}
+
+function applyPickedMove(game, move, rng) {
+  if (!move) return { type: 'noop' };
+  if (move.type === 'flag') return flagCell(game, move.i);
+  if (move.type === 'chord') return chordCell(game, move.i);
+  return openCell(game, move.i, rng);
+}
+
+function autoPlayGame(game, rng, limit) {
+  var guard = 0;
+  var cap = limit || 8000;
+  while (game.status === 'play' && guard < cap) {
+    var move = pickAutoMove(game);
+    if (!move) break;
+    applyPickedMove(game, move, rng);
+    guard += 1;
+  }
+  return game.status;
+}
+
+function lcg(seed) {
+  var s = seed >>> 0;
+  if (!s) s = 1;
+  return function () {
+    s = (Math.imul(1664525, s) + 1013904223) >>> 0;
+    return s / 4294967296;
+  };
+}
+
 function hexPixel(q, r, size) {
   return {
     x: size * SQRT3 * (q + r / 2),
@@ -498,6 +730,65 @@ function runSelfTests() {
   assert(DIFF[5].key === 'playbox-hex-mines-best-5', 'best key 5');
   assert(DIFF[7].key === 'playbox-hex-mines-best-7', 'best key 7');
 
+  g = createGame(5, 12);
+  var mv = pickAutoMove(g);
+  assert(mv && mv.type === 'open' && mv.i === indexAt(g, 0, 0), 'first auto move is center');
+
+  g = createGame(1, 1);
+  seedMines(g, [indexAt(g, 1, 0)]);
+  g.placed = true;
+  g.startAt = 1;
+  for (k = 0; k < g.cells.length; k++) {
+    if (!g.cells[k].mine && !g.cells[k].open) {
+      g.cells[k].open = true;
+      g.opened += 1;
+    }
+  }
+  mv = pickAutoMove(g);
+  assert(mv && mv.type === 'flag' && mv.i === indexAt(g, 1, 0), 'forced mine is flagged');
+
+  g = createGame(1, 1);
+  seedMines(g, [indexAt(g, 1, 0)]);
+  g.placed = true;
+  g.startAt = 1;
+  g.cells[indexAt(g, 0, 0)].open = true;
+  g.opened = 1;
+  flagCell(g, indexAt(g, 1, 0));
+  mv = pickAutoMove(g);
+  assert(mv && mv.type === 'chord' && mv.i === indexAt(g, 0, 0), 'matching flags chord');
+  r = applyPickedMove(g, mv);
+  assert(r.type !== 'deny' && r.type !== 'hit', 'chord opens remaining hidden');
+  assert(g.cells[indexAt(g, 0, 1)].open, 'chord opened a safe neighbor');
+
+  g = createGame(2, 2);
+  seedMines(g, [indexAt(g, 2, 0), indexAt(g, -2, 0)]);
+  assert(autoPlayGame(g) === 'win', 'forced-move pattern on small hex wins');
+  for (k = 0; k < g.cells.length; k++) {
+    if (g.cells[k].flag) assert(g.cells[k].mine, 'solver only flags mines');
+  }
+
+  var wins = 0;
+  var t;
+  for (t = 1; t <= 16; t++) {
+    g = createGame(5, 12);
+    if (autoPlayGame(g, lcg(t * 9973 + 17)) === 'win') wins += 1;
+  }
+  assert(wins >= 8, 'small auto often wins, got ' + wins + '/16');
+
+  g = createGame(5, 12);
+  openCell(g, indexAt(g, 0, 0));
+  assert(!g.cells[indexAt(g, 0, 0)].mine, 'auto path still first-click-safe');
+  ns = neighbors(g, indexAt(g, 0, 0));
+  for (k = 0; k < ns.length; k++) {
+    assert(!g.cells[ns[k]].mine, 'auto path neighborhood still safe');
+  }
+  assert(g.cells[indexAt(g, 0, 0)].adj === 0, 'auto path first click still a zero');
+
+  g = createGame(5, 12);
+  assert(g.cells.length === hexCount(5) && DIFF[5].mines === 12 && DIFF[5].name === '小', '小 unchanged');
+  g = createGame(7, 30);
+  assert(g.cells.length === hexCount(7) && DIFF[7].mines === 30 && DIFF[7].name === '中', '中 unchanged');
+
   return 'ok';
 }
 
@@ -519,6 +810,9 @@ var timerEl = document.getElementById('timer');
 var bestEl = document.getElementById('best');
 var btnMute = document.getElementById('btn-mute');
 var btnRetry = document.getElementById('btn-retry');
+var btnAuto = document.getElementById('btn-auto');
+var speedEl = document.getElementById('speed');
+var speedLab = document.getElementById('speed-lab');
 var ovRetry = document.getElementById('ov-retry');
 var diff5 = document.getElementById('diff-5');
 var diff7 = document.getElementById('diff-7');
@@ -541,6 +835,9 @@ var flashSet = {};
 var dirty = true;
 var actx = null;
 var muted = false;
+var autoOn = false;
+var autoTid = 0;
+var autoSpeed = 3;
 
 function audioCtx() {
   if (!actx) {
@@ -879,7 +1176,7 @@ function handleResult(res) {
     return;
   }
 
-  if (res.cells && !reduceMotion() && game.status === 'play') {
+  if (res.cells && !reduceMotion() && game.status === 'play' && !(autoOn && autoSpeed >= 4)) {
     var t = Date.now();
     flashUntil = t + 200;
     flashSet = {};
@@ -920,6 +1217,7 @@ function handleResult(res) {
 }
 
 function restart(nextRadius) {
+  stopAutoLoop();
   if (nextRadius) radius = nextRadius;
   game = createGame(radius, DIFF[radius].mines);
   cursor = indexAt(game, 0, 0);
@@ -935,6 +1233,7 @@ function restart(nextRadius) {
   relayout();
   updateMeters();
   canvas.focus();
+  if (autoOn) scheduleAuto();
 }
 
 function cellIndexFromEvent(ev) {
@@ -982,6 +1281,7 @@ function doChord(i) {
 }
 
 function primaryAction(i) {
+  if (autoOn) return;
   if (game.status !== 'play') return;
   if (flagMode && !game.cells[i].open) {
     doFlag(i);
@@ -991,6 +1291,7 @@ function primaryAction(i) {
 }
 
 canvas.addEventListener('pointerdown', function (ev) {
+  if (autoOn) return;
   if (game.status !== 'play') return;
   var i = cellIndexFromEvent(ev);
   if (i < 0) return;
@@ -1120,11 +1421,86 @@ function toggleMute() {
   if (!muted) audioCtx();
 }
 
+function loadAutoSpeed() {
+  try {
+    var n = parseInt(localStorage.getItem(AUTO_SPEED_KEY) || '', 10);
+    if (n >= 1 && n <= 4) return n;
+  } catch (e) { /* ignore */ }
+  return 3;
+}
+
+function saveAutoSpeed(n) {
+  try { localStorage.setItem(AUTO_SPEED_KEY, String(n)); } catch (e) { /* ignore */ }
+}
+
+function stopAutoLoop() {
+  if (autoTid) {
+    clearTimeout(autoTid);
+    autoTid = 0;
+  }
+}
+
+function scheduleAuto() {
+  stopAutoLoop();
+  if (!autoOn) return;
+  if (game.status !== 'play') return;
+  autoTid = setTimeout(runAutoTick, AUTO_DELAY[autoSpeed] || AUTO_DELAY[3]);
+}
+
+function runAutoTick() {
+  autoTid = 0;
+  if (!autoOn || game.status !== 'play') return;
+  var move = pickAutoMove(game);
+  if (!move) return;
+  if (move.type === 'flag') doFlag(move.i);
+  else if (move.type === 'chord') doChord(move.i);
+  else doOpen(move.i);
+  if (autoOn && game.status === 'play') scheduleAuto();
+}
+
+function syncAutoBtn() {
+  btnAuto.classList.toggle('on', autoOn);
+  btnAuto.setAttribute('aria-pressed', autoOn ? 'true' : 'false');
+  btnAuto.textContent = autoOn ? '停下' : '自动';
+  btnAuto.setAttribute('aria-label', autoOn ? '停止自动' : '自动');
+}
+
+function toggleAuto() {
+  autoOn = !autoOn;
+  syncAutoBtn();
+  if (!autoOn) {
+    stopAutoLoop();
+    return;
+  }
+  cancelPress();
+  audioCtx();
+  if (game.status === 'play') scheduleAuto();
+}
+
+function syncSpeedUI() {
+  speedEl.value = String(autoSpeed);
+  speedLab.textContent = AUTO_SPEED_NAME[autoSpeed];
+  speedEl.title = AUTO_SPEED_NAME[autoSpeed];
+  speedEl.setAttribute('aria-valuetext', AUTO_SPEED_NAME[autoSpeed]);
+}
+
+function onSpeedInput() {
+  var n = parseInt(speedEl.value, 10);
+  if (!(n >= 1 && n <= 4)) n = 3;
+  autoSpeed = n;
+  saveAutoSpeed(n);
+  syncSpeedUI();
+  if (autoOn && game.status === 'play') scheduleAuto();
+}
+
 btnMute.addEventListener('click', toggleMute);
+btnAuto.addEventListener('click', toggleAuto);
 btnRetry.addEventListener('click', function () { restart(); });
 ovRetry.addEventListener('click', function () { restart(); });
 diff5.addEventListener('click', function () { restart(5); });
 diff7.addEventListener('click', function () { restart(7); });
+speedEl.addEventListener('input', onSpeedInput);
+speedEl.addEventListener('change', onSpeedInput);
 
 function moveCursor(dq, dr) {
   var cell = game.cells[cursor];
@@ -1148,7 +1524,14 @@ window.addEventListener('keydown', function (ev) {
     restart();
     return;
   }
-  if (ev.target && (ev.target.tagName === 'INPUT' || ev.target.tagName === 'BUTTON')) {
+  if (key === 'a' || key === 'A') {
+    ev.preventDefault();
+    toggleAuto();
+    return;
+  }
+  if (ev.target === speedEl || (ev.target && ev.target.tagName === 'INPUT')) return;
+  if (autoOn) return;
+  if (ev.target && ev.target.tagName === 'BUTTON') {
     if (key === ' ' || key === 'Enter') return;
   }
   if (game.status !== 'play') return;
@@ -1160,7 +1543,6 @@ window.addEventListener('keydown', function (ev) {
     x: [0, 1], X: [0, 1],
     s: [0, 1], S: [0, 1],
     z: [-1, 1], Z: [-1, 1],
-    a: [-1, 0], A: [-1, 0],
     q: [-1, 0], Q: [-1, 0]
   };
   if (hexKeys[key]) {
@@ -1206,6 +1588,9 @@ if (window.visualViewport) {
   window.visualViewport.addEventListener('resize', relayout);
 }
 
+autoSpeed = loadAutoSpeed();
+syncSpeedUI();
+syncAutoBtn();
 showTouchMode();
 restart(5);
 timerId = setInterval(tick, 200);
