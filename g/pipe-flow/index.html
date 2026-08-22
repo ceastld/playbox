@@ -37,6 +37,12 @@
         </div>
       </div>
       <div class="tools">
+        <label class="speed-ctl" title="速度 慢 / 中 / 快 / 极快">
+          <span>速度</span>
+          <input type="range" id="speed" min="1" max="4" step="1" value="3" aria-label="速度" />
+          <b id="speed-lab">快</b>
+        </label>
+        <button type="button" id="btn-auto" title="A" aria-label="自动" aria-pressed="false">自动</button>
         <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
         <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
       </div>
@@ -51,7 +57,7 @@
           <p class="kicker" id="ov-kicker">PIPE</p>
           <h1 id="ov-title">通管</h1>
           <p class="lead" id="ov-lead">点格铺管，让水从源头流到出口。<br />绕路越长越爽，漏了就输。</p>
-          <p class="ops" id="ov-ops">点格放下一段 · 覆盖扣分 · 方向键选格 · 空格放置 · R 重开 · M 静音</p>
+          <p class="ops" id="ov-ops">点格放下一段 · 覆盖扣分 · 方向键选格 · 空格放置 · A 自动 · R 重开 · M 静音</p>
           <div class="ov-actions">
             <button type="button" id="btn-campaign">闯关</button>
             <button type="button" id="btn-endless">无尽</button>
@@ -60,7 +66,7 @@
       </div>
     </div>
 
-    <footer class="hint" id="hint">点格铺管 · 水会自己流 · 漏了就输 · 绕路加分</footer>
+    <footer class="hint" id="hint">点格铺管 · 水会自己流 · 漏了就输 · A 自动</footer>
   </div>
   <script src="js/game.js"></script>
 </body>

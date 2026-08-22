@@ -17,7 +17,10 @@
   const OPP = [2, 3, 0, 1];
   const BEST_KEY = 'playbox-pipe-flow-best';
   const MUTE_KEY = 'playbox-pipe-flow-mute';
-  const OPS = '点格放下一段 · 覆盖扣分 · 方向键选格 · 空格放置 · R 重开 · M 静音';
+  const AUTO_SPEED_KEY = 'playbox-pipe-flow-auto-speed';
+  const AUTO_SPEED_NAME = ['', '慢', '中', '快', '极快'];
+  const AUTO_DELAY = [0, 0.42, 0.2, 0.07, 0];
+  const OPS = '点格放下一段 · 覆盖扣分 · 方向键选格 · 空格放置 · A 自动 · R 重开 · M 静音';
   const NOTES = [523, 587, 659, 784, 880, 1046, 1175];
 
   const hasDom = typeof document !== 'undefined';
@@ -100,6 +103,9 @@
   const btnEndless = el('btn-endless');
   const btnMute = el('btn-mute');
   const btnRetry = el('btn-retry');
+  const btnAuto = el('btn-auto');
+  const speedEl = el('speed');
+  const speedLab = el('speed-lab');
   const scoreEl = el('score');
   const bestEl = el('best');
   const scoreBox = el('score-box');
@@ -172,6 +178,10 @@
     demo: false,
     waterHue: 0
   };
+
+  let autoOn = false;
+  let autoSpeed = 3;
+  let autoWait = 0;
 
   function clamp(v, a, b) {
     return v < a ? a : v > b ? b : v;
@@ -407,6 +417,20 @@
     } catch (err) {
       return false;
     }
+  }
+
+  function loadAutoSpeed() {
+    try {
+      const n = parseInt(localStorage.getItem(AUTO_SPEED_KEY) || '3', 10);
+      if (n >= 1 && n <= 4) return n;
+    } catch (err) { /* ignore */ }
+    return 3;
+  }
+
+  function saveAutoSpeed(n) {
+    try {
+      localStorage.setItem(AUTO_SPEED_KEY, String(n));
+    } catch (err) { /* ignore */ }
   }
 
   function saveBest() {
@@ -651,6 +675,7 @@
     particles.length = 0;
     pops.length = 0;
     rings.length = 0;
+    autoWait = 0;
   }
 
   function burst(x, y, n, rgb, spd, life, grav, cone, dir) {
@@ -733,6 +758,307 @@
       hitStop(28);
     }
     return true;
+  }
+
+  function canPlaceCell(r, c) {
+    const cell = at(r, c);
+    if (!cell) return false;
+    if (cell.kind === 'start' || cell.kind === 'end' || cell.kind === 'wall') return false;
+    if (cell.locked || cell.flowing) return false;
+    return true;
+  }
+
+  function maskFitsNeed(mask, need) {
+    return !!need && mask === need;
+  }
+
+  function walkableNext(nxt, nenter, st) {
+    if (!nxt) return false;
+    if (nxt.kind === 'wall' || nxt.kind === 'start') return false;
+    if (nxt.kind === 'end') return nenter === st.ed;
+    if (nxt.locked || nxt.flowing) {
+      return nxt.kind === 'pipe' && (nxt.mask & BIT[nenter]) !== 0;
+    }
+    return nxt.kind === 'empty' || nxt.kind === 'pipe';
+  }
+
+  function exitsPlanned(cell, enter, forceMask) {
+    if (forceMask != null) {
+      if ((forceMask & BIT[enter]) === 0) return [];
+      const xs = exitsOf(forceMask, enter, isCross(forceMask));
+      return xs.length ? [xs[0]] : [];
+    }
+    if (!cell || cell.kind === 'end' || cell.kind === 'wall' || cell.kind === 'start') return [];
+    if (cell.kind === 'pipe') {
+      if (cell.locked || cell.flowing || (cell.mask & BIT[enter]) !== 0) {
+        if ((cell.mask & BIT[enter]) === 0) return [];
+        return exitsOf(cell.mask, enter, isCross(cell.mask));
+      }
+    }
+    const out = [];
+    for (let d = 0; d < 4; d++) {
+      if (d !== enter) out.push(d);
+    }
+    return out;
+  }
+
+  function bfsToEnd(r0, c0, enter0, firstMask) {
+    const st = stageCfg();
+    if (r0 === st.er && c0 === st.ec) {
+      return enter0 === st.ed ? [] : null;
+    }
+    const cell0 = at(r0, c0);
+    if (!walkableNext(cell0, enter0, st)) return null;
+    if (firstMask != null && (firstMask & BIT[enter0]) === 0) return null;
+
+    const visited = Object.create(null);
+    const prev = Object.create(null);
+    const q = [{ r: r0, c: c0, enter: enter0 }];
+    visited[r0 + ',' + c0 + ',' + enter0] = 1;
+    let found = null;
+    let qi = 0;
+    while (qi < q.length) {
+      const cur = q[qi++];
+      if (cur.r === st.er && cur.c === st.ec && cur.enter === st.ed) {
+        found = cur;
+        break;
+      }
+      const cell = at(cur.r, cur.c);
+      if (cur.r === st.er && cur.c === st.ec) continue;
+      const force = (cur.r === r0 && cur.c === c0) ? firstMask : null;
+      const exits = exitsPlanned(cell, cur.enter, force);
+      for (let i = 0; i < exits.length; i++) {
+        const d = exits[i];
+        const nr = cur.r + DY[d];
+        const nc = cur.c + DX[d];
+        const nenter = OPP[d];
+        const nxt = at(nr, nc);
+        if (!walkableNext(nxt, nenter, st)) continue;
+        const key = nr + ',' + nc + ',' + nenter;
+        if (visited[key]) continue;
+        visited[key] = 1;
+        prev[key] = { r: cur.r, c: cur.c, enter: cur.enter };
+        q.push({ r: nr, c: nc, enter: nenter });
+      }
+    }
+    if (!found) return null;
+    const chain = [];
+    let r = found.r;
+    let c = found.c;
+    let enter = found.enter;
+    for (let guard = 0; guard < 128; guard++) {
+      chain.push({ r: r, c: c, enter: enter });
+      const p = prev[r + ',' + c + ',' + enter];
+      if (!p) break;
+      r = p.r;
+      c = p.c;
+      enter = p.enter;
+    }
+    chain.reverse();
+    const cells = [];
+    for (let i = 0; i < chain.length; i++) {
+      const node = chain[i];
+      if (node.r === st.er && node.c === st.ec) break;
+      let exit = -1;
+      if (i + 1 < chain.length) {
+        const nxt = chain[i + 1];
+        for (let d = 0; d < 4; d++) {
+          if (node.r + DY[d] === nxt.r && node.c + DX[d] === nxt.c) {
+            exit = d;
+            break;
+          }
+        }
+      }
+      cells.push({ r: node.r, c: node.c, enter: node.enter, exit: exit });
+    }
+    return cells;
+  }
+
+  function walkFrontier() {
+    const st = stageCfg();
+    let r = st.sr;
+    let c = st.sc;
+    let dir = st.sd;
+    const seen = Object.create(null);
+    seen[r + ',' + c] = 1;
+    for (let guard = 0; guard < 96; guard++) {
+      const nr = r + DY[dir];
+      const nc = c + DX[dir];
+      const nenter = OPP[dir];
+      const nxt = at(nr, nc);
+      if (!nxt) return { leak: true };
+      if (nxt.kind === 'end') {
+        if (nenter === st.ed) return { done: true };
+        return { leak: true };
+      }
+      if (nxt.kind === 'wall') return { leak: true };
+      if (nxt.kind === 'empty') return { r: nr, c: nc, enter: nenter };
+      if (nxt.kind === 'pipe') {
+        if ((nxt.mask & BIT[nenter]) === 0) {
+          if (nxt.locked || nxt.flowing) return { leak: true };
+          return { r: nr, c: nc, enter: nenter };
+        }
+        const key = nr + ',' + nc;
+        if (seen[key]) {
+          if (canPlaceCell(nr, nc)) return { r: nr, c: nc, enter: nenter };
+          return { leak: true };
+        }
+        seen[key] = 1;
+        const xs = exitsOf(nxt.mask, nenter, isCross(nxt.mask));
+        if (!xs.length) {
+          if (canPlaceCell(nr, nc)) return { r: nr, c: nc, enter: nenter };
+          return { leak: true };
+        }
+        r = nr;
+        c = nc;
+        dir = xs[0];
+        continue;
+      }
+      return { leak: true };
+    }
+    return { leak: true };
+  }
+
+  function cellNeed(node) {
+    if (!node || node.exit < 0) return 0;
+    return BIT[node.enter] | BIT[node.exit];
+  }
+
+  function pickDump(reserved) {
+    let best = null;
+    let bestS = -1e9;
+    const st = stageCfg();
+    for (let r = 0; r < G.rows; r++) {
+      for (let c = 0; c < G.cols; c++) {
+        if (!canPlaceCell(r, c)) continue;
+        if (reserved[r + ',' + c]) continue;
+        let adj = 0;
+        for (let d = 0; d < 4; d++) {
+          if (reserved[(r + DY[d]) + ',' + (c + DX[d])]) adj += 1;
+        }
+        const distS = Math.abs(r - st.sr) + Math.abs(c - st.sc);
+        const distE = Math.abs(r - st.er) + Math.abs(c - st.ec);
+        const empty = at(r, c).kind === 'empty' ? 4 : 0;
+        const score = distS + distE - adj * 10 + empty;
+        if (score > bestS) {
+          bestS = score;
+          best = { r: r, c: c };
+        }
+      }
+    }
+    return best;
+  }
+
+  function pickAutoPlace() {
+    if (G.mode !== 'play' || G.reached || G.demo) return null;
+    if (!G.queue.length) return null;
+    const pid = G.queue[0];
+    const mask = PIECES[pid].m;
+    const front = walkFrontier();
+    if (!front || front.done) return null;
+    if (front.leak) return pickDump(Object.create(null));
+
+    if (canPlaceCell(front.r, front.c) && front.enter >= 0) {
+      const detour = bfsToEnd(front.r, front.c, front.enter, mask);
+      if (detour && detour.length && maskFitsNeed(mask, cellNeed(detour[0]))) {
+        return { r: front.r, c: front.c };
+      }
+    }
+
+    const path = bfsToEnd(front.r, front.c, front.enter, null);
+    const reserved = Object.create(null);
+    if (path) {
+      for (let i = 0; i < path.length; i++) {
+        reserved[path[i].r + ',' + path[i].c] = 1;
+      }
+      for (let i = 0; i < path.length; i++) {
+        const node = path[i];
+        if (!canPlaceCell(node.r, node.c)) continue;
+        const need = cellNeed(node);
+        if (!need) continue;
+        const cell = at(node.r, node.c);
+        if (cell.kind === 'pipe' && maskFitsNeed(cell.mask, need)) continue;
+        if (maskFitsNeed(mask, need)) return { r: node.r, c: node.c };
+      }
+    }
+    const dump = pickDump(reserved);
+    if (dump) return dump;
+    if (canPlaceCell(front.r, front.c)) return { r: front.r, c: front.c };
+    return null;
+  }
+
+  function syncAutoBtn() {
+    if (!btnAuto) return;
+    btnAuto.classList.toggle('on', autoOn);
+    btnAuto.setAttribute('aria-pressed', autoOn ? 'true' : 'false');
+    btnAuto.textContent = autoOn ? '停下' : '自动';
+    btnAuto.setAttribute('aria-label', autoOn ? '停止自动' : '自动');
+  }
+
+  function syncSpeedUi() {
+    if (!speedEl || !speedLab) return;
+    speedEl.value = String(autoSpeed);
+    speedLab.textContent = AUTO_SPEED_NAME[autoSpeed];
+    speedEl.title = AUTO_SPEED_NAME[autoSpeed];
+    speedEl.setAttribute('aria-valuetext', AUTO_SPEED_NAME[autoSpeed]);
+  }
+
+  function toggleAuto() {
+    autoOn = !autoOn;
+    autoWait = 0;
+    syncAutoBtn();
+    if (autoOn) {
+      ptr.hover = false;
+      audio.ensure();
+      if (G.mode === 'play') setHint('自动铺管 · A 停下', '');
+    } else if (G.mode === 'play') {
+      setHint('点格铺管 · 水要来了', '');
+    }
+  }
+
+  function setAutoSpeed(n) {
+    if (!(n >= 1 && n <= 4)) n = 3;
+    autoSpeed = n;
+    saveAutoSpeed(n);
+    syncSpeedUi();
+  }
+
+  function tickAuto(dt) {
+    if (!autoOn) return;
+    if (G.demo) return;
+    if (G.mode === 'win') {
+      if (G.kind === 'campaign' && G.stage < STAGES.length - 1) {
+        autoWait += dt;
+        if (autoWait >= 0.55) {
+          autoWait = 0;
+          nextStage();
+        }
+      }
+      return;
+    }
+    if (G.mode === 'lose' || G.mode === 'title') return;
+    if (G.mode !== 'play') return;
+    if (G.lock > 0 || G.reached) return;
+    autoWait += dt;
+    const gap = AUTO_DELAY[autoSpeed] || 0;
+    if (autoWait < gap) return;
+    autoWait = 0;
+    const burst = autoSpeed >= 4 ? 4 : 1;
+    for (let i = 0; i < burst; i++) {
+      const mv = pickAutoPlace();
+      if (!mv) break;
+      if (autoSpeed <= 2 && (G.selR !== mv.r || G.selC !== mv.c)) {
+        G.selR = mv.r;
+        G.selC = mv.c;
+        ptr.hover = false;
+        break;
+      }
+      ptr.hover = false;
+      G.selR = mv.r;
+      G.selC = mv.c;
+      placeAt(mv.r, mv.c);
+      if (autoSpeed < 4) break;
+    }
   }
 
   function exitsOf(mask, enter, cross) {
@@ -1241,7 +1567,7 @@
     hideOverlay();
     seedBoard(false);
     audio.start();
-    setHint('点格铺管 · 水要来了', '');
+    setHint(autoOn ? '自动铺管 · A 停下' : '点格铺管 · 水要来了', '');
     syncHud();
   }
 
@@ -1256,7 +1582,7 @@
     hideOverlay();
     seedBoard(false);
     audio.start();
-    setHint('一盘铺到底 · 水会越来越快', '');
+    setHint(autoOn ? '自动铺管 · A 停下' : '一盘铺到底 · 水会越来越快', '');
     syncHud();
   }
 
@@ -1266,7 +1592,7 @@
       G.mode = 'play';
       hideOverlay();
       seedBoard(true);
-      setHint('第 ' + (G.stage + 1) + ' 关 · 倒计时更短', '');
+      setHint(autoOn ? '自动铺管 · A 停下' : '第 ' + (G.stage + 1) + ' 关 · 倒计时更短', '');
       syncHud();
       audio.start();
       return;
@@ -1359,8 +1685,13 @@
       return;
     }
 
-    if (G.mode === 'win' || G.mode === 'lose') return;
+    if (G.mode === 'win' || G.mode === 'lose') {
+      tickAuto(dt);
+      return;
+    }
     if (G.mode !== 'play') return;
+
+    tickAuto(dt);
 
     if (!G.flowing) {
       const before = G.delay;
@@ -1618,8 +1949,8 @@
 
   function drawGhost() {
     if (G.mode !== 'play') return;
-    const r = ptr.hover || ptr.down ? ptr.r : G.selR;
-    const c = ptr.hover || ptr.down ? ptr.c : G.selC;
+    const r = !autoOn && (ptr.hover || ptr.down) ? ptr.r : G.selR;
+    const c = !autoOn && (ptr.hover || ptr.down) ? ptr.c : G.selC;
     if (r < 0 || c < 0) return;
     const cell = at(r, c);
     if (!cell) return;
@@ -1842,17 +2173,35 @@
       e.preventDefault();
       return;
     }
+    if (k === 'a' || k === 'A') {
+      if (e.repeat) return;
+      e.preventDefault();
+      audio.ensure();
+      toggleAuto();
+      return;
+    }
     if (k === 'Enter' && overlayOpen()) {
       e.preventDefault();
       primaryAction();
       return;
     }
+    if (speedEl && e.target === speedEl) return;
     if (G.mode !== 'play' || overlayOpen()) return;
+    if (autoOn) {
+      if (
+        k === 'ArrowUp' || k === 'ArrowDown' || k === 'ArrowLeft' || k === 'ArrowRight' ||
+        k === 'w' || k === 'W' || k === 's' || k === 'S' || k === 'd' || k === 'D' ||
+        k === ' ' || k === 'Spacebar' || k === 'Enter'
+      ) {
+        e.preventDefault();
+      }
+      return;
+    }
     let nr = G.selR;
     let nc = G.selC;
     if (k === 'ArrowUp' || k === 'w' || k === 'W') nr -= 1;
     else if (k === 'ArrowDown' || k === 's' || k === 'S') nr += 1;
-    else if (k === 'ArrowLeft' || k === 'a' || k === 'A') nc -= 1;
+    else if (k === 'ArrowLeft') nc -= 1;
     else if (k === 'ArrowRight' || k === 'd' || k === 'D') nc += 1;
     else if (k === ' ' || k === 'Spacebar' || k === 'Enter') {
       e.preventDefault();
@@ -1956,6 +2305,71 @@
       if (!G.flowing && !G.reached) break;
     }
     if (!G.reached) throw new Error('laid path should reach the end');
+
+    if (!maskFitsNeed(E | W, E | W)) throw new Error('straight should fit itself');
+    if (maskFitsNeed(N | E | W, E | W)) throw new Error('tee should not sit on the main line');
+    if (maskFitsNeed(N | E, E | W)) throw new Error('elbow should not fit a straight');
+    if (maskFitsNeed(N | E | S, N | E)) throw new Error('tee should not turn as primary');
+
+    function autoFillBoard(maxN) {
+      let n = 0;
+      while (n < maxN) {
+        const mv = pickAutoPlace();
+        if (!mv) break;
+        if (!placeAt(mv.r, mv.c)) break;
+        n += 1;
+      }
+      return n;
+    }
+
+    function runAutoToExit() {
+      G.demo = false;
+      G.mode = 'play';
+      G.lives = LIVES;
+      G.score = 0;
+      seedBoard(false);
+      G.delay = 999;
+      G.flowing = false;
+      autoFillBoard(120);
+      G.freeze = 0;
+      const front = walkFrontier();
+      if (!front || !front.done) return false;
+      startWater();
+      let steps = 0;
+      while (steps < 2000 && !G.reached && G.mode === 'play' && G.lives === LIVES) {
+        G.freeze = 0;
+        updateHeads(STEP);
+        steps += 1;
+        if (!G.flowing && !G.reached) break;
+      }
+      return G.reached;
+    }
+
+    G.kind = 'campaign';
+    for (let s = 0; s < STAGES.length; s++) {
+      G.stage = s;
+      let ok = false;
+      for (let attempt = 0; attempt < 5; attempt++) {
+        if (runAutoToExit()) {
+          ok = true;
+          break;
+        }
+      }
+      if (!ok) throw new Error('autoplay should connect campaign stage ' + s);
+    }
+
+    G.kind = 'endless';
+    G.stage = 0;
+    G.wave = 1;
+    let endlessOk = false;
+    for (let attempt = 0; attempt < 5; attempt++) {
+      G.wave = 1;
+      if (runAutoToExit()) {
+        endlessOk = true;
+        break;
+      }
+    }
+    if (!endlessOk) throw new Error('autoplay should connect endless');
   }
 
   if (!hasDom) {
@@ -1966,6 +2380,9 @@
   try {
     audio.setMuted(loadMute());
   } catch (err) { /* ignore */ }
+  autoSpeed = loadAutoSpeed();
+  syncSpeedUi();
+  syncAutoBtn();
   loadBest();
   seedMotes();
   startDemo();
@@ -2005,7 +2422,7 @@
     ptr.r = cell.r;
     ptr.c = cell.c;
     try { canvas.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
-    if (G.mode === 'play' && cell.r >= 0) placeAt(cell.r, cell.c);
+    if (G.mode === 'play' && cell.r >= 0 && !autoOn) placeAt(cell.r, cell.c);
     e.preventDefault();
   });
   canvas.addEventListener('pointermove', function (e) {
@@ -2056,4 +2473,17 @@
     audio.ensure();
     audio.setMuted(!audio.muted);
   });
+  if (btnAuto) {
+    btnAuto.addEventListener('click', function () {
+      audio.ensure();
+      toggleAuto();
+    });
+  }
+  function onSpeedInput() {
+    setAutoSpeed(parseInt(speedEl.value, 10));
+  }
+  if (speedEl) {
+    speedEl.addEventListener('input', onSpeedInput);
+    speedEl.addEventListener('change', onSpeedInput);
+  }
 })();
