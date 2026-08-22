@@ -1287,7 +1287,7 @@
     "blurb": "三个一样就消。",
     "hue": 48,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/gem-three/",
     "kind": "remake"
   },
@@ -1323,7 +1323,7 @@
     "blurb": "一群涌上来，你边闪边打。",
     "hue": 338,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/horde-bite/",
     "kind": "remake"
   },
@@ -1397,6 +1397,30 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/beat-tap/",
+    "kind": "remake"
+  },
+  {
+    "n": 126,
+    "id": "rock-spin",
+    "title": "岩旋",
+    "subtitle": "ROCKS",
+    "blurb": "拧着打，碎成小块。",
+    "hue": 24,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/rock-spin/",
+    "kind": "remake"
+  },
+  {
+    "n": 127,
+    "id": "dunk-rim",
+    "title": "灌筐",
+    "subtitle": "DUNK",
+    "blurb": "甩进去，空心最爽。",
+    "hue": 18,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/dunk-rim/",
     "kind": "remake"
   }
 ]

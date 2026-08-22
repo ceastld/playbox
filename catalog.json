@@ -1208,5 +1208,29 @@
     "dir": "g/frog-hop/",
     "url": "./g/frog-hop/",
     "kind": "remake"
+  },
+  {
+    "n": 119,
+    "id": "horde-bite",
+    "title": "噬潮",
+    "subtitle": "HORDE",
+    "blurb": "一群涌上来，你边闪边打。",
+    "hue": 338,
+    "tag": "复刻",
+    "dir": "g/horde-bite/",
+    "url": "./g/horde-bite/",
+    "kind": "remake"
+  },
+  {
+    "n": 116,
+    "id": "gem-three",
+    "title": "三消",
+    "subtitle": "MATCH",
+    "blurb": "三个一样就消。",
+    "hue": 48,
+    "tag": "复刻",
+    "dir": "g/gem-three/",
+    "url": "./g/gem-three/",
+    "kind": "remake"
   }
 ]

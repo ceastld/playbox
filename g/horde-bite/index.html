@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#05030c" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>噬潮 · HORDE</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2305030c'/%3E%3Cpolygon points='16,6 22,16 16,26 10,16' fill='%2300f0ff'/%3E%3Ccircle cx='8' cy='10' r='2.2' fill='%23ff3d8a'/%3E%3Ccircle cx='25' cy='12' r='2.6' fill='%23ff3d8a'/%3E%3Ccircle cx='7' cy='22' r='1.8' fill='%23ff3db8'/%3E%3Ccircle cx='24' cy='23' r='2' fill='%23ff3db8'/%3E%3Ccircle cx='16' cy='4' r='1.4' fill='%237af6ff'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>噬潮</b>
+        <span>HORDE</span>
+      </div>
+      <div class="status">
+        <div class="bars">
+          <div class="hp-wrap" id="hp-wrap" title="生命">
+            <i id="hp-fill"></i>
+          </div>
+          <div class="xp-wrap" title="经验">
+            <i id="xp-fill"></i>
+          </div>
+        </div>
+        <div class="row">
+          <span id="time-label">8:00</span>
+          <span id="kill-label">噬 0</span>
+          <span id="lv-label">Lv 1</span>
+        </div>
+      </div>
+      <div class="tools">
+        <div class="modes" role="radiogroup" aria-label="模式">
+          <button type="button" id="mode-eight" aria-pressed="true">八分钟</button>
+          <button type="button" id="mode-endless" aria-pressed="false">无尽</button>
+        </div>
+        <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
+        <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <canvas id="c" tabindex="0" role="application" aria-label="噬潮场地，自动咬最近的潮，移动闪避"></canvas>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="loadout" class="loadout" aria-label="武装"></div>
+      <div id="combo" class="combo hidden" aria-hidden="true">×0</div>
+      <div id="banner" class="banner hidden"></div>
+      <div id="toast" class="toast hidden"></div>
+      <div id="vpad" class="vpad" aria-hidden="true">
+        <div class="vpad-base">
+          <div class="vpad-knob" id="vpad-knob"></div>
+        </div>
+      </div>
+      <div id="pick" class="pick hidden" role="dialog" aria-modal="true" aria-labelledby="pick-title">
+        <p class="pick-kicker" id="pick-title">噬力提升</p>
+        <p class="pick-sub">选一项武装</p>
+        <div class="picks" id="picks"></div>
+        <p class="pick-hint">点选或按 1 2 3</p>
+      </div>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">HORDE</p>
+          <h1 id="ov-title">噬潮</h1>
+          <p class="lead" id="ov-lead">一群涌上来，你边闪边打。<br />自动咬最近的，吃光点升级。</p>
+          <p class="ops" id="ov-ops">WASD / 摇杆 / 虚拟键移动 · R 重开 · M 静音</p>
+          <p class="best" id="ov-best"></p>
+          <button type="button" id="ov-btn">开噬</button>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">闪着打 · 吃光点升级 · 八分钟或死</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>
