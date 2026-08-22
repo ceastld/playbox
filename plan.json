@@ -1767,7 +1767,7 @@
     "blurb": "双形态战机，陆地空中都能打。",
     "hue": 276,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/xenon-run/",
     "kind": "remake"
   },
@@ -1793,6 +1793,18 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/track-dash/",
+    "kind": "remake"
+  },
+  {
+    "n": 159,
+    "id": "zax-iso",
+    "title": "斜城",
+    "subtitle": "ZAXXON",
+    "blurb": "斜视角飞过要塞，高度要对。",
+    "hue": 48,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/zax-iso/",
     "kind": "remake"
   }
 ]

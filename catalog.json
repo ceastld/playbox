@@ -1604,5 +1604,17 @@
     "dir": "g/out-run/",
     "url": "./g/out-run/",
     "kind": "remake"
+  },
+  {
+    "n": 156,
+    "id": "xenon-run",
+    "title": "异星",
+    "subtitle": "XENON",
+    "blurb": "双形态战机，陆地空中都能打。",
+    "hue": 276,
+    "tag": "复刻",
+    "dir": "g/xenon-run/",
+    "url": "./g/xenon-run/",
+    "kind": "remake"
   }
 ]
