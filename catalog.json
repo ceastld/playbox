@@ -1232,5 +1232,17 @@
     "dir": "g/gem-three/",
     "url": "./g/gem-three/",
     "kind": "remake"
+  },
+  {
+    "n": 124,
+    "id": "air-puck",
+    "title": "气球",
+    "subtitle": "HOCKEY",
+    "blurb": "一磕就飞，对打进门。",
+    "hue": 175,
+    "tag": "复刻",
+    "dir": "g/air-puck/",
+    "url": "./g/air-puck/",
+    "kind": "remake"
   }
 ]

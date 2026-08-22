@@ -1383,7 +1383,7 @@
     "blurb": "一磕就飞，对打进门。",
     "hue": 175,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/air-puck/",
     "kind": "remake"
   },
@@ -1421,6 +1421,18 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/dunk-rim/",
+    "kind": "remake"
+  },
+  {
+    "n": 128,
+    "id": "miss-cmd",
+    "title": "防空",
+    "subtitle": "MISSILE",
+    "blurb": "炸掉落弹，护住六城。",
+    "hue": 12,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/miss-cmd/",
     "kind": "remake"
   }
 ]
