@@ -2816,5 +2816,53 @@
     "dir": "g/choplifter/",
     "url": "./g/choplifter/",
     "kind": "remake"
+  },
+  {
+    "n": 255,
+    "id": "flying-shark",
+    "title": "飞鲨",
+    "subtitle": "SHARK",
+    "blurb": "武装直升机清海，躲开对空火网。",
+    "hue": 168,
+    "tag": "复刻",
+    "dir": "g/flying-shark/",
+    "url": "./g/flying-shark/",
+    "kind": "remake"
+  },
+  {
+    "n": 257,
+    "id": "tmnt",
+    "title": "神龟",
+    "subtitle": "TMNT",
+    "blurb": "四龟连斩，把脚兵和头目打下车。",
+    "hue": 122,
+    "tag": "复刻",
+    "dir": "g/tmnt/",
+    "url": "./g/tmnt/",
+    "kind": "remake"
+  },
+  {
+    "n": 258,
+    "id": "twin-cobra",
+    "title": "双蛇",
+    "subtitle": "COBRA",
+    "blurb": "双机扫射地面，捡武装换弹种。",
+    "hue": 152,
+    "tag": "复刻",
+    "dir": "g/twin-cobra/",
+    "url": "./g/twin-cobra/",
+    "kind": "remake"
+  },
+  {
+    "n": 259,
+    "id": "ice-climber",
+    "title": "冰锤",
+    "subtitle": "ICE",
+    "blurb": "砸冰往上爬，躲开独眼云。",
+    "hue": 196,
+    "tag": "复刻",
+    "dir": "g/ice-climber/",
+    "url": "./g/ice-climber/",
+    "kind": "remake"
   }
 ]

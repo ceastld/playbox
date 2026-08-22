@@ -2955,7 +2955,7 @@
     "blurb": "武装直升机清海，躲开对空火网。",
     "hue": 168,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/flying-shark/",
     "kind": "remake"
   },
@@ -2979,7 +2979,7 @@
     "blurb": "四龟连斩，把脚兵和头目打下车。",
     "hue": 122,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/tmnt/",
     "kind": "remake"
   },
@@ -2991,7 +2991,7 @@
     "blurb": "双机扫射地面，捡武装换弹种。",
     "hue": 152,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/twin-cobra/",
     "kind": "remake"
   },
@@ -3003,8 +3003,56 @@
     "blurb": "砸冰往上爬，躲开独眼云。",
     "hue": 196,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/ice-climber/",
+    "kind": "remake"
+  },
+  {
+    "n": 260,
+    "id": "punisher",
+    "title": "制裁",
+    "subtitle": "PUNI",
+    "blurb": "双人扫街，把枪匪和头目打趴。",
+    "hue": 8,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/punisher/",
+    "kind": "remake"
+  },
+  {
+    "n": 261,
+    "id": "x-men",
+    "title": "变种",
+    "subtitle": "XMEN",
+    "blurb": "变种人连斩，清掉哨站里的哨兵。",
+    "hue": 264,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/x-men/",
+    "kind": "remake"
+  },
+  {
+    "n": 262,
+    "id": "cadillacs",
+    "title": "恐龙",
+    "subtitle": "DINO",
+    "blurb": "拳打恐龙帮，开着凯迪拉克冲关。",
+    "hue": 22,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/cadillacs/",
+    "kind": "remake"
+  },
+  {
+    "n": 263,
+    "id": "blazing-star",
+    "title": "烈星",
+    "subtitle": "BLAZE",
+    "blurb": "蓄力一炮，把编队和装甲打穿。",
+    "hue": 14,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/blazing-star/",
     "kind": "remake"
   }
 ]

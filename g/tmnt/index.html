@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#04140a" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>神龟 · TMNT</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2304140a'/%3E%3Crect x='2' y='2' width='28' height='28' rx='4' fill='%23081812' stroke='%233dff7a' stroke-width='1.4'/%3E%3Cellipse cx='16' cy='20' rx='7' ry='5.2' fill='%232e8a3a'/%3E%3Ccircle cx='16' cy='13' r='5' fill='%2338b04a'/%3E%3Crect x='10.2' y='11.2' width='11.6' height='3.2' rx='1.4' fill='%233d7aff'/%3E%3Ccircle cx='13.4' cy='12.8' r='1.1' fill='%23fff'/%3E%3Ccircle cx='18.6' cy='12.8' r='1.1' fill='%23fff'/%3E%3Cpath d='M21 16l8-1-6 3z' fill='%23c47a32'/%3E%3Cellipse cx='10' cy='26' rx='4.2' ry='1.4' fill='%23101814'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>神龟</b>
+        <span>TMNT</span>
+      </div>
+      <div class="status">
+        <div class="scores" aria-live="polite">
+          <div class="score" id="score-box">
+            <em>分数</em>
+            <b id="score">0</b>
+            <span id="score-add" class="score-add" hidden>+0</span>
+          </div>
+          <div class="score best">
+            <em>最高</em>
+            <b id="best">0</b>
+          </div>
+          <div class="score combo" id="combo-box">
+            <em>连击</em>
+            <b id="combo">×1</b>
+          </div>
+        </div>
+        <div class="row">
+          <span id="stage-label">夜街</span>
+          <span id="tag-label">巷战</span>
+          <span id="turtle-label" class="turtle leo">蓝棍</span>
+          <div class="fill" id="hp-wrap" title="体力">
+            <em>体</em>
+            <div class="fill-track" aria-hidden="true"><i id="hp-bar"></i></div>
+          </div>
+          <span class="pips" id="pips" aria-label="剩余性命"></span>
+        </div>
+      </div>
+      <div class="tools">
+        <div class="modes" role="radiogroup" aria-label="模式">
+          <button type="button" id="mode-street" aria-pressed="true">巷战</button>
+          <button type="button" id="mode-swarm" aria-pressed="false">鼠潮</button>
+        </div>
+        <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
+        <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <div class="board-wrap">
+        <canvas id="c" tabindex="0" role="application" aria-label="神龟，侧向巷战，跳劈清场，井盖冒兵"></canvas>
+      </div>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden"></div>
+      <div id="chain-pop" class="chain-pop hidden" aria-hidden="true">×2</div>
+      <div id="pad" class="pad">
+        <button type="button" id="btn-left" aria-label="左">左</button>
+        <button type="button" id="btn-jump" aria-label="跳跃">跳</button>
+        <button type="button" id="btn-right" aria-label="右">右</button>
+        <button type="button" id="btn-atk" aria-label="劈砍">劈</button>
+      </div>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">TMNT</p>
+          <h1 id="ov-title">神龟</h1>
+          <p class="lead" id="ov-lead">侧向巷战。选一只神龟，挥棍拳钗叉清场。井盖冒兵，跳开枪子，打到犀甲和裂盔。</p>
+          <p class="ops" id="ov-ops">方向 / WASD 走 · 上跳 · 空格劈砍 · R 重开 · M 静音</p>
+          <div class="turtles" id="turtle-row" role="radiogroup" aria-label="选龟">
+            <button type="button" id="t-leo" data-id="leo" aria-pressed="true">蓝棍</button>
+            <button type="button" id="t-mikey" data-id="mikey" aria-pressed="false">橙拳</button>
+            <button type="button" id="t-raph" data-id="raph" aria-pressed="false">红钗</button>
+            <button type="button" id="t-don" data-id="don" aria-pressed="false">紫叉</button>
+          </div>
+          <div class="ov-actions" id="ov-start">
+            <button type="button" id="btn-street">巷战</button>
+            <button type="button" id="btn-swarm">鼠潮</button>
+          </div>
+          <div class="ov-actions gone" id="ov-end">
+            <button type="button" id="ov-again">再来</button>
+            <button type="button" id="ov-menu">换模式</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">走跳劈 · 井盖冒兵 · 跳开枪子 · 四龟不同射程</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>
