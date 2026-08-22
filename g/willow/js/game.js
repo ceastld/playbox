@@ -33,7 +33,10 @@
   const DIE_T = 0.86;
   const BEST_KEY = 'playbox-willow-best';
   const MUTE_KEY = 'playbox-willow-mute';
-  const OPS = '方向键 / WASD 走 · ↑ 跳 · 空格斩 · Shift / Z 魔法 · R 重开 · M 静音';
+  const AUTO_SPEED_KEY = 'playbox-willow-auto-speed';
+  const SPEED_LABELS = ['', '慢', '中', '快', '极快'];
+  const AUTO_SCALE = [1, 0.52, 0.78, 1, 3.4];
+  const OPS = '方向键 / D 走 · ↑ / W 跳 · 空格斩 · Shift / Z 魔法 · A 自动 · R 重开 · M 静音';
 
   const MAG = [255, 61, 184];
   const CYN = [0, 240, 255];
@@ -206,6 +209,10 @@
     if (walkMul(true) <= walkMul(false)) throw new Error('tide walk');
     if (HP_TIDE >= HP_WOOD) throw new Error('tide hp');
     if (BEST_KEY !== 'playbox-willow-best') throw new Error('best key');
+    if (AUTO_SPEED_KEY !== 'playbox-willow-auto-speed') throw new Error('auto key');
+    if (AUTO_SCALE[3] !== 1 || AUTO_SCALE[4] <= AUTO_SCALE[3]) throw new Error('auto scale');
+    if (AUTO_SCALE[1] >= AUTO_SCALE[2] || AUTO_SCALE[2] >= AUTO_SCALE[3]) throw new Error('auto scale order');
+    if (SPEED_LABELS[3] !== '快' || SPEED_LABELS[4] !== '极快') throw new Error('speed labels');
     if (STAGES[0].w >= STAGES[1].w || STAGES[1].w >= STAGES[2].w) throw new Error('wider later');
     if (STAGES[0].hp >= STAGES[1].hp || STAGES[1].hp >= STAGES[2].hp) throw new Error('boss hp');
     if (SWORD_RANGE > 40) throw new Error('sword close');
@@ -280,6 +287,9 @@
   const modeTide = document.getElementById('mode-tide');
   const btnMute = document.getElementById('btn-mute');
   const btnRetry = document.getElementById('btn-retry');
+  const btnAuto = document.getElementById('btn-auto');
+  const speedEl = document.getElementById('speed');
+  const speedLab = document.getElementById('speed-lab');
   const scoreEl = document.getElementById('score');
   const bestEl = document.getElementById('best');
   const scoreBox = document.getElementById('score-box');
@@ -316,6 +326,13 @@
 
   const keys = { l: false, r: false, u: false, d: false, slash: false, mag: false };
   const demo = { l: false, r: true, u: false, slash: false, mag: false };
+  let autoOn = false;
+  let autoSpeed = 3;
+  let autoOvWait = 0;
+  let autoLastX = 0;
+  let autoStuck = 0;
+  let autoBackT = 0;
+  let autoMaxX = 0;
   const pips = [];
   const particles = [];
   const sparks = [];
@@ -575,6 +592,18 @@
     if (bestEl) bestEl.textContent = String(G.best);
   }
 
+  function loadAutoSpeed() {
+    try {
+      const n = parseInt(localStorage.getItem(AUTO_SPEED_KEY) || '3', 10);
+      if (n >= 1 && n <= 4) return n;
+    } catch (err) { /* ignore */ }
+    return 3;
+  }
+
+  function saveAutoSpeed(n) {
+    try { localStorage.setItem(AUTO_SPEED_KEY, String(n)); } catch (err) { /* ignore */ }
+  }
+
   function saveBest() {
     if (G.score <= G.best) return;
     G.best = G.score;
@@ -681,6 +710,8 @@
     if (comboEl) comboEl.textContent = '×' + G.mult;
     if (comboBox) comboBox.classList.toggle('hot', G.combo >= 2 && playing());
     if (G.mode === 'title') setHint(OPS, '');
+    else if (autoOn && (G.mode === 'lose' || G.mode === 'win')) setHint('托管中 · R 重开接着打', 'hot');
+    else if (autoOn) setHint('托管中 · 走跳斩法 · A 停下', 'hot');
     else if (G.mode === 'lose') setHint('R 重开 · 坠崖与生命打空都会丢命', 'warn');
     else if (G.mode === 'win') setHint('守护者已灭 · R 再来一局', 'hot');
     else if (G.lives === 1) setHint('最后一命 · ↑跳 · 空格斩 · Shift/Z 魔法', 'warn');
@@ -949,6 +980,9 @@
     floats.length = 0;
     seedMist();
     G.player = makePlayer(70, GY);
+    autoMaxX = 70;
+    autoLastX = 70;
+    autoStuck = 0;
   }
 
   function platUnder(x, y, skip) {
@@ -1344,6 +1378,11 @@
     G.deadT = 0;
     G.why = '';
     loadStage(1, false);
+    autoStuck = 0;
+    autoBackT = 0;
+    autoLastX = 70;
+    autoMaxX = 70;
+    autoOvWait = 0;
     hideOverlay();
     syncHud();
   }
@@ -1403,6 +1442,391 @@
       G.magLv = 2;
       G.mana = MANA_WOOD;
       G.invuln = 99;
+    }
+  }
+
+  function clearAutoKeys() {
+    keys.l = false;
+    keys.r = false;
+    keys.u = false;
+    keys.d = false;
+    keys.slash = false;
+    keys.mag = false;
+  }
+
+  function syncAutoUi() {
+    if (!btnAuto) return;
+    btnAuto.classList.toggle('on', autoOn);
+    btnAuto.setAttribute('aria-pressed', autoOn ? 'true' : 'false');
+    btnAuto.textContent = autoOn ? '停下' : '自动';
+    btnAuto.setAttribute('aria-label', autoOn ? '停止自动' : '自动');
+  }
+
+  function syncSpeedUi() {
+    if (speedEl) speedEl.value = String(autoSpeed);
+    if (speedLab) speedLab.textContent = SPEED_LABELS[autoSpeed];
+    if (speedEl) {
+      speedEl.title = SPEED_LABELS[autoSpeed];
+      speedEl.setAttribute('aria-valuetext', SPEED_LABELS[autoSpeed]);
+    }
+  }
+
+  function setAutoSpeed(n) {
+    n = parseInt(n, 10);
+    if (!isFinite(n) || n < 1 || n > 4) n = 3;
+    autoSpeed = n;
+    saveAutoSpeed(autoSpeed);
+    syncSpeedUi();
+  }
+
+  function toggleAuto() {
+    autoOn = !autoOn;
+    autoOvWait = 0;
+    autoStuck = 0;
+    autoBackT = 0;
+    clearAutoKeys();
+    syncAutoUi();
+    if (autoOn) {
+      audio.ensure();
+      if (G.mode === 'title') startGame(G.kind === 'tide' ? 'tide' : 'wood');
+    }
+    syncHud();
+  }
+
+  function autoScale() {
+    if (!autoOn || G.mode !== 'play') return 1;
+    return AUTO_SCALE[autoSpeed] || 1;
+  }
+
+  function autoJumpDist() {
+    return WALK * walkMul(isTide()) * (2 * JUMP_V / GRAV);
+  }
+
+  function autoNextPlat(x, y, dir) {
+    let best = null;
+    let i, p, d, bestD;
+    bestD = 1e9;
+    for (i = 0; i < G.plats.length; i++) {
+      p = G.plats[i];
+      if (Math.abs(p.y - y) > 16) continue;
+      if (dir > 0) {
+        if (p.x < x - 2) continue;
+        d = p.x - x;
+      } else {
+        if (p.x + p.w > x + 2) continue;
+        d = x - (p.x + p.w);
+      }
+      if (d < bestD) {
+        bestD = d;
+        best = p;
+      }
+    }
+    return best;
+  }
+
+  function autoCoverPlat(edge, dir, fromY) {
+    const upY = fromY >= GY - 24 ? MY : HY;
+    let best = null;
+    let i, p;
+    for (i = 0; i < G.plats.length; i++) {
+      p = G.plats[i];
+      if (Math.abs(p.y - upY) > 12) continue;
+      if (dir > 0) {
+        if (p.x + p.w < edge - 24) continue;
+        if (p.x > edge + 90) continue;
+      } else {
+        if (p.x > edge + 24) continue;
+        if (p.x + p.w < edge - 90) continue;
+      }
+      if (!best || (dir > 0 ? p.x < best.x : p.x + p.w > best.x + best.w)) best = p;
+    }
+    return best;
+  }
+
+  function autoPickPlat(wantY) {
+    const p = G.player;
+    const stepY = p.y > MY + 30 ? MY : HY;
+    const targetY = wantY < p.y - 40 ? stepY : wantY;
+    let best = null;
+    let bestS = 1e9;
+    let i, pl, cx, sc;
+    for (i = 0; i < G.plats.length; i++) {
+      pl = G.plats[i];
+      if (Math.abs(pl.y - targetY) > 12) continue;
+      if (pl.w < 40) continue;
+      if (pl.x + pl.w < p.x + 18) continue;
+      cx = clamp(p.x, pl.x + 16, pl.x + pl.w - 16);
+      sc = Math.abs(cx - p.x);
+      if (pl.x + pl.w * 0.35 >= p.x) sc -= 28;
+      if (sc < bestS) {
+        bestS = sc;
+        best = pl;
+      }
+    }
+    return best;
+  }
+
+  function autoGoPlat(pl) {
+    const p = G.player;
+    const cx = (pl.x + pl.w * 0.45);
+    if (p.x < pl.x - 8) keys.r = true;
+    else if (p.x > pl.x + pl.w + 8) keys.l = true;
+    else if (p.y > pl.y + 18) {
+      if (p.grounded) keys.u = true;
+      if (p.x < cx - 6) keys.r = true;
+      else if (p.x > cx + 6) keys.l = true;
+      else keys.r = true;
+    } else if (p.x < cx - 5) keys.r = true;
+    else if (p.x > cx + 5) keys.l = true;
+  }
+
+  function autoSteer(dir) {
+    keys.l = dir < 0;
+    keys.r = dir > 0;
+  }
+
+  function autoMove(dir) {
+    const p = G.player;
+    const jumpD = autoJumpDist();
+    const cur = platUnder(p.x, p.y, null);
+    const look = p.x + dir * 26;
+    if (!p.grounded) {
+      const land = autoNextPlat(p.x + dir * 4, GY, dir) || autoNextPlat(p.x + dir * 4, p.y, dir);
+      if (land) {
+        const mid = land.x + land.w * 0.4;
+        autoSteer(p.x < mid ? 1 : -1);
+      } else autoSteer(dir);
+      return;
+    }
+    if (!standAt(look, p.y)) {
+      const dropGy = p.y < GY - 18 && (standAt(look, GY) || standAt(p.x + dir * 10, GY) || standAt(p.x, GY));
+      const dropMy = p.y < MY - 18 && (standAt(look, MY) || standAt(p.x + dir * 10, MY));
+      if (dropGy || dropMy) {
+        autoSteer(dir);
+        return;
+      }
+      const edge = cur ? (dir > 0 ? cur.x + cur.w : cur.x) : p.x;
+      const distToEdge = dir > 0 ? edge - p.x : p.x - edge;
+      const next = autoNextPlat(edge + dir * 4, p.y, dir);
+      const gap = next
+        ? (dir > 0 ? next.x - edge : edge - (next.x + next.w))
+        : 400;
+      const margin = jumpD - gap;
+      const cover = autoCoverPlat(edge, dir, p.y);
+      if (cover && margin < 24) {
+        autoGoPlat(cover);
+        return;
+      }
+      if (gap + 14 <= jumpD) {
+        const lead = Math.max(7, jumpD - gap - 12);
+        if (distToEdge <= lead || !standAt(p.x + dir * 10, p.y)) keys.u = true;
+        autoSteer(dir);
+        return;
+      }
+      if (cover) {
+        autoGoPlat(cover);
+        return;
+      }
+      if (distToEdge <= 12 || !standAt(p.x + dir * 8, p.y)) keys.u = true;
+    }
+    autoSteer(dir);
+  }
+
+  function autoUsefulPick(u) {
+    if (!u || u.taken) return false;
+    if (u.kind === 'heart') return G.hp < maxHp();
+    if (u.kind === 'crystal') return G.mana < maxMana() - 0.5;
+    if (u.kind === 'wand') return G.magLv < 3 || G.mana < maxMana() - 1;
+    return true;
+  }
+
+  function tickAutoFlow(dt) {
+    if (!autoOn) return;
+    if (G.mode === 'title') {
+      autoOvWait += dt;
+      if (autoOvWait >= (autoSpeed >= 3 ? 0.22 : 0.48)) {
+        autoOvWait = 0;
+        startGame(G.kind === 'tide' ? 'tide' : 'wood');
+      }
+      return;
+    }
+    if (G.mode === 'lose' || G.mode === 'win') {
+      autoOvWait += dt;
+      if (autoOvWait >= (autoSpeed >= 3 ? 0.7 : 1.15)) {
+        autoOvWait = 0;
+        startGame(G.kind || 'wood');
+      }
+    }
+  }
+
+  function autoThink(dt) {
+    clearAutoKeys();
+    const p = G.player;
+    if (!p || G.deadT > 0 || G.lock > 0) return;
+
+    if (Math.abs(p.x - autoLastX) < 1.4) autoStuck += dt;
+    else autoStuck = 0;
+    autoLastX = p.x;
+    if (p.x > autoMaxX) autoMaxX = p.x;
+    if (autoBackT > 0) autoBackT -= dt;
+
+    const sp = spellOf(G.magLv);
+    const canMag = G.mana >= sp.cost && G.magCd <= 0 && magCount() < MAG_MAX;
+    let near = null;
+    let far = null;
+    let flyer = null;
+    let shot = null;
+    let pick = null;
+    let i, e, s, u, dx, dy, adx, d2, bestPick;
+
+    for (i = 0; i < G.ents.length; i++) {
+      e = G.ents[i];
+      if (e.dead) continue;
+      dx = e.x - p.x;
+      dy = e.y - p.y;
+      adx = Math.abs(dx);
+      if (adx > 280 || e.x < G.camX - 20 || e.x > G.camX + VW + 40) continue;
+      if (Math.abs(dy) < 30 && adx < 44) {
+        if (!near || adx < Math.abs(near.x - p.x)) near = e;
+      }
+      if (Math.abs(dy) < 52 && adx > 42 && adx < 230) {
+        if (!far || adx < Math.abs(far.x - p.x)) far = e;
+      }
+      if (isFly(e.kind) && adx < 210 && Math.abs(dy) < 120) {
+        if (!flyer || adx < Math.abs(flyer.x - p.x)) flyer = e;
+      }
+    }
+
+    for (i = 0; i < G.shots.length; i++) {
+      s = G.shots[i];
+      if (s.dead || s.from !== 'e') continue;
+      dx = s.x - p.x;
+      dy = s.y - (p.y - 12);
+      if (Math.abs(dy) < 24 && Math.abs(dx) < 110 && dx * s.vx <= 0) {
+        if (!shot || Math.abs(dx) < Math.abs(shot.x - p.x)) shot = s;
+      }
+    }
+
+    bestPick = 1e9;
+    for (i = 0; i < G.pickups.length; i++) {
+      u = G.pickups[i];
+      if (!autoUsefulPick(u)) continue;
+      dx = u.x - p.x;
+      adx = Math.abs(dx);
+      if (adx > 140) continue;
+      d2 = adx + Math.abs(u.y - p.y) * 0.45;
+      if (u.kind === 'wand' && G.magLv < 3) d2 -= 40;
+      if (u.kind === 'heart' && G.hp <= 2) d2 -= 50;
+      if (d2 < bestPick) {
+        bestPick = d2;
+        pick = u;
+      }
+    }
+
+    const b = G.boss;
+    const bossOn = !!(b && b.active && !b.dead);
+    let wantY = GY;
+    if (bossOn && b.kind === '暗巫') wantY = HY;
+    else if (pick && Math.abs(pick.x - p.x) < 100 && Math.abs(pick.y - p.y) > 28) {
+      wantY = pick.y > MY + 16 ? GY : (pick.y > HY + 16 ? MY : HY);
+    }
+
+    if (autoStuck > 1.05) {
+      autoBackT = 0.32;
+      autoStuck = 0;
+      keys.u = true;
+    }
+    if (autoBackT > 0) {
+      autoSteer(-1);
+      keys.u = true;
+      if (near) keys.slash = true;
+      if (canMag && (far || bossOn)) keys.mag = true;
+      return;
+    }
+
+    if (bossOn) {
+      dx = b.x - p.x;
+      adx = Math.abs(dx);
+      dy = b.y - p.y;
+      if (b.kind === '暗巫') {
+        if (p.y > HY + 28) {
+          const up = autoPickPlat(HY);
+          if (up) autoGoPlat(up);
+          else autoMove(1);
+        } else {
+          if (adx < 28) autoMove(dx > 0 ? -1 : 1);
+          else if (adx > 70) autoMove(dx > 0 ? 1 : -1);
+          else autoSteer(dx >= 0 ? 1 : -1);
+        }
+        if (adx < SWORD_RANGE + 18 && Math.abs(dy) < 46) keys.slash = true;
+        if (canMag && adx < 220) keys.mag = true;
+        if (b.state === 'blink' || (shot && Math.abs(shot.x - p.x) < 70)) keys.u = true;
+      } else {
+        if (adx < 24) autoMove(dx > 0 ? -1 : 1);
+        else if (adx > 46) autoMove(dx > 0 ? 1 : -1);
+        else autoSteer(dx >= 0 ? 1 : -1);
+        if (adx < SWORD_RANGE + 14 && Math.abs(dy) < 42) keys.slash = true;
+        if (canMag && adx > 28 && adx < 210) keys.mag = true;
+        if (b.state === 'slam' || b.state === 'hop') keys.u = true;
+      }
+      if (shot && Math.abs(shot.x - p.x) < 40) keys.slash = true;
+      if (autoStuck > 0.5) keys.u = true;
+      return;
+    }
+
+    if (p.y > wantY + 40) {
+      const up = autoPickPlat(wantY);
+      if (up) {
+        autoGoPlat(up);
+        if (near && Math.abs(near.x - p.x) < 40) keys.slash = true;
+        if (canMag && far) keys.mag = true;
+        if (shot && Math.abs(shot.x - p.x) < 36) keys.slash = true;
+        if (autoStuck > 0.45) keys.u = true;
+        return;
+      }
+    }
+
+    if (pick && p.grounded && pick.x >= autoMaxX - 30 && Math.abs(pick.x - p.x) < 110 && Math.abs(pick.y - p.y) < 90) {
+      if (pick.x > p.x + 6) autoMove(1);
+      else if (pick.x < p.x - 6) autoMove(-1);
+      if (pick.y < p.y - 28) keys.u = true;
+    } else {
+      autoMove(1);
+    }
+
+    if (near) {
+      keys.slash = true;
+      if (p.grounded && !keys.u) {
+        const ndx = near.x - p.x;
+        if (G.invuln <= 0 && Math.abs(ndx) < 16) autoSteer(ndx > 0 ? -1 : 1);
+        else if (ndx > -10) autoSteer(1);
+        else autoSteer(-1);
+      }
+      if (near.kind === 'troll' && Math.abs(near.x - p.x) < 22 && p.grounded) keys.u = true;
+    }
+    if (shot) {
+      if (Math.abs(shot.x - p.x) < 38) keys.slash = true;
+      else if (Math.abs(shot.y - (p.y - 12)) < 18 && p.grounded) keys.u = true;
+    }
+    if (canMag) {
+      if (far && (far.x - p.x) * (keys.l ? -1 : 1) >= 0) keys.mag = true;
+      else if (flyer && Math.abs(flyer.y - p.y) < 56 && flyer.x > p.x) keys.mag = true;
+    }
+    if (!near && !far && canMag) {
+      for (i = 0; i < G.ents.length; i++) {
+        e = G.ents[i];
+        if (e.dead) continue;
+        dx = e.x - p.x;
+        if (dx > 36 && dx < 200 && Math.abs(e.y - p.y) < 58) {
+          keys.mag = true;
+          break;
+        }
+      }
+    }
+    if (autoStuck > 0.5 && p.grounded) keys.u = true;
+    if (p.grounded && pitAhead(p.x, p.y, 1) && !standAt(p.x + 14, p.y)) {
+      keys.u = true;
+      autoSteer(1);
     }
   }
 
@@ -1926,9 +2350,13 @@
   function update(dt) {
     G.clock += dt;
     G.t += dt;
+    tickAutoFlow(dt);
     if (G.stop > 0) {
-      G.stop -= dt;
-      return;
+      if (autoOn && autoSpeed >= 4 && playing()) G.stop = 0;
+      else {
+        G.stop -= dt;
+        return;
+      }
     }
     if (G.clearT > 0) {
       G.clearT -= dt;
@@ -1941,7 +2369,8 @@
       updateFx(dt);
       return;
     }
-    if (G.mode === 'title') demoThink();
+    if (G.mode === 'title' && !autoOn) demoThink();
+    if (autoOn && playing()) autoThink(dt);
     updatePlayer(dt);
     resolveSlash();
     let i;
@@ -2508,20 +2937,31 @@
   function onKey(e, down) {
     const k = e.key;
     const code = e.code;
+    const isAuto = code === 'KeyA' || k === 'a' || k === 'A';
     const isMove = k === 'ArrowLeft' || k === 'ArrowRight' || k === 'ArrowUp' || k === 'ArrowDown'
-      || k === 'a' || k === 'A' || k === 'd' || k === 'D' || k === 'w' || k === 'W' || k === 's' || k === 'S';
+      || k === 'd' || k === 'D' || k === 'w' || k === 'W' || k === 's' || k === 'S';
     const space = k === ' ' || k === 'Spacebar' || code === 'Space';
     const magK = k === 'z' || k === 'Z' || k === 'Shift' || code === 'ShiftLeft' || code === 'ShiftRight';
 
-    if (k === 'ArrowLeft' || k === 'a' || k === 'A' || k === 'Left') keys.l = down;
-    if (k === 'ArrowRight' || k === 'd' || k === 'D' || k === 'Right') keys.r = down;
-    if (k === 'ArrowUp' || k === 'w' || k === 'W' || k === 'Up') keys.u = down;
-    if (k === 'ArrowDown' || k === 's' || k === 'S' || k === 'Down') keys.d = down;
-    if (space) keys.slash = down;
-    if (magK) keys.mag = down;
+    if (isAuto) {
+      e.preventDefault();
+      if (down && !e.repeat) {
+        audio.ensure();
+        toggleAuto();
+      }
+      return;
+    }
 
-    if (down && (isMove || space || k === 'Enter' || magK)) e.preventDefault();
-    if (!down) return;
+    if (!down) {
+      if (autoOn) return;
+      if (k === 'ArrowLeft' || k === 'Left') keys.l = false;
+      if (k === 'ArrowRight' || k === 'd' || k === 'D' || k === 'Right') keys.r = false;
+      if (k === 'ArrowUp' || k === 'w' || k === 'W' || k === 'Up') keys.u = false;
+      if (k === 'ArrowDown' || k === 's' || k === 'S' || k === 'Down') keys.d = false;
+      if (space) keys.slash = false;
+      if (magK) keys.mag = false;
+      return;
+    }
 
     if (k === 'm' || k === 'M') {
       audio.ensure();
@@ -2532,6 +2972,22 @@
       restart();
       return;
     }
+    if (e.target === speedEl) return;
+
+    if (autoOn) {
+      if (isMove || space || magK) e.preventDefault();
+      return;
+    }
+
+    if (k === 'ArrowLeft' || k === 'Left') keys.l = true;
+    if (k === 'ArrowRight' || k === 'd' || k === 'D' || k === 'Right') keys.r = true;
+    if (k === 'ArrowUp' || k === 'w' || k === 'W' || k === 'Up') keys.u = true;
+    if (k === 'ArrowDown' || k === 's' || k === 'S' || k === 'Down') keys.d = true;
+    if (space) keys.slash = true;
+    if (magK) keys.mag = true;
+
+    if (isMove || space || k === 'Enter' || magK) e.preventDefault();
+
     if (k === '1' && G.mode === 'title') {
       startGame('wood');
       return;
@@ -2558,6 +3014,7 @@
       if (!el) return;
       const down = function (e) {
         e.preventDefault();
+        if (autoOn) return;
         audio.ensure();
         el.classList.add('held');
         on();
@@ -2584,7 +3041,7 @@
     canvas.addEventListener('pointerdown', function (e) {
       audio.ensure();
       e.preventDefault();
-      if (overlayOpen()) return;
+      if (overlayOpen() || autoOn) return;
       keys.slash = true;
       trySlash();
     });
@@ -2607,13 +3064,16 @@
     let dt = t - last;
     last = t;
     if (dt > 0.05) dt = 0.05;
-    acc += dt;
+    const turbo = autoOn && autoSpeed >= 4 && G.mode === 'play';
+    acc += dt * autoScale();
     let n = 0;
-    while (acc >= STEP && n < 5) {
+    const cap = turbo ? 16 : 5;
+    while (acc >= STEP && n < cap) {
       update(STEP);
       acc -= STEP;
       n += 1;
     }
+    if (acc > STEP * 4) acc = 0;
     draw();
   }
 
@@ -2625,6 +3085,9 @@
 
   loadBest();
   initMute();
+  autoSpeed = loadAutoSpeed();
+  syncSpeedUi();
+  syncAutoUi();
   goTitle();
   resize();
   bindPointer();
@@ -2673,6 +3136,11 @@
       audio.ensure();
       audio.setMuted(!audio.muted);
     });
+  }
+  if (btnAuto) btnAuto.addEventListener('click', function () { toggleAuto(); });
+  if (speedEl) {
+    speedEl.addEventListener('input', function () { setAutoSpeed(speedEl.value); });
+    speedEl.addEventListener('change', function () { setAutoSpeed(speedEl.value); });
   }
 
   window.addEventListener('keydown', function (e) { onKey(e, true); });
