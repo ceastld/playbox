@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#050d08" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>追猎 · SPY</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23050d08'/%3E%3Crect x='8' y='0' width='16' height='32' fill='%231a2420'/%3E%3Crect x='8.4' y='0' width='1.2' height='32' fill='%2332ff7a'/%3E%3Crect x='22.4' y='0' width='1.2' height='32' fill='%2332ff7a'/%3E%3Crect x='15.4' y='0' width='1.2' height='32' fill='%23ffe36b' opacity='.45'/%3E%3Crect x='13' y='18' width='6' height='10' rx='1' fill='%2332ff7a'/%3E%3Crect x='13.8' y='19.2' width='4.4' height='3.2' rx='.4' fill='%2300f0ff'/%3E%3Crect x='12' y='8' width='8' height='5' rx='.8' fill='%23ff3db8'/%3E%3Crect x='13.2' y='4' width='5.6' height='3.2' rx='.5' fill='%23ffe36b'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>追猎</b>
+        <span>SPY</span>
+      </div>
+      <div class="status">
+        <div class="scores" aria-live="polite">
+          <div class="score" id="score-box">
+            <em>分数</em>
+            <b id="score">0</b>
+            <span id="score-add" class="score-add" hidden>+0</span>
+          </div>
+          <div class="score best">
+            <em>最高</em>
+            <b id="best">0</b>
+          </div>
+        </div>
+        <div class="row">
+          <span id="stage-label">国道</span>
+          <span id="tag-label">公路</span>
+          <span id="ammo-label" class="ammo">油 3 · 烟 3 · 弹 2</span>
+          <span id="combo-label" class="combo" hidden>连击</span>
+          <span class="pips" id="pips" aria-label="剩余生命"></span>
+        </div>
+      </div>
+      <div class="tools">
+        <button type="button" id="btn-oil" title="Q" aria-label="机油">油</button>
+        <button type="button" id="btn-smoke" title="W" aria-label="烟幕">烟</button>
+        <button type="button" id="btn-missile" title="E" aria-label="导弹">弹</button>
+        <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
+        <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <canvas id="c" tabindex="0" role="application" aria-label="追猎游戏区，公路上转向开火，机油烟幕导弹，别打平民"></canvas>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden"></div>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">SPY</p>
+          <h1 id="ov-title">追猎</h1>
+          <p class="lead" id="ov-lead">公路上车里开火。扫敌车，别打平民。开进补给车补弹，水面会变成快艇。</p>
+          <p class="ops" id="ov-ops">← → 转向 · ↑ 加速 · 空格开火 · Q 机油 · W 烟幕 · E 导弹 · R 重开 · M 静音</p>
+          <div class="ov-actions">
+            <button type="button" id="btn-road">公路</button>
+            <button type="button" id="btn-night">夜追</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">← → 转向 · ↑ 加速 · 空格开火 · Q 机油 W 烟幕 E 导弹 · 别打平民</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>

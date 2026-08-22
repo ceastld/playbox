@@ -1923,7 +1923,7 @@
     "blurb": "公路上车里开火，换武器躲陷阱。",
     "hue": 130,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/spy-hunt/",
     "kind": "remake"
   },
@@ -1935,7 +1935,7 @@
     "blurb": "横版边跑边打，八向开火。",
     "hue": 8,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/contra-run/",
     "kind": "remake"
   },
@@ -1947,7 +1947,7 @@
     "blurb": "跑跳打怪，吃水果变身。",
     "hue": 42,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/wonder-isle/",
     "kind": "remake"
   },
@@ -1973,6 +1973,42 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/beast-run/",
+    "kind": "remake"
+  },
+  {
+    "n": 174,
+    "id": "rage-street",
+    "title": "怒街",
+    "subtitle": "RAGE",
+    "blurb": "街上连打，捡铁管清场。",
+    "hue": 4,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/rage-street/",
+    "kind": "remake"
+  },
+  {
+    "n": 175,
+    "id": "castle-whip",
+    "title": "城夜",
+    "subtitle": "VANIA",
+    "blurb": "古堡里甩鞭，打蜡烛摸道具。",
+    "hue": 272,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/castle-whip/",
+    "kind": "remake"
+  },
+  {
+    "n": 176,
+    "id": "mega-run",
+    "title": "洛克",
+    "subtitle": "MEGA",
+    "blurb": "打关卡头目，抢走他们的武器。",
+    "hue": 200,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/mega-run/",
     "kind": "remake"
   }
 ]
