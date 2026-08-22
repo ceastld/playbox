@@ -42,6 +42,12 @@
         </div>
       </div>
       <div class="tools">
+        <label class="speed-ctl" title="速度 慢 / 中 / 快 / 极快">
+          <span>速度</span>
+          <input type="range" id="speed" min="1" max="4" step="1" value="3" aria-label="速度" />
+          <b id="speed-lab">快</b>
+        </label>
+        <button type="button" id="btn-auto" title="A" aria-label="自动" aria-pressed="false">自动</button>
         <button type="button" id="btn-slow" title="Shift" aria-label="慢割" aria-pressed="false">慢</button>
         <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
         <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
@@ -57,7 +63,7 @@
           <p class="kicker" id="ov-kicker">QIX</p>
           <h1 id="ov-title">割域</h1>
           <p class="lead" id="ov-lead">贴边游走，按住方向走进空域画出割线。<br />闭合回已占边，圈住螺旋对面的那一块。</p>
-          <p class="ops" id="ov-ops">方向键／WASD 游走 · Shift 慢割加倍 · 触屏拖拽 · 别碰上螺旋与火花</p>
+          <p class="ops" id="ov-ops">方向键／WSD 游走 · Shift 慢割加倍 · A 自动 · 触屏拖拽 · 别碰上螺旋与火花</p>
           <div class="ov-actions" id="ov-start">
             <button type="button" id="btn-classic">经典</button>
             <button type="button" id="btn-helix">双螺旋</button>
@@ -70,7 +76,7 @@
       </div>
     </div>
 
-    <footer class="hint" id="hint">走进空域开割 · 闭合圈地 · Shift 慢割 · 避开螺旋</footer>
+    <footer class="hint" id="hint">走进空域开割 · 闭合圈地 · Shift 慢割 · A 自动 · 避开螺旋</footer>
   </div>
   <script src="js/game.js"></script>
 </body>

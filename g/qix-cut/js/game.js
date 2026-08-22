@@ -22,7 +22,11 @@
   const COMBO_WIN = 4.8;
   const BEST_KEY = 'playbox-qix-cut-best';
   const MUTE_KEY = 'playbox-qix-cut-mute';
-  const OPS = '方向键／WASD 游走 · Shift 慢割加倍 · 触屏拖拽 · 别碰上螺旋与火花';
+  const AUTO_SPEED_KEY = 'playbox-qix-cut-auto-speed';
+  const SPEED_LABELS = ['', '慢', '中', '快', '极快'];
+  const AUTO_SPD_WALK = [0, 28, 54, 130, 900];
+  const AUTO_SPD_DRAW = [0, 18, 42, 90, 720];
+  const OPS = '方向键／WSD 游走 · Shift 慢割加倍 · A 自动 · 触屏拖拽 · 别碰上螺旋与火花';
 
   const MAG = [255, 61, 184];
   const CYN = [0, 240, 255];
@@ -56,6 +60,9 @@
   const btnMute = el('btn-mute');
   const btnRetry = el('btn-retry');
   const btnSlow = el('btn-slow');
+  const btnAuto = el('btn-auto');
+  const speedEl = el('speed');
+  const speedLab = el('speed-lab');
   const scoreEl = el('score');
   const bestEl = el('best');
   const scoreBox = el('score-box');
@@ -83,6 +90,16 @@
   const keys = { n: false, e: false, s: false, w: false, shift: false };
   let lastDir = 1;
   const pointer = { down: false, x: 0, y: 0, id: null };
+  let autoOn = false;
+  let autoSpeed = 3;
+  let autoPlan = null;
+  const autoBuf = new Uint8Array(GW * GH);
+  const autoSeen = new Int32Array(GW * GH);
+  const autoDist = new Int16Array(GW * GH);
+  const autoPar = new Int8Array(GW * GH);
+  const autoQx = new Int16Array(GW * GH + 8);
+  const autoQy = new Int16Array(GW * GH + 8);
+  let autoStamp = 1;
   const pips = [];
   const particles = [];
   const floaters = [];
@@ -402,6 +419,69 @@
     } catch (err) { /* ignore */ }
   }
 
+  function loadAutoSpeed() {
+    try {
+      const n = parseInt(localStorage.getItem(AUTO_SPEED_KEY) || '3', 10);
+      if (!isFinite(n) || n < 1 || n > 4) return 3;
+      return n;
+    } catch (err) {
+      return 3;
+    }
+  }
+
+  function saveAutoSpeed(n) {
+    try {
+      localStorage.setItem(AUTO_SPEED_KEY, String(n));
+    } catch (err) { /* ignore */ }
+  }
+
+  function syncAutoUi() {
+    if (!btnAuto) return;
+    btnAuto.classList.toggle('on', autoOn);
+    btnAuto.setAttribute('aria-pressed', autoOn ? 'true' : 'false');
+    btnAuto.textContent = autoOn ? '停下' : '自动';
+    btnAuto.setAttribute('aria-label', autoOn ? '停止自动' : '自动');
+  }
+
+  function syncSpeedUi() {
+    if (!speedEl) return;
+    speedEl.value = String(autoSpeed);
+    if (speedLab) speedLab.textContent = SPEED_LABELS[autoSpeed];
+    speedEl.title = SPEED_LABELS[autoSpeed];
+    speedEl.setAttribute('aria-valuetext', SPEED_LABELS[autoSpeed]);
+  }
+
+  function clearPlayerInput() {
+    keys.n = keys.e = keys.s = keys.w = false;
+    pointer.down = false;
+    pointer.id = null;
+  }
+
+  function playHint() {
+    if (autoOn) setHint('托管中 · A 或「停下」取消', 'hot');
+    else setHint('走进空域开割 · 闭合圈地 · 避开螺旋', '');
+  }
+
+  function setAutoSpeed(n) {
+    n = parseInt(n, 10);
+    if (!(n >= 1 && n <= 4)) n = 3;
+    autoSpeed = n;
+    saveAutoSpeed(n);
+    syncSpeedUi();
+  }
+
+  function toggleAuto() {
+    autoOn = !autoOn;
+    autoPlan = null;
+    syncAutoUi();
+    audio.ensure();
+    if (autoOn) {
+      clearPlayerInput();
+      if (G.mode === 'title') startGame('classic');
+    }
+    if (G.mode === 'play') playHint();
+  }
+
   function addScore(n) {
     if (G.mode !== 'play' && G.mode !== 'clear') return;
     if (n <= 0) return;
@@ -561,7 +641,12 @@
   }
 
   function isSlow() {
+    if (autoOn) return false;
     return keys.shift || G.slowHold;
+  }
+
+  function autoTurbo() {
+    return autoOn && autoSpeed >= 4;
   }
 
   function qixSpeed() {
@@ -626,6 +711,7 @@
     G.stix = [];
     G.moveAcc = 0;
     lastDir = 0;
+    autoPlan = null;
   }
 
   function nearestEmpty(x, y) {
@@ -815,8 +901,9 @@
     G.waveT = 0;
     G.fillRgb = slowRatio > 0.55 ? GOLD : slowRatio > 0.2 ? VIO : CYN;
 
-    const freeze = REDUCE ? 0 : clamp(0.036 + totalNew * 0.00001, 0.036, 0.08);
+    const freeze = autoTurbo() ? 0 : (REDUCE ? 0 : clamp(0.036 + totalNew * 0.00001, 0.036, 0.08));
     G.freeze = Math.max(G.freeze, freeze);
+    autoPlan = null;
     G.shake = REDUCE ? 0 : clamp(4 + totalNew * 0.0022, 5, 14);
     G.punch = REDUCE ? 0 : clamp(0.012 + totalNew * 0.000004, 0.014, 0.045);
     G.flash = slowRatio > 0.55 ? 0.42 : 0.32;
@@ -876,7 +963,7 @@
       void pctBox.offsetWidth;
       pctBox.classList.add('flash');
     }
-    if (!G.clearing) setHint('走进空域开割 · 闭合圈地 · 避开螺旋', '');
+    if (!G.clearing) playHint();
     syncHud();
 
     if (G.pct >= 0.9 && prevPct < 0.9) {
@@ -899,7 +986,8 @@
     G.clearing = true;
     G.clearT = 0;
     G.mode = 'clear';
-    G.freeze = REDUCE ? 0.2 : 0.55;
+    G.freeze = autoTurbo() ? 0.05 : (REDUCE ? 0.2 : 0.55);
+    autoPlan = null;
     G.flash = 0.55;
     G.flashRgb = GOLD;
     G.shake = REDUCE ? 0 : 10;
@@ -927,7 +1015,7 @@
     G.invuln = 0.55;
     G.freeze = 0.12;
     toast('第 ' + G.round + ' 轮');
-    setHint('走进空域开割 · 闭合圈地 · 避开螺旋', '');
+    playHint();
     syncHud();
   }
 
@@ -956,6 +1044,7 @@
     G.comboT = 0;
     const ox_ = G.originX;
     const oy_ = G.originY;
+    autoPlan = null;
     clearStix();
     if (reason !== 'spark') {
       G.px = ox_;
@@ -1007,7 +1096,8 @@
       '贴边游走，按住方向走进空域画出割线。<br />闭合回已占边，圈住螺旋对面的那一块。慢割分高。',
       false
     );
-    setHint('走进空域开割 · 闭合圈地 · Shift 慢割 · 避开螺旋', '');
+    autoPlan = null;
+    setHint('走进空域开割 · 闭合圈地 · Shift 慢割 · A 自动 · 避开螺旋', '');
     syncHud();
   }
 
@@ -1029,7 +1119,7 @@
     hideOverlay();
     audio.start();
     toast(kindName());
-    setHint('走进空域开割 · 闭合圈地 · 避开螺旋', '');
+    playHint();
     syncHud();
   }
 
@@ -1070,6 +1160,535 @@
     }
     if (Math.abs(dx) < 0.35) return -1;
     return dx > 0 ? 1 : 3;
+  }
+
+  function autoBumpStamp() {
+    autoStamp += 1;
+    if (autoStamp > 0x3ffff000) {
+      autoSeen.fill(0);
+      autoStamp = 1;
+    }
+    return autoStamp;
+  }
+
+  function autoQixClearance(x, y) {
+    let best = 1e9;
+    for (let i = 0; i < G.qixes.length; i++) {
+      const q = G.qixes[i];
+      const d = hypot(q.x - (x + 0.5), q.y - (y + 0.5)) - (q.len + 3.2);
+      if (d < best) best = d;
+    }
+    return best;
+  }
+
+  function autoQixInside(x, y) {
+    for (let i = 0; i < G.qixes.length; i++) {
+      const q = G.qixes[i];
+      if ((q.x | 0) === x && (q.y | 0) === y) return true;
+    }
+    return false;
+  }
+
+  function autoMarkSparkDist() {
+    const stamp = autoBumpStamp();
+    let head = 0;
+    let tail = 0;
+    for (let i = 0; i < GW * GH; i++) autoDist[i] = 9999;
+    for (let i = 0; i < G.sparks.length; i++) {
+      const s = G.sparks[i];
+      if (!isEdge(s.x, s.y)) continue;
+      const id = idx(s.x, s.y);
+      autoDist[id] = 0;
+      autoSeen[id] = stamp;
+      autoQx[tail] = s.x;
+      autoQy[tail] = s.y;
+      tail += 1;
+    }
+    while (head < tail) {
+      const x = autoQx[head];
+      const y = autoQy[head];
+      head += 1;
+      const d0 = autoDist[idx(x, y)];
+      for (let d = 0; d < 4; d++) {
+        const nx = x + DX[d];
+        const ny = y + DY[d];
+        if (!isEdge(nx, ny)) continue;
+        const id = idx(nx, ny);
+        if (autoSeen[id] === stamp) continue;
+        autoSeen[id] = stamp;
+        autoDist[id] = d0 + 1;
+        autoQx[tail] = nx;
+        autoQy[tail] = ny;
+        tail += 1;
+      }
+    }
+  }
+
+  function autoSparkAt(x, y) {
+    if (!inb(x, y)) return 9999;
+    return autoDist[idx(x, y)];
+  }
+
+  function autoEdgePath(sx, sy, tx, ty, minSpark) {
+    if (sx === tx && sy === ty) return [];
+    const stamp = autoBumpStamp();
+    let head = 0;
+    let tail = 0;
+    autoQx[0] = sx;
+    autoQy[0] = sy;
+    autoSeen[idx(sx, sy)] = stamp;
+    autoPar[idx(sx, sy)] = -1;
+    tail = 1;
+    let found = false;
+    while (head < tail) {
+      const x = autoQx[head];
+      const y = autoQy[head];
+      head += 1;
+      if (x === tx && y === ty) {
+        found = true;
+        break;
+      }
+      for (let d = 0; d < 4; d++) {
+        const nx = x + DX[d];
+        const ny = y + DY[d];
+        if (!isEdge(nx, ny)) continue;
+        const id = idx(nx, ny);
+        if (autoSeen[id] === stamp) continue;
+        if ((nx !== tx || ny !== ty) && autoDist[id] < minSpark) continue;
+        autoSeen[id] = stamp;
+        autoPar[id] = d;
+        autoQx[tail] = nx;
+        autoQy[tail] = ny;
+        tail += 1;
+      }
+    }
+    if (!found) return null;
+    const revs = [];
+    let x = tx;
+    let y = ty;
+    let guard = 0;
+    while (!(x === sx && y === sy) && guard++ < GW * GH) {
+      const d = autoPar[idx(x, y)];
+      if (d < 0) break;
+      revs.push(d);
+      x -= DX[d];
+      y -= DY[d];
+    }
+    revs.reverse();
+    return revs;
+  }
+
+  function autoWalkTo(sx, sy, tx, ty) {
+    return autoEdgePath(sx, sy, tx, ty, 6)
+      || autoEdgePath(sx, sy, tx, ty, 3)
+      || autoEdgePath(sx, sy, tx, ty, 0);
+  }
+
+  function autoBuildU(sx, sy, inDir, along, depth, width) {
+    const trail = [];
+    let x = sx;
+    let y = sy;
+    for (let i = 0; i < depth; i++) {
+      x += DX[inDir];
+      y += DY[inDir];
+      if (!isEmpty(x, y) || autoQixInside(x, y)) return null;
+      trail.push({ x: x, y: y, dir: inDir });
+    }
+    for (let i = 0; i < width; i++) {
+      x += DX[along];
+      y += DY[along];
+      if (!isEmpty(x, y) || autoQixInside(x, y)) return null;
+      trail.push({ x: x, y: y, dir: along });
+    }
+    const back = (inDir + 2) & 3;
+    let guard = 0;
+    while (guard++ < GW + GH) {
+      x += DX[back];
+      y += DY[back];
+      if (!inb(x, y) || isStix(x, y)) return null;
+      if (isClaimed(x, y)) {
+        trail.push({ x: x, y: y, dir: back, close: true });
+        return trail;
+      }
+      if (!isEmpty(x, y) || autoQixInside(x, y)) return null;
+      trail.push({ x: x, y: y, dir: back });
+    }
+    return null;
+  }
+
+  function autoBuildStraight(sx, sy, inDir, maxLen) {
+    const trail = [];
+    let x = sx;
+    let y = sy;
+    for (let i = 0; i < maxLen; i++) {
+      x += DX[inDir];
+      y += DY[inDir];
+      if (!inb(x, y) || isStix(x, y)) return null;
+      if (isClaimed(x, y)) {
+        if (!trail.length) return null;
+        trail.push({ x: x, y: y, dir: inDir, close: true });
+        return trail;
+      }
+      if (!isEmpty(x, y) || autoQixInside(x, y)) return null;
+      trail.push({ x: x, y: y, dir: inDir });
+    }
+    return null;
+  }
+
+  function autoBuildL(sx, sy, inDir, along, depth, maxAlong) {
+    const trail = [];
+    let x = sx;
+    let y = sy;
+    for (let i = 0; i < depth; i++) {
+      x += DX[inDir];
+      y += DY[inDir];
+      if (!isEmpty(x, y) || autoQixInside(x, y)) return null;
+      trail.push({ x: x, y: y, dir: inDir });
+    }
+    for (let i = 0; i < maxAlong; i++) {
+      x += DX[along];
+      y += DY[along];
+      if (!inb(x, y) || isStix(x, y)) return null;
+      if (isClaimed(x, y)) {
+        trail.push({ x: x, y: y, dir: along, close: true });
+        return trail;
+      }
+      if (!isEmpty(x, y) || autoQixInside(x, y)) return null;
+      trail.push({ x: x, y: y, dir: along });
+    }
+    return null;
+  }
+
+  function autoTrailSafety(trail) {
+    let worst = 1e9;
+    for (let i = 0; i < trail.length; i++) {
+      if (trail[i].close) continue;
+      const s = autoQixClearance(trail[i].x, trail[i].y);
+      if (s < worst) worst = s;
+    }
+    return worst;
+  }
+
+  function autoSimulateFill(trail) {
+    autoBuf.set(cells);
+    const ink = [];
+    for (let i = 0; i < trail.length; i++) {
+      if (!trail[i].close) ink.push(trail[i]);
+    }
+    if (!ink.length) return 0;
+    const seeds = [];
+    for (let i = 0; i < G.qixes.length; i++) {
+      seeds.push({ x: G.qixes[i].x, y: G.qixes[i].y });
+    }
+    const res = applyFill(autoBuf, GW, GH, ink, seeds);
+    return res.filled.length;
+  }
+
+  function autoCutDirs(trail) {
+    const dirs = [];
+    for (let i = 0; i < trail.length; i++) dirs.push(trail[i].dir);
+    return dirs;
+  }
+
+  function autoEvalCut(sx, sy, trail, minFill) {
+    if (!trail || trail.length < 4) return null;
+    const fillCells = autoSimulateFill(trail);
+    if (fillCells < minFill) return null;
+    const safety = autoTrailSafety(trail);
+    const drawSpd = AUTO_SPD_DRAW[autoSpeed] || FAST_SPD;
+    const time = trail.length / Math.max(12, drawSpd);
+    const reach = qixSpeed() * time + (autoSpeed <= 1 ? 8 : autoSpeed <= 2 ? 5 : 2.5);
+    if (safety < reach) return null;
+    const spark = autoSparkAt(sx, sy);
+    if (spark < 5 && minFill > 4) return null;
+    const score = fillCells * 3 + safety * 6 - trail.length * 0.35 + Math.min(40, spark) * 0.4;
+    return {
+      sx: sx,
+      sy: sy,
+      dirs: autoCutDirs(trail),
+      filled: fillCells,
+      safety: safety,
+      score: score
+    };
+  }
+
+  function autoInwardDirs(x, y) {
+    const out = [];
+    for (let d = 0; d < 4; d++) {
+      if (isEmpty(x + DX[d], y + DY[d])) out.push(d);
+    }
+    return out;
+  }
+
+  function autoSampleStarts() {
+    const starts = [{ x: G.px, y: G.py }];
+    const stamp = autoBumpStamp();
+    let head = 0;
+    let tail = 0;
+    autoQx[0] = G.px;
+    autoQy[0] = G.py;
+    autoSeen[idx(G.px, G.py)] = stamp;
+    tail = 1;
+    let n = 0;
+    while (head < tail) {
+      const x = autoQx[head];
+      const y = autoQy[head];
+      head += 1;
+      n += 1;
+      if (n % 7 === 0 && (x !== G.px || y !== G.py)) starts.push({ x: x, y: y });
+      if (starts.length >= 26) break;
+      for (let d = 0; d < 4; d++) {
+        const nx = x + DX[d];
+        const ny = y + DY[d];
+        if (!isEdge(nx, ny)) continue;
+        const id = idx(nx, ny);
+        if (autoSeen[id] === stamp) continue;
+        autoSeen[id] = stamp;
+        autoQx[tail] = nx;
+        autoQy[tail] = ny;
+        tail += 1;
+      }
+    }
+    return starts;
+  }
+
+  function autoTryRecord(best, sx, sy, trail, minFill) {
+    const ev = autoEvalCut(sx, sy, trail, minFill);
+    if (!ev) return best;
+    if (!best || ev.score > best.score) return ev;
+    return best;
+  }
+
+  function autoFindBestCut(minFill) {
+    const starts = autoSampleStarts();
+    const roundCap = clamp(36 - G.round * 2.4 - (G.kind === 'helix' ? 8 : 0), 8, 36);
+    const speedCap = autoSpeed <= 1 ? 14 : autoSpeed === 2 ? 20 : 36;
+    const maxD = Math.min(roundCap, speedCap);
+    const depths = [];
+    const dCands = [3, 5, 8, 12, 16, 22, 28, 36];
+    for (let i = 0; i < dCands.length; i++) {
+      if (dCands[i] <= maxD) depths.push(dCands[i]);
+    }
+    if (depths[depths.length - 1] !== maxD) depths.push(maxD | 0);
+    const widths = [5, 8, 12, 18, 26, 36];
+    let best = null;
+    let simsLeft = 28;
+    for (let s = 0; s < starts.length && simsLeft > 0; s++) {
+      const sx = starts[s].x;
+      const sy = starts[s].y;
+      if (autoSparkAt(sx, sy) < 5 && minFill > 4) continue;
+      const inns = autoInwardDirs(sx, sy);
+      for (let ii = 0; ii < inns.length && simsLeft > 0; ii++) {
+        const inDir = inns[ii];
+        const nx0 = sx + DX[inDir];
+        const ny0 = sy + DY[inDir];
+        if (autoQixClearance(nx0, ny0) < 3) continue;
+        for (let k = 0; k < 2 && simsLeft > 0; k++) {
+          const along = (inDir + (k === 0 ? 1 : 3)) & 3;
+          for (let di = 0; di < depths.length && simsLeft > 0; di++) {
+            const depth = depths[di];
+            for (let wi = 0; wi < widths.length && simsLeft > 0; wi++) {
+              const width = widths[wi];
+              if (width < 4 || depth < 3) continue;
+              const trail = autoBuildU(sx, sy, inDir, along, depth, width);
+              if (!trail) continue;
+              const heur = (depth - 1) * (width - 1);
+              if (heur < minFill) continue;
+              const safety = autoTrailSafety(trail);
+              if (safety < 2) continue;
+              simsLeft -= 1;
+              best = autoTryRecord(best, sx, sy, trail, minFill);
+            }
+          }
+          const lTrail = autoBuildL(sx, sy, inDir, along, Math.min(10, maxD), GW + GH);
+          if (lTrail && autoTrailSafety(lTrail) >= 4) {
+            simsLeft -= 1;
+            best = autoTryRecord(best, sx, sy, lTrail, minFill);
+          }
+        }
+        const split = autoBuildStraight(sx, sy, inDir, GW + GH);
+        if (split && split.length >= 8 && autoTrailSafety(split) >= 6) {
+          simsLeft -= 1;
+          best = autoTryRecord(best, sx, sy, split, minFill);
+        }
+      }
+    }
+    return best;
+  }
+
+  function autoEscapePlan() {
+    const stamp = autoBumpStamp();
+    let head = 0;
+    let tail = 0;
+    autoQx[0] = G.px;
+    autoQy[0] = G.py;
+    autoSeen[idx(G.px, G.py)] = stamp;
+    autoPar[idx(G.px, G.py)] = -1;
+    tail = 1;
+    let gx = -1;
+    let gy = -1;
+    while (head < tail) {
+      const x = autoQx[head];
+      const y = autoQy[head];
+      head += 1;
+      for (let d = 0; d < 4; d++) {
+        const nx = x + DX[d];
+        const ny = y + DY[d];
+        if (!inb(nx, ny)) continue;
+        const id = idx(nx, ny);
+        if (autoSeen[id] === stamp) continue;
+        if (isClaimed(nx, ny)) {
+          autoSeen[id] = stamp;
+          autoPar[id] = d;
+          gx = nx;
+          gy = ny;
+          head = tail;
+          break;
+        }
+        if (!isEmpty(nx, ny)) continue;
+        autoSeen[id] = stamp;
+        autoPar[id] = d;
+        autoQx[tail] = nx;
+        autoQy[tail] = ny;
+        tail += 1;
+      }
+    }
+    if (gx < 0) return null;
+    const revs = [];
+    let x = gx;
+    let y = gy;
+    let guard = 0;
+    while (!(x === G.px && y === G.py) && guard++ < GW * GH) {
+      const d = autoPar[idx(x, y)];
+      if (d < 0) break;
+      revs.push(d);
+      x -= DX[d];
+      y -= DY[d];
+    }
+    revs.reverse();
+    if (!revs.length) return null;
+    return { dirs: revs, i: 0 };
+  }
+
+  function autoEmergencyCut() {
+    const inns = autoInwardDirs(G.px, G.py);
+    let best = null;
+    for (let ii = 0; ii < inns.length; ii++) {
+      const inDir = inns[ii];
+      if (autoQixClearance(G.px + DX[inDir], G.py + DY[inDir]) < 2) continue;
+      for (let k = 0; k < 2; k++) {
+        const along = (inDir + (k === 0 ? 1 : 3)) & 3;
+        const sizes = [[3, 5], [4, 7], [5, 9], [3, 8], [6, 6]];
+        for (let s = 0; s < sizes.length; s++) {
+          const trail = autoBuildU(G.px, G.py, inDir, along, sizes[s][0], sizes[s][1]);
+          best = autoTryRecord(best, G.px, G.py, trail, 2);
+        }
+      }
+    }
+    return best;
+  }
+
+  function autoFleeDir() {
+    let bestD = -1;
+    let bestScore = -1e9;
+    for (let d = 0; d < 4; d++) {
+      const nx = G.px + DX[d];
+      const ny = G.py + DY[d];
+      if (!isEdge(nx, ny)) continue;
+      const sp = autoSparkAt(nx, ny);
+      const q = autoQixClearance(nx, ny);
+      const score = sp * 4 + q * 0.2;
+      if (score > bestScore) {
+        bestD = d;
+        bestScore = score;
+      }
+    }
+    if (bestD < 0) return null;
+    return { dirs: [bestD], i: 0 };
+  }
+
+  function makeAutoPlan() {
+    if (G.drawing) return autoEscapePlan();
+    if (!isEdge(G.px, G.py)) snapPlayer();
+    autoMarkSparkDist();
+    const sparkHere = autoSparkAt(G.px, G.py);
+    if (sparkHere <= 5) {
+      const em = autoEmergencyCut();
+      if (em && em.sx === G.px && em.sy === G.py) return { dirs: em.dirs, i: 0 };
+      const flee = autoFleeDir();
+      if (flee) return flee;
+    }
+    let best = autoFindBestCut(8);
+    if (!best) best = autoFindBestCut(3);
+    if (!best) {
+      const em = autoEmergencyCut();
+      if (em) best = em;
+    }
+    if (!best) {
+      const flee = autoFleeDir();
+      if (flee) return flee;
+      for (let d = 0; d < 4; d++) {
+        const nx = G.px + DX[d];
+        const ny = G.py + DY[d];
+        if (isEdge(nx, ny) || isEmpty(nx, ny)) return { dirs: [d], i: 0 };
+      }
+      return null;
+    }
+    if (best.sx === G.px && best.sy === G.py) return { dirs: best.dirs, i: 0 };
+    const walk = autoWalkTo(G.px, G.py, best.sx, best.sy);
+    if (!walk) {
+      if (sparkHere > 6) {
+        const local = autoEmergencyCut();
+        if (local) return { dirs: local.dirs, i: 0 };
+      }
+      return autoFleeDir();
+    }
+    return { dirs: walk.concat(best.dirs), i: 0 };
+  }
+
+  function autoStep() {
+    if (G.mode !== 'play') return;
+    if (!autoPlan || autoPlan.i >= autoPlan.dirs.length) {
+      autoPlan = makeAutoPlan();
+      if (!autoPlan || !autoPlan.dirs.length) return;
+    }
+    if (!G.drawing && autoSparkAt(G.px, G.py) <= 3 && autoPlan.i < autoPlan.dirs.length) {
+      const nd = autoPlan.dirs[autoPlan.i];
+      const nx = G.px + DX[nd];
+      const ny = G.py + DY[nd];
+      if (!isEmpty(nx, ny) && autoSparkAt(nx, ny) <= autoSparkAt(G.px, G.py)) {
+        autoPlan = makeAutoPlan();
+        if (!autoPlan || !autoPlan.dirs.length) return;
+      }
+    }
+    const dir = autoPlan.dirs[autoPlan.i];
+    const beforeDraw = G.drawing;
+    const px = G.px;
+    const py = G.py;
+    const ok = tryStep(dir);
+    if (!ok || (G.px === px && G.py === py && G.drawing === beforeDraw && G.mode === 'play')) {
+      autoPlan = null;
+      return;
+    }
+    if (autoPlan) autoPlan.i += 1;
+  }
+
+  function autoMoveSpeed() {
+    if (G.drawing) return AUTO_SPD_DRAW[autoSpeed] || FAST_SPD;
+    return AUTO_SPD_WALK[autoSpeed] || BORDER_SPD;
+  }
+
+  function tickAuto(dt) {
+    if (!autoOn || G.mode !== 'play') return;
+    G.moveAcc += dt * autoMoveSpeed();
+    const cap = autoSpeed >= 4 ? 64 : autoSpeed >= 3 ? 12 : 5;
+    let guard = 0;
+    while (G.moveAcc >= 1 && guard < cap) {
+      G.moveAcc -= 1;
+      autoStep();
+      guard += 1;
+      if (G.mode !== 'play') break;
+    }
   }
 
   function startDraw(nx, ny) {
@@ -1377,6 +1996,10 @@
 
   function updatePlayer(dt) {
     if (G.mode !== 'play') return;
+    if (autoOn) {
+      tickAuto(dt);
+      return;
+    }
     G.moveAcc += dt * playerSpeed();
     let guard = 0;
     while (G.moveAcc >= 1 && guard < 5) {
@@ -1392,7 +2015,7 @@
     if (G.mode === 'clear') {
       G.clearT += dt;
       updateQixes(dt * 0.25);
-      if (G.clearT > 1.25) nextRound();
+      if (G.clearT > (autoTurbo() ? 0.12 : 1.25)) nextRound();
       return;
     }
     if (G.freeze > 0) {
@@ -1705,13 +2328,22 @@
     if (code === 'ArrowUp' || key === 'w' || key === 'W') return 0;
     if (code === 'ArrowRight' || key === 'd' || key === 'D') return 1;
     if (code === 'ArrowDown' || key === 's' || key === 'S') return 2;
-    if (code === 'ArrowLeft' || key === 'a' || key === 'A') return 3;
+    if (code === 'ArrowLeft') return 3;
     return -1;
   }
 
   function onKey(e, down) {
+    if (e.key === 'a' || e.key === 'A' || e.code === 'KeyA') {
+      e.preventDefault();
+      if (down && !e.repeat) toggleAuto();
+      return;
+    }
     const dir = dirFromCode(e.code, e.key);
     if (dir >= 0) {
+      if (autoOn) {
+        e.preventDefault();
+        return;
+      }
       if (dir === 0) keys.n = down;
       if (dir === 1) keys.e = down;
       if (dir === 2) keys.s = down;
@@ -1821,6 +2453,63 @@
     if (cells[idx((GW * 0.5) | 0, (GH * 0.4) | 0)] !== EMPTY) throw new Error('qix pocket must remain empty');
     const after = countClaimedBuf(cells) / (GW * GH);
     if (after < 0.06 || after >= GOAL) throw new Error('one bite should raise claim but not clear 75%');
+
+    selfCheckAuto('classic');
+    selfCheckAuto('helix');
+  }
+
+  function selfCheckAuto(kind) {
+    stampBorder(cells, GW, GH, BW);
+    fillGlow.fill(0);
+    reveal.fill(0);
+    G.mode = 'play';
+    G.kind = kind === 'helix' ? 'helix' : 'classic';
+    G.round = 1;
+    G.lives = LIVES;
+    G.score = 0;
+    G.combo = 1;
+    G.comboT = 0;
+    G.invuln = 0;
+    G.freeze = 0;
+    G.clearing = false;
+    G.claimed = countClaimedBuf(cells);
+    G.pct = G.claimed / (GW * GH);
+    G.stix = [];
+    G.drawing = false;
+    G.px = GW >> 1;
+    G.py = GH - BW;
+    G.originX = G.px;
+    G.originY = G.py;
+    G.moveAcc = 0;
+    spawnQix();
+    spawnSparks();
+    const startPct = G.pct;
+    const prevOn = autoOn;
+    const prevSp = autoSpeed;
+    autoOn = true;
+    autoSpeed = 4;
+    autoPlan = null;
+    let filledOnce = false;
+    for (let i = 0; i < 12000 && G.mode === 'play'; i++) {
+      const before = G.pct;
+      autoStep();
+      if (G.pct > before + 0.0005) filledOnce = true;
+      updateQixes(STEP);
+      updateSparks(STEP);
+      qixKills();
+      sparksKill();
+      if (G.pct >= startPct + 0.08) break;
+    }
+    const gained = G.pct - startPct;
+    autoOn = prevOn;
+    autoSpeed = prevSp;
+    autoPlan = null;
+    if (!filledOnce || gained < 0.05) {
+      throw new Error('autoplay (' + kind + ') should claim territory by boxing, pct=' + G.pct.toFixed(4) + ' start=' + startPct.toFixed(4));
+    }
+    if (G.drawing && G.stix.length > 80) {
+      throw new Error('autoplay should close boxes, not wiggle a long unclosed cut');
+    }
   }
 
   if (!hasDom) {
@@ -1832,6 +2521,10 @@
     if (e.button != null && e.button !== 0) return;
     audio.ensure();
     if (overlayOpen()) return;
+    if (autoOn) {
+      e.preventDefault();
+      return;
+    }
     pointer.down = true;
     pointer.id = e.pointerId;
     const g = eventToGrid(e);
@@ -1890,6 +2583,17 @@
     audio.ensure();
     audio.setMuted(!audio.muted);
   });
+  if (btnAuto) btnAuto.addEventListener('click', function () {
+    toggleAuto();
+  });
+  if (speedEl) {
+    speedEl.addEventListener('input', function () {
+      setAutoSpeed(parseInt(speedEl.value, 10));
+    });
+    speedEl.addEventListener('change', function () {
+      setAutoSpeed(parseInt(speedEl.value, 10));
+    });
+  }
   if (btnSlow) {
     btnSlow.addEventListener('pointerdown', function (e) {
       G.slowHold = true;
@@ -1938,11 +2642,14 @@
   } catch (err) { /* ignore */ }
 
   loadBest();
+  autoSpeed = loadAutoSpeed();
   seedMotes();
   resize();
   bootTitle();
   syncHud();
   syncSlowUi();
+  syncAutoUi();
+  syncSpeedUi();
 
   let last = performance.now();
   let acc = 0;
