@@ -20,9 +20,11 @@
   const STEP = 1 / 60;
   const BEST_KEY = 'playbox-beat-tap-best';
   const MUTE_KEY = 'playbox-beat-tap-mute';
+  const AUTO_SPEED_KEY = 'playbox-beat-tap-auto-speed';
+  const AUTO_SPEED_NAME = ['', '慢', '中', '快', '极快'];
   const REDUCE = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const OPS_TITLE = 'D F J K 拍道 · 点按音轨 · 完美回血 · 空血失败';
-  const OPS_PLAY = 'D F J K 或点按音轨 · R 重开 · M 静音';
+  const OPS_TITLE = 'D F J K 拍道 · 点按音轨 · A 自动 · 完美回血 · 空血失败';
+  const OPS_PLAY = 'D F J K 或点按音轨 · A 自动 · R 重开 · M 静音';
 
   const MAG = [255, 61, 184];
   const CYN = [0, 240, 255];
@@ -57,6 +59,9 @@
   const btnMenu = document.getElementById('btn-menu');
   const btnMute = document.getElementById('btn-mute');
   const btnRetry = document.getElementById('btn-retry');
+  const btnAuto = document.getElementById('btn-auto');
+  const speedEl = document.getElementById('speed');
+  const speedLab = document.getElementById('speed-lab');
   const scoreEl = document.getElementById('score');
   const bestEl = document.getElementById('best');
   const scoreBox = document.getElementById('score-box');
@@ -95,7 +100,10 @@
   const holdN = [0, 0, 0, 0];
   const held = [false, false, false, false];
   const recPulse = [0, 0, 0, 0];
+  const autoHoldT = [0, 0, 0, 0];
   const ptrLane = {};
+  let autoOn = false;
+  let autoSpeed = 3;
 
   const G = {
     mode: 'title',
@@ -469,8 +477,16 @@
       tagLabel.textContent = 'BEAT';
     }
     tagLabel.className = G.hp <= 30 && G.mode === 'play' ? 'warn' : (G.combo >= 50 ? 'hot' : '');
-    hintEl.textContent = G.hp <= 30 && G.mode === 'play' ? '血量见底即失败 · 抓完美回血' : OPS_PLAY;
-    hintEl.className = G.hp <= 30 && G.mode === 'play' ? 'hint warn' : 'hint';
+    if (G.hp <= 30 && G.mode === 'play') {
+      hintEl.textContent = autoOn ? '托管中 · 血量见底即失败' : '血量见底即失败 · 抓完美回血';
+      hintEl.className = 'hint warn';
+    } else if (autoOn && G.mode === 'play') {
+      hintEl.textContent = '托管中 · A 停下';
+      hintEl.className = 'hint hot';
+    } else {
+      hintEl.textContent = OPS_PLAY;
+      hintEl.className = 'hint';
+    }
     const u = G.mode === 'play' ? clamp(t / G.endTime, 0, 1) : 0;
     progFill.style.width = (u * 100).toFixed(2) + '%';
   }
@@ -714,6 +730,7 @@
       holdN[i] = 0;
       held[i] = false;
       recPulse[i] = 0;
+      autoHoldT[i] = 0;
     }
     for (const k in ptrLane) delete ptrLane[k];
     for (let i = 0; i < padBtns.length; i++) padBtns[i].classList.remove('held');
@@ -747,7 +764,7 @@
     stageLabel.textContent = '一曲';
     tagLabel.textContent = 'BEAT';
     tagLabel.className = '';
-    hintEl.textContent = '选一曲或加速 · D F J K 拍道';
+    hintEl.textContent = '选一曲或加速 · D F J K 拍道 · A 自动';
     hintEl.className = 'hint';
     progFill.style.width = '0%';
     resetJuice();
@@ -818,6 +835,7 @@
   function endGame(win) {
     if (G.mode !== 'play') return;
     G.stop = 0;
+    clearHolds();
     if (win) {
       if (G.m === 0) addScore(5000);
       if (G.m === 0 && G.g === 0 && G.o === 0) addScore(10000);
@@ -857,7 +875,7 @@
         '<br />分数 ' + G.score + ' · 最高连击 ' + G.maxCombo +
         '<br />完美 ' + G.p + '　好 ' + G.g + '　差 ' + G.o + '　miss ' + G.m;
     }
-    ovOps.textContent = '谱 #' + seedHex + ' · ' + Math.round(G.startBpm) + (G.accel ? '→' + Math.round(G.endBpm) : '') + ' BPM · R 重开';
+    ovOps.textContent = '谱 #' + seedHex + ' · ' + Math.round(G.startBpm) + (G.accel ? '→' + Math.round(G.endBpm) : '') + ' BPM · A 自动 · R 重开';
     hudPlay();
   }
 
@@ -1004,6 +1022,106 @@
         changeHp(-14);
         if (G.mode !== 'play') return;
       }
+    }
+  }
+
+  function loadAutoSpeed() {
+    try {
+      const n = parseInt(localStorage.getItem(AUTO_SPEED_KEY) || '3', 10);
+      if (!isFinite(n) || n < 1 || n > 4) return 3;
+      return n;
+    } catch (err) {
+      return 3;
+    }
+  }
+
+  function saveAutoSpeed(n) {
+    try {
+      localStorage.setItem(AUTO_SPEED_KEY, String(n));
+    } catch (err) { /* ignore */ }
+  }
+
+  function syncAutoBtn() {
+    if (!btnAuto) return;
+    btnAuto.classList.toggle('on', autoOn);
+    btnAuto.setAttribute('aria-pressed', autoOn ? 'true' : 'false');
+    btnAuto.textContent = autoOn ? '停下' : '自动';
+    btnAuto.setAttribute('aria-label', autoOn ? '停止自动' : '自动');
+  }
+
+  function syncSpeedUI() {
+    if (!speedEl || !speedLab) return;
+    speedEl.value = String(autoSpeed);
+    speedLab.textContent = AUTO_SPEED_NAME[autoSpeed];
+    speedEl.title = AUTO_SPEED_NAME[autoSpeed];
+    speedEl.setAttribute('aria-valuetext', AUTO_SPEED_NAME[autoSpeed]);
+  }
+
+  function setAutoSpeed(n) {
+    n = parseInt(n, 10);
+    if (!isFinite(n) || n < 1 || n > 4) n = 3;
+    autoSpeed = n;
+    saveAutoSpeed(autoSpeed);
+    syncSpeedUI();
+  }
+
+  function clearAutoHolds() {
+    for (let i = 0; i < 4; i++) autoHoldT[i] = 0;
+    clearHolds();
+  }
+
+  function toggleAuto() {
+    autoOn = !autoOn;
+    clearAutoHolds();
+    syncAutoBtn();
+    if (G.mode === 'play') hudPlay();
+    if (!autoOn) return;
+    audio.ensure();
+    if (G.mode === 'title') startPlay('one');
+  }
+
+  function autoHoldDur() {
+    if (autoSpeed <= 1) return 0.12;
+    if (autoSpeed === 2) return 0.08;
+    if (autoSpeed === 3) return 0.05;
+    return 0.028;
+  }
+
+  function autoHitOffset() {
+    if (autoSpeed <= 1) return 0.016;
+    if (autoSpeed === 2) return 0.008;
+    if (autoSpeed === 3) return 0;
+    return -0.004;
+  }
+
+  function autoHitNote(n) {
+    if (!n || n.judged || G.mode !== 'play') return;
+    const t = songTime();
+    const dt = t - n.time;
+    if (dt < -WIN_O || dt > WIN_O) return;
+    if (!held[n.lane]) pressLane(n.lane, true);
+    autoHoldT[n.lane] = t + autoHoldDur();
+    judgeNote(n, dt);
+  }
+
+  function tickAuto() {
+    if (!autoOn || G.mode !== 'play') return;
+    const t = songTime();
+    for (let i = 0; i < 4; i++) {
+      if (autoHoldT[i] > 0 && t >= autoHoldT[i]) {
+        autoHoldT[i] = 0;
+        if (held[i]) pressLane(i, false);
+      }
+    }
+    const need = autoHitOffset();
+    for (let i = 0; i < notes.length; i++) {
+      const n = notes[i];
+      if (n.judged) continue;
+      const dt = t - n.time;
+      if (dt < need) continue;
+      if (dt > WIN_O) continue;
+      autoHitNote(n);
+      if (G.mode !== 'play') return;
     }
   }
 
@@ -1172,10 +1290,11 @@
 
   function update(dt) {
     if (G.mode === 'play') pumpAudio(songTime());
+    if (G.mode === 'play' && autoOn) tickAuto();
     if (G.stop > 0) {
       G.stop -= dt;
       if (G.stop < 0) G.stop = 0;
-      return;
+      if (G.stop > 0) return;
     }
     G.clock += dt;
     updateJuice(dt);
@@ -1579,6 +1698,13 @@
       }
       return;
     }
+    if (code === 'KeyA' || key === 'a') {
+      if (down) {
+        e.preventDefault();
+        toggleAuto();
+      }
+      return;
+    }
     if (down && (G.mode === 'title' || G.mode === 'win' || G.mode === 'lose')) {
       if (code === 'Enter' || code === 'Space' || key === '1') {
         e.preventDefault();
@@ -1605,6 +1731,10 @@
       }
     }
     if (lane < 0) return;
+    if (autoOn) {
+      e.preventDefault();
+      return;
+    }
     e.preventDefault();
     audio.ensure();
     pressLane(lane, down);
@@ -1614,6 +1744,7 @@
   canvas.addEventListener('pointerdown', function (e) {
     audio.ensure();
     canvas.setPointerCapture(e.pointerId);
+    if (autoOn) return;
     const rect = canvas.getBoundingClientRect();
     const lane = laneAt(e.clientX - rect.left, e.clientY - rect.top);
     if (lane < 0) return;
@@ -1643,6 +1774,7 @@
         e.preventDefault();
         e.stopPropagation();
         audio.ensure();
+        if (autoOn) return;
         btn.setPointerCapture(e.pointerId);
         ptrLane['p' + e.pointerId] = lane;
         pressLane(lane, true);
@@ -1678,6 +1810,11 @@
     audio.ensure();
     audio.setMuted(!audio.muted);
   });
+  if (btnAuto) btnAuto.addEventListener('click', function () { toggleAuto(); });
+  if (speedEl) {
+    speedEl.addEventListener('input', function () { setAutoSpeed(speedEl.value); });
+    speedEl.addEventListener('change', function () { setAutoSpeed(speedEl.value); });
+  }
   btnRetry.addEventListener('click', function () {
     audio.ensure();
     if (G.mode === 'title') startPlay('one');
@@ -1705,6 +1842,9 @@
   } catch (err) {
     audio.setMuted(false);
   }
+  autoSpeed = loadAutoSpeed();
+  syncSpeedUI();
+  syncAutoBtn();
   loadBest();
   fillMotes();
   resize();
