@@ -1,9 +1,219 @@
 'use strict';
 
 (function () {
-  const DURATION = 45;
   const TAP_HOLD = 0.12;
   const INPUT_LOCK = 0.22;
+
+  // 8 炉：只改安全带与漂移，不改点降温/按住升温。
+  const STAGES = [
+    {
+      name: '冷启动',
+      cue: '轻点降温 · 按住升温',
+      dur: 16,
+      w0: 38,
+      w1: 32,
+      center: 50,
+      osc: [{ f: 0.32, p: 0.4, a0: 6, a1: 8 }],
+      wAmp: [3.2, 2.0],
+      wFreq: [0.52, 0.91],
+      bias: 3.6,
+      drift: 0,
+      jump: 0,
+      jumpAmt: 0,
+      jumpLerp: 0,
+      jumpDelay: 99,
+      stabRate: 6.4,
+      crackRate: 4.6,
+      crackDist: 0.38,
+      crackDecay: 9.2,
+      grace: 1.25,
+      carry: 0
+    },
+    {
+      name: '暖机',
+      cue: '跟着安全带慢慢走',
+      dur: 16,
+      w0: 30,
+      w1: 24,
+      center: 50,
+      osc: [
+        { f: 0.46, p: 0.2, a0: 10, a1: 13 },
+        { f: 0.94, p: 1.1, a0: 3, a1: 6 }
+      ],
+      wAmp: [5.0, 3.0],
+      wFreq: [0.65, 1.18],
+      bias: 4.4,
+      drift: 0.035,
+      jump: 0,
+      jumpAmt: 0,
+      jumpLerp: 0,
+      jumpDelay: 99,
+      stabRate: 5.4,
+      crackRate: 5.5,
+      crackDist: 0.46,
+      crackDecay: 7.6,
+      grace: 0.95,
+      carry: 0.18
+    },
+    {
+      name: '巡航',
+      cue: '带宽开始收',
+      dur: 17,
+      w0: 24,
+      w1: 18,
+      center: 50,
+      osc: [
+        { f: 0.55, p: 0.7, a0: 12, a1: 16 },
+        { f: 1.13, p: 0.3, a0: 5, a1: 9 }
+      ],
+      wAmp: [6.2, 4.2],
+      wFreq: [0.73, 1.48],
+      bias: 4.8,
+      drift: 0.06,
+      jump: 0,
+      jumpAmt: 0,
+      jumpLerp: 0,
+      jumpDelay: 99,
+      stabRate: 4.5,
+      crackRate: 6.5,
+      crackDist: 0.55,
+      crackDecay: 6.1,
+      grace: 0.7,
+      carry: 0.32
+    },
+    {
+      name: '热偏',
+      cue: '堆芯偏热 · 多点降温',
+      dur: 17,
+      w0: 22,
+      w1: 16,
+      center: 58,
+      osc: [
+        { f: 0.62, p: 1.4, a0: 10, a1: 14 },
+        { f: 1.38, p: 0.8, a0: 4, a1: 8 }
+      ],
+      wAmp: [7.0, 4.8],
+      wFreq: [0.8, 1.62],
+      bias: 12.2,
+      drift: 0.14,
+      jump: 0,
+      jumpAmt: 0,
+      jumpLerp: 0,
+      jumpDelay: 99,
+      stabRate: 4.1,
+      crackRate: 7.2,
+      crackDist: 0.62,
+      crackDecay: 5.2,
+      grace: 0.58,
+      carry: 0.48
+    },
+    {
+      name: '失冷',
+      cue: '堆芯偏冷 · 按住升温',
+      dur: 17,
+      w0: 20,
+      w1: 15,
+      center: 40,
+      osc: [
+        { f: 0.68, p: 2.1, a0: 11, a1: 15 },
+        { f: 1.5, p: 0.2, a0: 4, a1: 7 }
+      ],
+      wAmp: [5.4, 3.4],
+      wFreq: [0.7, 1.42],
+      bias: -8.4,
+      drift: -0.06,
+      jump: 0,
+      jumpAmt: 0,
+      jumpLerp: 0,
+      jumpDelay: 99,
+      stabRate: 4.0,
+      crackRate: 7.5,
+      crackDist: 0.64,
+      crackDecay: 4.9,
+      grace: 0.55,
+      carry: 0.58
+    },
+    {
+      name: '跳变',
+      cue: '安全带会突然挪位',
+      dur: 18,
+      w0: 18,
+      w1: 14,
+      center: 50,
+      osc: [
+        { f: 0.4, p: 0.5, a0: 6, a1: 8 },
+        { f: 1.18, p: 1.6, a0: 3, a1: 5 }
+      ],
+      wAmp: [6.4, 4.2],
+      wFreq: [0.85, 1.66],
+      bias: 5.4,
+      drift: 0.08,
+      jump: 3.15,
+      jumpAmt: 16,
+      jumpLerp: 3.6,
+      jumpDelay: 2.15,
+      stabRate: 3.5,
+      crackRate: 8.4,
+      crackDist: 0.72,
+      crackDecay: 4.0,
+      grace: 0.42,
+      carry: 0.72
+    },
+    {
+      name: '窄脉',
+      cue: '带宽极窄 · 贴心拍',
+      dur: 18,
+      w0: 14,
+      w1: 10.5,
+      center: 50,
+      osc: [
+        { f: 0.88, p: 0.3, a0: 14, a1: 18 },
+        { f: 1.68, p: 2.0, a0: 6, a1: 10 },
+        { f: 2.35, p: 0.7, a0: 0, a1: 5 }
+      ],
+      wAmp: [8.0, 5.2],
+      wFreq: [0.92, 1.82],
+      bias: 6.6,
+      drift: 0.11,
+      jump: 4.2,
+      jumpAmt: 12,
+      jumpLerp: 3.1,
+      jumpDelay: 2.0,
+      stabRate: 3.1,
+      crackRate: 9.6,
+      crackDist: 0.82,
+      crackDecay: 3.0,
+      grace: 0.32,
+      carry: 0.84
+    },
+    {
+      name: '熔变',
+      cue: '末炉 · 带宽收死',
+      dur: 20,
+      w0: 12,
+      w1: 9.5,
+      center: 50,
+      osc: [
+        { f: 0.92, p: 1.1, a0: 10, a1: 14 },
+        { f: 1.7, p: 0.4, a0: 5, a1: 8 },
+        { f: 2.4, p: 2.2, a0: 2, a1: 4 }
+      ],
+      wAmp: [8.0, 5.5],
+      wFreq: [1.0, 1.85],
+      bias: 7.4,
+      drift: 0.13,
+      jump: 2.5,
+      jumpAmt: 14,
+      jumpLerp: 3.7,
+      jumpDelay: 1.85,
+      stabRate: 2.6,
+      crackRate: 10.0,
+      crackDist: 0.84,
+      crackDecay: 2.3,
+      grace: 0.25,
+      carry: 0.95
+    }
+  ];
 
   const canvas = document.getElementById('view');
   const ctx = canvas.getContext('2d', { alpha: false });
@@ -105,6 +315,11 @@
         this.beep(90, 0.7, 'square', 0.06, 40);
       } else if (kind === 'start') {
         this.beep(220, 0.16, 'sine', 0.07, 440);
+      } else if (kind === 'clear') {
+        this.beep(392, 0.12, 'triangle', 0.08, 660);
+        this.beep(523, 0.2, 'sine', 0.06, 784);
+      } else if (kind === 'jump') {
+        this.beep(520, 0.07, 'square', 0.045, 180);
       }
     },
     tickDrone(temp, out, heating) {
@@ -136,11 +351,12 @@
   const G = {
     mode: 'title',
     t: 0,
-    remain: DURATION,
+    remain: STAGES[0].dur,
     temp: 50,
     vel: 0,
     stab: 0,
     crack: 0,
+    crackAtEntry: 0,
     heating: false,
     pressT: 0,
     wasDown: false,
@@ -150,12 +366,22 @@
     shake: 0,
     flash: 0,
     coolFlash: 0,
+    clearFlash: 0,
+    jumpFlash: 0,
     heatGlow: 0,
     seed: 1,
     paused: false,
     result: '',
-    clock: 0
+    clock: 0,
+    stage: 0,
+    cueT: 0,
+    jumpOff: 0,
+    jumpTarget: 0,
+    jumpK: -1,
+    survived: 0
   };
+
+  const stageTagEl = document.getElementById('stage-tag');
 
   function clamp(v, a, b) {
     return v < a ? a : v > b ? b : v;
@@ -221,19 +447,50 @@
     }
   }
 
+  function spec() {
+    return STAGES[G.mode === 'title' ? 0 : G.stage];
+  }
+
   function bandAt(t) {
-    const u = smooth(t / DURATION);
-    const w = mix(32, 14, u);
-    let c =
-      50 +
-      Math.sin(t * 0.52) * mix(10, 18, u) +
-      Math.sin(t * 1.13 + 0.7) * mix(4, 11, u) +
-      Math.sin(t * 1.82 + 2.2) * mix(0, 6, Math.max(0, (t - 16) / 18)) +
-      Math.sin(t * 0.19 + 1.1) * 5;
+    const S = spec();
+    const u = smooth(S.dur > 0 ? t / S.dur : 0);
+    const w = mix(S.w0, S.w1, u);
+    let c = S.center;
+    const osc = S.osc;
+    for (let i = 0; i < osc.length; i++) {
+      const o = osc[i];
+      c += Math.sin(t * o.f + o.p) * mix(o.a0, o.a1, u);
+    }
+    if (G.mode === 'play') c += G.jumpOff;
     const half = w / 2;
     if (c - half < 5) c = 5 + half;
     if (c + half > 95) c = 95 - half;
     return { lo: c - half, hi: c + half, c: c, w: w };
+  }
+
+  function updateJump(dt) {
+    const S = STAGES[G.stage];
+    if (!S.jump) {
+      G.jumpOff = 0;
+      G.jumpTarget = 0;
+      G.jumpK = -1;
+      return;
+    }
+    if (G.t < S.jumpDelay) {
+      G.jumpTarget = 0;
+    } else {
+      const k = (G.t - S.jumpDelay) / S.jump | 0;
+      if (k !== G.jumpK) {
+        G.jumpK = k;
+        const rnd = rng((G.seed + (k + 1) * 7919 + (G.stage + 3) * 104729) | 0);
+        const mag = mix(S.jumpAmt * 0.58, S.jumpAmt, rnd());
+        const sign = k % 2 === 0 ? 1 : -1;
+        G.jumpTarget = sign * mag;
+        G.jumpFlash = 1;
+        audio.pulse('jump');
+      }
+    }
+    G.jumpOff += (G.jumpTarget - G.jumpOff) * Math.min(1, S.jumpLerp * dt);
   }
 
   function tempColor(temp, a) {
@@ -292,33 +549,67 @@
     layout.gw = Math.max(16, m * 0.028);
   }
 
-  function resetRun() {
+  function pad2(n) {
+    return n < 10 ? '0' + n : '' + n;
+  }
+
+  function setStageTag() {
+    if (!stageTagEl) return;
+    if (G.mode === 'play') {
+      stageTagEl.textContent = pad2(G.stage + 1) + ' / ' + pad2(STAGES.length);
+    } else if (G.mode === 'win') {
+      stageTagEl.textContent = 'LOCK';
+    } else if (G.mode === 'lose') {
+      stageTagEl.textContent = pad2(G.stage + 1) + ' / ' + pad2(STAGES.length);
+    } else {
+      stageTagEl.textContent = 'CORE';
+    }
+  }
+
+  function beginStage(fresh, retry) {
+    const S = STAGES[G.stage];
+    if (fresh) {
+      G.crack = 0;
+      G.crackAtEntry = 0;
+      G.survived = 0;
+      G.seed = (Math.random() * 1e9) | 0;
+      makeCracks(G.seed);
+      particles.length = 0;
+      ripples.length = 0;
+    } else if (retry) {
+      G.crack = G.crackAtEntry;
+    } else {
+      G.crack = Math.max(0, G.crack * S.carry);
+      G.crackAtEntry = G.crack;
+    }
     G.t = 0;
-    G.remain = DURATION;
-    G.temp = 50;
+    G.remain = S.dur;
     G.vel = 0;
     G.stab = 0;
-    G.crack = 0;
     G.heating = false;
     G.pressT = 0;
     G.wasDown = false;
-    G.lock = INPUT_LOCK;
-    G.inBand = true;
-    G.band = bandAt(0);
+    G.lock = INPUT_LOCK + 0.1;
     G.shake = 0;
     G.flash = 0;
-    G.coolFlash = 0;
+    G.coolFlash = fresh ? 0 : 0.85;
     G.heatGlow = 0;
-    G.seed = (Math.random() * 1e9) | 0;
+    G.jumpOff = 0;
+    G.jumpTarget = 0;
+    G.jumpK = -1;
+    G.jumpFlash = 0;
+    G.cueT = 2.35;
     G.result = '';
-    G.clock = 0;
+    G.band = bandAt(0);
+    G.temp = G.band.c;
+    G.inBand = true;
     audio.alarmAt = -1;
-    particles.length = 0;
-    ripples.length = 0;
-    makeCracks(G.seed);
-    input.pointer = false;
-    input.key = false;
-    input.pointerId = null;
+    if (fresh || retry) {
+      input.pointer = false;
+      input.key = false;
+      input.pointerId = null;
+    }
+    setStageTag();
   }
 
   function showPanel(kind) {
@@ -328,19 +619,20 @@
       kickerEl.textContent = 'MELT CORE';
       titleEl.textContent = '熔核';
       leadEl.innerHTML = '轻点降温，按住升温。<br />把核温留在游走的安全带里。';
-      metaEl.textContent = '撑过 45 秒，或把稳定槽加满。偏出则裂。';
+      metaEl.textContent =
+        '八炉递进。前几炉教手感，后几炉收带、跳变、偏热偏冷。偏出则裂。';
       btnMain.textContent = '启动堆芯';
       footEl.textContent = '空格 / 点击 · M 静音';
     } else if (kind === 'win') {
       card.classList.add('win');
       kickerEl.textContent = 'STABLE';
-      titleEl.textContent = G.result === 'stab' ? '堆芯锁定' : '撑过熔变';
+      titleEl.textContent = '八炉锁核';
       leadEl.textContent =
-        G.result === 'stab' ? '安全带被你捂稳了。核温锁在带内。' : '四十五秒，堆芯没有崩。';
+        G.result === 'stab' ? '末炉被你捂稳了。八条安全带全锁。' : '八炉走完，堆芯没有崩。';
       metaEl.textContent =
-        '用时 ' +
-        (DURATION - G.remain).toFixed(1) +
-        ' 秒 · 稳定 ' +
+        '总存活 ' +
+        G.survived.toFixed(1) +
+        ' 秒 · 末炉稳定 ' +
         Math.round(G.stab) +
         '% · 裂痕 ' +
         Math.round(G.crack) +
@@ -348,26 +640,37 @@
       btnMain.textContent = '再来一局';
       footEl.textContent = '空格 / 回车 · R 重开';
     } else {
+      const S = STAGES[G.stage];
       card.classList.add('lose');
       kickerEl.textContent = 'MELT';
       titleEl.textContent = '堆芯崩裂';
-      leadEl.textContent = '温度偏离安全带，裂痕吞掉了核。';
+      leadEl.textContent =
+        '第 ' + (G.stage + 1) + ' 炉「' + S.name + '」里，温度偏离安全带。';
       metaEl.textContent =
-        '存活 ' + G.t.toFixed(1) + ' 秒 · 稳定 ' + Math.round(G.stab) + '%';
-      btnMain.textContent = '再来一局';
-      footEl.textContent = '空格 / 回车 · R 重开';
+        '存活 ' +
+        (G.survived + G.t).toFixed(1) +
+        ' 秒 · 本炉稳定 ' +
+        Math.round(G.stab) +
+        '%';
+      btnMain.textContent = '重开本炉';
+      footEl.textContent = '空格 重开本炉 · R 从头再来';
     }
+    setStageTag();
   }
 
-  function startPlay() {
+  function startPlay(full) {
     audio.ensure();
     audio.pulse('start');
-    resetRun();
+    const fresh = full || G.mode === 'title' || G.mode === 'win';
+    if (fresh) G.stage = 0;
     G.mode = 'play';
+    beginStage(fresh, !fresh);
+    G.clock = 0;
     panel.classList.add('hidden');
     hud.classList.remove('hidden');
-    hintEl.textContent = '轻点降温 · 按住升温';
+    hintEl.textContent = '第 ' + (G.stage + 1) + ' 炉 · ' + STAGES[G.stage].name;
     hintEl.className = 'hint';
+    setStageTag();
     syncHud();
   }
 
@@ -413,7 +716,36 @@
       });
     }
     audio.stopDrone();
+    setStageTag();
     showPanel(G.mode);
+  }
+
+  function clearStage() {
+    G.survived += G.t;
+    emit(18, {
+      x: layout.cx,
+      y: layout.cy,
+      j: 10,
+      vx0: -70,
+      vx1: 70,
+      vy0: -80,
+      vy1: 30,
+      life: 0.7,
+      r0: 1.8,
+      r1: 4,
+      hue: 'cyan'
+    });
+    if (G.stage >= STAGES.length - 1) {
+      G.stab = Math.min(100, G.stab);
+      endGame(true, G.stab >= 100 ? 'stab' : 'time');
+      return;
+    }
+    audio.pulse('clear');
+    G.clearFlash = 1;
+    G.stage += 1;
+    beginStage(false, false);
+    hintEl.textContent = '第 ' + (G.stage + 1) + ' 炉 · ' + STAGES[G.stage].name;
+    hintEl.className = 'hint cool';
   }
 
   function coolPulse() {
@@ -460,18 +792,21 @@
   }
 
   function updatePlay(dt) {
+    const S = STAGES[G.stage];
     G.lock = Math.max(0, G.lock - dt);
     handleActuator(dt);
 
     G.t += dt;
-    G.remain = Math.max(0, DURATION - G.t);
+    G.remain = Math.max(0, S.dur - G.t);
+    G.cueT = Math.max(0, G.cueT - dt);
+    updateJump(dt);
     G.band = bandAt(G.t);
 
     const wander =
-      Math.sin(G.t * 0.73 + 0.4) * 7 +
-      Math.sin(G.t * 1.67) * 5 +
-      4.2 +
-      G.t * 0.08;
+      Math.sin(G.t * S.wFreq[0] + 0.4) * S.wAmp[0] +
+      Math.sin(G.t * S.wFreq[1]) * S.wAmp[1] +
+      S.bias +
+      G.t * S.drift;
     let acc = wander;
     if (G.heating) acc += 74;
 
@@ -488,14 +823,14 @@
 
     if (inBand) {
       const mid = 1 - Math.abs(G.temp - b.c) / (b.w * 0.5);
-      const rate = 3.35 + 1.55 * clamp(mid, 0, 1);
+      const rate = S.stabRate + 1.55 * clamp(mid, 0, 1);
       G.stab = Math.min(100, G.stab + rate * dt);
-      G.crack = Math.max(0, G.crack - 5.4 * dt);
+      G.crack = Math.max(0, G.crack - S.crackDecay * dt);
       G.shake *= Math.pow(0.04, dt);
     } else {
       const dist = G.temp < b.lo ? b.lo - G.temp : G.temp - b.hi;
-      const rate = 7.2 + dist * 0.62;
-      if (G.t > 0.85) G.crack = Math.min(100, G.crack + rate * dt);
+      const rate = S.crackRate + dist * S.crackDist;
+      if (G.t > S.grace) G.crack = Math.min(100, G.crack + rate * dt);
       G.shake = Math.min(7, 1.6 + dist * 0.12 + G.crack * 0.03);
       if (G.t - audio.alarmAt > 0.38) {
         audio.alarmAt = G.t;
@@ -530,12 +865,12 @@
 
     if (G.stab >= 100) {
       G.stab = 100;
-      endGame(true, 'stab');
+      clearStage();
       return;
     }
     if (G.remain <= 0) {
       G.remain = 0;
-      endGame(true, 'time');
+      clearStage();
       return;
     }
     if (G.crack >= 100) {
@@ -561,8 +896,11 @@
       r.a -= dt * 1.6;
       if (r.a <= 0) ripples.splice(i, 1);
     }
+    G.clearFlash = Math.max(0, G.clearFlash - dt * 2.6);
+    G.jumpFlash = Math.max(0, G.jumpFlash - dt * 3.4);
     if (G.mode === 'title') {
       G.clock += dt;
+      G.jumpOff = 0;
       G.band = bandAt(G.clock * 0.55);
       G.temp = 50 + Math.sin(G.clock * 0.8) * 2.2;
     } else if (G.mode === 'win') {
@@ -580,17 +918,24 @@
   function syncHud() {
     timeEl.textContent = G.remain.toFixed(1);
     stabEl.textContent = Math.round(G.stab) + '%';
+    const S = STAGES[G.stage];
     if (!G.inBand) {
       hintEl.textContent = '偏离安全带 · 裂痕 ' + Math.round(G.crack) + '%';
       hintEl.className = 'hint warn';
+    } else if (G.cueT > 0.35) {
+      hintEl.textContent = '第 ' + (G.stage + 1) + ' 炉 · ' + S.name + ' · ' + S.cue;
+      hintEl.className = 'hint';
     } else if (G.heating) {
       hintEl.textContent = '升温中';
       hintEl.className = 'hint heat';
     } else if (G.coolFlash > 0.35) {
       hintEl.textContent = '降温';
       hintEl.className = 'hint cool';
+    } else if (G.jumpFlash > 0.2) {
+      hintEl.textContent = '安全带跳变';
+      hintEl.className = 'hint warn';
     } else {
-      hintEl.textContent = '轻点降温 · 按住升温';
+      hintEl.textContent = S.cue;
       hintEl.className = 'hint';
     }
   }
@@ -656,15 +1001,20 @@
     const by0 = gy(G.band.hi);
     const by1 = gy(G.band.lo);
     const inB = G.mode !== 'play' ? true : G.inBand;
+    const jumping = G.jumpFlash > 0.12;
     ctx.save();
-    ctx.shadowColor = inB ? '#00f0ff' : '#ff3db8';
+    ctx.shadowColor = jumping ? '#ffe36b' : inB ? '#00f0ff' : '#ff3db8';
     ctx.shadowBlur = 18;
-    ctx.strokeStyle = inB ? 'rgba(0,240,255,0.95)' : 'rgba(255,61,184,0.95)';
+    ctx.strokeStyle = jumping
+      ? 'rgba(255,227,107,0.95)'
+      : inB ? 'rgba(0,240,255,0.95)' : 'rgba(255,61,184,0.95)';
     ctx.lineWidth = 3;
     ctx.strokeRect(x - w / 2 - 10, by0, w + 20, by1 - by0);
-    ctx.fillStyle = inB ? 'rgba(0,240,255,0.1)' : 'rgba(255,61,184,0.16)';
+    ctx.fillStyle = G.jumpFlash > 0
+      ? 'rgba(255,227,107,' + (0.1 + G.jumpFlash * 0.22) + ')'
+      : inB ? 'rgba(0,240,255,0.1)' : 'rgba(255,61,184,0.16)';
     ctx.fillRect(x - w / 2 - 10, by0, w + 20, by1 - by0);
-    ctx.fillStyle = inB ? '#00f0ff' : '#ff3db8';
+    ctx.fillStyle = G.jumpFlash > 0.15 ? '#ffe36b' : inB ? '#00f0ff' : '#ff3db8';
     ctx.fillRect(x - w / 2 - 14, by0 - 2, w + 28, 4);
     ctx.fillRect(x - w / 2 - 14, by1 - 2, w + 28, 4);
     ctx.restore();
@@ -831,6 +1181,25 @@
     ctx.restore();
   }
 
+  function drawStagePips() {
+    const n = STAGES.length;
+    const x = layout.cx;
+    const y = layout.cy + layout.coreR * 1.68;
+    const gap = Math.max(9, layout.coreR * 0.16);
+    const total = (n - 1) * gap;
+    for (let i = 0; i < n; i++) {
+      const px = x - total / 2 + i * gap;
+      const done = G.mode === 'win' || ((G.mode === 'play' || G.mode === 'lose') && i < G.stage);
+      const cur = (G.mode === 'play' || G.mode === 'lose') && i === G.stage;
+      ctx.beginPath();
+      ctx.arc(px, y, cur ? 3.3 : 2.3, 0, Math.PI * 2);
+      if (done) ctx.fillStyle = '#00f0ff';
+      else if (cur) ctx.fillStyle = G.inBand || G.mode !== 'play' ? '#ffe36b' : '#ff3db8';
+      else ctx.fillStyle = 'rgba(246,243,255,0.18)';
+      ctx.fill();
+    }
+  }
+
   function drawParticles() {
     for (let i = 0; i < particles.length; i++) {
       const p = particles[i];
@@ -851,9 +1220,14 @@
     drawCore();
     drawParticles();
     drawGauge();
+    drawStagePips();
 
     if (G.flash > 0) {
       ctx.fillStyle = 'rgba(255,61,184,' + G.flash * 0.28 + ')';
+      ctx.fillRect(-sx, -sy, W, H);
+    }
+    if (G.clearFlash > 0) {
+      ctx.fillStyle = 'rgba(0,240,255,' + G.clearFlash * 0.14 + ')';
       ctx.fillRect(-sx, -sy, W, H);
     }
     if (G.mode === 'play' && !G.inBand) {
@@ -889,7 +1263,7 @@
     if (isUi(e.target)) return;
     audio.ensure();
     if (G.mode !== 'play') {
-      startPlay();
+      startPlay(G.mode !== 'lose');
       e.preventDefault();
       return;
     }
@@ -919,7 +1293,7 @@
     if (k === 'r' || k === 'R') {
       if (G.mode === 'play' || G.mode === 'win' || G.mode === 'lose') {
         audio.ensure();
-        startPlay();
+        startPlay(true);
         e.preventDefault();
       }
       return;
@@ -927,8 +1301,12 @@
     if (k === ' ' || k === 'Enter') {
       e.preventDefault();
       if (e.repeat) return;
-      if (G.mode === 'title' || G.mode === 'win' || G.mode === 'lose') {
-        startPlay();
+      if (G.mode === 'title' || G.mode === 'win') {
+        startPlay(true);
+        return;
+      }
+      if (G.mode === 'lose') {
+        startPlay(false);
         return;
       }
       if (G.mode === 'play') input.key = true;
@@ -942,12 +1320,12 @@
   btnMain.addEventListener('click', function (e) {
     e.stopPropagation();
     audio.ensure();
-    startPlay();
+    startPlay(G.mode !== 'lose');
   });
   btnRetry.addEventListener('click', function (e) {
     e.stopPropagation();
     audio.ensure();
-    startPlay();
+    startPlay(true);
   });
   btnMute.addEventListener('click', function (e) {
     e.stopPropagation();

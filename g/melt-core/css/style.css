@@ -64,8 +64,9 @@ canvas {
 
 .brand span {
   font-size: 10px;
-  letter-spacing: 0.42em;
+  letter-spacing: 0.18em;
   color: var(--cyan);
+  white-space: nowrap;
 }
 
 .readouts {
