@@ -15,9 +15,14 @@
   const P_SPD = 4.35;
   const BEST_KEY = 'playbox-bomb-maze-best';
   const MUTE_KEY = 'playbox-bomb-maze-mute';
+  const AUTO_SPEED_KEY = 'playbox-bomb-maze-auto-speed';
+  const AUTO_SPEED_NAME = ['', '慢', '中', '快', '极快'];
+  const AUTO_TIME = [0, 0.7, 1, 1.45, 2.85];
+  const AUTO_PLANT_WAIT = [0, 0.2, 0.07, 0, 0];
+  const AUTO_OV_WAIT = [0, 0.85, 0.5, 0.22, 0.06];
   const DX = [0, 1, 0, -1];
   const DY = [-1, 0, 1, 0];
-  const OPS = '方向键 / WASD 走 · 空格或点击放弹 · 拖动也能走 · R 重开 · M 静音';
+  const OPS = '方向键 / W S D 走 · 空格或点击放弹 · 拖动也能走 · A 自动 · R 重开 · M 静音';
 
   const MAG = [255, 61, 184];
   const CYN = [0, 240, 255];
@@ -224,6 +229,9 @@
   const ovMenu = el('ov-menu');
   const btnMute = el('btn-mute');
   const btnRetry = el('btn-retry');
+  const btnAuto = el('btn-auto');
+  const speedEl = el('speed');
+  const speedLab = el('speed-lab');
   const modeCamp = el('mode-camp');
   const modeEnd = el('mode-end');
   const scoreEl = el('score');
@@ -258,6 +266,21 @@
   let addTok = 0;
   let chainTok = 0;
   let lastPress = 'right';
+  let autoOn = false;
+  let autoSpeed = 3;
+  let autoWish = { x: 0, y: 0 };
+  let autoGoal = null;
+  let autoStuck = 0;
+  let autoLastX = 1;
+  let autoLastY = 1;
+  let autoPlantWait = 0;
+  let autoOvWait = 0;
+  let autoReplan = 0;
+  let autoDs = null;
+  let autoDe = null;
+  let autoSeen = null;
+  let autoPrev = null;
+  let autoQueue = null;
 
   const keys = { u: false, d: false, l: false, r: false };
   const ptr = { down: false, id: null, sx: 0, sy: 0, x: 0, y: 0, dragging: false, dirX: 0, dirY: 0 };
@@ -493,6 +516,7 @@
   }
 
   function hitStop(chain) {
+    if (autoOn && autoSpeed >= 4) return;
     if (REDUCE) return;
     const t = 0.034 + Math.min(0.046, Math.max(0, chain - 1) * 0.014);
     G.stop = Math.max(G.stop, t);
@@ -654,7 +678,819 @@
     }
   }
 
+  function autoResetPlan() {
+    autoGoal = null;
+    autoWish.x = 0;
+    autoWish.y = 0;
+    autoStuck = 0;
+    autoPlantWait = 0;
+    autoReplan = 0;
+  }
+
+  function autoEnsureBuf() {
+    if (autoDs) return;
+    const n = COLS * ROWS;
+    autoDs = new Float32Array(n);
+    autoDe = new Float32Array(n);
+    autoSeen = new Int16Array(n);
+    autoPrev = new Int16Array(n);
+    autoQueue = new Int16Array(n);
+  }
+
+  function autoStepTime() {
+    return 1 / P_SPD;
+  }
+
+  function autoHazardHold() {
+    let hold = 0.85;
+    for (let i = 0; i < G.bombs.length; i++) {
+      const b = G.bombs[i];
+      if (b.dead && !b.pending) continue;
+      const t = b.pending ? b.pending.wait : b.t;
+      hold = Math.max(hold, t + BLAST_LIFE + 0.08);
+    }
+    return Math.min(hold, 2.7);
+  }
+
+  function autoRebuildDanger(extra) {
+    autoEnsureBuf();
+    const inf = 99;
+    autoDs.fill(inf);
+    autoDe.fill(0);
+    for (let i = 0; i < G.blast.length; i++) {
+      if (G.blast[i] > 0) {
+        autoDs[i] = 0;
+        autoDe[i] = G.blast[i];
+      }
+    }
+    const list = [];
+    for (let i = 0; i < G.bombs.length; i++) {
+      const b = G.bombs[i];
+      if (b.dead && !b.pending) continue;
+      list.push({
+        c: b.c,
+        r: b.r,
+        range: b.range,
+        t: b.pending ? b.pending.wait : b.t
+      });
+    }
+    if (extra) {
+      list.push({
+        c: extra.c,
+        r: extra.r,
+        range: extra.range != null ? extra.range : G.fire,
+        t: extra.t != null ? extra.t : FUSE
+      });
+    }
+    let changed = true;
+    let guard = 0;
+    while (changed && guard++ < 24) {
+      changed = false;
+      for (let i = 0; i < list.length; i++) {
+        const cells = blastCells(G.grid, list[i].c, list[i].r, list[i].range);
+        const hit = {};
+        for (let k = 0; k < cells.length; k++) hit[idx(cells[k].c, cells[k].r)] = 1;
+        for (let j = 0; j < list.length; j++) {
+          if (i === j) continue;
+          if (hit[idx(list[j].c, list[j].r)]) {
+            const nt = list[i].t + 0.05;
+            if (nt < list[j].t - 1e-4) {
+              list[j].t = nt;
+              changed = true;
+            }
+          }
+        }
+      }
+    }
+    for (let i = 0; i < list.length; i++) {
+      const cells = blastCells(G.grid, list[i].c, list[i].r, list[i].range);
+      const t0 = Math.max(0, list[i].t);
+      const t1 = t0 + BLAST_LIFE;
+      for (let k = 0; k < cells.length; k++) {
+        const id = idx(cells[k].c, cells[k].r);
+        if (t0 < autoDs[id]) autoDs[id] = t0;
+        if (t1 > autoDe[id]) autoDe[id] = t1;
+      }
+    }
+  }
+
+  function autoSafeAt(c, r, t, hold) {
+    if (!inb(c, r)) return false;
+    const ds = autoDs[idx(c, r)];
+    const de = autoDe[idx(c, r)];
+    if (ds >= 90) return true;
+    const t1 = t + (hold || 0);
+    return t1 < ds - 0.05 || t > de + 0.02;
+  }
+
+  function autoWalkable(c, r, sc, sr) {
+    if (!inb(c, r)) return false;
+    const tile = G.grid[idx(c, r)];
+    if (tile === HARD || tile === SOFT) return false;
+    if (c === sc && r === sr) return true;
+    if (bombAt(c, r)) return false;
+    return true;
+  }
+
+  function autoNearEnemy(c, r, rad) {
+    for (let i = 0; i < G.enemies.length; i++) {
+      const e = G.enemies[i];
+      if (e.dead) continue;
+      if (Math.abs(e.x - c) < rad && Math.abs(e.y - r) < rad) return true;
+    }
+    return false;
+  }
+
+  function autoUnwind(nid, sid) {
+    const path = [];
+    let cur = nid;
+    let guard = 0;
+    while (cur !== sid && cur >= 0 && guard++ < COLS * ROWS) {
+      path.push({ c: cur % COLS, r: (cur / COLS) | 0 });
+      cur = autoPrev[cur];
+    }
+    path.reverse();
+    return path;
+  }
+
+  function autoBfs(sc, sr, pred, ignoreFire) {
+    autoEnsureBuf();
+    autoSeen.fill(-1);
+    autoPrev.fill(-1);
+    if (!inb(sc, sr)) return null;
+    const sid = idx(sc, sr);
+    let qh = 0;
+    let qt = 0;
+    autoQueue[qt++] = sid;
+    autoSeen[sid] = 0;
+    const step = autoStepTime();
+    const allowFire = ignoreFire || G.invuln > 0.2;
+    if (pred(sc, sr, 0, 0)) return [];
+    while (qh < qt) {
+      const id = autoQueue[qh++];
+      const c = id % COLS;
+      const r = (id / COLS) | 0;
+      const d = autoSeen[id];
+      for (let dir = 0; dir < 4; dir++) {
+        const nc = c + DX[dir];
+        const nr = r + DY[dir];
+        if (!autoWalkable(nc, nr, sc, sr)) continue;
+        const nid = idx(nc, nr);
+        if (autoSeen[nid] >= 0) continue;
+        const nt = (d + 1) * step;
+        const ds = autoDs[nid];
+        const de = autoDe[nid];
+        const hold = autoStepTime() * 1.25;
+        if (ds < 90 && nt + hold >= ds && nt < de) {
+          if (!(allowFire && ds <= 0.02)) continue;
+        }
+        if (!allowFire && G.invuln <= 0 && autoNearEnemy(nc, nr, 0.48)) continue;
+        autoSeen[nid] = d + 1;
+        autoPrev[nid] = id;
+        if (pred(nc, nr, d + 1, nt)) return autoUnwind(nid, sid);
+        autoQueue[qt++] = nid;
+      }
+    }
+    return null;
+  }
+
+  function autoPathTo(sc, sr, gc, gr, ignoreFire) {
+    if (sc === gc && sr === gr) return [];
+    return autoBfs(sc, sr, function (c, r) {
+      return c === gc && r === gr;
+    }, ignoreFire);
+  }
+
+  function autoReachable(sc, sr) {
+    const out = [];
+    autoBfs(sc, sr, function (c, r, d, t) {
+      out.push({ c: c, r: r, d: d, t: t });
+      return false;
+    }, false);
+    return out;
+  }
+
+  function autoFleePath(sc, sr) {
+    autoRebuildDanger(null);
+    const hold = autoHazardHold();
+    let path = autoBfs(sc, sr, function (c, r, d, t) {
+      return (d > 0 || (c !== sc || r !== sr)) && autoSafeAt(c, r, t, hold) && !autoNearEnemy(c, r, 0.62);
+    }, true);
+    if (path && path.length) return path;
+    path = autoBfs(sc, sr, function (c, r, d, t) {
+      return autoSafeAt(c, r, t, hold);
+    }, true);
+    if (path && path.length) return path;
+    path = autoBfs(sc, sr, function (c, r, d, t) {
+      return autoSafeAt(c, r, t, 0.55);
+    }, true);
+    if (path && path.length) return path;
+    path = autoBfs(sc, sr, function (c, r, d, t) {
+      return autoSafeAt(c, r, t, 0.12);
+    }, true);
+    return path || [];
+  }
+
+  function autoEscapeFromPlant(c, r) {
+    autoRebuildDanger({ c: c, r: r, range: G.fire, t: FUSE });
+    const path = autoBfs(c, r, function (gc, gr, d, t) {
+      if (gc === c && gr === r) return false;
+      return autoSafeAt(gc, gr, t, 0.55) && !autoNearEnemy(gc, gr, 0.55);
+    }, false);
+    if (path && path.length) return path;
+    const path2 = autoBfs(c, r, function (gc, gr, d, t) {
+      if (gc === c && gr === r) return false;
+      return autoSafeAt(gc, gr, t, 0.45);
+    }, false);
+    if (path2 && path2.length) return path2;
+    return autoBfs(c, r, function (gc, gr, d, t) {
+      if (gc === c && gr === r) return false;
+      return t < FUSE - 0.4 && autoSafeAt(gc, gr, t, 0.2);
+    }, true);
+  }
+
+  function autoScorePlant(c, r, dist) {
+    if (!inb(c, r) || G.grid[idx(c, r)] !== EMPTY) return null;
+    if (G.blast[idx(c, r)] > 0) return null;
+    if (bombAt(c, r)) return null;
+    const cells = blastCells(G.grid, c, r, G.fire);
+    const esc = autoEscapeFromPlant(c, r);
+    if (!esc || !esc.length) return null;
+    const last = esc[esc.length - 1];
+    if (!autoSafeAt(last.c, last.r, esc.length * autoStepTime(), 0.4)) return null;
+    let score = 4;
+    let kills = 0;
+    let walls = 0;
+    const hit = {};
+    for (let i = 0; i < cells.length; i++) {
+      const cc = cells[i];
+      hit[idx(cc.c, cc.r)] = 1;
+      if (G.grid[idx(cc.c, cc.r)] === SOFT) {
+        walls += 1;
+        score += 20;
+      }
+    }
+    for (let i = 0; i < G.enemies.length; i++) {
+      const e = G.enemies[i];
+      if (e.dead) continue;
+      const ec = Math.round(e.x);
+      const er = Math.round(e.y);
+      if (hit[idx(ec, er)]) {
+        kills += 1;
+        score += 280;
+      } else {
+        for (let d = 0; d < 4; d++) {
+          const ac = ec + DX[d];
+          const ar = er + DY[d];
+          if (inb(ac, ar) && hit[idx(ac, ar)]) {
+            score += 42;
+            break;
+          }
+        }
+      }
+      const md = Math.abs(ec - c) + Math.abs(er - r);
+      if (md <= G.fire + 2) score += Math.max(0, 10 - md);
+    }
+    for (let i = 0; i < G.pickups.length; i++) {
+      const p = G.pickups[i];
+      if (hit[idx(p.c, p.r)]) score -= 24;
+    }
+    if (autoNearEnemy(c, r, 0.78) && G.invuln <= 0) score -= 140;
+    const standT = dist * autoStepTime();
+    if (!autoSafeAt(c, r, standT, 0.4)) return null;
+    score -= dist * 3.2;
+    if (!kills && !walls) return null;
+    return { c: c, r: r, score: score, escape: esc, kills: kills, walls: walls };
+  }
+
+  function autoBreakToward(sc, sr, gc, gr) {
+    autoEnsureBuf();
+    autoSeen.fill(0);
+    autoPrev.fill(-1);
+    let qh = 0;
+    let qt = 0;
+    const sid = idx(sc, sr);
+    autoQueue[qt++] = sid;
+    autoSeen[sid] = 1;
+    let found = -1;
+    let foundSoft = false;
+    while (qh < qt) {
+      const id = autoQueue[qh++];
+      const c = id % COLS;
+      const r = (id / COLS) | 0;
+      if (c === gc && r === gr && !foundSoft) {
+        found = id;
+        break;
+      }
+      for (let d = 0; d < 4; d++) {
+        const nc = c + DX[d];
+        const nr = r + DY[d];
+        if (!inb(nc, nr)) continue;
+        const nid = idx(nc, nr);
+        if (autoSeen[nid]) continue;
+        const tile = G.grid[nid];
+        if (tile === HARD) continue;
+        if (bombAt(nc, nr) && !(nc === sc && nr === sr)) continue;
+        autoSeen[nid] = 1;
+        autoPrev[nid] = id;
+        if (tile === SOFT) {
+          found = nid;
+          foundSoft = true;
+          qh = qt;
+          break;
+        }
+        autoQueue[qt++] = nid;
+      }
+    }
+    if (found < 0) return null;
+    if (!foundSoft) {
+      autoRebuildDanger(null);
+      const path = autoPathTo(sc, sr, gc, gr, false);
+      if (!path) return null;
+      return { c: gc, r: gr, plant: false, path: path };
+    }
+    const standId = autoPrev[found];
+    if (standId < 0) return null;
+    const standC = standId % COLS;
+    const standR = (standId / COLS) | 0;
+    autoRebuildDanger(null);
+    const path = autoPathTo(sc, sr, standC, standR, false);
+    if (!path) return null;
+    const scored = autoScorePlant(standC, standR, path.length);
+    if (!scored) return null;
+    return { c: standC, r: standR, plant: true, path: path, escape: scored.escape, wall: true };
+  }
+
+  function autoNearestSoftStand(sc, sr) {
+    let best = null;
+    let bestD = 99;
+    for (let r = 1; r < ROWS - 1; r++) {
+      for (let c = 1; c < COLS - 1; c++) {
+        if (G.grid[idx(c, r)] !== SOFT) continue;
+        for (let d = 0; d < 4; d++) {
+          const nc = c + DX[d];
+          const nr = r + DY[d];
+          if (!inb(nc, nr) || G.grid[idx(nc, nr)] !== EMPTY) continue;
+          if (bombAt(nc, nr)) continue;
+          const md = Math.abs(nc - sc) + Math.abs(nr - sr);
+          if (md < bestD) {
+            bestD = md;
+            best = { c: nc, r: nr };
+          }
+        }
+      }
+    }
+    if (!best) return null;
+    return autoBreakToward(sc, sr, best.c, best.r);
+  }
+
+  function autoPickGoal(pc, pr) {
+    autoRebuildDanger(null);
+    if (G.door) {
+      const p = autoPathTo(pc, pr, G.door.c, G.door.r, false);
+      const doorHold = Math.max(0.4, liveBombCount() ? autoHazardHold() : 0.4);
+      if (p && autoSafeAt(G.door.c, G.door.r, p.length * autoStepTime(), doorHold)) {
+        return { c: G.door.c, r: G.door.r, plant: false, path: p, door: true };
+      }
+      if (liveBombCount() === 0) {
+        const br = autoBreakToward(pc, pr, G.door.c, G.door.r);
+        if (br) return br;
+      }
+    }
+
+    let bestPick = null;
+    let bestPickD = 99;
+    for (let i = 0; i < G.pickups.length; i++) {
+      const p = G.pickups[i];
+      const path = autoPathTo(pc, pr, p.c, p.r, false);
+      if (!path) continue;
+      if (path.length < bestPickD && autoSafeAt(p.c, p.r, path.length * autoStepTime(), 0.25)) {
+        bestPickD = path.length;
+        bestPick = { c: p.c, r: p.r, plant: false, path: path, pickup: true };
+      }
+    }
+
+    const bombsOut = liveBombCount();
+    if (bombsOut >= G.bombsMax) {
+      const hold = autoHazardHold();
+      if (autoSafeAt(pc, pr, 0, hold) && !autoNearEnemy(pc, pr, 0.7)) {
+        return { c: pc, r: pr, plant: false, path: [], wait: true };
+      }
+      const flee = autoFleePath(pc, pr);
+      if (flee && flee.length) {
+        return {
+          c: flee[flee.length - 1].c,
+          r: flee[flee.length - 1].r,
+          plant: false,
+          path: flee,
+          flee: true
+        };
+      }
+    }
+    if (bombsOut < G.bombsMax) {
+      const reach = autoReachable(pc, pr);
+      let best = null;
+      for (let i = 0; i < reach.length; i++) {
+        const s = reach[i];
+        const scored = autoScorePlant(s.c, s.r, s.d);
+        if (!scored) continue;
+        if (!best || scored.score > best.score) best = scored;
+      }
+      if (best && best.score >= 12) {
+        const path = autoPathTo(pc, pr, best.c, best.r, false);
+        if (path) {
+          return {
+            c: best.c,
+            r: best.r,
+            plant: true,
+            path: path,
+            escape: best.escape,
+            score: best.score,
+            kills: best.kills
+          };
+        }
+      }
+    }
+
+    let ne = null;
+    let nd = 1e9;
+    for (let i = 0; i < G.enemies.length; i++) {
+      const e = G.enemies[i];
+      if (e.dead) continue;
+      const d = Math.abs(e.x - G.player.x) + Math.abs(e.y - G.player.y);
+      if (d < nd) {
+        nd = d;
+        ne = e;
+      }
+    }
+    if (ne) {
+      const tc = Math.round(ne.x);
+      const tr = Math.round(ne.y);
+      const br = autoBreakToward(pc, pr, tc, tr);
+      if (br && br.plant) return br;
+    }
+
+    if (bestPick && bestPickD <= 8) return bestPick;
+
+    const wall = autoNearestSoftStand(pc, pr);
+    if (wall) return wall;
+
+    let softGoal = null;
+    let softD = 99;
+    const reach2 = bombsOut < G.bombsMax ? autoReachable(pc, pr) : [];
+    for (let i = 0; i < reach2.length; i++) {
+      const s = reach2[i];
+      for (let d = 0; d < 4; d++) {
+        const nc = s.c + DX[d];
+        const nr = s.r + DY[d];
+        if (!inb(nc, nr) || G.grid[idx(nc, nr)] !== SOFT) continue;
+        if (s.d < softD && autoSafeAt(s.c, s.r, s.t, 0.35)) {
+          softD = s.d;
+          softGoal = s;
+        }
+      }
+    }
+    if (softGoal) {
+      const path = autoPathTo(pc, pr, softGoal.c, softGoal.r, false) || [];
+      return { c: softGoal.c, r: softGoal.r, plant: true, path: path, wall: true };
+    }
+
+    if (bestPick) return bestPick;
+
+    if (bombsOut > 0) {
+      const flee = autoFleePath(pc, pr);
+      if (flee && flee.length) return { c: flee[flee.length - 1].c, r: flee[flee.length - 1].r, plant: false, path: flee, flee: true };
+    }
+    return { c: pc, r: pr, plant: false, path: [] };
+  }
+
+  function autoArrived(c, r) {
+    return Math.abs(G.player.x - c) < 0.22 && Math.abs(G.player.y - r) < 0.22;
+  }
+
+  function autoFollow(path) {
+    if (!path || !path.length) {
+      autoWish.x = 0;
+      autoWish.y = 0;
+      return true;
+    }
+    let i = 0;
+    while (i < path.length) {
+      const w = path[i];
+      if (Math.abs(G.player.x - w.c) < 0.2 && Math.abs(G.player.y - w.r) < 0.2) {
+        i += 1;
+        continue;
+      }
+      break;
+    }
+    if (i >= path.length) {
+      autoWish.x = 0;
+      autoWish.y = 0;
+      return true;
+    }
+    const w = path[i];
+    const dx = w.c - G.player.x;
+    const dy = w.r - G.player.y;
+    const pc = Math.round(G.player.x);
+    const pr = Math.round(G.player.y);
+    if (Math.abs(dx) > 0.08 && Math.abs(dy) > 0.08) {
+      if (w.c !== pc && Math.abs(dx) >= Math.abs(dy) - 0.02) {
+        autoWish.x = dx > 0 ? 1 : -1;
+        autoWish.y = 0;
+      } else if (w.r !== pr) {
+        autoWish.x = 0;
+        autoWish.y = dy > 0 ? 1 : -1;
+      } else {
+        autoWish.x = dx > 0 ? 1 : -1;
+        autoWish.y = 0;
+      }
+    } else if (Math.abs(dx) >= Math.abs(dy)) {
+      autoWish.x = dx > 0 ? 1 : dx < 0 ? -1 : 0;
+      autoWish.y = 0;
+    } else {
+      autoWish.x = 0;
+      autoWish.y = dy > 0 ? 1 : dy < 0 ? -1 : 0;
+    }
+    if (autoWish.x > 0) lastPress = 'right';
+    else if (autoWish.x < 0) lastPress = 'left';
+    else if (autoWish.y > 0) lastPress = 'down';
+    else if (autoWish.y < 0) lastPress = 'up';
+    return false;
+  }
+
+  function autoGoalStillGood(pc, pr) {
+    if (!autoGoal) return false;
+    if (autoGoal.flee || autoGoal.wait) {
+      if (liveBombCount() === 0 && !cellOnBlast(G.player.x, G.player.y)) return false;
+      if (bombAt(pc, pr)) return true;
+      const hold = autoHazardHold();
+      if (autoSafeAt(pc, pr, 0, hold) && !autoNearEnemy(pc, pr, 0.65)) {
+        autoGoal.wait = true;
+        autoGoal.flee = false;
+        autoGoal.plant = false;
+        autoGoal.path = [];
+        autoGoal.c = pc;
+        autoGoal.r = pr;
+        return true;
+      }
+      return true;
+    }
+    if (autoGoal.door) return !!G.door;
+    if (autoGoal.plant) {
+      if (liveBombCount() >= G.bombsMax) return false;
+      if (G.grid[idx(autoGoal.c, autoGoal.r)] !== EMPTY) return false;
+      if (bombAt(autoGoal.c, autoGoal.r) && !autoArrived(autoGoal.c, autoGoal.r)) return false;
+    }
+    if (autoGoal.path && autoGoal.path.length) {
+      for (let i = 0; i < autoGoal.path.length; i++) {
+        const w = autoGoal.path[i];
+        if (!autoWalkable(w.c, w.r, pc, pr) && !(w.c === pc && w.r === pr)) return false;
+      }
+    }
+    return true;
+  }
+
+  function autoRefreshPath(pc, pr) {
+    if (!autoGoal) return;
+    if (autoGoal.flee) {
+      autoGoal.path = autoFleePath(pc, pr);
+      return;
+    }
+    const path = autoPathTo(pc, pr, autoGoal.c, autoGoal.r, false);
+    if (path) autoGoal.path = path;
+  }
+
+  function autoTryPlant(pc, pr) {
+    if (liveBombCount() >= G.bombsMax) return false;
+    if (Math.abs(G.player.x - pc) > 0.32 || Math.abs(G.player.y - pr) > 0.32) return false;
+    const esc = autoEscapeFromPlant(Math.round(G.player.x), Math.round(G.player.y));
+    if (!esc || !esc.length) return false;
+    if (!plant()) return false;
+    autoGoal = {
+      flee: true,
+      plant: false,
+      path: esc,
+      c: esc[esc.length - 1].c,
+      r: esc[esc.length - 1].r
+    };
+    autoPlantWait = 0;
+    autoFollow(esc);
+    return true;
+  }
+
+  function autoThink(dt) {
+    if (G.dead) {
+      autoWish.x = 0;
+      autoWish.y = 0;
+      return;
+    }
+    autoEnsureBuf();
+    const pc = Math.round(G.player.x);
+    const pr = Math.round(G.player.y);
+    autoRebuildDanger(null);
+
+    const moved = Math.abs(G.player.x - autoLastX) + Math.abs(G.player.y - autoLastY);
+    if (moved < 0.035) autoStuck += dt;
+    else autoStuck = 0;
+    autoLastX = G.player.x;
+    autoLastY = G.player.y;
+
+    const inFire = cellOnBlast(G.player.x, G.player.y);
+    const onBomb = !!bombAt(pc, pr);
+    const inDanger = inFire || onBomb || !autoSafeAt(pc, pr, 0, Math.max(0.75, Math.min(1.1, autoHazardHold())));
+    const enemyClose = G.invuln <= 0 && autoNearEnemy(G.player.x, G.player.y, 0.95);
+
+    if (inDanger) {
+      const arrivedFlee = autoGoal && autoGoal.flee && autoArrived(autoGoal.c, autoGoal.r);
+      const keepFlee = autoGoal && autoGoal.flee && autoGoal.path && autoGoal.path.length && !arrivedFlee;
+      if (!keepFlee) {
+        autoGoal = {
+          flee: true,
+          plant: false,
+          path: autoFleePath(pc, pr)
+        };
+        if (autoGoal.path && autoGoal.path.length) {
+          autoGoal.c = autoGoal.path[autoGoal.path.length - 1].c;
+          autoGoal.r = autoGoal.path[autoGoal.path.length - 1].r;
+        } else {
+          autoGoal.c = pc;
+          autoGoal.r = pr;
+        }
+      }
+      autoFollow(autoGoal.path);
+      autoPlantWait = 0;
+      return;
+    }
+
+    if (enemyClose && liveBombCount() < G.bombsMax && Math.abs(G.player.x - pc) < 0.28 && Math.abs(G.player.y - pr) < 0.28) {
+      const scored = autoScorePlant(pc, pr, 0);
+      if (scored && scored.kills) {
+        if (autoTryPlant(pc, pr)) return;
+      }
+    }
+
+    if (autoStuck > 0.42) {
+      autoGoal = null;
+      autoStuck = 0;
+      autoReplan = 0;
+      if (liveBombCount() < G.bombsMax) {
+        for (let d = 0; d < 4; d++) {
+          const nc = pc + DX[d];
+          const nr = pr + DY[d];
+          if (inb(nc, nr) && G.grid[idx(nc, nr)] === SOFT) {
+            if (autoTryPlant(pc, pr)) return;
+          }
+        }
+      }
+    }
+
+    if (autoGoal && autoGoalStillGood(pc, pr)) {
+      autoReplan -= dt;
+      if (autoReplan <= 0) {
+        autoRefreshPath(pc, pr);
+        autoReplan = autoSpeed >= 4 ? 0.1 : 0.22;
+      }
+      if (autoGoal.plant && autoArrived(autoGoal.c, autoGoal.r)) {
+        autoWish.x = 0;
+        autoWish.y = 0;
+        autoPlantWait += dt;
+        if (autoPlantWait >= (AUTO_PLANT_WAIT[autoSpeed] || 0)) {
+          if (!autoTryPlant(autoGoal.c, autoGoal.r)) autoGoal = null;
+        }
+        return;
+      }
+      if (autoFollow(autoGoal.path)) {
+        if (autoGoal.plant) {
+          autoWish.x = 0;
+          autoWish.y = 0;
+          autoPlantWait += dt;
+          if (autoPlantWait >= (AUTO_PLANT_WAIT[autoSpeed] || 0)) {
+            if (!autoTryPlant(autoGoal.c, autoGoal.r)) autoGoal = null;
+          }
+          return;
+        }
+        if (autoGoal.flee || autoGoal.wait) {
+          autoWish.x = 0;
+          autoWish.y = 0;
+          return;
+        }
+        autoGoal = null;
+      } else {
+        return;
+      }
+    }
+
+    autoReplan = autoSpeed >= 4 ? 0.1 : 0.22;
+    autoRebuildDanger(null);
+    autoGoal = autoPickGoal(pc, pr);
+    if (!autoGoal) {
+      autoWish.x = 0;
+      autoWish.y = 0;
+      return;
+    }
+    if (autoGoal.plant && autoArrived(autoGoal.c, autoGoal.r)) {
+      autoWish.x = 0;
+      autoWish.y = 0;
+      autoPlantWait += dt;
+      if (autoPlantWait >= (AUTO_PLANT_WAIT[autoSpeed] || 0)) autoTryPlant(autoGoal.c, autoGoal.r);
+      return;
+    }
+    autoFollow(autoGoal.path);
+  }
+
+  function tickAuto(dt) {
+    if (!autoOn) return;
+    if (G.mode === 'title') {
+      autoOvWait += dt;
+      if (autoOvWait >= (AUTO_OV_WAIT[autoSpeed] || 0.4)) {
+        autoOvWait = 0;
+        if (G.kind === 'endless') startEndless();
+        else startCampaign();
+      }
+      return;
+    }
+    if (G.mode === 'win') {
+      autoOvWait += dt;
+      if (autoOvWait >= (AUTO_OV_WAIT[autoSpeed] || 0.4)) {
+        autoOvWait = 0;
+        gotoNext();
+      }
+      return;
+    }
+    autoOvWait = 0;
+    if (G.mode !== 'play' || G.dead) {
+      autoWish.x = 0;
+      autoWish.y = 0;
+      return;
+    }
+    autoThink(dt);
+  }
+
+  function loadAutoSpeed() {
+    try {
+      const n = parseInt(localStorage.getItem(AUTO_SPEED_KEY) || '3', 10);
+      if (n >= 1 && n <= 4) return n;
+    } catch (err) { /* ignore */ }
+    return 3;
+  }
+
+  function saveAutoSpeed(n) {
+    try {
+      localStorage.setItem(AUTO_SPEED_KEY, String(n));
+    } catch (err) { /* ignore */ }
+  }
+
+  function syncAutoUi() {
+    if (!btnAuto) return;
+    btnAuto.classList.toggle('on', autoOn);
+    btnAuto.setAttribute('aria-pressed', autoOn ? 'true' : 'false');
+    btnAuto.textContent = autoOn ? '停下' : '自动';
+    btnAuto.setAttribute('aria-label', autoOn ? '停止自动' : '自动');
+  }
+
+  function syncSpeedUi() {
+    if (!speedEl || !speedLab) return;
+    speedEl.value = String(autoSpeed);
+    speedLab.textContent = AUTO_SPEED_NAME[autoSpeed];
+    speedEl.title = AUTO_SPEED_NAME[autoSpeed];
+    speedEl.setAttribute('aria-valuetext', AUTO_SPEED_NAME[autoSpeed]);
+  }
+
+  function setAutoSpeed(n) {
+    n = parseInt(n, 10);
+    if (!isFinite(n) || n < 1 || n > 4) n = 3;
+    autoSpeed = n;
+    saveAutoSpeed(autoSpeed);
+    syncSpeedUi();
+  }
+
+  function toggleAuto() {
+    autoOn = !autoOn;
+    autoResetPlan();
+    autoOvWait = 0;
+    keys.u = keys.d = keys.l = keys.r = false;
+    ptr.down = false;
+    ptr.dragging = false;
+    ptr.dirX = 0;
+    ptr.dirY = 0;
+    syncAutoUi();
+    audio.ensure();
+    if (autoOn) {
+      if (G.mode === 'title') {
+        if (G.kind === 'endless') startEndless();
+        else startCampaign();
+      } else if (G.mode === 'play') {
+        setHint('托管中 · A 停下', 'hot');
+      }
+    } else if (G.mode === 'play') {
+      setHint(G.kind === 'endless' ? '无尽 · 波次更密 · 连环加分' : '放弹炸软墙 · 清怪后门开 · 硬墙炸不穿');
+    }
+  }
+
   function wishDir() {
+    if (autoOn && G.mode === 'play') {
+      return { x: autoWish.x, y: autoWish.y };
+    }
     if (ptr.down && ptr.dragging && (ptr.dirX || ptr.dirY)) {
       return { x: ptr.dirX, y: ptr.dirY };
     }
@@ -974,7 +1810,7 @@
     G.door = { c: bestC, r: bestR };
     toast('门开了', false, true);
     audio.door();
-    setHint('走进光门 · 进下一巷', 'hot');
+    setHint(autoOn ? '托管中 · A 停下' : '走进光门 · 进下一巷', 'hot');
   }
 
   function maybeNextWave() {
@@ -1007,7 +1843,7 @@
     spawnEnemies(enemies, hunt, spd);
     G.waveWait = 0;
     syncHud();
-    setHint('无尽 · 波次更密 · 连环加分', 'hot');
+    setHint(autoOn ? '托管中 · A 停下' : '无尽 · 波次更密 · 连环加分', autoOn ? 'hot' : 'hot');
   }
 
   function winStage() {
@@ -1017,7 +1853,8 @@
     G.flashRgb = LIME;
     kick('win-flash');
     audio.win();
-    if (G.kind === 'campaign' && G.stage >= STAGES.length - 1) {
+    if (autoOn) setHint('托管中 · A 停下', 'hot');
+    else if (G.kind === 'campaign' && G.stage >= STAGES.length - 1) {
       setHint('全巷扫清 · R 再来', 'hot');
     } else {
       setHint('巷清了 · 空格下一关', 'hot');
@@ -1029,7 +1866,7 @@
     G.mode = 'lose';
     saveBest();
     audio.lose();
-    setHint('炸到了 · R 重开', 'warn');
+    setHint(autoOn ? '托管中 · R 重开接着打' : '炸到了 · R 重开', 'warn');
     showOverlay('lose');
   }
 
@@ -1047,7 +1884,8 @@
     buildStage(STAGES[0], 0);
     hideOverlay();
     audio.start();
-    setHint('放弹炸软墙 · 清怪后门开 · 硬墙炸不穿');
+    autoResetPlan();
+    setHint(autoOn ? '托管中 · A 停下' : '放弹炸软墙 · 清怪后门开 · 硬墙炸不穿', autoOn ? 'hot' : null);
     syncHud();
     if (canvas) canvas.focus();
   }
@@ -1066,7 +1904,8 @@
     buildStage({ name: '无尽', enemies: 3, hunt: 0, density: 0.34, spd: 1.62 }, 0);
     hideOverlay();
     audio.start();
-    setHint('无尽 · 波次更密 · 连环加分');
+    autoResetPlan();
+    setHint(autoOn ? '托管中 · A 停下' : '无尽 · 波次更密 · 连环加分', autoOn ? 'hot' : null);
     syncHud();
     if (canvas) canvas.focus();
   }
@@ -1087,7 +1926,8 @@
     buildStage(STAGES[G.stage], 0);
     hideOverlay();
     audio.start();
-    setHint('第 ' + (G.stage + 1) + ' 巷 · ' + STAGES[G.stage].name);
+    autoResetPlan();
+    setHint(autoOn ? '托管中 · A 停下' : ('第 ' + (G.stage + 1) + ' 巷 · ' + STAGES[G.stage].name), autoOn ? 'hot' : null);
     syncHud();
     if (canvas) canvas.focus();
   }
@@ -1113,7 +1953,7 @@
     G.enemies.length = 0;
     spawnEnemies(2, 0, 1.1);
     showOverlay('title');
-    setHint('方向键走 · 空格或点击放弹 · 清怪后门开 · 硬墙炸不穿');
+    setHint(autoOn ? '托管中 · A 停下' : '方向键走 · 空格或点击放弹 · A 自动 · 清怪后门开 · 硬墙炸不穿', autoOn ? 'hot' : null);
     syncHud();
   }
 
@@ -1248,6 +2088,8 @@
     if (G.shake > 0) G.shake = Math.max(0, G.shake - dt * 28);
     if (G.flash > 0) G.flash = Math.max(0, G.flash - dt * 2.4);
     if (G.player.squash > 0) G.player.squash = Math.max(0, G.player.squash - dt * 2.8);
+    if (autoOn && (G.mode !== 'play' || G.stop <= 0)) tickAuto(dt);
+
     if (G.stop > 0) {
       G.stop -= dt;
       updateParticles(dt);
@@ -1689,6 +2531,7 @@
   function onPointerDown(e) {
     if (e.button != null && e.button !== 0) return;
     audio.ensure();
+    if (autoOn) return;
     if (overlayOpenPlayBlock()) return;
     const w = pointerWorld(e);
     ptr.down = true;
@@ -1743,26 +2586,45 @@
   function onKey(e, down) {
     const k = e.key;
     const code = e.code;
+    if (k === 'm' || k === 'M') {
+      e.preventDefault();
+      if (down && !e.repeat) {
+        audio.ensure();
+        audio.setMuted(!audio.muted);
+      }
+      return;
+    }
+    if (k === 'r' || k === 'R') {
+      e.preventDefault();
+      if (down && !e.repeat) restart();
+      return;
+    }
+    if (k === 'a' || k === 'A' || code === 'KeyA') {
+      e.preventDefault();
+      if (down && !e.repeat) toggleAuto();
+      return;
+    }
     const isUp = k === 'ArrowUp' || k === 'Up' || code === 'KeyW' || k === 'w' || k === 'W';
     const isDn = k === 'ArrowDown' || k === 'Down' || code === 'KeyS' || k === 's' || k === 'S';
-    const isLf = k === 'ArrowLeft' || k === 'Left' || code === 'KeyA' || k === 'a' || k === 'A';
+    const isLf = k === 'ArrowLeft' || k === 'Left';
     const isRt = k === 'ArrowRight' || k === 'Right' || code === 'KeyD' || k === 'd' || k === 'D';
     const isSp = k === ' ' || k === 'Spacebar' || code === 'Space';
     if (isUp || isDn || isLf || isRt || isSp) e.preventDefault();
+    if (autoOn) {
+      if (!down) return;
+      if (e.repeat) return;
+      if ((isSp || k === 'Enter') && overlayOpen()) {
+        if (e.target && e.target.tagName === 'BUTTON') return;
+        audio.ensure();
+        primaryAction();
+      }
+      return;
+    }
     if (isUp) setKey('up', down);
     if (isDn) setKey('down', down);
     if (isLf) setKey('left', down);
     if (isRt) setKey('right', down);
     if (!down) return;
-    if (k === 'm' || k === 'M') {
-      audio.ensure();
-      audio.setMuted(!audio.muted);
-      return;
-    }
-    if (k === 'r' || k === 'R') {
-      restart();
-      return;
-    }
     if (e.repeat) return;
     if (isSp || k === 'Enter') {
       if (e.target && e.target.tagName === 'BUTTON') return;
@@ -1794,6 +2656,7 @@
       e.preventDefault();
       e.stopPropagation();
       audio.ensure();
+      if (autoOn) return;
       if (dir === 'bomb') {
         if (!overlayOpenPlayBlock()) plant();
         btn.classList.add('held');
@@ -1864,6 +2727,11 @@
   if (ovAgain) ovAgain.addEventListener('click', function () { primaryAction(); });
   if (ovMenu) ovMenu.addEventListener('click', function () { audio.ensure(); bootTitle(); });
   if (btnRetry) btnRetry.addEventListener('click', function () { restart(); });
+  if (btnAuto) btnAuto.addEventListener('click', function () { toggleAuto(); });
+  if (speedEl) {
+    speedEl.addEventListener('input', function () { setAutoSpeed(speedEl.value); });
+    speedEl.addEventListener('change', function () { setAutoSpeed(speedEl.value); });
+  }
   if (btnMute) btnMute.addEventListener('click', function () {
     audio.ensure();
     audio.setMuted(!audio.muted);
@@ -1898,12 +2766,15 @@
   } catch (err) { /* ignore */ }
 
   loadBest();
+  autoSpeed = loadAutoSpeed();
+  syncSpeedUi();
+  syncAutoUi();
   resize();
   bootTitle();
   syncHud();
 
   if (padEl && window.matchMedia && window.matchMedia('(pointer: coarse)').matches) {
-    setHint('滑动或十字键走 · 点炸放弹 · 清怪后门开');
+    setHint('滑动或十字键走 · 点炸放弹 · A 自动 · 清怪后门开');
   }
 
   let last = performance.now();
@@ -1917,14 +2788,16 @@
     let dt = (now - last) / 1000;
     last = now;
     if (dt > 0.05) dt = 0.05;
-    acc += dt;
+    const scale = (autoOn && G.mode === 'play') ? (AUTO_TIME[autoSpeed] || 1) : 1;
+    acc += dt * scale;
     let steps = 0;
-    while (acc >= STEP && steps < 5) {
+    const maxSteps = autoOn && autoSpeed >= 4 ? 16 : 5;
+    while (acc >= STEP && steps < maxSteps) {
       update(STEP);
       acc -= STEP;
       steps += 1;
     }
-    if (acc > STEP * 5) acc = 0;
+    if (acc > STEP * maxSteps) acc = 0;
     draw();
   }
   requestAnimationFrame(frame);
