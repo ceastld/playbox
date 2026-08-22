@@ -2007,7 +2007,7 @@
     "blurb": "打关卡头目，抢走他们的武器。",
     "hue": 200,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/mega-run/",
     "kind": "remake"
   },
@@ -2019,7 +2019,7 @@
     "blurb": "马上挥斧，清一波再打头目。",
     "hue": 28,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/axe-war/",
     "kind": "remake"
   },
@@ -2057,6 +2057,30 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/rain-isle/",
+    "kind": "remake"
+  },
+  {
+    "n": 181,
+    "id": "gal-raid",
+    "title": "虫袭",
+    "subtitle": "GAL",
+    "blurb": "编队来袭，抓住单机再打。",
+    "hue": 168,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/gal-raid/",
+    "kind": "remake"
+  },
+  {
+    "n": 182,
+    "id": "kung-leap",
+    "title": "功夫",
+    "subtitle": "KUNG",
+    "blurb": "一层一层往上打，别让人抓住。",
+    "hue": 12,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/kung-leap/",
     "kind": "remake"
   }
 ]

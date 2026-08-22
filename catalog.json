@@ -1868,5 +1868,29 @@
     "dir": "g/castle-whip/",
     "url": "./g/castle-whip/",
     "kind": "remake"
+  },
+  {
+    "n": 176,
+    "id": "mega-run",
+    "title": "洛克",
+    "subtitle": "MEGA",
+    "blurb": "打关卡头目，抢走他们的武器。",
+    "hue": 200,
+    "tag": "复刻",
+    "dir": "g/mega-run/",
+    "url": "./g/mega-run/",
+    "kind": "remake"
+  },
+  {
+    "n": 177,
+    "id": "axe-war",
+    "title": "战斧",
+    "subtitle": "AXE",
+    "blurb": "马上挥斧，清一波再打头目。",
+    "hue": 28,
+    "tag": "复刻",
+    "dir": "g/axe-war/",
+    "url": "./g/axe-war/",
+    "kind": "remake"
   }
 ]
