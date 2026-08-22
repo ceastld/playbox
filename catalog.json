@@ -1304,5 +1304,41 @@
     "dir": "g/centi-crawl/",
     "url": "./g/centi-crawl/",
     "kind": "remake"
+  },
+  {
+    "n": 128,
+    "id": "miss-cmd",
+    "title": "防空",
+    "subtitle": "MISSILE",
+    "blurb": "炸掉落弹，护住六城。",
+    "hue": 12,
+    "tag": "复刻",
+    "dir": "g/miss-cmd/",
+    "url": "./g/miss-cmd/",
+    "kind": "remake"
+  },
+  {
+    "n": 130,
+    "id": "qix-cut",
+    "title": "割域",
+    "subtitle": "QIX",
+    "blurb": "圈地，别碰上线。",
+    "hue": 260,
+    "tag": "复刻",
+    "dir": "g/qix-cut/",
+    "url": "./g/qix-cut/",
+    "kind": "remake"
+  },
+  {
+    "n": 132,
+    "id": "dot-munch",
+    "title": "豆径",
+    "subtitle": "PAC",
+    "blurb": "吃光豆子，躲鬼。",
+    "hue": 48,
+    "tag": "复刻",
+    "dir": "g/dot-munch/",
+    "url": "./g/dot-munch/",
+    "kind": "remake"
   }
 ]

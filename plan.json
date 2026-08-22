@@ -1431,7 +1431,7 @@
     "blurb": "炸掉落弹，护住六城。",
     "hue": 12,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/miss-cmd/",
     "kind": "remake"
   },
@@ -1455,7 +1455,7 @@
     "blurb": "圈地，别碰上线。",
     "hue": 260,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/qix-cut/",
     "kind": "remake"
   },
@@ -1479,7 +1479,7 @@
     "blurb": "吃光豆子，躲鬼。",
     "hue": 48,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/dot-munch/",
     "kind": "remake"
   },
@@ -1493,6 +1493,42 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/kong-climb/",
+    "kind": "remake"
+  },
+  {
+    "n": 134,
+    "id": "tempest-tube",
+    "title": "管旋",
+    "subtitle": "TEMPEST",
+    "blurb": "沿着管壁开火，别让它们爬上来。",
+    "hue": 275,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/tempest-tube/",
+    "kind": "remake"
+  },
+  {
+    "n": 135,
+    "id": "ski-slide",
+    "title": "雪道",
+    "subtitle": "SKI",
+    "blurb": "往下滑，躲开树。",
+    "hue": 190,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/ski-slide/",
+    "kind": "remake"
+  },
+  {
+    "n": 136,
+    "id": "joust-kick",
+    "title": "鸵踢",
+    "subtitle": "JOUST",
+    "blurb": "飞起来，从上面撞。",
+    "hue": 36,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/joust-kick/",
     "kind": "remake"
   }
 ]
