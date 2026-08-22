@@ -849,5 +849,38 @@
     "tag": "露",
     "dir": "g/dew-collect/",
     "url": "./g/dew-collect/"
+  },
+  {
+    "n": 88,
+    "id": "map-tear",
+    "title": "撕图",
+    "subtitle": "TEAR",
+    "blurb": "沿线撕开藏路。",
+    "hue": 30,
+    "tag": "撕",
+    "dir": "g/map-tear/",
+    "url": "./g/map-tear/"
+  },
+  {
+    "n": 89,
+    "id": "loom-row",
+    "title": "织行",
+    "subtitle": "LOOM",
+    "blurb": "梭只在开口时穿过。",
+    "hue": 285,
+    "tag": "织",
+    "dir": "g/loom-row/",
+    "url": "./g/loom-row/"
+  },
+  {
+    "n": 90,
+    "id": "ash-write",
+    "title": "灰书",
+    "subtitle": "ASH",
+    "blurb": "用灰写字，风会吹散。",
+    "hue": 20,
+    "tag": "灰",
+    "dir": "g/ash-write/",
+    "url": "./g/ash-write/"
   }
 ]

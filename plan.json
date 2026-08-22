@@ -964,7 +964,7 @@
     "blurb": "沿线撕开藏路。",
     "hue": 30,
     "tag": "撕",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/map-tear/"
   },
   {
@@ -975,7 +975,7 @@
     "blurb": "梭只在开口时穿过。",
     "hue": 285,
     "tag": "织",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/loom-row/"
   },
   {
@@ -986,7 +986,7 @@
     "blurb": "用灰写字，风会吹散。",
     "hue": 20,
     "tag": "灰",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/ash-write/"
   },
   {
@@ -1019,7 +1019,7 @@
     "blurb": "翻沙漏，让指定的一只最后走完。",
     "hue": 38,
     "tag": "沙",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/sand-timer/"
   },
   {
@@ -1030,7 +1030,7 @@
     "blurb": "摆光源，藤朝光长。",
     "hue": 125,
     "tag": "藤",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/vine-climb/"
   },
   {
@@ -1041,7 +1041,7 @@
     "blurb": "硬币旋着时把别的叠上去。",
     "hue": 46,
     "tag": "旋",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/coin-spin/"
   },
   {
