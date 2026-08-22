@@ -2276,5 +2276,41 @@
     "dir": "g/robotron/",
     "url": "./g/robotron/",
     "kind": "remake"
+  },
+  {
+    "n": 211,
+    "id": "chackn-pop",
+    "title": "企鹅",
+    "subtitle": "CHACK",
+    "blurb": "钻地救人，炸弹别炸自己。",
+    "hue": 160,
+    "tag": "复刻",
+    "dir": "g/chackn-pop/",
+    "url": "./g/chackn-pop/",
+    "kind": "remake"
+  },
+  {
+    "n": 212,
+    "id": "sinistar",
+    "title": "星吞",
+    "subtitle": "SINI",
+    "blurb": "挖矿造炸弹，别被它吃掉。",
+    "hue": 348,
+    "tag": "复刻",
+    "dir": "g/sinistar/",
+    "url": "./g/sinistar/",
+    "kind": "remake"
+  },
+  {
+    "n": 213,
+    "id": "juno-first",
+    "title": "朱诺",
+    "subtitle": "JUNO",
+    "blurb": "竖着冲，敌人从四面来。",
+    "hue": 220,
+    "tag": "复刻",
+    "dir": "g/juno-first/",
+    "url": "./g/juno-first/",
+    "kind": "remake"
   }
 ]

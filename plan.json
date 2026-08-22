@@ -2427,7 +2427,7 @@
     "blurb": "钻地救人，炸弹别炸自己。",
     "hue": 160,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/chackn-pop/",
     "kind": "remake"
   },
@@ -2439,7 +2439,7 @@
     "blurb": "挖矿造炸弹，别被它吃掉。",
     "hue": 348,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/sinistar/",
     "kind": "remake"
   },
@@ -2451,7 +2451,7 @@
     "blurb": "竖着冲，敌人从四面来。",
     "hue": 220,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/juno-first/",
     "kind": "remake"
   },
@@ -2465,6 +2465,42 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/wizard-wor/",
+    "kind": "remake"
+  },
+  {
+    "n": 215,
+    "id": "elevator-act",
+    "title": "电梯",
+    "subtitle": "LIFT",
+    "blurb": "楼层穿梭，开门对射。",
+    "hue": 42,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/elevator-act/",
+    "kind": "remake"
+  },
+  {
+    "n": 216,
+    "id": "carnival",
+    "title": "嘉年",
+    "subtitle": "FAIR",
+    "blurb": "靶场连射，打爆会走的鸭子。",
+    "hue": 18,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/carnival/",
+    "kind": "remake"
+  },
+  {
+    "n": 217,
+    "id": "congo-bongo",
+    "title": "刚果",
+    "subtitle": "BONGO",
+    "blurb": "斜城蹦跳，别被猩猩拍扁。",
+    "hue": 138,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/congo-bongo/",
     "kind": "remake"
   }
 ]
