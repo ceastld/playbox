@@ -3159,7 +3159,7 @@
     "blurb": "举剑闯塔，把怪物和魔王砍下去。",
     "hue": 16,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/magic-sword/",
     "kind": "remake"
   },
@@ -3209,6 +3209,18 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/capcom-1941/",
+    "kind": "remake"
+  },
+  {
+    "n": 277,
+    "id": "snow-bros",
+    "title": "雪兄",
+    "subtitle": "SNOW",
+    "blurb": "滚雪球把怪挤爆，别被顶下来。",
+    "hue": 200,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/snow-bros/",
     "kind": "remake"
   }
 ]

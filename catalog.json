@@ -3020,5 +3020,17 @@
     "dir": "g/section-z/",
     "url": "./g/section-z/",
     "kind": "remake"
+  },
+  {
+    "n": 272,
+    "id": "magic-sword",
+    "title": "魔剑",
+    "subtitle": "SWORD",
+    "blurb": "举剑闯塔，把怪物和魔王砍下去。",
+    "hue": 16,
+    "tag": "复刻",
+    "dir": "g/magic-sword/",
+    "url": "./g/magic-sword/",
+    "kind": "remake"
   }
 ]
