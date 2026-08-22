@@ -12,6 +12,9 @@
   const BEST_KEY = 'playbox-gem-three-best';
   const MUTE_KEY = 'playbox-gem-three-mute';
   const MODE_KEY = 'playbox-gem-three-mode';
+  const AUTO_SPEED_KEY = 'playbox-gem-three-auto-speed';
+  const AUTO_DELAY = [0, 0.42, 0.2, 0.07, 0];
+  const AUTO_SPEED_NAME = ['', '慢', '中', '快', '极快'];
   const TAU = Math.PI * 2;
   const STEP = 1 / 60;
   const SWAP_T = 0.12;
@@ -147,6 +150,121 @@
       }
     }
     return null;
+  }
+
+  function cloneLayout(src) {
+    const next = [];
+    for (let r = 0; r < N; r++) {
+      next[r] = [];
+      for (let c = 0; c < N; c++) {
+        const g = src[r][c];
+        next[r][c] = g && !g.dead ? { color: g.color, spec: g.spec || NONE } : null;
+      }
+    }
+    return next;
+  }
+
+  function gravityNoFill(b) {
+    for (let c = 0; c < N; c++) {
+      let write = N - 1;
+      for (let r = N - 1; r >= 0; r--) {
+        const g = b[r][c];
+        if (!g) continue;
+        b[r][c] = null;
+        b[write][c] = g;
+        write -= 1;
+      }
+    }
+  }
+
+  function simulateMove(board, r1, c1, r2, c2) {
+    const a = board[r1][c1];
+    const b = board[r2][c2];
+    if (!a || !b || a.dead || b.dead) return -1;
+    const special = isSpecialSwap(a, b);
+    if (!special && !swapCreatesMatch(board, r1, c1, r2, c2)) return -1;
+
+    const b2 = cloneLayout(board);
+    const tmp = b2[r1][c1];
+    b2[r1][c1] = b2[r2][c2];
+    b2[r2][c2] = tmp;
+
+    let score = 0;
+    let chain = 0;
+
+    if (special) {
+      const ga = { r: r1, c: c1, spec: b2[r1][c1].spec, color: b2[r1][c1].color };
+      const gb = { r: r2, c: c2, spec: b2[r2][c2].spec, color: b2[r2][c2].color };
+      const clear = specialClearSet(b2, ga, gb);
+      score += clear.size * 12 + 90;
+      chain = 1;
+      clear.forEach(function (k) {
+        b2[rk(k)][ck(k)] = null;
+      });
+      gravityNoFill(b2);
+    }
+
+    for (let guard = 0; guard < 10; guard++) {
+      const groups = findGroups(b2);
+      if (!groups.length) break;
+      chain += 1;
+      const originR = !special && chain === 1 ? r2 : -1;
+      const originC = !special && chain === 1 ? c2 : -1;
+      const specials = planSpecials(groups, originR, originC);
+      const clear = collectClears(b2, groups);
+      let maxRun = 0;
+      for (let i = 0; i < groups.length; i++) {
+        if (groups[i].n > maxRun) maxRun = groups[i].n;
+      }
+      score += clear.size * 10;
+      if (maxRun >= 4) score += 50;
+      if (maxRun >= 5) score += 140;
+      for (let i = 0; i < specials.length; i++) {
+        score += specials[i].spec === BOMB ? 200 : 80;
+      }
+      if (chain >= 2) score += 120 * (chain - 1);
+      clear.forEach(function (k) {
+        b2[rk(k)][ck(k)] = null;
+      });
+      for (let i = 0; i < specials.length; i++) {
+        const sp = specials[i];
+        b2[sp.r][sp.c] = { color: sp.color, spec: sp.spec };
+      }
+      gravityNoFill(b2);
+    }
+
+    return chain > 0 ? score : -1;
+  }
+
+  function pickAutoMove(board) {
+    let best = null;
+    let bestScore = -1;
+    for (let r = 0; r < N; r++) {
+      for (let c = 0; c < N; c++) {
+        if (c + 1 < N) {
+          const s = simulateMove(board, r, c, r, c + 1);
+          if (s > bestScore) {
+            bestScore = s;
+            best = [
+              [r, c],
+              [r, c + 1]
+            ];
+          }
+        }
+        if (r + 1 < N) {
+          const s = simulateMove(board, r, c, r + 1, c);
+          if (s > bestScore) {
+            bestScore = s;
+            best = [
+              [r, c],
+              [r + 1, c]
+            ];
+          }
+        }
+      }
+    }
+    if (best && bestScore > 0) return best;
+    return findValidMove(board);
   }
 
   function pickSpawn(cells, pr, pc) {
@@ -415,6 +533,43 @@
     ok('swap yes', swapCreatesMatch(bs, 0, 2, 0, 3));
     ok('swap no', !swapCreatesMatch(bs, 3, 3, 3, 4));
     ok('has move on 3-near', !!findValidMove(bs));
+    ok('sim yes', simulateMove(bs, 0, 2, 0, 3) > 0);
+    ok('sim no', simulateMove(bs, 3, 3, 3, 4) < 0);
+    const ai3 = pickAutoMove(bs);
+    ok('ai 3-near', !!ai3);
+    ok(
+      'ai 3-near clears',
+      ai3 && swapCreatesMatch(bs, ai3[0][0], ai3[0][1], ai3[1][0], ai3[1][1])
+    );
+
+    const casc = [];
+    for (let r = 0; r < N; r++) {
+      casc[r] = [];
+      for (let c = 0; c < N; c++) casc[r][c] = { color: (r + c) % 6, spec: 0 };
+    }
+    const A = 4;
+    const Bcol = 5;
+    const X = 1;
+    casc[0][2] = { color: Bcol, spec: 0 };
+    casc[1][2] = { color: Bcol, spec: 0 };
+    casc[2][0] = { color: A, spec: 0 };
+    casc[2][1] = { color: A, spec: 0 };
+    casc[2][2] = { color: X, spec: 0 };
+    casc[2][3] = { color: A, spec: 0 };
+    casc[2][4] = { color: A, spec: 0 };
+    casc[3][2] = { color: Bcol, spec: 0 };
+    casc[6][4] = { color: A, spec: 0 };
+    casc[6][5] = { color: A, spec: 0 };
+    casc[6][6] = { color: X, spec: 0 };
+    casc[6][7] = { color: A, spec: 0 };
+    const cascScore = simulateMove(casc, 2, 2, 2, 3);
+    const simpleScore = simulateMove(casc, 6, 6, 6, 7);
+    ok('cascade sim', cascScore > 0);
+    ok('simple sim', simpleScore > 0);
+    ok('prefer cascade', cascScore > simpleScore);
+    const aiC = pickAutoMove(casc);
+    ok('ai cascade clears', aiC && swapCreatesMatch(casc, aiC[0][0], aiC[0][1], aiC[1][0], aiC[1][1]));
+    ok('ai not random no-swap', aiC && simulateMove(casc, aiC[0][0], aiC[0][1], aiC[1][0], aiC[1][1]) > 0);
 
     const bb = base();
     bb[4][4] = { color: 0, spec: BOMB };
@@ -437,6 +592,12 @@
       const play = makePlayableBoard();
       eq('new board matched', findGroups(play).length, 0);
       ok('new board has move', !!findValidMove(play));
+      const mv = pickAutoMove(play);
+      ok('ai has move', !!mv);
+      ok(
+        'ai actually clears',
+        mv && swapCreatesMatch(play, mv[0][0], mv[0][1], mv[1][0], mv[1][1])
+      );
     }
 
     const tshape = base();
@@ -461,6 +622,12 @@
   }
 
   const REDUCE = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let autoOn = false;
+  let autoSpeed = 3;
+  let autoWait = 0;
+  function fastFx() {
+    return REDUCE || (autoOn && autoSpeed >= 4);
+  }
   const PAL = [
     [255, 227, 107],
     [255, 61, 184],
@@ -498,6 +665,9 @@
   const btnTime = document.getElementById('btn-time');
   const btnMute = document.getElementById('btn-mute');
   const btnRetry = document.getElementById('btn-retry');
+  const btnAuto = document.getElementById('btn-auto');
+  const speedEl = document.getElementById('speed');
+  const speedLab = document.getElementById('speed-lab');
   const scoreEl = document.getElementById('score');
   const bestEl = document.getElementById('best');
   const scoreBox = document.getElementById('score-box');
@@ -511,8 +681,8 @@
   const hintEl = document.getElementById('hint');
   const stageEl = document.getElementById('stage');
 
-  const OPS_TITLE = '拖或点相邻宝石对换 · 四个成划爆 · 五个成彩爆 · 方向键选格空格交换 · M 静音';
-  const OPS_PLAY = '拖相邻对换 · 方向键选格 · 空格交换 · R 重开 · M 静音';
+  const OPS_TITLE = '拖或点相邻宝石对换 · 四个成划爆 · 五个成彩爆 · 方向键选格空格交换 · A 自动 · M 静音';
+  const OPS_PLAY = '拖相邻对换 · 方向键选格 · 空格交换 · A 自动 · R 重开 · M 静音';
 
   let W = 1;
   let H = 1;
@@ -792,6 +962,68 @@
     } catch (err) { /* ignore */ }
   }
 
+  function loadAutoSpeed() {
+    try {
+      const n = parseInt(localStorage.getItem(AUTO_SPEED_KEY) || '3', 10);
+      if (n >= 1 && n <= 4) return n;
+    } catch (err) { /* ignore */ }
+    return 3;
+  }
+
+  function saveAutoSpeed(n) {
+    try {
+      localStorage.setItem(AUTO_SPEED_KEY, String(n));
+    } catch (err) { /* ignore */ }
+  }
+
+  function syncAutoBtn() {
+    btnAuto.classList.toggle('on', autoOn);
+    btnAuto.setAttribute('aria-pressed', autoOn ? 'true' : 'false');
+    btnAuto.textContent = autoOn ? '停下' : '自动';
+    btnAuto.setAttribute('aria-label', autoOn ? '停止自动' : '自动');
+  }
+
+  function syncSpeedUI() {
+    speedEl.value = String(autoSpeed);
+    speedLab.textContent = AUTO_SPEED_NAME[autoSpeed];
+    speedEl.title = AUTO_SPEED_NAME[autoSpeed];
+    speedEl.setAttribute('aria-valuetext', AUTO_SPEED_NAME[autoSpeed]);
+  }
+
+  function toggleAuto() {
+    autoOn = !autoOn;
+    autoWait = 0;
+    syncAutoBtn();
+    if (!autoOn) {
+      hudPlay();
+      return;
+    }
+    audio.ensure();
+    if (G.mode === 'title' || G.mode === 'over') startGame(G.kind || 'moves');
+    else hudPlay();
+  }
+
+  function setAutoSpeed(n) {
+    if (!(n >= 1 && n <= 4)) n = 3;
+    autoSpeed = n;
+    saveAutoSpeed(n);
+    syncSpeedUI();
+    hudPlay();
+  }
+
+  function tickAuto(dt) {
+    if (!autoOn || G.mode !== 'play' || G.phase !== 'idle' || G.pendingEnd) {
+      if (G.phase !== 'idle') autoWait = 0;
+      return;
+    }
+    autoWait += dt;
+    if (autoWait < AUTO_DELAY[autoSpeed]) return;
+    autoWait = 0;
+    const mv = pickAutoMove(board);
+    if (!mv) return;
+    beginSwap(mv[0][0], mv[0][1], mv[1][0], mv[1][1]);
+  }
+
   function addScore(n) {
     if (G.mode !== 'play' || n <= 0) return;
     G.score += n;
@@ -865,6 +1097,10 @@
       hintEl.textContent = warn ? '步数不多了' : OPS_PLAY;
       hintEl.className = warn ? 'hint warn' : 'hint';
     }
+    if (autoOn) {
+      hintEl.textContent = '自动托管中 · A 停下 · 速度 ' + AUTO_SPEED_NAME[autoSpeed];
+      hintEl.className = 'hint';
+    }
   }
 
   function spawnGem(r, c, color, spec) {
@@ -908,12 +1144,12 @@
   }
 
   function hitStop(sec) {
-    if (REDUCE) return;
+    if (fastFx()) return;
     G.freeze = Math.max(G.freeze, sec);
   }
 
   function kick(mag) {
-    if (REDUCE) return;
+    if (fastFx()) return;
     const a = rand(0, TAU);
     G.kickX += Math.cos(a) * mag;
     G.kickY += Math.sin(a) * mag;
@@ -935,7 +1171,7 @@
   }
 
   function emit(n, spec) {
-    const count = REDUCE ? Math.min(4, n) : n;
+    const count = fastFx() ? Math.min(4, n) : n;
     for (let i = 0; i < count; i++) {
       particles.push({
         x: spec.x + rand(-spec.j, spec.j),
@@ -952,7 +1188,7 @@
   }
 
   function emitSparks(n, x, y, rgb) {
-    const count = REDUCE ? Math.min(3, n) : n;
+    const count = fastFx() ? Math.min(3, n) : n;
     for (let i = 0; i < count; i++) {
       const a = rand(0, TAU);
       const sp = rand(2.2, 7.5);
@@ -1101,7 +1337,7 @@
     for (let i = 0; i < G.specials.length; i++) {
       const sp = G.specials[i];
       const ng = spawnGem(sp.r, sp.c, sp.color, sp.spec);
-      ng.scale = REDUCE ? 1 : 0.2;
+      ng.scale = fastFx() ? 1 : 0.2;
       ng.squash = -0.18;
       board[sp.r][sp.c] = ng;
       gems.push(ng);
@@ -1136,10 +1372,10 @@
       for (let r = write; r >= 0; r--) {
         spawn += 1;
         const g = spawnGem(r, c, irand(COLORS), NONE);
-        g.y = REDUCE ? r + 0.5 : -spawn + 0.35;
+        g.y = fastFx() ? r + 0.5 : -spawn + 0.35;
         g.x = c + 0.5;
         g.vy = 0;
-        g.scale = REDUCE ? 1 : 0.86;
+        g.scale = fastFx() ? 1 : 0.86;
         board[r][c] = g;
         gems.push(g);
       }
@@ -1292,7 +1528,7 @@
       G.phase = 'snap';
       G.phaseT = 0;
       audio.fail();
-      if (!REDUCE) {
+      if (!fastFx()) {
         stageEl.classList.remove('noop');
         void stageEl.offsetWidth;
         stageEl.classList.add('noop');
@@ -1382,6 +1618,7 @@
     G.flash = 0;
     G.cursorR = 3;
     G.cursorC = 3;
+    autoWait = 0;
     timeWarnTok = -1;
     particles.length = 0;
     sparks.length = 0;
@@ -1392,7 +1629,7 @@
     overlay.classList.remove('bottom');
     overlay.setAttribute('aria-hidden', 'true');
     panel.className = 'panel';
-    buildFromLayout(makePlayableBoard(), !REDUCE);
+    buildFromLayout(makePlayableBoard(), !fastFx());
     G.phase = 'fall';
     G.landedSfx = false;
     hudPlay();
@@ -1436,7 +1673,7 @@
   }
 
   function trySelectOrSwap(r, c) {
-    if (G.mode !== 'play' || G.phase !== 'idle') return;
+    if (autoOn || G.mode !== 'play' || G.phase !== 'idle') return;
     G.cursorR = r;
     G.cursorC = c;
     if (!G.selected) {
@@ -1457,7 +1694,7 @@
   }
 
   function updateHint() {
-    if (G.mode !== 'play' || G.phase !== 'idle') {
+    if (autoOn || G.mode !== 'play' || G.phase !== 'idle') {
       G.hint = null;
       return;
     }
@@ -1478,7 +1715,7 @@
       if (g.scale < 1) g.scale = Math.min(1, g.scale + dt * 5);
       if (g.y < ty - 0.002) {
         allLanded = false;
-        if (REDUCE) {
+        if (fastFx()) {
           g.y = ty;
           g.vy = 0;
         } else {
@@ -1506,7 +1743,7 @@
   function updateSwap(dt, back) {
     const dur = back ? SNAP_T : SWAP_T;
     G.phaseT += dt;
-    const t = Math.min(1, G.phaseT / (REDUCE ? 0.01 : dur));
+    const t = Math.min(1, G.phaseT / (fastFx() ? 0.01 : dur));
     const k = back ? easeInOut(t) : easeOut(t);
     const a = G.swapA;
     const b = G.swapB;
@@ -1540,7 +1777,7 @@
       const g = board[rk(k)][ck(k)];
       if (g) g.flash = 1;
     });
-    if (G.phaseT >= (REDUCE ? 0.01 : FLASH_T)) {
+    if (G.phaseT >= (fastFx() ? 0.01 : FLASH_T)) {
       burstWave();
       G.phase = 'pop';
       G.phaseT = 0;
@@ -1549,7 +1786,7 @@
 
   function updatePop(dt) {
     G.phaseT += dt;
-    const t = Math.min(1, G.phaseT / (REDUCE ? 0.01 : POP_T));
+    const t = Math.min(1, G.phaseT / (fastFx() ? 0.01 : POP_T));
     G.clear.forEach(function (k) {
       const g = board[rk(k)][ck(k)];
       if (!g) return;
@@ -1631,6 +1868,7 @@
     else if (G.phase === 'fall') updateFall(dt);
     else if (G.phase === 'idle') {
       G.idle += dt;
+      tickAuto(dt);
       updateHint();
       for (let i = 0; i < gems.length; i++) {
         const g = gems[i];
@@ -1956,8 +2194,8 @@
 
   function draw() {
     ctx.save();
-    const jx = REDUCE ? 0 : G.kickX + (Math.random() - 0.5) * G.shake * 0.25;
-    const jy = REDUCE ? 0 : G.kickY + (Math.random() - 0.5) * G.shake * 0.25;
+    const jx = fastFx() ? 0 : G.kickX + (Math.random() - 0.5) * G.shake * 0.25;
+    const jy = fastFx() ? 0 : G.kickY + (Math.random() - 0.5) * G.shake * 0.25;
     ctx.translate(W / 2, H / 2);
     ctx.scale(G.punch, G.punch);
     ctx.translate(-W / 2 + jx, -H / 2 + jy);
@@ -1985,7 +2223,7 @@
     if (dt > 0.08) dt = 0.08;
     if (!hidden) {
       acc += dt;
-      const slice = REDUCE ? dt : STEP;
+      const slice = fastFx() ? dt : STEP;
       let steps = 0;
       while (acc >= slice && steps < 6) {
         step(slice);
@@ -2026,7 +2264,7 @@
     const p = eventXY(e);
     ptr.x = p.x;
     ptr.y = p.y;
-    if (ptr.swapped || !ptr.from || G.phase !== 'idle' || G.mode !== 'play') return;
+    if (autoOn || ptr.swapped || !ptr.from || G.phase !== 'idle' || G.mode !== 'play') return;
     const dx = ptr.x - ptr.sx;
     const dy = ptr.y - ptr.sy;
     const th = cell * 0.26;
@@ -2046,7 +2284,7 @@
     ptr.id = null;
     ptr.from = null;
     ptr.swapped = false;
-    if (swapped || !was) return;
+    if (autoOn || swapped || !was) return;
     const p = eventXY(e);
     const hit = cellAt(p.x, p.y);
     if (hit && hit.r === was.r && hit.c === was.c) trySelectOrSwap(hit.r, hit.c);
@@ -2065,6 +2303,13 @@
       retry();
       return;
     }
+    if (k === 'a' || k === 'A') {
+      if (e.repeat) return;
+      e.preventDefault();
+      toggleAuto();
+      return;
+    }
+    if (e.target === speedEl) return;
     if (G.mode === 'title' || G.mode === 'over') {
       if (k === '1') {
         e.preventDefault();
@@ -2082,9 +2327,17 @@
       return;
     }
     if (G.mode !== 'play') return;
+    if (autoOn) {
+      if (k === 'ArrowLeft' || k === 'ArrowRight' || k === 'ArrowUp' || k === 'ArrowDown' ||
+          k === 'w' || k === 'W' || k === 's' || k === 'S' || k === 'd' || k === 'D' ||
+          k === ' ' || k === 'Enter' || k === 'Escape') {
+        e.preventDefault();
+      }
+      return;
+    }
     let dr = 0;
     let dc = 0;
-    if (k === 'ArrowLeft' || k === 'a' || k === 'A') dc = -1;
+    if (k === 'ArrowLeft') dc = -1;
     else if (k === 'ArrowRight' || k === 'd' || k === 'D') dc = 1;
     else if (k === 'ArrowUp' || k === 'w' || k === 'W') dr = -1;
     else if (k === 'ArrowDown' || k === 's' || k === 'S') dr = 1;
@@ -2113,8 +2366,17 @@
     audio.ensure();
     audio.setMuted(!audio.muted);
   });
+  btnAuto.addEventListener('click', function () {
+    toggleAuto();
+  });
   btnRetry.addEventListener('click', function () {
     retry();
+  });
+  speedEl.addEventListener('input', function () {
+    setAutoSpeed(parseInt(speedEl.value, 10));
+  });
+  speedEl.addEventListener('change', function () {
+    setAutoSpeed(parseInt(speedEl.value, 10));
   });
   btnMoves.addEventListener('click', function (e) {
     e.stopPropagation();
@@ -2149,6 +2411,9 @@
     loadBest();
     loadMute();
     loadMode();
+    autoSpeed = loadAutoSpeed();
+    syncSpeedUI();
+    syncAutoBtn();
     resize();
     showTitle();
     hudPlay();
