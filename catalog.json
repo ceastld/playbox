@@ -2576,5 +2576,53 @@
     "dir": "g/warlords/",
     "url": "./g/warlords/",
     "kind": "remake"
+  },
+  {
+    "n": 235,
+    "id": "lunar-land",
+    "title": "登月",
+    "subtitle": "LAND",
+    "blurb": "省着喷火，轻轻落到平台上。",
+    "hue": 48,
+    "tag": "复刻",
+    "dir": "g/lunar-land/",
+    "url": "./g/lunar-land/",
+    "kind": "remake"
+  },
+  {
+    "n": 236,
+    "id": "major-havoc",
+    "title": "浩劫",
+    "subtitle": "HAVOC",
+    "blurb": "飞过星门再钻进基地跑酷。",
+    "hue": 200,
+    "tag": "复刻",
+    "dir": "g/major-havoc/",
+    "url": "./g/major-havoc/",
+    "kind": "remake"
+  },
+  {
+    "n": 237,
+    "id": "cloak-dagger",
+    "title": "斗篷",
+    "subtitle": "DAG",
+    "blurb": "迷宫里摸匕首，别让守卫发现。",
+    "hue": 272,
+    "tag": "复刻",
+    "dir": "g/cloak-dagger/",
+    "url": "./g/cloak-dagger/",
+    "kind": "remake"
+  },
+  {
+    "n": 238,
+    "id": "gaplus",
+    "title": "加普",
+    "subtitle": "GAP",
+    "blurb": "编队俯冲，抓住那艘母舰拖走。",
+    "hue": 292,
+    "tag": "复刻",
+    "dir": "g/gaplus/",
+    "url": "./g/gaplus/",
+    "kind": "remake"
   }
 ]

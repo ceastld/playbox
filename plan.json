@@ -2715,7 +2715,7 @@
     "blurb": "省着喷火，轻轻落到平台上。",
     "hue": 48,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/lunar-land/",
     "kind": "remake"
   },
@@ -2727,7 +2727,7 @@
     "blurb": "飞过星门再钻进基地跑酷。",
     "hue": 200,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/major-havoc/",
     "kind": "remake"
   },
@@ -2739,7 +2739,7 @@
     "blurb": "迷宫里摸匕首，别让守卫发现。",
     "hue": 272,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/cloak-dagger/",
     "kind": "remake"
   },
@@ -2751,7 +2751,7 @@
     "blurb": "编队俯冲，抓住那艘母舰拖走。",
     "hue": 292,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/gaplus/",
     "kind": "remake"
   },
@@ -2765,6 +2765,54 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/star-trench/",
+    "kind": "remake"
+  },
+  {
+    "n": 240,
+    "id": "red-baron",
+    "title": "红爵",
+    "subtitle": "BARON",
+    "blurb": "云上对射，先打掉他的机翼。",
+    "hue": 4,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/red-baron/",
+    "kind": "remake"
+  },
+  {
+    "n": 241,
+    "id": "gravitar",
+    "title": "引力",
+    "subtitle": "GRAV",
+    "blurb": "绕着行星喷火，钻进坑里拆炮。",
+    "hue": 266,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/gravitar/",
+    "kind": "remake"
+  },
+  {
+    "n": 242,
+    "id": "space-fury",
+    "title": "怒空",
+    "subtitle": "FURY",
+    "blurb": "旋转开火，别让护盾被啃穿。",
+    "hue": 320,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/space-fury/",
+    "kind": "remake"
+  },
+  {
+    "n": 243,
+    "id": "omega-race",
+    "title": "环赛",
+    "subtitle": "OMEGA",
+    "blurb": "封闭赛道弹射，别撞自己的弹。",
+    "hue": 174,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/omega-race/",
     "kind": "remake"
   }
 ]
