@@ -1647,7 +1647,7 @@
     "blurb": "迷宫里边跑边打，别被机器人围住。",
     "hue": 0,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/berzerk-run/",
     "kind": "remake"
   },
@@ -1659,7 +1659,7 @@
     "blurb": "绕圈打飞机，穿越年代。",
     "hue": 262,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/time-loop/",
     "kind": "remake"
   },
@@ -1697,6 +1697,30 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/lift-gun/",
+    "kind": "remake"
+  },
+  {
+    "n": 151,
+    "id": "paper-toss",
+    "title": "报童",
+    "subtitle": "PAPER",
+    "blurb": "骑车扔报纸，砸窗户扣分。",
+    "hue": 88,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/paper-toss/",
+    "kind": "remake"
+  },
+  {
+    "n": 152,
+    "id": "gaunt-hall",
+    "title": "魔宫",
+    "subtitle": "GAUNT",
+    "blurb": "迷宫里砍怪捡宝物，别把命耗光。",
+    "hue": 14,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/gaunt-hall/",
     "kind": "remake"
   }
 ]

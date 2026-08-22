@@ -1508,5 +1508,29 @@
     "dir": "g/scram-run/",
     "url": "./g/scram-run/",
     "kind": "remake"
+  },
+  {
+    "n": 146,
+    "id": "berzerk-run",
+    "title": "狂廊",
+    "subtitle": "BZERK",
+    "blurb": "迷宫里边跑边打，别被机器人围住。",
+    "hue": 0,
+    "tag": "复刻",
+    "dir": "g/berzerk-run/",
+    "url": "./g/berzerk-run/",
+    "kind": "remake"
+  },
+  {
+    "n": 147,
+    "id": "time-loop",
+    "title": "时航",
+    "subtitle": "PILOT",
+    "blurb": "绕圈打飞机，穿越年代。",
+    "hue": 262,
+    "tag": "复刻",
+    "dir": "g/time-loop/",
+    "url": "./g/time-loop/",
+    "kind": "remake"
   }
 ]
