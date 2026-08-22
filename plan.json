@@ -2343,7 +2343,7 @@
     "blurb": "绕开红车去收旗。",
     "hue": 40,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/rally-x/",
     "kind": "remake"
   },
@@ -2367,7 +2367,7 @@
     "blurb": "藤蔓荡过去，鳄鱼别咬着。",
     "hue": 92,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/jungle-king/",
     "kind": "remake"
   },
@@ -2379,7 +2379,7 @@
     "blurb": "拳打猴子，把孩子救下来。",
     "hue": 28,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/kangaroo/",
     "kind": "remake"
   },
@@ -2391,7 +2391,7 @@
     "blurb": "围着圆圈打，往里冲。",
     "hue": 260,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/gyruss/",
     "kind": "remake"
   },
@@ -2405,6 +2405,54 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/robotron/",
+    "kind": "remake"
+  },
+  {
+    "n": 210,
+    "id": "mappy",
+    "title": "米皮",
+    "subtitle": "MAPPY",
+    "blurb": "蹦床上楼，门一关夹住猫。",
+    "hue": 12,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/mappy/",
+    "kind": "remake"
+  },
+  {
+    "n": 211,
+    "id": "chackn-pop",
+    "title": "企鹅",
+    "subtitle": "CHACK",
+    "blurb": "钻地救人，炸弹别炸自己。",
+    "hue": 160,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/chackn-pop/",
+    "kind": "remake"
+  },
+  {
+    "n": 212,
+    "id": "sinistar",
+    "title": "星吞",
+    "subtitle": "SINI",
+    "blurb": "挖矿造炸弹，别被它吃掉。",
+    "hue": 348,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/sinistar/",
+    "kind": "remake"
+  },
+  {
+    "n": 213,
+    "id": "juno-first",
+    "title": "朱诺",
+    "subtitle": "JUNO",
+    "blurb": "竖着冲，敌人从四面来。",
+    "hue": 220,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/juno-first/",
     "kind": "remake"
   }
 ]

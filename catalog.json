@@ -2216,5 +2216,53 @@
     "dir": "g/circus-jump/",
     "url": "./g/circus-jump/",
     "kind": "remake"
+  },
+  {
+    "n": 204,
+    "id": "rally-x",
+    "title": "迷宫车",
+    "subtitle": "RALLY",
+    "blurb": "绕开红车去收旗。",
+    "hue": 40,
+    "tag": "复刻",
+    "dir": "g/rally-x/",
+    "url": "./g/rally-x/",
+    "kind": "remake"
+  },
+  {
+    "n": 206,
+    "id": "jungle-king",
+    "title": "丛林",
+    "subtitle": "JUNGLE",
+    "blurb": "藤蔓荡过去，鳄鱼别咬着。",
+    "hue": 92,
+    "tag": "复刻",
+    "dir": "g/jungle-king/",
+    "url": "./g/jungle-king/",
+    "kind": "remake"
+  },
+  {
+    "n": 207,
+    "id": "kangaroo",
+    "title": "袋鼠",
+    "subtitle": "ROO",
+    "blurb": "拳打猴子，把孩子救下来。",
+    "hue": 28,
+    "tag": "复刻",
+    "dir": "g/kangaroo/",
+    "url": "./g/kangaroo/",
+    "kind": "remake"
+  },
+  {
+    "n": 208,
+    "id": "gyruss",
+    "title": "环轨",
+    "subtitle": "GYRUSS",
+    "blurb": "围着圆圈打，往里冲。",
+    "hue": 260,
+    "tag": "复刻",
+    "dir": "g/gyruss/",
+    "url": "./g/gyruss/",
+    "kind": "remake"
   }
 ]

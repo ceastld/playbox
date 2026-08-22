@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#05030c" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>袋鼠 · ROO</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2305030c'/%3E%3Cpath d='M6 24 L26 24' stroke='%23ff881f' stroke-width='2.2' stroke-linecap='round'/%3E%3Cpath d='M8 17 L20 17' stroke='%23ffb04a' stroke-width='2' stroke-linecap='round'/%3E%3Cellipse cx='12' cy='20' rx='3.2' ry='4.2' fill='%23ffb04a'/%3E%3Ccircle cx='12.4' cy='14.2' r='2.6' fill='%23ffd080'/%3E%3Ccircle cx='13.2' cy='13.6' r='.7' fill='%2300f0ff'/%3E%3Ccircle cx='16.6' cy='19.4' r='1.8' fill='%23ff3a3a'/%3E%3Ccircle cx='23' cy='16' r='2.2' fill='%23c45a28'/%3E%3Ccircle cx='23.6' cy='13.4' r='1.2' fill='%23ff3db8'/%3E%3Crect x='20' y='5.2' width='6.4' height='5.2' rx='.6' fill='none' stroke='%23ffe36b' stroke-width='1.1'/%3E%3Ccircle cx='23.2' cy='7.6' r='1.2' fill='%23ffb04a'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>袋鼠</b>
+        <span>ROO</span>
+      </div>
+      <div class="status">
+        <div class="scores" aria-live="polite">
+          <div class="score" id="score-box">
+            <em>分数</em>
+            <b id="score">0</b>
+            <span id="score-add" class="score-add" hidden>+0</span>
+          </div>
+          <div class="score">
+            <em>关</em>
+            <b id="round">1</b>
+          </div>
+          <div class="score best">
+            <em>最高</em>
+            <b id="best">0</b>
+          </div>
+          <div class="score combo" id="combo-box">
+            <em>连击</em>
+            <b id="combo">×1</b>
+          </div>
+        </div>
+        <div class="row">
+          <span id="mode-label">救子</span>
+          <div class="fill glove" id="glove-wrap" title="拳套">
+            <em>拳</em>
+            <div class="fill-track" aria-hidden="true"><i id="glove-bar"></i></div>
+          </div>
+          <span class="pips" id="pips" aria-label="剩余性命"></span>
+        </div>
+      </div>
+      <div class="tools">
+        <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
+        <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <canvas id="c" tabindex="0" role="application" aria-label="袋鼠，拳打猴子，爬到顶上笼子救出小袋鼠"></canvas>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden"></div>
+      <div id="pad" class="pad">
+        <button type="button" id="btn-left" aria-label="向左">左</button>
+        <button type="button" id="btn-down" aria-label="蹲下">下</button>
+        <button type="button" id="btn-jump" aria-label="跳跃">跳</button>
+        <button type="button" id="btn-right" aria-label="向右">右</button>
+        <button type="button" id="btn-punch" aria-label="出拳">拳</button>
+      </div>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">ROO</p>
+          <h1 id="ov-title">袋鼠</h1>
+          <p class="lead" id="ov-lead">拳打猴子，躲开苹果，爬到顶上笼子救出小袋鼠。碰到猴子或苹果丢命。</p>
+          <p class="ops" id="ov-ops">方向键或 WASD 走跳 · Z 出拳 · 触屏左 下 跳 右 拳 · R 重开 · M 静音</p>
+          <div class="ov-actions" id="ov-start">
+            <button type="button" id="btn-rescue">救子</button>
+            <button type="button" id="btn-swarm">群猴</button>
+          </div>
+          <div class="ov-actions gone" id="ov-end">
+            <button type="button" id="ov-retry">再来</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">拳打猴子 · 砸飞苹果 · 爬到顶上救人 · R 重开</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>
