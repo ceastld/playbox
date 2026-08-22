@@ -3519,7 +3519,7 @@
     "blurb": "弹幕对撞，把蜂巢核心打穿。",
     "hue": 52,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/donpachi/",
     "kind": "remake"
   },
@@ -3569,6 +3569,18 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/cotton/",
+    "kind": "remake"
+  },
+  {
+    "n": 307,
+    "id": "baraduke",
+    "title": "巴拉",
+    "subtitle": "BARA",
+    "blurb": "地下扫射，把胶囊外星人救出来。",
+    "hue": 188,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/baraduke/",
     "kind": "remake"
   }
 ]

@@ -3380,5 +3380,17 @@
     "dir": "g/gauntlet/",
     "url": "./g/gauntlet/",
     "kind": "remake"
+  },
+  {
+    "n": 302,
+    "id": "donpachi",
+    "title": "弹蜂",
+    "subtitle": "DONP",
+    "blurb": "弹幕对撞，把蜂巢核心打穿。",
+    "hue": 52,
+    "tag": "复刻",
+    "dir": "g/donpachi/",
+    "url": "./g/donpachi/",
+    "kind": "remake"
   }
 ]
