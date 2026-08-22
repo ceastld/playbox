@@ -3404,5 +3404,17 @@
     "dir": "g/gunbird/",
     "url": "./g/gunbird/",
     "kind": "remake"
+  },
+  {
+    "n": 304,
+    "id": "power-drift",
+    "title": "漂移",
+    "subtitle": "DRFT",
+    "blurb": "卡丁甩尾，把赛道对手甩开。",
+    "hue": 22,
+    "tag": "复刻",
+    "dir": "g/power-drift/",
+    "url": "./g/power-drift/",
+    "kind": "remake"
   }
 ]

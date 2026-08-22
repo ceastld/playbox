@@ -3543,7 +3543,7 @@
     "blurb": "卡丁甩尾，把赛道对手甩开。",
     "hue": 22,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/power-drift/",
     "kind": "remake"
   },
@@ -3593,6 +3593,18 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/r-type2/",
+    "kind": "remake"
+  },
+  {
+    "n": 309,
+    "id": "batsugun",
+    "title": "战枪",
+    "subtitle": "BATS",
+    "blurb": "弹幕对撞，把机甲核心打穿。",
+    "hue": 16,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/batsugun/",
     "kind": "remake"
   }
 ]
