@@ -1443,7 +1443,7 @@
     "blurb": "打头打尾，别让它落地。",
     "hue": 140,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/centi-crawl/",
     "kind": "remake"
   },
@@ -1481,6 +1481,18 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/dot-munch/",
+    "kind": "remake"
+  },
+  {
+    "n": 133,
+    "id": "kong-climb",
+    "title": "桶山",
+    "subtitle": "KONG",
+    "blurb": "躲桶上楼，救出。",
+    "hue": 16,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/kong-climb/",
     "kind": "remake"
   }
 ]
