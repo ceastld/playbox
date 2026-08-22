@@ -1184,5 +1184,17 @@
     "dir": "g/star-raid/",
     "url": "./g/star-raid/",
     "kind": "remake"
+  },
+  {
+    "n": 122,
+    "id": "chain-boom",
+    "title": "连环",
+    "subtitle": "CHAIN",
+    "blurb": "点一个，炸一串。",
+    "hue": 280,
+    "tag": "复刻",
+    "dir": "g/chain-boom/",
+    "url": "./g/chain-boom/",
+    "kind": "remake"
   }
 ]
