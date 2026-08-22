@@ -9,8 +9,28 @@
   const countEl = document.getElementById("count");
   const empty = document.getElementById("empty");
   const q = document.getElementById("q");
+  const filtersEl = document.getElementById("filters");
+  const shelfHead = document.getElementById("shelf-head");
 
   let games = [];
+  let filter = "picks";
+  const PICKS = ["mirror-step", "echo-ping", "melt-core", "tide-trace", "ghost-jump", "beat-blade", "pebble-skip", "fold-crane", "dice-lock", "night-gate", "fuse-cut", "yarn-ball"];
+  const FAMILIES = [
+    { id: "picks", title: "精选", hint: "从这儿开始，这几款最好上手" },
+    { id: "remake", title: "复刻", hint: "经典重做，手感对齐原版", kind: "remake" },
+    { id: "pulse", title: "节奏", tags: "拍铃听律音笛谱" },
+    { id: "water", title: "水面", tags: "接波漂涉潜滑雾气斟帆露" },
+    { id: "mind", title: "巧思", tags: "记径迷屑找躲隐巧察印钥门月影时骰" },
+    { id: "move", title: "动作", tags: "跳踏剪切撕凿速射转投推弹" },
+    { id: "grow", title: "养成", tags: "苔藤养圈栖引爬牧" },
+    { id: "all", title: "全部", hint: "一百间都在这儿" }
+  ];
+  function familyOf(g) {
+    if (g.kind === "remake" || g.pack === "classic") return "remake";
+    const tag = g.tag || "";
+    for (const f of FAMILIES) { if (f.tags && f.tags.includes(tag)) return f.id; }
+    return "all";
+  }
 
   function hash32(s) {
     let h = 2166136261;
@@ -436,21 +456,64 @@
     return [g.title, g.subtitle, g.tag, g.blurb].join(" ").toLowerCase();
   }
 
-  function render() {
-    const needle = (q.value || "").trim().toLowerCase();
-    grid.innerHTML = "";
-    let shown = 0;
-    games.forEach((g, i) => {
-      if (needle && !hay(g).includes(needle)) return;
-      grid.appendChild(card(g, i));
-      shown++;
+  function paintFilters() {
+    if (!filtersEl) return;
+    if (!filtersEl.childElementCount) {
+      FAMILIES.forEach((f) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "chip";
+        btn.dataset.id = f.id;
+        btn.textContent = f.title;
+        btn.addEventListener("click", () => {
+          filter = f.id;
+          render();
+        });
+        filtersEl.appendChild(btn);
+      });
+    }
+    filtersEl.querySelectorAll(".chip").forEach((btn) => {
+      btn.setAttribute("aria-pressed", btn.dataset.id === filter ? "true" : "false");
     });
-    const noMatch = needle && shown === 0 && games.length > 0;
-    empty.classList.toggle("hidden", !noMatch);
+  }
+
+  function listed(needle) {
+    if (needle) return games.filter((g) => hay(g).includes(needle));
+    if (filter === "picks") {
+      const byId = new Map(games.map((g) => [g.id, g]));
+      return PICKS.map((id) => byId.get(id)).filter(Boolean);
+    }
+    if (filter === "remake") return games.filter((g) => familyOf(g) === "remake");
+    if (filter === "all") return games.slice();
+    return games.filter((g) => familyOf(g) === filter);
+  }
+
+  function render() {
+    paintFilters();
+    const needle = (q.value || "").trim().toLowerCase();
+    const list = listed(needle);
+    grid.innerHTML = "";
+    grid.classList.toggle("featured", !needle && filter === "picks");
+    const fam = FAMILIES.find((f) => f.id === filter) || FAMILIES[0];
+    if (shelfHead) {
+      if (needle) shelfHead.textContent = list.length ? ("\u641c\u5230 " + list.length + " \u6b3e") : "\u6ca1\u6709\u53eb\u8fd9\u4e2a\u7684\u620f";
+      else if (fam.hint) shelfHead.textContent = fam.title + " \u00b7 " + fam.hint;
+      else shelfHead.textContent = fam.title + " \u00b7 " + list.length + " \u6b3e";
+    }
     if (!games.length && !needle) {
       empty.classList.add("hidden");
-      grid.textContent = "还没有过关的游戏。第一批写完会挂到这里。";
+      grid.textContent = "\u8fd8\u6ca1\u6709\u8fc7\u5173\u7684\u6e38\u620f\u3002\u7b2c\u4e00\u6279\u5199\u5b8c\u4f1a\u6302\u5230\u8fd9\u91cc\u3002";
+      return;
     }
+    list.forEach((g, i) => grid.appendChild(card(g, i)));
+    let msg = "";
+    if (!list.length) {
+      if (needle) msg = "\u6ca1\u6709\u53eb\u8fd9\u4e2a\u7684\u620f";
+      else if (filter === "remake") msg = "\u590d\u523b\u8fd8\u5728\u5199\uff0c\u5148\u73a9\u7cbe\u9009\u3002";
+      else msg = "\u8fd9\u5c42\u8fd8\u662f\u7a7a\u7684\u3002";
+    }
+    empty.textContent = msg || "\u6ca1\u6709\u53eb\u8fd9\u4e2a\u7684\u620f";
+    empty.classList.toggle("hidden", !msg);
   }
 
   function hrefOf(g) {
