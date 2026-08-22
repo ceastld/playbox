@@ -27,6 +27,9 @@
   var BEST_KEY = 'playbox-bubble-shot-best';
   var MUTE_KEY = 'playbox-bubble-shot-mute';
   var MODE_KEY = 'playbox-bubble-shot-mode';
+  var AUTO_SPEED_KEY = 'playbox-bubble-shot-auto-speed';
+  var AUTO_DELAY = [0, 420, 200, 70, 0];
+  var AUTO_SPEED_NAME = ['', '慢', '中', '快', '极快'];
 
   var MAG = [255, 61, 184];
   var CYN = [0, 240, 255];
@@ -109,6 +112,16 @@
     for (r = 0; r < MAX_ROWS; r++) {
       row = [];
       for (c = 0; c < COLS; c++) row.push(-1);
+      g.push(row);
+    }
+    return g;
+  }
+  function cloneGrid(src) {
+    var g = [];
+    var r, c, row;
+    for (r = 0; r < MAX_ROWS; r++) {
+      row = [];
+      for (c = 0; c < COLS; c++) row.push(src[r][c]);
       g.push(row);
     }
     return g;
@@ -261,11 +274,11 @@
     stripFloaters(g);
     return g;
   }
-  function makeBoard(rows, nColors) {
+  function makeBoard(rows, nColors, rnd) {
     var g;
     var guard = 24;
     do {
-      g = fillBoard(rows, nColors);
+      g = fillBoard(rows, nColors, rnd);
       guard -= 1;
     } while (countCells(g) < rows * 4 && guard > 0);
     return g;
@@ -281,6 +294,272 @@
     fell = floatersOf(grid);
     for (i = 0; i < fell.length; i++) grid[fell[i].r][fell[i].c] = -1;
     return { popped: popped, fell: fell };
+  }
+  function lowestRow(grid) {
+    var r, c, max = -1;
+    for (r = 0; r < MAX_ROWS; r++) {
+      for (c = 0; c < colsInRow(r); c++) {
+        if (grid[r][c] >= 0) max = r;
+      }
+    }
+    return max;
+  }
+  function findHitOn(grid, dropY, x, y) {
+    var best = null;
+    var bestD = COLLIDE2;
+    var r, c, dx, dy, d, cx, cy;
+    for (r = 0; r < MAX_ROWS; r++) {
+      cy = cellY(r, dropY);
+      if (cy + R + 4 < y - R || cy - R - 4 > y + R) continue;
+      for (c = 0; c < colsInRow(r); c++) {
+        if (grid[r][c] < 0) continue;
+        cx = cellX(c, r);
+        dx = cx - x;
+        dy = cy - y;
+        d = dx * dx + dy * dy;
+        if (d < bestD) {
+          bestD = d;
+          best = { c: c, r: r };
+        }
+      }
+    }
+    return best;
+  }
+  function placeShotOn(grid, dropY, x, y, hit) {
+    var cand = [];
+    var seen = {};
+    var i, n, p, d, best, bestD, k, rr, cc, ap;
+    function add(c, r) {
+      if (r < 0 || r >= MAX_ROWS || c < 0 || c >= colsInRow(r)) return;
+      if (cellAt(grid, c, r) >= 0) return;
+      k = c + ',' + r;
+      if (seen[k]) return;
+      seen[k] = 1;
+      cand.push({ c: c, r: r });
+    }
+    if (hit) {
+      n = neighbors(hit.c, hit.r);
+      for (i = 0; i < n.length; i++) add(n[i].c, n[i].r);
+    }
+    if (y - R <= CEIL0 + dropY + R * 1.2) {
+      for (i = 0; i < colsInRow(0); i++) add(i, 0);
+    }
+    if (!cand.length) {
+      ap = {
+        r: clamp(Math.round((y - CEIL0 - dropY - R) / ROW_H), 0, MAX_ROWS - 1),
+        c: 0
+      };
+      ap.c = clamp(
+        Math.round((x - LEFT - R - ((ap.r & 1) ? R : 0)) / D),
+        0,
+        colsInRow(ap.r) - 1
+      );
+      add(ap.c, ap.r);
+      n = neighbors(ap.c, ap.r);
+      for (i = 0; i < n.length; i++) add(n[i].c, n[i].r);
+      for (rr = Math.max(0, ap.r - 2); rr <= Math.min(MAX_ROWS - 1, ap.r + 2); rr++) {
+        for (cc = 0; cc < colsInRow(rr); cc++) {
+          if (canPlace(grid, cc, rr)) add(cc, rr);
+        }
+      }
+    }
+    best = null;
+    bestD = 1e15;
+    for (i = 0; i < cand.length; i++) {
+      p = { x: cellX(cand[i].c, cand[i].r), y: cellY(cand[i].r, dropY) };
+      d = (p.x - x) * (p.x - x) + (p.y - y) * (p.y - y);
+      if (d < bestD) {
+        bestD = d;
+        best = cand[i];
+      }
+    }
+    return best;
+  }
+  function simLand(grid, dropY, aim) {
+    var x = SHOOT_X + Math.sin(aim) * 26;
+    var y = SHOOT_Y - Math.cos(aim) * 26;
+    var vx = Math.sin(aim) * SHOT_SPD;
+    var vy = -Math.cos(aim) * SHOT_SPD;
+    var adt = STEP / 6;
+    var i, hit, ceil;
+    ceil = CEIL0 + dropY;
+    for (i = 0; i < 720; i++) {
+      x += vx * adt;
+      y += vy * adt;
+      if (x < LEFT + R) {
+        x = LEFT + R;
+        if (vx < 0) vx = -vx;
+      } else if (x > RIGHT - R) {
+        x = RIGHT - R;
+        if (vx > 0) vx = -vx;
+      }
+      hit = findHitOn(grid, dropY, x, y);
+      if (hit) return placeShotOn(grid, dropY, x, y, hit);
+      if (y - R <= ceil) return placeShotOn(grid, dropY, x, y, null);
+      if (y < -40) break;
+    }
+    return null;
+  }
+  function aimToPoint(x, y) {
+    var dx = x - SHOOT_X;
+    var dy = SHOOT_Y - y;
+    if (dy < 10) dy = 10;
+    return clamp(Math.atan2(dx, dy), -AIM_MAX, AIM_MAX);
+  }
+  function bestPopSize(grid, color) {
+    var best = 0;
+    var r, c, n;
+    if (color < 0) return 0;
+    for (r = 0; r < MAX_ROWS; r++) {
+      for (c = 0; c < colsInRow(r); c++) {
+        if (!canPlace(grid, c, r)) continue;
+        grid[r][c] = color;
+        n = findGroup(grid, c, r).length;
+        grid[r][c] = -1;
+        if (n > best) best = n;
+      }
+    }
+    return best;
+  }
+  function evalPlace(grid, c, r, color, nextColor, dropY) {
+    var copy = cloneGrid(grid);
+    var res;
+    var popped;
+    var fell;
+    var left;
+    var sc;
+    var grp;
+    var nxt;
+    var low;
+    var threat;
+    copy[r][c] = color;
+    res = resolveAt(copy, c, r);
+    popped = res.popped.length;
+    fell = res.fell.length;
+    left = countCells(copy);
+    low = lowestRow(copy);
+    threat = Math.max(0, cellY(low < 0 ? 0 : low, dropY || 0) + R - (FLOOR_Y - 88));
+    if (popped >= 3) {
+      sc = 900 + popped * 140 + fell * 320;
+      if (fell >= 2) sc += fell * 180;
+      if (left === 0) sc += 5200;
+      sc += r * 12;
+    } else {
+      grp = findGroup(copy, c, r).length;
+      sc = grp * 48 - 140 - r * 16;
+      if (grp < 2) sc -= 80;
+    }
+    nxt = bestPopSize(copy, nextColor);
+    if (nxt >= 3) sc += nxt * 70 + 40;
+    else sc += nxt * 10;
+    sc -= threat * 2.4;
+    if (low >= 12) sc -= (low - 11) * 90;
+    return { sc: sc, popped: popped, fell: fell, left: left };
+  }
+  function pickAiAim(grid, dropY, color, nextColor) {
+    var seen = {};
+    var best = null;
+    var bestSc = -1e15;
+    var ang;
+    var slot;
+    var ev;
+    var key;
+    var r;
+    var c;
+    var px;
+    var py;
+    var wallL = LEFT + R;
+    var wallR = RIGHT - R;
+    function consider(aim) {
+      if (aim < -AIM_MAX - 1e-6 || aim > AIM_MAX + 1e-6) return;
+      aim = clamp(aim, -AIM_MAX, AIM_MAX);
+      slot = simLand(grid, dropY, aim);
+      if (!slot) return;
+      key = slot.c + ',' + slot.r;
+      if (seen[key]) {
+        if (Math.abs(aim) < Math.abs(seen[key].aim)) seen[key].aim = aim;
+        if (seen[key] === best) best.aim = seen[key].aim;
+        return;
+      }
+      ev = evalPlace(grid, slot.c, slot.r, color, nextColor, dropY);
+      seen[key] = { aim: aim, c: slot.c, r: slot.r, sc: ev.sc, popped: ev.popped, fell: ev.fell };
+      if (
+        ev.sc > bestSc + 0.01 ||
+        (Math.abs(ev.sc - bestSc) <= 0.01 && best &&
+          (ev.popped > best.popped ||
+            (ev.popped === best.popped && ev.fell > best.fell) ||
+            (ev.popped === best.popped && ev.fell === best.fell && Math.abs(aim) < Math.abs(best.aim))))
+      ) {
+        bestSc = ev.sc;
+        best = seen[key];
+      }
+    }
+    for (ang = -AIM_MAX; ang <= AIM_MAX + 1e-9; ang += 0.024) consider(ang);
+    consider(0);
+    consider(-AIM_MAX);
+    consider(AIM_MAX);
+    for (r = 0; r < MAX_ROWS; r++) {
+      for (c = 0; c < colsInRow(r); c++) {
+        if (!canPlace(grid, c, r)) continue;
+        px = cellX(c, r);
+        py = cellY(r, dropY);
+        consider(aimToPoint(px, py));
+        consider(aimToPoint(2 * wallL - px, py));
+        consider(aimToPoint(2 * wallR - px, py));
+      }
+    }
+    return best;
+  }
+  function playAutoN(maxShots, seed) {
+    var rnd = (function (s) {
+      return function () {
+        s = (s * 1664525 + 1013904223) | 0;
+        return (s >>> 0) / 4294967296;
+      };
+    })(seed || 2026);
+    var grid = makeBoard(5, 4, rnd);
+    var pops = 0;
+    var fells = 0;
+    var shots = 0;
+    var color;
+    var next;
+    var cols;
+    var pick;
+    var slot;
+    var res;
+    var start = countCells(grid);
+    function takeColor(list) {
+      if (!list.length) return 0;
+      return list[(rnd() * list.length) | 0];
+    }
+    cols = colorsOn(grid);
+    color = takeColor(cols);
+    next = takeColor(cols);
+    while (shots < maxShots) {
+      if (countCells(grid) === 0) break;
+      cols = colorsOn(grid);
+      if (!cols.length) break;
+      if (cols.indexOf(color) < 0) color = takeColor(cols);
+      if (cols.indexOf(next) < 0) next = takeColor(cols);
+      pick = pickAiAim(grid, 0, color, next);
+      if (!pick) break;
+      slot = simLand(grid, 0, pick.aim);
+      if (!slot) break;
+      grid[slot.r][slot.c] = color;
+      res = resolveAt(grid, slot.c, slot.r);
+      if (res.popped.length >= 3) pops += 1;
+      fells += res.fell.length;
+      color = next;
+      next = takeColor(colorsOn(grid).length ? colorsOn(grid) : cols);
+      shots += 1;
+    }
+    return {
+      shots: shots,
+      pops: pops,
+      fells: fells,
+      start: start,
+      left: countCells(grid)
+    };
   }
 
   function runSelfTest() {
@@ -364,6 +643,45 @@
     eq(stageAt(7).name, '终幕', 'finale');
     eq(stageAt(10).dropEvery <= 4 ? 1 : 0, 1, 'faster later');
 
+    var gAi = emptyGrid();
+    gAi[0][2] = 1; gAi[0][3] = 1;
+    var aiPop = pickAiAim(gAi, 0, 1, 2);
+    eq(aiPop && simLand(gAi, 0, aiPop.aim) ? 1 : 0, 1, 'ai finds pair');
+    var gAiLand = cloneGrid(gAi);
+    var aiSlot = simLand(gAiLand, 0, aiPop.aim);
+    gAiLand[aiSlot.r][aiSlot.c] = 1;
+    var aiRes = resolveAt(gAiLand, aiSlot.c, aiSlot.r);
+    eq(aiRes.popped.length >= 3 ? 1 : 0, 1, 'ai pops 3 not random');
+
+    var gDrop = emptyGrid();
+    gDrop[0][0] = 1; gDrop[0][1] = 1;
+    gDrop[0][4] = 1; gDrop[0][5] = 1;
+    gDrop[1][4] = 2;
+    var aiDrop = pickAiAim(gDrop, 0, 1, 0);
+    var gDropLand = cloneGrid(gDrop);
+    var dropSlot = simLand(gDropLand, 0, aiDrop.aim);
+    gDropLand[dropSlot.r][dropSlot.c] = 1;
+    var dropRes = resolveAt(gDropLand, dropSlot.c, dropSlot.r);
+    eq(dropRes.popped.length >= 3 ? 1 : 0, 1, 'ai drop-pop');
+    eq(dropRes.fell.length >= 1 ? 1 : 0, 1, 'ai prefers chain drop');
+
+    var gStay = emptyGrid();
+    gStay[0][0] = 0; gStay[0][3] = 1; gStay[0][6] = 2;
+    var aiStay = pickAiAim(gStay, 0, 0, 1);
+    var staySlot = simLand(gStay, 0, aiStay.aim);
+    eq(staySlot ? 1 : 0, 1, 'ai setup lands');
+    var around0 = 0;
+    var nStay = neighbors(staySlot.c, staySlot.r);
+    var si;
+    for (si = 0; si < nStay.length; si++) {
+      if (cellAt(gStay, nStay[si].c, nStay[si].r) === 0) around0 += 1;
+    }
+    eq(around0 >= 1 || (staySlot.c === 0 && staySlot.r === 0) ? 1 : 0, 1, 'ai attaches same color');
+
+    var autoRun = playAutoN(22, 2026);
+    eq(autoRun.pops >= 6 ? 1 : 0, 1, 'ai clears groups over a run');
+    eq(autoRun.left < autoRun.start ? 1 : 0, 1, 'ai reduces board');
+
     if (fail) {
       if (typeof console !== 'undefined') console.error('self-test failures', fail);
       if (typeof process !== 'undefined') process.exit(1);
@@ -389,6 +707,9 @@
   var ovTimed = document.getElementById('ov-timed');
   var btnMute = document.getElementById('btn-mute');
   var btnRetry = document.getElementById('btn-retry');
+  var btnAuto = document.getElementById('btn-auto');
+  var speedEl = document.getElementById('speed');
+  var speedLab = document.getElementById('speed-lab');
   var modeCampaignBtn = document.getElementById('mode-campaign');
   var modeTimedBtn = document.getElementById('mode-timed');
   var scoreEl = document.getElementById('score');
@@ -430,6 +751,102 @@
   var falls = [];
 
   var keys = { l: false, r: false };
+  var autoOn = false;
+  var autoSpeed = 3;
+  var autoMs = 0;
+  var autoPlan = null;
+
+  function loadAutoSpeed() {
+    try {
+      var n = parseInt(localStorage.getItem(AUTO_SPEED_KEY) || '3', 10);
+      if (n >= 1 && n <= 4) return n;
+    } catch (e) { /* ignore */ }
+    return 3;
+  }
+  function saveAutoSpeed(n) {
+    try { localStorage.setItem(AUTO_SPEED_KEY, String(n)); } catch (e) { /* ignore */ }
+  }
+  function autoTurbo() {
+    return autoOn && autoSpeed >= 4;
+  }
+  function syncAutoUi() {
+    btnAuto.classList.toggle('on', autoOn);
+    btnAuto.setAttribute('aria-pressed', autoOn ? 'true' : 'false');
+    btnAuto.textContent = autoOn ? '停下' : '自动';
+    btnAuto.setAttribute('aria-label', autoOn ? '停止自动' : '自动');
+  }
+  function syncSpeedUi() {
+    speedEl.value = String(autoSpeed);
+    speedLab.textContent = AUTO_SPEED_NAME[autoSpeed];
+    speedEl.title = AUTO_SPEED_NAME[autoSpeed];
+    speedEl.setAttribute('aria-valuetext', AUTO_SPEED_NAME[autoSpeed]);
+  }
+  function setAutoSpeed(n) {
+    n = parseInt(n, 10);
+    if (!(n >= 1 && n <= 4)) n = 3;
+    autoSpeed = n;
+    saveAutoSpeed(n);
+    syncSpeedUi();
+  }
+  function playHint() {
+    if (autoOn && G.mode === 'play' && !frozen) {
+      setHint('托管中 · A 或「停下」取消', 'hot');
+      return;
+    }
+    if (G.kind === 'timed') {
+      setHint('九十秒冲分 · 对上颜色就爆串 · 清盘接着打', '');
+    } else {
+      setHint('清八关 · 对上颜色就爆串 · 天花板会往下压', '');
+    }
+  }
+  function clearPlayerAim() {
+    keys.l = false;
+    keys.r = false;
+  }
+  function toggleAuto() {
+    autoOn = !autoOn;
+    autoPlan = null;
+    autoMs = 0;
+    clearPlayerAim();
+    syncAutoUi();
+    audio.ensure();
+    if (autoOn) {
+      if (overlayKind === 'title' || G.mode === 'title') {
+        startPlay(G.kind === 'timed' ? 'timed' : 'campaign');
+      }
+    }
+    playHint();
+  }
+  function tickAuto(dt) {
+    if (!autoOn || frozen || G.mode !== 'play') return;
+    if (!canShoot()) {
+      autoPlan = null;
+      return;
+    }
+    if (!autoPlan) {
+      var pick = pickAiAim(G.grid, G.dropY, G.current, G.next);
+      if (!pick) return;
+      autoPlan = { aim: pick.aim, from: G.aim };
+      autoMs = 0;
+      if (autoTurbo()) {
+        G.aim = pick.aim;
+        fire();
+        autoPlan = null;
+        return;
+      }
+    }
+    autoMs += dt * 1000;
+    var wait = AUTO_DELAY[autoSpeed] || 0;
+    var t = wait <= 0 ? 1 : Math.min(1, autoMs / Math.max(1, wait));
+    var ease = t * t * (3 - 2 * t);
+    G.aim = lerp(autoPlan.from, autoPlan.aim, ease);
+    if (autoMs >= wait) {
+      G.aim = autoPlan.aim;
+      fire();
+      autoPlan = null;
+      autoMs = 0;
+    }
+  }
 
   var G = {
     mode: 'title',
@@ -774,7 +1191,7 @@
       ovKicker.textContent = 'BUBBLE';
       ovTitle.textContent = '泡弹';
       ovLead.textContent = '对上颜色就爆串。三颗同色炸掉，悬空的整串砸下来。';
-      ovOps.textContent = '瞄准点按或空格发射 · 方向键微调 · 天花板会往下压';
+      ovOps.textContent = '瞄准点按或空格发射 · 方向键微调 · A 自动 · 天花板会往下压';
       ovCampaign.textContent = '闯关';
       ovTimed.textContent = '限时 90s';
     } else if (kind === 'win') {
@@ -784,7 +1201,7 @@
       ovTitle.textContent = '通关了';
       ovLead.textContent = '八关清完 · ' + G.score + ' 分 · 最大一爆 ' + G.biggest +
         ' · 连击 ×' + G.maxCombo + (rec ? ' · 新纪录' : ' · 最高 ' + currentBest());
-      ovOps.textContent = 'R 重开 · 点弹层外可看盘 · M 静音';
+      ovOps.textContent = 'R 重开 · 点弹层外可看盘 · A 自动 · M 静音';
       ovCampaign.textContent = '再闯';
       ovTimed.textContent = '限时';
     } else if (kind === 'lose') {
@@ -793,7 +1210,7 @@
       ovTitle.textContent = '贴地了';
       ovLead.textContent = G.score + ' 分 · 第 ' + (G.round + 1) + ' 关 · 炸掉 ' + G.pops +
         ' 次 · 坠落 ' + G.dropped + ' · 最高 ' + currentBest();
-      ovOps.textContent = 'R 重开 · 点弹层外可看盘 · M 静音';
+      ovOps.textContent = 'R 重开 · 点弹层外可看盘 · A 自动 · M 静音';
       ovCampaign.textContent = '再闯';
       ovTimed.textContent = '限时';
     } else if (kind === 'time') {
@@ -803,7 +1220,7 @@
       ovTitle.textContent = '时间到';
       ovLead.textContent = G.score + ' 分 · 清了 ' + G.round + ' 盘 · 连击 ×' + G.maxCombo +
         (recT ? ' · 新纪录' : ' · 最高 ' + currentBest());
-      ovOps.textContent = 'R 重开 · 点弹层外可看盘 · M 静音';
+      ovOps.textContent = 'R 重开 · 点弹层外可看盘 · A 自动 · M 静音';
       ovCampaign.textContent = '闯关';
       ovTimed.textContent = '再冲';
     }
@@ -815,8 +1232,8 @@
   }
 
   function hitStop(sec) {
-    if (REDUCE) {
-      G.stop = Math.max(G.stop, 0.012);
+    if (REDUCE || autoTurbo()) {
+      G.stop = Math.max(G.stop, autoTurbo() ? 0 : 0.012);
       return;
     }
     G.stop = Math.max(G.stop, sec);
@@ -996,78 +1413,11 @@
   }
 
   function findHit(x, y) {
-    var best = null;
-    var bestD = COLLIDE2;
-    var r, c, dx, dy, d, cx, cy;
-    var dropY = G.dropY;
-    for (r = 0; r < MAX_ROWS; r++) {
-      cy = cellY(r, dropY);
-      if (cy + R + 4 < y - R || cy - R - 4 > y + R) continue;
-      for (c = 0; c < colsInRow(r); c++) {
-        if (G.grid[r][c] < 0) continue;
-        cx = cellX(c, r);
-        dx = cx - x;
-        dy = cy - y;
-        d = dx * dx + dy * dy;
-        if (d < bestD) {
-          bestD = d;
-          best = { c: c, r: r };
-        }
-      }
-    }
-    return best;
+    return findHitOn(G.grid, G.dropY, x, y);
   }
 
   function placeShot(x, y, hit) {
-    var dropY = G.dropY;
-    var cand = [];
-    var seen = {};
-    var i, n, p, d, best, bestD, k, rr, cc, ap;
-    function add(c, r) {
-      if (r < 0 || r >= MAX_ROWS || c < 0 || c >= colsInRow(r)) return;
-      if (cellAt(G.grid, c, r) >= 0) return;
-      k = c + ',' + r;
-      if (seen[k]) return;
-      seen[k] = 1;
-      cand.push({ c: c, r: r });
-    }
-    if (hit) {
-      n = neighbors(hit.c, hit.r);
-      for (i = 0; i < n.length; i++) add(n[i].c, n[i].r);
-    }
-    if (y - R <= CEIL0 + dropY + R * 1.2) {
-      for (i = 0; i < colsInRow(0); i++) add(i, 0);
-    }
-    if (!cand.length) {
-      ap = {
-        r: clamp(Math.round((y - CEIL0 - dropY - R) / ROW_H), 0, MAX_ROWS - 1),
-        c: 0
-      };
-      ap.c = clamp(
-        Math.round((x - LEFT - R - ((ap.r & 1) ? R : 0)) / D),
-        0,
-        colsInRow(ap.r) - 1
-      );
-      add(ap.c, ap.r);
-      n = neighbors(ap.c, ap.r);
-      for (i = 0; i < n.length; i++) add(n[i].c, n[i].r);
-      for (rr = Math.max(0, ap.r - 2); rr <= Math.min(MAX_ROWS - 1, ap.r + 2); rr++) {
-        for (cc = 0; cc < colsInRow(rr); cc++) {
-          if (canPlace(G.grid, cc, rr)) add(cc, rr);
-        }
-      }
-    }
-    best = null;
-    bestD = 1e15;
-    for (i = 0; i < cand.length; i++) {
-      p = { x: cellX(cand[i].c, cand[i].r), y: cellY(cand[i].r, dropY) };
-      d = (p.x - x) * (p.x - x) + (p.y - y) * (p.y - y);
-      if (d < bestD) {
-        bestD = d;
-        best = cand[i];
-      }
-    }
-    return best;
+    return placeShotOn(G.grid, G.dropY, x, y, hit);
   }
 
   function peekGhost() {
@@ -1075,27 +1425,7 @@
       G.ghost = null;
       return;
     }
-    var x = SHOOT_X + Math.sin(G.aim) * 26;
-    var y = SHOOT_Y - Math.cos(G.aim) * 26;
-    var vx = Math.sin(G.aim);
-    var vy = -Math.cos(G.aim);
-    var step = 8;
-    var i, hit, ceil, slot;
-    ceil = CEIL0 + G.dropY;
-    for (i = 0; i < 110; i++) {
-      x += vx * step;
-      y += vy * step;
-      if (x < LEFT + R) { x = LEFT + R; vx = Math.abs(vx); }
-      else if (x > RIGHT - R) { x = RIGHT - R; vx = -Math.abs(vx); }
-      hit = findHit(x, y);
-      if (hit || y - R <= ceil) {
-        slot = placeShot(x, y, hit);
-        G.ghost = slot;
-        return;
-      }
-      if (y < -20) break;
-    }
-    G.ghost = null;
+    G.ghost = simLand(G.grid, G.dropY, G.aim);
   }
 
   function traceAim() {
@@ -1235,7 +1565,7 @@
     bumpScore(add);
     syncCombo();
     G.phase = 'resolve';
-    G.lock = REDUCE ? 0.1 : clamp(0.14 + fell.length * 0.012, 0.14, 0.3);
+    G.lock = autoTurbo() ? 0.02 : (REDUCE ? 0.1 : clamp(0.14 + fell.length * 0.012, 0.14, 0.3));
     refreshQueue();
   }
 
@@ -1266,7 +1596,7 @@
     }
     refreshQueue();
     G.phase = 'idle';
-    G.lock = 0.04;
+    G.lock = autoTurbo() ? 0 : 0.04;
   }
 
   function onClear() {
@@ -1285,7 +1615,7 @@
       return;
     }
     G.phase = 'clear';
-    G.lock = REDUCE ? 0.18 : 0.48;
+    G.lock = autoTurbo() ? 0.04 : (REDUCE ? 0.18 : 0.48);
   }
 
   function nextRound() {
@@ -1296,7 +1626,8 @@
     G.lock = 0.12;
     var spec = stageAt(G.round);
     showToast((G.kind === 'timed' ? '下一盘 · ' : '第 ' + (G.round + 1) + ' 关 · ') + spec.name, 'gold');
-    setHint(spec.name + ' · 压顶更快了', 'hot');
+    if (autoOn) playHint();
+    else setHint(spec.name + ' · 压顶更快了', 'hot');
     renderHud();
     kick(0, 0.4, 4);
     screenFlash(CYN, 0.2);
@@ -1326,8 +1657,9 @@
     }
     refreshQueue();
     G.phase = 'idle';
-    G.lock = 0.06;
-    setHint('瞄准同色 · 三颗起爆 · 悬空坠落加分', '');
+    G.lock = autoTurbo() ? 0 : 0.06;
+    if (autoOn) playHint();
+    else setHint('瞄准同色 · 三颗起爆 · 悬空坠落加分', '');
     renderHud();
   }
 
@@ -1481,10 +1813,10 @@
     renderHud();
     var spec = stageAt(0);
     showToast(G.kind === 'timed' ? '90 秒冲分' : spec.name, 'gold');
-    setHint(G.kind === 'timed'
-      ? '九十秒冲分 · 对上颜色就爆串 · 清盘接着打'
-      : '清八关 · 对上颜色就爆串 · 天花板会往下压');
+    autoPlan = null;
+    autoMs = 0;
     canvas.focus();
+    playHint();
   }
 
   function retry() {
@@ -1888,7 +2220,7 @@
     G.lock = Math.max(0, G.lock - dt);
 
     if (frozen) {
-      if (overlayKind === 'title') {
+      if (overlayKind === 'title' && !autoOn) {
         G.aim = Math.sin(G.clock * 0.65) * 0.52;
       }
       return;
@@ -1896,8 +2228,10 @@
 
     if (G.mode !== 'play') return;
 
-    if (keys.l) G.aim = Math.max(-AIM_MAX, G.aim - AIM_SPD * dt);
-    if (keys.r) G.aim = Math.min(AIM_MAX, G.aim + AIM_SPD * dt);
+    if (!autoOn) {
+      if (keys.l) G.aim = Math.max(-AIM_MAX, G.aim - AIM_SPD * dt);
+      if (keys.r) G.aim = Math.min(AIM_MAX, G.aim + AIM_SPD * dt);
+    }
 
     if (G.kind === 'timed' && G.ticking) {
       G.time -= dt;
@@ -1927,6 +2261,7 @@
       kEase(dt);
     } else if (G.phase === 'idle') {
       peekGhost();
+      if (autoOn) tickAuto(dt);
     }
   }
 
@@ -1953,6 +2288,7 @@
   }
 
   function onPointerMove(ev) {
+    if (autoOn) return;
     if (frozen && overlayKind !== 'title') return;
     var w = toWorld(ev.clientX, ev.clientY);
     if (G.mode === 'play' && !frozen) aimAt(w.x, w.y);
@@ -1964,6 +2300,7 @@
     if (overlayKind === 'title') return;
     if (frozen && overlayKind !== 'none') return;
     if (G.mode !== 'play') return;
+    if (autoOn) return;
     var w = toWorld(ev.clientX, ev.clientY);
     aimAt(w.x, w.y);
     fire();
@@ -1983,15 +2320,28 @@
       ev.preventDefault();
       return;
     }
+    if (k === 'a' || k === 'A') {
+      if (ev.repeat) return;
+      audio.ensure();
+      toggleAuto();
+      ev.preventDefault();
+      return;
+    }
+    if (ev.target === speedEl) return;
     audio.ensure();
     if (k === ' ' || k === 'Enter') {
       ev.preventDefault();
       if (overlayKind === 'title') { startPlay('campaign'); return; }
       if (overlayKind !== 'none' && overlayKind !== 'title') { retry(); return; }
+      if (autoOn) return;
       fire();
       return;
     }
-    if (k === 'ArrowLeft' || k === 'a' || k === 'A') {
+    if (autoOn) {
+      if (k === 'ArrowLeft' || k === 'ArrowRight' || k === 'd' || k === 'D') ev.preventDefault();
+      return;
+    }
+    if (k === 'ArrowLeft') {
       keys.l = true;
       ev.preventDefault();
     } else if (k === 'ArrowRight' || k === 'd' || k === 'D') {
@@ -2002,7 +2352,7 @@
 
   function onKeyUp(ev) {
     var k = ev.key;
-    if (k === 'ArrowLeft' || k === 'a' || k === 'A') keys.l = false;
+    if (k === 'ArrowLeft') keys.l = false;
     else if (k === 'ArrowRight' || k === 'd' || k === 'D') keys.r = false;
   }
 
@@ -2022,6 +2372,9 @@
     buildBoard();
     G.mode = 'title';
     G.phase = 'idle';
+    autoSpeed = loadAutoSpeed();
+    syncSpeedUi();
+    syncAutoUi();
     renderHud();
     setOverlay('title');
     resize();
@@ -2046,6 +2399,9 @@
       audio.setMuted(!audio.muted);
     });
     btnRetry.addEventListener('click', retry);
+    btnAuto.addEventListener('click', function () { toggleAuto(); });
+    speedEl.addEventListener('input', function () { setAutoSpeed(speedEl.value); });
+    speedEl.addEventListener('change', function () { setAutoSpeed(speedEl.value); });
     modeCampaignBtn.addEventListener('click', function () {
       if (G.kind === 'campaign' && G.mode === 'play' && overlayKind === 'none') return;
       startPlay('campaign');

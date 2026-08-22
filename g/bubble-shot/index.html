@@ -49,6 +49,12 @@
           <button type="button" id="mode-campaign" aria-pressed="true" title="闯关清盘">闯关</button>
           <button type="button" id="mode-timed" aria-pressed="false" title="九十秒冲分">限时</button>
         </div>
+        <label class="speed-ctl" title="速度 慢 / 中 / 快 / 极快">
+          <span>速度</span>
+          <input type="range" id="speed" min="1" max="4" step="1" value="3" aria-label="速度" />
+          <b id="speed-lab">快</b>
+        </label>
+        <button type="button" id="btn-auto" title="A" aria-label="自动" aria-pressed="false">自动</button>
         <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
         <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
       </div>
@@ -63,7 +69,7 @@
           <p class="kicker" id="ov-kicker">BUBBLE</p>
           <h1 id="ov-title">泡弹</h1>
           <p class="lead" id="ov-lead">对上颜色就爆串。三颗同色炸掉，悬空的整串砸下来。</p>
-          <p class="ops" id="ov-ops">瞄准点按或空格发射 · 方向键微调 · 天花板会往下压</p>
+          <p class="ops" id="ov-ops">瞄准点按或空格发射 · 方向键微调 · A 自动 · 天花板会往下压</p>
           <div class="ov-actions">
             <button type="button" id="ov-campaign">闯关</button>
             <button type="button" id="ov-timed">限时 90s</button>
@@ -72,7 +78,7 @@
       </div>
     </div>
 
-    <footer class="hint" id="hint">瞄准同色 · 三颗起爆 · 悬空坠落加分 · 还剩 3 发会警告压顶</footer>
+    <footer class="hint" id="hint">瞄准同色 · 三颗起爆 · 悬空坠落加分 · A 自动 · 还剩 3 发会警告压顶</footer>
   </div>
   <script src="js/game.js"></script>
 </body>
