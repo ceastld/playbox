@@ -11,7 +11,10 @@
   const TILT = 3.55;
   const BEST_KEY = 'playbox-excitebike-best';
   const MUTE_KEY = 'playbox-excitebike-mute';
-  const OPS = '→ D 油门 · ← A 刹车 · ↑↓ 空中摆车 · 空格涡轮 · R 重开 · M 静音';
+  const AUTO_SPEED_KEY = 'playbox-excitebike-auto-speed';
+  const SPEED_LABELS = ['', '慢', '中', '快', '极快'];
+  const AUTO_SCALE = [1, 0.48, 0.72, 1, 2.6];
+  const OPS = '→ D 油门 · ← 刹车 · ↑↓ 空中摆车 · 空格涡轮 · A 自动 · R 重开 · M 静音';
   const REDUCE = typeof window !== 'undefined' && window.matchMedia
     ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
     : false;
@@ -43,6 +46,9 @@
   const btnOvModes = document.getElementById('ov-modes');
   const btnMute = document.getElementById('btn-mute');
   const btnRetry = document.getElementById('btn-retry');
+  const btnAuto = document.getElementById('btn-auto');
+  const speedEl = document.getElementById('speed');
+  const speedLab = document.getElementById('speed-lab');
   const scoreEl = document.getElementById('score');
   const bestEl = document.getElementById('best');
   const timeEl = document.getElementById('time');
@@ -77,6 +83,9 @@
   let kickTok = 0;
   let comboTok = 0;
   let inputSrc = 'key';
+  let autoOn = false;
+  let autoSpeed = 3;
+  let autoOvWait = 0;
 
   const keys = { l: false, r: false, u: false, d: false, turbo: false };
   const pointer = { down: false, hover: false, x: VW * 0.4, y: VH * 0.6, id: null };
@@ -563,6 +572,19 @@
     hintEl.classList.toggle('warn', cls === 'warn');
   }
 
+  function loadAutoSpeed() {
+    try {
+      const n = parseInt(localStorage.getItem(AUTO_SPEED_KEY) || '3', 10);
+      if (!isFinite(n) || n < 1 || n > 4) return 3;
+      return n;
+    } catch (err) {
+      return 3;
+    }
+  }
+  function saveAutoSpeed(n) {
+    try { localStorage.setItem(AUTO_SPEED_KEY, String(n)); } catch (err) { /* ignore */ }
+  }
+
   function loadBest() {
     try {
       const raw = localStorage.getItem(BEST_KEY);
@@ -618,6 +640,7 @@
     if (G.mode === 'title') setHint(OPS, '');
     else if (G.mode === 'win') setHint('R 再冲 · 摆车落地冲线', 'hot');
     else if (G.mode === 'lose') setHint('R 重开 · 超时没冲过终点', 'warn');
+    else if (autoOn) setHint('托管中 · A 停下', 'hot');
     else if (player.crashT > 0.2) setHint('摔了 · 起来接着冲', 'warn');
     else if (player.heat > 0.78) setHint('引擎要炸 · 松涡轮', 'warn');
     else if (player.air) setHint('↑ 抬头 · ↓ 压头 · 顺着坡落地', 'hot');
@@ -682,6 +705,7 @@
 
   function hitStop(sec) {
     if (REDUCE || G.mode !== 'play') return;
+    if (autoOn && autoSpeed >= 4) return;
     G.stop = Math.max(G.stop, sec);
   }
   function kick(mag) {
@@ -775,6 +799,7 @@
     G.camX = player.x - 220;
     G.camY = 40;
     showOverlay('title', '越野', '冲坡起飞，空中摆车落地。涡轮别过热，摔了就晚了。跟 CPU 抢终点。');
+    autoOvWait = 0;
     hud();
   }
 
@@ -797,6 +822,7 @@
     G.camX = player.x - 210;
     G.camY = 36;
     hideOverlay();
+    autoOvWait = 0;
     audio.sting();
     toast(isFever() ? '发烧 · 引擎更烫更快' : '越野 · 冲坡摆车', false, !isFever());
     floatText(player.x + 40, player.y - 50, 'GO', GOLD, 22);
@@ -973,6 +999,62 @@
     if (!muddy && b.heat < heatCap && b.vx > 40 && !behind) b.turbo = true;
     if (muddy && b.vx > 130) b.brake = true;
     if (sl < -0.42 && b.vx > 300) b.brake = true;
+  }
+
+  function thinkPlayerAuto(b) {
+    b.gas = true;
+    b.brake = false;
+    b.turbo = false;
+    b.tilt = 0;
+    if (b.crashT > 0) return;
+    if (b.air) {
+      let px = b.x;
+      let py = b.y;
+      let pvx = b.vx;
+      let pvy = b.vy;
+      let landSl = groundSlope(b.x + Math.max(28, b.vx * 0.22));
+      let airLeft = 0.02;
+      for (let i = 0; i < 48; i++) {
+        pvy += GRAV * 0.016;
+        px += pvx * 0.016;
+        py += pvy * 0.016;
+        airLeft = (i + 1) * 0.016;
+        if (py + WHEEL >= groundY(px)) {
+          landSl = groundSlope(px);
+          break;
+        }
+      }
+      const diff = wrapAng(landSl - b.pitch);
+      const gain = airLeft < 0.12 ? 10 : 6.4;
+      b.tilt = clamp(diff * gain, -1, 1);
+      return;
+    }
+    const sl = groundSlope(b.x);
+    const look = Math.max(42, b.vx * 0.24);
+    const slAhead = groundSlope(b.x + look);
+    const muddy = inMud(b.x);
+    const mudSoon = inMud(b.x + look * 1.05);
+    const crest = slAhead - sl;
+    const whoops = Math.abs(crest) > 0.32 && sl > -0.55 && sl < 0.38;
+    const steepUp = sl < -0.46;
+    let nextMud = 1e9;
+    let nextRamp = 1e9;
+    for (let i = 0; i < flags.length; i++) {
+      const dx = flags[i].x - b.x;
+      if (dx < 8) continue;
+      if (flags[i].k === 'mud' && dx < nextMud) nextMud = dx;
+      if (flags[i].k === 'ramp' && dx < nextRamp) nextRamp = dx;
+    }
+    if (muddy && b.vx > 118) b.brake = true;
+    else if (mudSoon && b.vx > 200) b.brake = true;
+    else if (steepUp && b.vx > 355 && nextRamp < 140) b.brake = true;
+    const nearFinish = b.x > finishX - 520;
+    const heatCap = nearFinish ? 0.84 : (whoops ? 0.5 : 0.76);
+    if (!muddy && !mudSoon && b.heat < heatCap && b.vx > 32 && !(steepUp && b.vx > 330)) {
+      b.turbo = true;
+    }
+    if (nextMud < 160 && b.heat > 0.45) b.turbo = false;
+    if (whoops && b.heat > 0.42) b.turbo = false;
   }
 
   function controlPlayer(b) {
@@ -1184,19 +1266,26 @@
       if (G.comboT <= 0) G.comboT = 0;
     }
 
+    tickAutoFlow(dt);
+
     const playing = G.mode === 'play';
     const demo = G.mode === 'title';
 
     if (G.stop > 0 && playing) {
-      G.stop -= dt;
-      stepParticles(dt);
-      audio.tickEngine(clamp(player.vx / maxSpd(), 0, 1), true, false, player.heat);
-      return;
+      if (autoOn && autoSpeed >= 4) G.stop = 0;
+      else {
+        G.stop -= dt;
+        stepParticles(dt);
+        audio.tickEngine(clamp(player.vx / maxSpd(), 0, 1), true, false, player.heat);
+        return;
+      }
     }
 
     if (playing || demo) {
-      if (playing) controlPlayer(player);
-      else thinkAI(player);
+      if (playing) {
+        if (autoOn) thinkPlayerAuto(player);
+        else controlPlayer(player);
+      } else thinkAI(player);
       stepBike(player, dt);
       for (let i = 0; i < cpus.length; i++) {
         thinkAI(cpus[i]);
@@ -1671,6 +1760,82 @@
     return (e.clientY - rect.top - oy) / scale;
   }
 
+  function autoClearInput() {
+    keys.l = false;
+    keys.r = false;
+    keys.u = false;
+    keys.d = false;
+    keys.turbo = false;
+    pointer.down = false;
+    pointer.id = null;
+    pads.l = pads.r = pads.u = pads.d = pads.turbo = false;
+    if (padBrake) padBrake.classList.remove('on');
+    if (padUp) padUp.classList.remove('on');
+    if (padDown) padDown.classList.remove('on');
+    if (padGas) padGas.classList.remove('on');
+    if (padTurbo) padTurbo.classList.remove('on');
+  }
+
+  function syncAutoUi() {
+    if (!btnAuto) return;
+    btnAuto.classList.toggle('on', autoOn);
+    btnAuto.setAttribute('aria-pressed', autoOn ? 'true' : 'false');
+    btnAuto.textContent = autoOn ? '停下' : '自动';
+    btnAuto.setAttribute('aria-label', autoOn ? '停止自动' : '自动');
+  }
+
+  function syncSpeedUi() {
+    if (!speedEl) return;
+    speedEl.value = String(autoSpeed);
+    if (speedLab) speedLab.textContent = SPEED_LABELS[autoSpeed];
+    speedEl.title = SPEED_LABELS[autoSpeed];
+    speedEl.setAttribute('aria-valuetext', SPEED_LABELS[autoSpeed]);
+  }
+
+  function toggleAuto() {
+    autoOn = !autoOn;
+    autoOvWait = 0;
+    autoClearInput();
+    syncAutoUi();
+    if (autoOn) {
+      audio.ensure();
+      if (G.mode === 'title') startGame('track');
+    }
+    hud();
+  }
+
+  function setAutoSpeed(n) {
+    n = n | 0;
+    if (n < 1 || n > 4 || !isFinite(n)) n = 3;
+    autoSpeed = n;
+    saveAutoSpeed(autoSpeed);
+    syncSpeedUi();
+  }
+
+  function autoScale() {
+    if (!autoOn || G.mode !== 'play') return 1;
+    return AUTO_SCALE[autoSpeed] || 1;
+  }
+
+  function tickAutoFlow(dt) {
+    if (!autoOn) return;
+    if (G.mode === 'title') {
+      autoOvWait += dt;
+      if (autoOvWait >= (autoSpeed >= 3 ? 0.25 : 0.5)) {
+        autoOvWait = 0;
+        startGame('track');
+      }
+      return;
+    }
+    if (G.mode === 'lose' || G.mode === 'win') {
+      autoOvWait += dt;
+      if (autoOvWait >= (autoSpeed >= 3 ? 0.7 : 1.15)) {
+        autoOvWait = 0;
+        startGame(G.kind || 'track');
+      }
+    }
+  }
+
   function restart() {
     audio.ensure();
     if (G.mode === 'title') startGame('track');
@@ -1685,18 +1850,26 @@
   function onKey(e, down) {
     const code = e.code || '';
     const k = e.key;
-    const left = code === 'KeyA' || code === 'ArrowLeft' || k === 'a' || k === 'A' || k === 'Left';
+    if (k === 'a' || k === 'A' || code === 'KeyA') {
+      if (down) {
+        e.preventDefault();
+        if (!e.repeat) toggleAuto();
+      }
+      return;
+    }
+    if (e.target === speedEl) return;
+    const left = code === 'ArrowLeft' || k === 'Left';
     const right = code === 'KeyD' || code === 'ArrowRight' || k === 'd' || k === 'D' || k === 'Right';
     const up = code === 'KeyW' || code === 'ArrowUp' || k === 'w' || k === 'W' || k === 'Up';
     const dn = code === 'KeyS' || code === 'ArrowDown' || k === 's' || k === 'S' || k === 'Down';
     const space = code === 'Space' || k === ' ' || k === 'Spacebar';
     if (down && (left || right || up || dn || space || k === 'Enter')) e.preventDefault();
-    if (left) { keys.l = down; if (down) inputSrc = 'key'; }
-    if (right) { keys.r = down; if (down) inputSrc = 'key'; }
-    if (up) { keys.u = down; if (down) inputSrc = 'key'; }
-    if (dn) { keys.d = down; if (down) inputSrc = 'key'; }
+    if (left) { keys.l = down && !autoOn; if (down) inputSrc = 'key'; }
+    if (right) { keys.r = down && !autoOn; if (down) inputSrc = 'key'; }
+    if (up) { keys.u = down && !autoOn; if (down) inputSrc = 'key'; }
+    if (dn) { keys.d = down && !autoOn; if (down) inputSrc = 'key'; }
     if (space) {
-      keys.turbo = down && G.mode === 'play' && !overlayOpen();
+      keys.turbo = down && !autoOn && G.mode === 'play' && !overlayOpen();
       if (down) inputSrc = 'key';
     }
     if (!down) return;
@@ -1707,6 +1880,9 @@
     }
     if (k === 'r' || k === 'R') {
       restart();
+      return;
+    }
+    if (autoOn && (left || right || up || dn || space || k === 'd' || k === 'D' || k === 'w' || k === 'W' || k === 's' || k === 'S')) {
       return;
     }
     if (k === '1') {
@@ -1726,6 +1902,7 @@
     if (!canvas) return;
     canvas.addEventListener('pointerdown', function (e) {
       audio.ensure();
+      if (autoOn) return;
       e.preventDefault();
       pointer.down = true;
       pointer.hover = true;
@@ -1738,6 +1915,7 @@
       }
     });
     canvas.addEventListener('pointermove', function (e) {
+      if (autoOn) return;
       pointer.x = clamp(pointerVirtX(e), 0, VW);
       pointer.y = pointerVirtY(e);
       if (!pointer.down && e.pointerType === 'mouse') pointer.hover = true;
@@ -1762,6 +1940,7 @@
       e.preventDefault();
       e.stopPropagation();
       audio.ensure();
+      if (autoOn) return;
       pads[key] = true;
       inputSrc = 'ptr';
       el.classList.add('on');
@@ -1793,13 +1972,17 @@
     let dt = t - last;
     last = t;
     if (dt > 0.05) dt = 0.05;
-    acc += dt;
+    const turbo = autoOn && autoSpeed >= 4 && G.mode === 'play';
+    if (turbo) G.stop = 0;
+    acc += dt * autoScale();
     let n = 0;
-    while (acc >= STEP && n < 5) {
+    const maxSteps = turbo ? 16 : 5;
+    while (acc >= STEP && n < maxSteps) {
       update(STEP);
       acc -= STEP;
       n += 1;
     }
+    if (acc > STEP * 4) acc = 0;
     draw();
   }
 
@@ -1811,6 +1994,9 @@
 
   loadBest();
   initMute();
+  autoSpeed = loadAutoSpeed();
+  syncSpeedUi();
+  syncAutoUi();
   goTitle();
   resize();
   bindPointer();
@@ -1856,6 +2042,12 @@
       audio.setMuted(!audio.muted);
     });
   }
+  if (btnAuto) btnAuto.addEventListener('click', function () { toggleAuto(); });
+  if (speedEl) {
+    speedEl.addEventListener('input', function () {
+      setAutoSpeed(parseInt(speedEl.value, 10) || 3);
+    });
+  }
 
   window.addEventListener('keydown', function (e) { onKey(e, true); });
   window.addEventListener('keyup', function (e) { onKey(e, false); });
@@ -1863,13 +2055,7 @@
   document.addEventListener('visibilitychange', function () {
     hidden = document.hidden;
     if (hidden) {
-      keys.l = false;
-      keys.r = false;
-      keys.u = false;
-      keys.d = false;
-      keys.turbo = false;
-      pointer.down = false;
-      pads.l = pads.r = pads.u = pads.d = pads.turbo = false;
+      autoClearInput();
     }
   });
 
