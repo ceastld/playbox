@@ -1467,7 +1467,7 @@
     "blurb": "接住炸弹，别让它落地。",
     "hue": 8,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/kaboom-catch/",
     "kind": "remake"
   },
@@ -1529,6 +1529,18 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/joust-kick/",
+    "kind": "remake"
+  },
+  {
+    "n": 137,
+    "id": "pipe-flow",
+    "title": "通管",
+    "subtitle": "PIPE",
+    "blurb": "接上管子，让水通过。",
+    "hue": 168,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/pipe-flow/",
     "kind": "remake"
   }
 ]

@@ -1340,5 +1340,17 @@
     "dir": "g/dot-munch/",
     "url": "./g/dot-munch/",
     "kind": "remake"
+  },
+  {
+    "n": 131,
+    "id": "kaboom-catch",
+    "title": "接弹",
+    "subtitle": "KABOOM",
+    "blurb": "接住炸弹，别让它落地。",
+    "hue": 8,
+    "tag": "复刻",
+    "dir": "g/kaboom-catch/",
+    "url": "./g/kaboom-catch/",
+    "kind": "remake"
   }
 ]
