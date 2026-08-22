@@ -13,7 +13,10 @@
   const COMBO_WIN = 1.35;
   const BEST_KEY = 'playbox-river-raid-best';
   const MUTE_KEY = 'playbox-river-raid-mute';
-  const OPS = '← → 转向 · ↑ 加速 ↓ 减速 · 空格 / 点按开火 · R 重开 · M 静音';
+  const AUTO_SPEED_KEY = 'playbox-river-raid-auto-speed';
+  const SPEED_LABELS = ['', '慢', '中', '快', '极快'];
+  const AUTO_SCALE = [1, 0.48, 0.72, 1, 2.6];
+  const OPS = '← → 转向 · ↑ 加速 ↓ 减速 · 空格 / 点按开火 · A 自动 · R 重开 · M 静音';
   const REDUCE = typeof window !== 'undefined' && window.matchMedia
     ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
     : false;
@@ -44,6 +47,9 @@
   const btnRapids = document.getElementById('btn-rapids');
   const btnMute = document.getElementById('btn-mute');
   const btnRetry = document.getElementById('btn-retry');
+  const btnAuto = document.getElementById('btn-auto');
+  const speedEl = document.getElementById('speed');
+  const speedLab = document.getElementById('speed-lab');
   const scoreEl = document.getElementById('score');
   const bestEl = document.getElementById('best');
   const scoreBox = document.getElementById('score-box');
@@ -120,6 +126,13 @@
   };
 
   let inputSrc = 'key';
+  let autoOn = false;
+  let autoSpeed = 3;
+  let autoTarget = VW * 0.5;
+  let autoWantSpd = 154;
+  let autoFire = false;
+  let autoSide = 0;
+  let autoOvWait = 0;
 
   function clamp(v, a, b) {
     return v < a ? a : v > b ? b : v;
@@ -437,6 +450,22 @@
     } catch (err) { /* ignore */ }
   }
 
+  function loadAutoSpeed() {
+    try {
+      const n = parseInt(localStorage.getItem(AUTO_SPEED_KEY) || '3', 10);
+      if (!isFinite(n) || n < 1 || n > 4) return 3;
+      return n;
+    } catch (err) {
+      return 3;
+    }
+  }
+
+  function saveAutoSpeed(n) {
+    try {
+      localStorage.setItem(AUTO_SPEED_KEY, String(n));
+    } catch (err) { /* ignore */ }
+  }
+
   function addScore(n) {
     if (G.mode !== 'play' || n <= 0) return;
     G.score += n;
@@ -537,9 +566,10 @@
     }
     if (G.mode === 'title') setHint(OPS, '');
     else if (G.mode === 'lose') setHint('R 重开 · 撞岸、撞敌、撞桥或油尽即坠', 'warn');
+    else if (autoOn) setHint('托管中 · A 停下', 'hot');
     else if (G.fuel < 22) setHint('燃油告急 · 找金罐飞过去或打掉', 'warn');
     else if (G.lives === 1) setHint('最后一命 · 桥是检查点', 'warn');
-    else setHint('← → 转向 · ↑ 加速 · 空格开火 · 打桥才能过', '');
+    else setHint('← → 转向 · ↑ 加速 · 空格开火 · A 自动 · 打桥才能过', '');
     syncPips();
   }
 
@@ -573,6 +603,7 @@
 
   function hitStop(sec) {
     if (REDUCE || G.mode !== 'play') return;
+    if (autoOn && autoSpeed >= 4) return;
     G.stop = Math.max(G.stop, sec);
   }
 
@@ -811,6 +842,10 @@
     G.siphon = 0;
     G.alarmT = 0;
     G.why = '';
+    autoTarget = G.ship.x;
+    autoWantSpd = cruise();
+    autoFire = false;
+    autoSide = 0;
     particles.length = 0;
     sparks.length = 0;
     rings.length = 0;
@@ -836,6 +871,7 @@
     G.kind = kind === 'rapids' ? 'rapids' : 'classic';
     G.secLen = isRapids() ? 960 : 1220;
     G.mode = 'play';
+    autoOvWait = 0;
     resetRun();
     hideOverlay();
     audio.start();
@@ -859,6 +895,8 @@
     const r = riverAt(G.alt);
     G.ship.x = r.cx;
     G.ship.vx = 0;
+    autoTarget = r.cx;
+    autoWantSpd = cruise();
     G.fuel = 100;
     G.invuln = 1.35;
     G.shots.length = 0;
@@ -1064,9 +1102,390 @@
     }
   }
 
+  function waterSegs(y, margin) {
+    const r = riverAt(y);
+    const m = Math.max(4, margin);
+    const segs = [];
+    if (r.island) {
+      segs.push([r.L + m, r.island.L - m]);
+      segs.push([r.island.R + m, r.R - m]);
+    } else {
+      segs.push([r.L + m, r.R - m]);
+    }
+    const ok = [];
+    for (let i = 0; i < segs.length; i++) {
+      if (segs[i][1] - segs[i][0] > 6) ok.push(segs[i]);
+    }
+    if (!ok.length) {
+      const half = Math.max(8, (r.w * 0.5) - 4);
+      ok.push([r.cx - half, r.cx + half]);
+    }
+    return ok;
+  }
+
+  function autoMargin(y) {
+    const r = riverAt(y);
+    const need = HW.plane + (isRapids() ? 10 : 12);
+    const room = Math.max(8, r.w * 0.5 - 6);
+    return Math.min(need, room);
+  }
+
+  function pickSeg(segs, x, prefer) {
+    if (!segs.length) return [x - 20, x + 20];
+    if (prefer >= 0 && prefer < segs.length) {
+      const s = segs[prefer];
+      if (s[1] - s[0] > 8) return s;
+    }
+    let best = segs[0];
+    let bestD = 1e9;
+    for (let i = 0; i < segs.length; i++) {
+      const s = segs[i];
+      const cx = (s[0] + s[1]) * 0.5;
+      const inside = x >= s[0] && x <= s[1];
+      const d = inside ? 0 : Math.abs(x - cx);
+      if (d < bestD) {
+        bestD = d;
+        best = s;
+      }
+    }
+    return best;
+  }
+
+  function predEntX(e, t) {
+    if (e.type === 'fuel' || e.type === 'bridge' || !e.vx) return e.x;
+    if (e.type === 'jet') return e.x + e.vx * t;
+    let x = e.x;
+    let vx = e.vx;
+    const n = Math.min(14, Math.max(1, Math.ceil(t / 0.05)));
+    const dt = t / n;
+    for (let i = 0; i < n; i++) {
+      x += vx * dt;
+      const r = riverAt(e.y);
+      const m = e.hw + 3;
+      if (x < r.L + m) {
+        x = r.L + m;
+        vx = Math.abs(vx);
+      }
+      if (x > r.R - m) {
+        x = r.R - m;
+        vx = -Math.abs(vx);
+      }
+      if (r.island) {
+        if (x > r.island.L - m && x < r.island.R + m) {
+          const mid = (r.island.L + r.island.R) * 0.5;
+          if (x < mid) {
+            x = r.island.L - m;
+            vx = -Math.abs(vx);
+          } else {
+            x = r.island.R + m;
+            vx = Math.abs(vx);
+          }
+        }
+      }
+    }
+    return x;
+  }
+
+  function autoClearInput() {
+    keys.l = false;
+    keys.r = false;
+    keys.u = false;
+    keys.d = false;
+    pointer.down = false;
+    G.fireHold = false;
+    autoFire = false;
+  }
+
+  function syncAutoUi() {
+    if (!btnAuto) return;
+    btnAuto.classList.toggle('on', autoOn);
+    btnAuto.setAttribute('aria-pressed', autoOn ? 'true' : 'false');
+    btnAuto.textContent = autoOn ? '停下' : '自动';
+    btnAuto.setAttribute('aria-label', autoOn ? '停止自动' : '自动');
+  }
+
+  function syncSpeedUi() {
+    if (!speedEl) return;
+    speedEl.value = String(autoSpeed);
+    if (speedLab) speedLab.textContent = SPEED_LABELS[autoSpeed];
+    speedEl.title = SPEED_LABELS[autoSpeed];
+    speedEl.setAttribute('aria-valuetext', SPEED_LABELS[autoSpeed]);
+  }
+
+  function toggleAuto() {
+    autoOn = !autoOn;
+    autoOvWait = 0;
+    autoClearInput();
+    autoTarget = G.ship.x;
+    autoWantSpd = cruise();
+    autoFire = false;
+    syncAutoUi();
+    if (autoOn) {
+      audio.ensure();
+      if (G.mode === 'title') startGame('classic');
+    }
+    syncHud();
+  }
+
+  function setAutoSpeed(n) {
+    if (n < 1 || n > 4 || !isFinite(n)) n = 3;
+    autoSpeed = n;
+    saveAutoSpeed(autoSpeed);
+    syncSpeedUi();
+  }
+
+  function autoScale() {
+    if (!autoOn || G.mode !== 'play') return 1;
+    return AUTO_SCALE[autoSpeed] || 1;
+  }
+
+  function tickAutoFlow(dt) {
+    if (!autoOn) return;
+    if (G.mode === 'title') {
+      autoOvWait += dt;
+      if (autoOvWait >= (autoSpeed >= 3 ? 0.25 : 0.5)) {
+        autoOvWait = 0;
+        startGame('classic');
+      }
+      return;
+    }
+    if (G.mode === 'lose') {
+      autoOvWait += dt;
+      if (autoOvWait >= (autoSpeed >= 3 ? 0.7 : 1.15)) {
+        autoOvWait = 0;
+        startGame(G.kind);
+      }
+    }
+  }
+
+  function autoThink(dt) {
+    autoFire = false;
+    if (G.mode !== 'play' || G.deadT > 0) {
+      G.fireHold = false;
+      return;
+    }
+
+    const x0 = G.ship.x;
+    const y0 = G.alt;
+    const spd = Math.max(40, G.spd);
+    const look = 90 + spd * 0.95;
+    const r0 = riverAt(y0);
+    if (r0.island) {
+      const left = x0 < (r0.island.L + r0.island.R) * 0.5;
+      if (x0 < r0.island.L - 2) autoSide = 0;
+      else if (x0 > r0.island.R + 2) autoSide = 1;
+      else autoSide = left ? 0 : 1;
+    }
+
+    let fuelNeed = G.fuel < 52;
+    let fuelCrit = G.fuel < 28;
+    let fuelT = null;
+    let fuelScore = -1e9;
+    let bridge = null;
+    let bridgeD = 1e9;
+    let threat = null;
+    let threatT = 1e9;
+    const ahead = [];
+
+    for (let i = 0; i < G.ents.length; i++) {
+      const e = G.ents[i];
+      if (!e.alive) continue;
+      const dy = e.y - y0;
+      if (e.type === 'bridge') {
+        if (dy > -18 && dy < look + 80 && dy < bridgeD) {
+          bridgeD = dy;
+          bridge = e;
+        }
+        continue;
+      }
+      if (dy < -24 || dy > look + 40) continue;
+      ahead.push(e);
+      if (e.type === 'fuel' && dy > -8) {
+        const s = (fuelCrit ? 220 : 80) - dy * 0.35 - Math.abs(e.x - x0) * 0.45;
+        if (s > fuelScore) {
+          fuelScore = s;
+          fuelT = e;
+        }
+      }
+    }
+
+    if (fuelT && fuelNeed) {
+      const fy = fuelT.y;
+      const fr = riverAt(fy);
+      if (fr.island) autoSide = fuelT.x < (fr.island.L + fr.island.R) * 0.5 ? 0 : 1;
+    } else if (!r0.island) {
+      for (let d = 40; d <= look; d += 36) {
+        const r = riverAt(y0 + d);
+        if (!r.island) continue;
+        const leftW = r.island.L - r.L;
+        const rightW = r.R - r.island.R;
+        const leftC = (r.L + r.island.L) * 0.5;
+        const rightC = (r.island.R + r.R) * 0.5;
+        const leftCost = Math.abs(x0 - leftC) - leftW * 0.35;
+        const rightCost = Math.abs(x0 - rightC) - rightW * 0.35;
+        if (fuelT) autoSide = fuelT.x < (r.island.L + r.island.R) * 0.5 ? 0 : 1;
+        else if (leftCost < rightCost - 14) autoSide = 0;
+        else if (rightCost < leftCost - 14) autoSide = 1;
+        break;
+      }
+    }
+
+    let pathX = x0;
+    const samples = 14;
+    for (let i = 1; i <= samples; i++) {
+      const y = y0 + (look * i) / samples;
+      const m = autoMargin(y);
+      const segs = waterSegs(y, m);
+      const r = riverAt(y);
+      let prefer = 0;
+      if (r.island && segs.length > 1) prefer = autoSide;
+      else if (segs.length > 1) prefer = pathX > (segs[0][1] + segs[1][0]) * 0.5 ? 1 : 0;
+      const seg = pickSeg(segs, pathX, prefer);
+      const cx = (seg[0] + seg[1]) * 0.5;
+      const w = seg[1] - seg[0];
+      if (pathX < seg[0] + 2 || pathX > seg[1] - 2) pathX = cx;
+      else if (w < 52) pathX = lerp(pathX, cx, 0.55);
+      else pathX = clamp(pathX, seg[0] + 3, seg[1] - 3);
+    }
+
+    const near = waterSegs(y0 + 18, autoMargin(y0 + 18));
+    const nearR = riverAt(y0 + 18);
+    let preferNow = 0;
+    if (nearR.island && near.length > 1) preferNow = autoSide;
+    const lane = pickSeg(near, pathX, preferNow);
+    let desired = clamp(pathX, lane[0] + 2, lane[1] - 2);
+    const laneC = (lane[0] + lane[1]) * 0.5;
+    const laneW = lane[1] - lane[0];
+    if (laneW < 56) desired = lerp(desired, laneC, 0.4);
+
+    if (fuelT && (fuelNeed || Math.abs(fuelT.x - desired) < 28)) {
+      const fx = fuelT.x;
+      const inLane = fx > lane[0] - 8 && fx < lane[1] + 8;
+      if (inLane || fuelCrit) {
+        const pull = fuelCrit ? 0.85 : fuelNeed ? 0.55 : 0.28;
+        desired = lerp(desired, clamp(fx, lane[0] + 2, lane[1] - 2), pull);
+      }
+    }
+
+    for (let i = 0; i < ahead.length; i++) {
+      const e = ahead[i];
+      if (e.type === 'fuel' || e.type === 'bridge') continue;
+      const tHit = (e.y - y0) / spd;
+      if (tHit < -0.05 || tHit > 0.85) continue;
+      const px = predEntX(e, Math.max(0, tHit));
+      const rad = e.hw + HW.plane + 10;
+      if (Math.abs(px - desired) < rad && tHit < 0.72) {
+        const roomL = desired - (lane[0] + 2);
+        const roomR = (lane[1] - 2) - desired;
+        const goR = px <= desired ? roomR > 16 : roomR > roomL && roomR > 16;
+        const goL = px >= desired ? roomL > 16 : roomL > roomR && roomL > 16;
+        if (goR && roomR >= roomL) desired = clamp(px + rad + 6, lane[0] + 2, lane[1] - 2);
+        else if (goL) desired = clamp(px - rad - 6, lane[0] + 2, lane[1] - 2);
+        else if (roomR > 10) desired = clamp(px + rad, lane[0] + 2, lane[1] - 2);
+        else if (roomL > 10) desired = clamp(px - rad, lane[0] + 2, lane[1] - 2);
+        if (tHit < threatT) {
+          threatT = tHit;
+          threat = e;
+        }
+      }
+    }
+
+    desired = clamp(desired, lane[0] + 1, lane[1] - 1);
+    if (onLand(desired, y0 + 8, HW.plane + 4)) desired = laneC;
+    if (onLand(desired, y0 + 28, HW.plane + 4)) desired = lerp(desired, laneC, 0.6);
+
+    const nowSegs = waterSegs(y0, autoMargin(y0));
+    const nowLane = pickSeg(nowSegs, desired, r0.island ? autoSide : -1);
+    desired = clamp(desired, nowLane[0] + 1, nowLane[1] - 1);
+
+    const snap = autoSpeed >= 4 ? 0.55 : 0.32;
+    if (Math.abs(desired - autoTarget) > 5) {
+      autoTarget = lerp(autoTarget, desired, 1 - Math.exp(-dt * (7 + snap * 6)));
+    } else {
+      autoTarget = lerp(autoTarget, desired, 1 - Math.exp(-dt * 4));
+    }
+    autoTarget = clamp(autoTarget, 12, VW - 12);
+
+    let wantSpd = cruise();
+    const rAhead = riverAt(y0 + 70);
+    if (rAhead.w < (isRapids() ? 88 : 108) || laneW < 50) {
+      wantSpd = lerp(minSpd(), cruise(), 0.28);
+    }
+    if (fuelCrit) wantSpd = minSpd() + 10;
+    else if (G.fuel < 40) wantSpd = lerp(minSpd(), cruise(), 0.42);
+    else if (G.fuel > 72 && rAhead.w > 130 && !threat) {
+      wantSpd = lerp(cruise(), maxSpd(), 0.18);
+    }
+    if (fuelT && fuelNeed && Math.abs(fuelT.x - x0) < 18 && fuelT.y - y0 < 90) {
+      wantSpd = minSpd() + 6;
+    }
+    if (bridge && bridgeD < 70 && bridge.alive) wantSpd = Math.min(wantSpd, cruise() * 0.72);
+    autoWantSpd = wantSpd;
+
+    const align = autoSpeed >= 4 ? 16 : autoSpeed >= 3 ? 11 : 8;
+    const shotRange = 40 + spd * 0.85;
+    let shoot = false;
+
+    if (bridge && bridge.alive && bridgeD > 10 && bridgeD < shotRange + 140) {
+      shoot = true;
+    }
+
+    function aligned(e, pad) {
+      if (!e || !e.alive) return false;
+      const dy = e.y - y0;
+      if (dy < 8 || dy > shotRange + 60) return false;
+      const t = dy / (spd + 500);
+      const px = predEntX(e, t);
+      return Math.abs(px - x0) <= e.hw + pad;
+    }
+
+    if (!shoot) {
+      if (fuelT && (fuelNeed || fuelCrit) && aligned(fuelT, align + 4)) shoot = true;
+      if (threat && aligned(threat, align + 6)) shoot = true;
+      for (let i = 0; i < ahead.length && !shoot; i++) {
+        const e = ahead[i];
+        if (e.type === 'bridge') continue;
+        const dy = e.y - y0;
+        if (e.type === 'fuel') {
+          if ((fuelNeed || dy < 150) && aligned(e, align + 2)) shoot = true;
+          continue;
+        }
+        const t = dy / spd;
+        const px = predEntX(e, Math.max(0, t));
+        const block = Math.abs(px - x0) < e.hw + HW.plane + 14 && dy < 150;
+        if (block && aligned(e, align + 6)) shoot = true;
+        else if (e.type === 'jet' && aligned(e, align + 8)) shoot = true;
+        else if (aligned(e, align) && dy < 220) shoot = true;
+      }
+    }
+
+    autoFire = shoot;
+    G.fireHold = autoFire;
+  }
+
   function updatePlayer(dt) {
     const acc = 2400;
     const spd = turnSpd();
+    const lo = minSpd();
+    const hi = maxSpd();
+    if (autoOn && G.mode === 'play') {
+      const dx = autoTarget - G.ship.x;
+      const turn = spd * (autoSpeed >= 4 ? 1.25 : autoSpeed >= 3 ? 1.08 : 0.92);
+      if (Math.abs(dx) < 2.2) {
+        G.ship.vx *= Math.exp(-dt * 14);
+        G.ship.x += G.ship.vx * dt;
+      } else {
+        const max = turn * dt;
+        const step = clamp(dx, -max, max);
+        G.ship.x += step;
+        G.ship.vx = step / Math.max(dt, 0.0001);
+      }
+      G.ship.x = clamp(G.ship.x, 10, VW - 10);
+      const want = clamp(autoWantSpd, lo, hi);
+      G.spd = lerp(G.spd, want, 1 - Math.exp(-dt * 5.2));
+      G.spd = clamp(G.spd, lo, hi);
+      return;
+    }
     if (keys.l || keys.r) {
       if (keys.l) G.ship.vx -= acc * dt;
       if (keys.r) G.ship.vx += acc * dt;
@@ -1081,8 +1500,6 @@
     }
     G.ship.x = clamp(G.ship.x, 10, VW - 10);
 
-    const lo = minSpd();
-    const hi = maxSpd();
     if (inputSrc === 'ptr' && (pointer.down || pointer.hover)) {
       const t = clamp((PLAYER_SY + 70 - pointer.y) / 260, 0, 1);
       const target = lerp(lo, hi, t);
@@ -1215,9 +1632,12 @@
     if (G.fireCd > 0) G.fireCd = Math.max(0, G.fireCd - dt);
 
     if (G.stop > 0) {
-      G.stop -= dt;
-      updateFx(dt * 0.4);
-      return;
+      if (autoOn && autoSpeed >= 4 && G.mode === 'play') G.stop = 0;
+      else {
+        G.stop -= dt;
+        updateFx(dt * 0.4);
+        return;
+      }
     }
 
     if (G.mode === 'title') {
@@ -1228,12 +1648,14 @@
       updateEnts(dt);
       updateFx(dt);
       if (G.fireHold) G.fireHold = false;
+      tickAutoFlow(dt);
       return;
     }
 
     if (G.mode === 'lose') {
       updateEnts(dt);
       updateFx(dt);
+      tickAutoFlow(dt);
       return;
     }
 
@@ -1241,6 +1663,8 @@
       G.deadT -= dt;
       updateEnts(dt);
       updateFx(dt);
+      autoFire = false;
+      G.fireHold = false;
       if (G.deadT <= 0) {
         if (G.lives <= 0) loseRun();
         else respawn();
@@ -1249,6 +1673,7 @@
       return;
     }
 
+    if (autoOn) autoThink(dt);
     updatePlayer(dt);
     const oldAlt = G.alt;
     G.alt += G.spd * dt;
@@ -1824,20 +2249,28 @@
 
   function onKey(e, down) {
     const k = e.key;
-    if (k === 'ArrowLeft' || k === 'Left' || k === 'a' || k === 'A') {
-      keys.l = down;
+    if (k === 'a' || k === 'A' || e.code === 'KeyA') {
+      if (down) {
+        e.preventDefault();
+        if (!e.repeat) toggleAuto();
+      }
+      return;
+    }
+    if (e.target === speedEl) return;
+    if (k === 'ArrowLeft' || k === 'Left') {
+      keys.l = down && !autoOn;
       if (down) inputSrc = 'key';
     }
     if (k === 'ArrowRight' || k === 'Right' || k === 'd' || k === 'D') {
-      keys.r = down;
+      keys.r = down && !autoOn;
       if (down) inputSrc = 'key';
     }
     if (k === 'ArrowUp' || k === 'Up' || k === 'w' || k === 'W') {
-      keys.u = down;
+      keys.u = down && !autoOn;
       if (down) inputSrc = 'key';
     }
     if (k === 'ArrowDown' || k === 'Down' || k === 's' || k === 'S') {
-      keys.d = down;
+      keys.d = down && !autoOn;
       if (down) inputSrc = 'key';
     }
     const space = k === ' ' || k === 'Spacebar' || e.code === 'Space';
@@ -1845,7 +2278,7 @@
       e.preventDefault();
     }
     if (!down) {
-      if (space) G.fireHold = false;
+      if (space && !autoOn) G.fireHold = false;
       return;
     }
     if (k === 'm' || k === 'M') {
@@ -1855,6 +2288,9 @@
     }
     if (k === 'r' || k === 'R') {
       restart();
+      return;
+    }
+    if (autoOn && (k === 'ArrowLeft' || k === 'ArrowRight' || k === 'ArrowUp' || k === 'ArrowDown' || space || k === 'd' || k === 'D' || k === 'w' || k === 'W' || k === 's' || k === 'S')) {
       return;
     }
     if (space || k === 'Enter') {
@@ -1873,6 +2309,7 @@
     if (!canvas) return;
     canvas.addEventListener('pointerdown', function (e) {
       audio.ensure();
+      if (autoOn) return;
       e.preventDefault();
       pointer.down = true;
       pointer.hover = true;
@@ -1887,6 +2324,7 @@
       }
     });
     canvas.addEventListener('pointermove', function (e) {
+      if (autoOn) return;
       pointer.x = clamp(pointerWorldX(e), 10, VW - 10);
       pointer.y = pointerWorldY(e);
       if (!pointer.down && e.pointerType === 'mouse') pointer.hover = true;
@@ -1896,13 +2334,13 @@
       if (pointer.id != null && e.pointerId !== pointer.id && pointer.down) return;
       pointer.down = false;
       pointer.id = null;
-      G.fireHold = false;
+      if (!autoOn) G.fireHold = false;
     }
     canvas.addEventListener('pointerup', up);
     canvas.addEventListener('pointercancel', up);
     canvas.addEventListener('pointerleave', function () {
       pointer.hover = false;
-      if (!pointer.down) G.fireHold = false;
+      if (!pointer.down && !autoOn) G.fireHold = false;
     });
     canvas.addEventListener('contextmenu', function (e) { e.preventDefault(); });
   }
@@ -1920,13 +2358,17 @@
     let dt = t - last;
     last = t;
     if (dt > 0.05) dt = 0.05;
-    acc += dt;
+    const turbo = autoOn && autoSpeed >= 4 && G.mode === 'play';
+    if (turbo) G.stop = 0;
+    acc += dt * autoScale();
     let n = 0;
-    while (acc >= STEP && n < 5) {
+    const maxSteps = turbo ? 16 : 5;
+    while (acc >= STEP && n < maxSteps) {
       update(STEP);
       acc -= STEP;
       n += 1;
     }
+    if (acc > STEP * 4) acc = 0;
     draw();
   }
 
@@ -1938,6 +2380,9 @@
 
   loadBest();
   initMute();
+  autoSpeed = loadAutoSpeed();
+  syncSpeedUi();
+  syncAutoUi();
   goTitle();
   resize();
   bindPointer();
@@ -1961,6 +2406,12 @@
     btnMute.addEventListener('click', function () {
       audio.ensure();
       audio.setMuted(!audio.muted);
+    });
+  }
+  if (btnAuto) btnAuto.addEventListener('click', function () { toggleAuto(); });
+  if (speedEl) {
+    speedEl.addEventListener('input', function () {
+      setAutoSpeed(parseInt(speedEl.value, 10) || 3);
     });
   }
 

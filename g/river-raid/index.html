@@ -42,6 +42,12 @@
         </div>
       </div>
       <div class="tools">
+        <label class="speed-ctl" title="速度 慢 / 中 / 快 / 极快">
+          <span>速度</span>
+          <input type="range" id="speed" min="1" max="4" step="1" value="3" aria-label="速度" />
+          <b id="speed-lab">快</b>
+        </label>
+        <button type="button" id="btn-auto" title="A" aria-label="自动" aria-pressed="false">自动</button>
         <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
         <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
       </div>
@@ -56,7 +62,7 @@
           <p class="kicker" id="ov-kicker">RIVER</p>
           <h1 id="ov-title">河袭</h1>
           <p class="lead" id="ov-lead">沿河道飞，打船打桥，别撞岸。油尽也会坠。</p>
-          <p class="ops" id="ov-ops">← → 转向 · ↑ 加速 ↓ 减速 · 空格开火 · R 重开 · M 静音</p>
+          <p class="ops" id="ov-ops">← → 转向 · ↑ 加速 ↓ 减速 · 空格开火 · A 自动 · R 重开 · M 静音</p>
           <div class="ov-actions">
             <button type="button" id="btn-classic">经典</button>
             <button type="button" id="btn-rapids">急流</button>
@@ -65,7 +71,7 @@
       </div>
     </div>
 
-    <footer class="hint" id="hint">← → 转向 · ↑ 加速 · 空格开火 · 飞过油罐或打掉都能补油</footer>
+    <footer class="hint" id="hint">← → 转向 · ↑ 加速 · 空格开火 · A 自动 · 飞过油罐或打掉都能补油</footer>
   </div>
   <script src="js/game.js"></script>
 </body>
