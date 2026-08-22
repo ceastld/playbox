@@ -18,6 +18,11 @@
   const VIEW = 800;
   const BEST_KEY = 'playbox-horde-bite-best';
   const MUTE_KEY = 'playbox-horde-bite-mute';
+  const AUTO_SPEED_KEY = 'playbox-horde-bite-auto-speed';
+  const SPEED_LABELS = ['', '慢', '中', '快', '极快'];
+  const AUTO_SCALE = [1, 1, 2, 4, 10];
+  const AUTO_PICK_WAIT = [0, 0.42, 0.22, 0.08, 0];
+  const AUTO_START_WAIT = [0, 0.55, 0.38, 0.2, 0.06];
   const REDUCE = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   const MAG = [255, 61, 138];
@@ -57,6 +62,9 @@
   const ovBtn = document.getElementById('ov-btn');
   const btnMute = document.getElementById('btn-mute');
   const btnRetry = document.getElementById('btn-retry');
+  const btnAuto = document.getElementById('btn-auto');
+  const speedEl = document.getElementById('speed');
+  const speedLab = document.getElementById('speed-lab');
   const modeEight = document.getElementById('mode-eight');
   const modeEndless = document.getElementById('mode-endless');
   const hpWrap = document.getElementById('hp-wrap');
@@ -94,6 +102,13 @@
   const mouse = { down: false, id: 0, wx: 0, wy: 0 };
   const vpad = { active: false, id: 0, ox: 0, oy: 0, x: 0, y: 0 };
   const pad = { x: 0, y: 0, a: false, aPrev: false, start: false, startPrev: false };
+  const autoDir = { x: 1, y: 0 };
+  let autoOn = false;
+  let autoSpeed = 3;
+  let autoOrbit = 1;
+  let autoOrbitHold = 0;
+  let autoPickT = 0;
+  let autoOvWait = 0;
 
   const P = { x: WORLD * 0.5, y: WORLD * 0.5, vx: 0, vy: 0, face: -0.6, r: PLAYER_R };
 
@@ -447,6 +462,20 @@
     }
   }
 
+  function loadAutoSpeed() {
+    try {
+      const n = parseInt(localStorage.getItem(AUTO_SPEED_KEY) || '3', 10);
+      if (!isFinite(n) || n < 1 || n > 4) return 3;
+      return n;
+    } catch (e) {
+      return 3;
+    }
+  }
+
+  function saveAutoSpeed(n) {
+    try { localStorage.setItem(AUTO_SPEED_KEY, String(n)); } catch (e) { /* ignore */ }
+  }
+
   function currentBest() {
     return G.selKind === 'eight' ? G.bestEight : G.bestEnd;
   }
@@ -475,6 +504,7 @@
 
   function hitStop(ms) {
     if (REDUCE || G.demo) return;
+    if (autoOn && autoSpeed >= 3) return;
     const s = ms / 1000;
     G.stop = Math.min(0.082, Math.max(G.stop, s));
   }
@@ -1130,6 +1160,40 @@
       picksEl.appendChild(btn);
     }
     pickEl.classList.remove('hidden');
+    autoPickT = 0;
+  }
+
+  function upgradeScore(id) {
+    const lv = levelOf(id);
+    const hpFrac = G.hp / Math.max(1, G.maxHp);
+    let s = 0;
+    if (id === 'bite') s = 100 + (lv < 3 ? 10 : 0);
+    else if (id === 'orbit') s = lv <= 0 ? 118 : 88;
+    else if (id === 'lightning') s = lv <= 0 ? 112 : 86;
+    else if (id === 'spread') s = lv <= 0 ? 94 : 80;
+    else if (id === 'overflow') s = 78;
+    else if (id === 'magnet') s = lv <= 0 ? 96 : 72;
+    else if (id === 'speed') s = lv <= 0 ? 62 : 48;
+    else if (id === 'vital') {
+      s = 38;
+      if (hpFrac < 0.42) s += 48;
+      if (hpFrac < 0.26) s += 36;
+    }
+    if (lv >= 4 && id !== 'overflow') s += 6;
+    return s;
+  }
+
+  function bestPickIndex() {
+    let bi = 0;
+    let bs = -1e9;
+    for (let i = 0; i < G.pickIds.length; i++) {
+      const s = upgradeScore(G.pickIds[i]);
+      if (s > bs) {
+        bs = s;
+        bi = i;
+      }
+    }
+    return bi;
   }
 
   function choosePick(i) {
@@ -1139,6 +1203,7 @@
     applyUpgrade(id);
     pickEl.classList.add('hidden');
     G.pending = Math.max(0, G.pending - 1);
+    autoPickT = 0;
     if (G.pending > 0) openPick();
     else G.mode = 'play';
   }
@@ -1176,7 +1241,183 @@
     kick(1, 0, 6);
   }
 
+  function scoreMove(nx, ny, dx, dy, st) {
+    let score = 0;
+    const lo = MARGIN + PLAYER_R + 8;
+    const hi = WORLD - MARGIN - PLAYER_R - 8;
+    const wall = Math.min(nx - lo, hi - nx, ny - lo, hi - ny);
+    if (wall < 110) score -= (110 - wall) * (110 - wall) * 0.55;
+    if (wall < 36) score -= 14000;
+    const cx = WORLD * 0.5;
+    const cy = WORLD * 0.5;
+    const rdx = nx - cx;
+    const rdy = ny - cy;
+    const rd = hypot(rdx, rdy) || 1;
+    score -= Math.abs(rd - 640) * 0.42;
+    score += autoOrbit * (dx * -rdy + dy * rdx) / rd * 260;
+
+    const live = enemies.live;
+    let closest = 1e9;
+    let nearX = 0;
+    let nearY = 0;
+    let nearN = 0;
+    let dens = 0;
+    let huntX = 0;
+    let huntY = 0;
+    let huntD = 1e9;
+    for (let i = 0; i < live.length; i++) {
+      const e = live[i];
+      if (!e.on || e.dying) continue;
+      const ex = e.x + e.vx * 0.18;
+      const ey = e.y + e.vy * 0.18;
+      const edx = ex - nx;
+      const edy = ey - ny;
+      const d = hypot(edx, edy) || 1;
+      const mass = e.mass || 1;
+      if (d < closest) {
+        closest = d;
+        huntX = edx;
+        huntY = edy;
+        huntD = d;
+      }
+      if (d < 230) {
+        nearX += edx;
+        nearY += edy;
+        nearN += 1;
+      }
+      const danger = e.r + PLAYER_R + (e.type === 'runner' ? 28 : 16);
+      if (d < danger + 70) score -= (24000 * mass) / Math.max(10, d - e.r * 0.4);
+      if (d < 88) score -= 18000 * mass;
+      if (e.type === 'boss') {
+        score -= 9000 / Math.max(24, d);
+        if (e.phase === 'wind' || e.phase === 'dash') {
+          const bx = P.x - e.x;
+          const by = P.y - e.y;
+          const bd = hypot(bx, by) || 1;
+          const side = dx * (-by / bd) + dy * (bx / bd);
+          const along = dx * (bx / bd) + dy * (by / bd);
+          score += Math.abs(side) * (e.phase === 'dash' ? 2800 : 1600);
+          score -= Math.max(0, along) * 900;
+        }
+      }
+      const ahead = dx * edx + dy * edy;
+      if (ahead > 0 && d < 170) dens += mass / d;
+    }
+    score -= dens * 1100;
+
+    if (nearN > 0) {
+      const nd = hypot(nearX, nearY) || 1;
+      const away = -(nearX / nd) * dx - (nearY / nd) * dy;
+      const side = (-nearY / nd) * dx + (nearX / nd) * dy;
+      if (closest < 70) score += away * 5200;
+      else if (closest < 210) {
+        score += Math.abs(side) * 1400;
+        score += away * 900;
+        score += autoOrbit * side * 700;
+      }
+    }
+
+    if (closest < 48) score -= 90000;
+    if (closest > 80 && closest < 280) score += 220;
+    if (closest > 300) score -= (closest - 300) * 2.4;
+    if (closest > 460) score -= (closest - 460) * 8;
+    if (huntD < 1e8 && closest > 200) {
+      score += (huntX * dx + huntY * dy) / huntD * 640;
+    }
+
+    const hpFrac = G.hp / Math.max(1, G.maxHp);
+    const panic = closest < 44 || (hpFrac < 0.3 && closest < 96);
+    const mag = st.mag;
+    if (!panic) {
+      const gemsLive = gems.live;
+      for (let i = 0; i < gemsLive.length; i++) {
+        const g = gemsLive[i];
+        const gx = g.x - nx;
+        const gy = g.y - ny;
+        const gd = hypot(gx, gy) || 1;
+        let threat = 0;
+        for (let j = 0; j < live.length; j++) {
+          const e = live[j];
+          if (!e.on || e.dying) continue;
+          const td = hypot(e.x - g.x, e.y - g.y);
+          if (td < 70) threat += 1;
+          if (threat > 4) break;
+        }
+        const urgent = g.life < 4 ? 2.4 : g.v >= 8 ? 1.6 : 1;
+        const w = (g.v * 62 * urgent) / (gd + 28);
+        score += w * (threat > 3 ? 0.12 : 1);
+        if (gd < mag + 20) score += g.v * 3;
+        if (closest > 90) score += (gx * dx + gy * dy) / gd * w * 0.35;
+      }
+    }
+
+    const ringsLive = rings.live;
+    for (let i = 0; i < ringsLive.length; i++) {
+      const r = ringsLive[i];
+      if (!r.dmg || !r.from) continue;
+      const d = hypot(nx - r.x, ny - r.y);
+      const band = Math.abs(d - (r.r + r.vr * 0.2));
+      if (band < 26) score -= 22000;
+    }
+
+    const spdNow = hypot(P.vx, P.vy);
+    if (spdNow > 24) score += (dx * P.vx + dy * P.vy) / spdNow * 320;
+    return score;
+  }
+
+  function autoThink() {
+    const st = stats();
+    const look = 0.22;
+    const reach = st.spd * look;
+    let bestX = autoDir.x;
+    let bestY = autoDir.y;
+    let bestS = -1e15;
+    const n = 16;
+    for (let i = 0; i < n; i++) {
+      const a = (TAU * i) / n;
+      const dx = Math.cos(a);
+      const dy = Math.sin(a);
+      const nx = clamp(P.x + dx * reach, MARGIN + PLAYER_R, WORLD - MARGIN - PLAYER_R);
+      const ny = clamp(P.y + dy * reach, MARGIN + PLAYER_R, WORLD - MARGIN - PLAYER_R);
+      const s = scoreMove(nx, ny, dx, dy, st);
+      if (s > bestS) {
+        bestS = s;
+        bestX = dx;
+        bestY = dy;
+      }
+    }
+    const spdNow = hypot(P.vx, P.vy);
+    if (spdNow > 28) {
+      const dx = P.vx / spdNow;
+      const dy = P.vy / spdNow;
+      const nx = clamp(P.x + dx * reach, MARGIN + PLAYER_R, WORLD - MARGIN - PLAYER_R);
+      const ny = clamp(P.y + dy * reach, MARGIN + PLAYER_R, WORLD - MARGIN - PLAYER_R);
+      const s = scoreMove(nx, ny, dx, dy, st) + 36;
+      if (s > bestS) {
+        bestS = s;
+        bestX = dx;
+        bestY = dy;
+      }
+    }
+    autoDir.x = bestX;
+    autoDir.y = bestY;
+    const toC = { x: P.x - WORLD * 0.5, y: P.y - WORLD * 0.5 };
+    const tang = autoOrbit * (-toC.y * bestX + toC.x * bestY);
+    if (tang < -0.15) {
+      autoOrbitHold += 1;
+      if (autoOrbitHold > 18) {
+        autoOrbit *= -1;
+        autoOrbitHold = 0;
+      }
+    } else {
+      autoOrbitHold = 0;
+    }
+  }
+
   function wishDir() {
+    if (autoOn && G.mode === 'play' && !G.demo) {
+      return autoDir;
+    }
     let x = 0;
     let y = 0;
     if (keys.l) x -= 1;
@@ -1226,7 +1467,7 @@
     if (aEdge || sEdge) {
       audio.ensure();
       if (G.mode === 'title' || G.mode === 'win' || G.mode === 'lose') start();
-      else if (G.mode === 'pick') choosePick(0);
+      else if (G.mode === 'pick' && !autoOn) choosePick(0);
     }
   }
 
@@ -1613,10 +1854,10 @@
     ovKicker.textContent = 'HORDE';
     ovTitle.textContent = '噬潮';
     ovLead.innerHTML = '一群涌上来，你边闪边打。<br />自动咬最近的，吃光点升级。';
-    ovOps.textContent = 'WASD / 摇杆 / 虚拟键移动 · R 重开 · M 静音';
+    ovOps.textContent = 'WASD / 摇杆 / 虚拟键移动 · A 自动 · R 重开 · M 静音';
     ovBtn.textContent = '开噬';
     ovBest.textContent = bestText();
-    hintEl.textContent = '闪着打 · 吃光点升级 · 八分钟或死';
+    hintEl.textContent = autoOn ? '自动托管 · A 停下 · 八分钟或死' : '闪着打 · 吃光点升级 · A 自动 · 八分钟或死';
     pickEl.classList.add('hidden');
   }
 
@@ -1630,10 +1871,10 @@
     const rec = G.newBest ? '<br />新纪录' : '';
     ovLead.innerHTML = (win ? '八分钟撑过去了。' : '被潮淹没。') +
       '<br />活过 ' + fmtTime(G.survived) + ' · 噬 ' + G.kills + ' · Lv ' + G.lv + rec;
-    ovOps.textContent = 'R 再噬 · M 静音';
+    ovOps.textContent = 'A 自动 · R 再噬 · M 静音';
     ovBtn.textContent = '再噬';
     ovBest.textContent = bestText();
-    hintEl.textContent = win ? '潮退了 · R 再来' : '倒了 · R 再噬';
+    hintEl.textContent = win ? '潮退了 · A 自动 · R 再来' : '倒了 · A 自动 · R 再噬';
   }
 
   function clearPools() {
@@ -1731,7 +1972,9 @@
     panel.classList.remove('win', 'lose');
     banner(G.kind === 'eight' ? '八分钟' : '无尽', 'cyan', 800);
     toast(G.kind === 'eight' ? '活过八分钟' : '能咬多久算多久');
-    hintEl.textContent = 'WASD 闪 · 自动咬 · 1 2 3 升级 · R 重开';
+    hintEl.textContent = autoOn
+      ? '自动托管 · 绕潮吃光点 · A 停下 · R 重开'
+      : 'WASD 闪 · 自动咬 · 1 2 3 升级 · A 自动 · R 重开';
     if (!REDUCE) G.shake = 6;
     addPunch(1.04);
     ringAt(P.x, P.y, 10, 280, CYN, 0.35, 3);
@@ -1751,12 +1994,27 @@
     readPad();
 
     if (G.mode === 'pick') {
+      if (autoOn) {
+        autoPickT += dt;
+        if (autoPickT >= (AUTO_PICK_WAIT[autoSpeed] || 0)) {
+          autoPickT = 0;
+          choosePick(bestPickIndex());
+        }
+      }
       updateCam();
       updateFx(dt * 0.6);
       return;
     }
 
     if (G.mode === 'title') {
+      if (autoOn) {
+        autoOvWait += dt;
+        if (autoOvWait >= (AUTO_START_WAIT[autoSpeed] || 0.2)) {
+          autoOvWait = 0;
+          start();
+          return;
+        }
+      }
       if (!G.demo) resetRun(true);
       G.demo = true;
       G.t += dt;
@@ -1774,6 +2032,7 @@
     }
 
     if (G.mode === 'play') {
+      if (autoOn) autoThink();
       G.t += dt;
       G.survived += dt;
       if (G.kind === 'eight') {
@@ -2273,6 +2532,7 @@
     if ((G.mode === 'title' || G.mode === 'win' || G.mode === 'lose') && e.target === canvas) {
       start();
     }
+    if (autoOn) return;
     if (G.mode !== 'play' && !G.demo) return;
     try { canvas.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
     const loc = eventToLocal(e);
@@ -2331,7 +2591,7 @@
 
   function keyOf(e) {
     const k = e.key;
-    if (k === 'a' || k === 'A' || k === 'ArrowLeft') return 'l';
+    if (k === 'ArrowLeft') return 'l';
     if (k === 'd' || k === 'D' || k === 'ArrowRight') return 'r';
     if (k === 'w' || k === 'W' || k === 'ArrowUp') return 'u';
     if (k === 's' || k === 'S' || k === 'ArrowDown') return 'd';
@@ -2340,10 +2600,10 @@
 
   function onKeyDown(e) {
     audio.ensure();
-    const bit = keyOf(e);
-    if (bit) {
-      keys[bit] = true;
+    if (e.key === 'a' || e.key === 'A') {
+      if (!e.repeat) toggleAuto();
       e.preventDefault();
+      return;
     }
     if (e.key === 'm' || e.key === 'M') {
       audio.setMuted(!audio.muted);
@@ -2353,6 +2613,17 @@
     if (e.key === 'r' || e.key === 'R') {
       retry();
       e.preventDefault();
+      return;
+    }
+    const bit = keyOf(e);
+    if (bit) {
+      if (!autoOn) keys[bit] = true;
+      e.preventDefault();
+    }
+    if (autoOn) {
+      if (e.key === '1' || e.key === '2' || e.key === '3' || e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+      }
       return;
     }
     if (G.mode === 'pick' && (e.key === '1' || e.key === '2' || e.key === '3')) {
@@ -2385,6 +2656,14 @@
     updateCam();
   }
 
+  function autoScale() {
+    if (!autoOn) return 1;
+    if (G.mode === 'play' || G.mode === 'winning' || G.mode === 'dying') {
+      return AUTO_SCALE[autoSpeed] || 1;
+    }
+    return 1;
+  }
+
   function frame(now) {
     if (!last) last = now;
     let dt = (now - last) / 1000;
@@ -2394,7 +2673,8 @@
       requestAnimationFrame(frame);
       return;
     }
-    if (G.stop > 0 && !REDUCE) {
+    const turbo = autoOn && autoSpeed >= 3 && (G.mode === 'play' || G.mode === 'pick');
+    if (G.stop > 0 && !REDUCE && !turbo) {
       G.stop -= dt;
       updateFx(dt * 0.55);
       G.shake = Math.max(0, G.shake - 18 * dt);
@@ -2402,9 +2682,12 @@
       requestAnimationFrame(frame);
       return;
     }
-    acc += dt;
+    if (turbo) G.stop = 0;
+    const scale = autoScale();
+    acc += dt * scale;
     let steps = 0;
-    while (acc >= STEP && steps < 5) {
+    const maxSteps = scale >= 8 ? 48 : scale >= 4 ? 24 : 12;
+    while (acc >= STEP && steps < maxSteps) {
       update(STEP);
       acc -= STEP;
       steps += 1;
@@ -2414,9 +2697,69 @@
     requestAnimationFrame(frame);
   }
 
+  function syncAutoUi() {
+    btnAuto.classList.toggle('on', autoOn);
+    btnAuto.setAttribute('aria-pressed', autoOn ? 'true' : 'false');
+    btnAuto.textContent = autoOn ? '停下' : '自动';
+    btnAuto.setAttribute('aria-label', autoOn ? '停止自动' : '自动');
+  }
+
+  function syncSpeedUi() {
+    speedEl.value = String(autoSpeed);
+    speedLab.textContent = SPEED_LABELS[autoSpeed];
+    speedEl.title = SPEED_LABELS[autoSpeed];
+    speedEl.setAttribute('aria-valuetext', SPEED_LABELS[autoSpeed]);
+  }
+
+  function clearPlayerMotion() {
+    keys.l = false;
+    keys.r = false;
+    keys.u = false;
+    keys.d = false;
+    mouse.down = false;
+    vpad.active = false;
+    vpad.x = 0;
+    vpad.y = 0;
+    knobEl.style.transform = 'translate(0,0)';
+    vpadEl.classList.remove('on');
+    vpadEl.style.left = '';
+    vpadEl.style.top = '';
+    vpadEl.style.bottom = '';
+  }
+
+  function toggleAuto() {
+    autoOn = !autoOn;
+    autoPickT = 0;
+    autoOvWait = 0;
+    syncAutoUi();
+    if (autoOn) {
+      clearPlayerMotion();
+      audio.ensure();
+      if (G.mode === 'play') {
+        hintEl.textContent = '自动托管 · 绕潮吃光点 · A 停下 · R 重开';
+      } else if (G.mode === 'title') {
+        hintEl.textContent = '自动托管 · A 停下 · 八分钟或死';
+      }
+    } else if (G.mode === 'play') {
+      hintEl.textContent = 'WASD 闪 · 自动咬 · 1 2 3 升级 · A 自动 · R 重开';
+    } else if (G.mode === 'title') {
+      hintEl.textContent = '闪着打 · 吃光点升级 · A 自动 · 八分钟或死';
+    }
+  }
+
+  function setAutoSpeed(n) {
+    n = parseInt(n, 10);
+    if (!(n >= 1 && n <= 4)) n = 3;
+    autoSpeed = n;
+    saveAutoSpeed(autoSpeed);
+    syncSpeedUi();
+  }
+
   ovBtn.addEventListener('click', function () { audio.ensure(); start(); });
   btnRetry.addEventListener('click', function () { retry(); });
   btnMute.addEventListener('click', function () { audio.ensure(); audio.setMuted(!audio.muted); });
+  btnAuto.addEventListener('click', function () { audio.ensure(); toggleAuto(); });
+  speedEl.addEventListener('input', function () { setAutoSpeed(speedEl.value); });
   modeEight.addEventListener('click', function () { setKind('eight'); });
   modeEndless.addEventListener('click', function () { setKind('endless'); });
   canvas.addEventListener('pointerdown', onPointerDown);
@@ -2433,6 +2776,9 @@
   });
 
   loadBest();
+  autoSpeed = loadAutoSpeed();
+  syncSpeedUi();
+  syncAutoUi();
   audio.setMuted(audio.muted);
   seedWorld();
   resetRun(true);
