@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" fill="#030910"/>
+  <rect x="5" y="5" width="54" height="54" rx="9" fill="#041828" stroke="#00b4ff" stroke-width="1.3"/>
+  <path d="M8 14c6 2 10-2 16 1 6 3 9-1 16 2 5 2 9-1 14 1" fill="none" stroke="#00b4ff" stroke-width=".7" opacity=".35"/>
+  <path d="M10 22c5 1 9-2 14 0 6 2 10-2 15 1 5 2 8 0 13 1" fill="none" stroke="#3ad0ff" stroke-width=".5" opacity=".28"/>
+  <g fill="#ff3db8">
+    <path d="M14 16l2.2-6 2.2 6h-4.4zm.6-1.6h3.2l-1.6-4.2z"/>
+    <path d="M28 14l2.4-7 2.4 7h-4.8z"/>
+    <path d="M43 16l2.2-6 2.2 6h-4.4z"/>
+  </g>
+  <g fill="#ff3db8" opacity=".85">
+    <path d="M20 24l1.8-5 1.8 5h-3.6z"/>
+    <path d="M36 23l1.8-5 1.8 5h-3.6z"/>
+  </g>
+  <ellipse cx="18" cy="34" rx="7" ry="3.2" fill="#164a3c"/>
+  <ellipse cx="18" cy="33.2" rx="4.6" ry="1.8" fill="#2a966c"/>
+  <circle cx="18" cy="33.6" r="1.3" fill="#ffe36b"/>
+  <rect x="17.3" y="30.4" width="1.4" height="3.2" fill="#ffe36b"/>
+  <g fill="#00b4ff">
+    <path d="M32 46.2l1.4-8.2 1.4 8.2h-2.8z"/>
+    <rect x="28.4" y="44.2" width="9.2" height="1.8" rx=".3"/>
+    <rect x="29.4" y="45.6" width="2.1" height="6.2"/>
+    <rect x="34.5" y="45.6" width="2.1" height="6.2"/>
+    <rect x="28.2" y="51.2" width="4.4" height="1.5"/>
+    <rect x="33.4" y="51.2" width="4.4" height="1.5"/>
+  </g>
+  <rect x="31.4" y="40.2" width="1.2" height="5" fill="#e8ffff"/>
+  <g fill="#ffe36b">
+    <rect x="30.4" y="38.4" width="1.1" height="3.4"/>
+    <rect x="32.6" y="38.4" width="1.1" height="3.4"/>
+  </g>
+  <circle cx="48" cy="40" r="3.4" fill="#ffe36b"/>
+  <text x="48" y="41.6" text-anchor="middle" font-size="4.2" font-family="sans-serif" font-weight="700" fill="#2a1a00">P</text>
+</svg>

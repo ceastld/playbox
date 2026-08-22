@@ -1731,7 +1731,7 @@
     "blurb": "赛道上超车，别撞护栏。",
     "hue": 352,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/pole-dash/",
     "kind": "remake"
   },
@@ -1755,7 +1755,7 @@
     "blurb": "纵向卷轴打飞机，打完大编队。",
     "hue": 200,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/sky-1942/",
     "kind": "remake"
   },
@@ -1805,6 +1805,30 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/zax-iso/",
+    "kind": "remake"
+  },
+  {
+    "n": 160,
+    "id": "punch-bag",
+    "title": "拳台",
+    "subtitle": "PUNCH",
+    "blurb": "盯破绽出拳，躲开重击。",
+    "hue": 6,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/punch-bag/",
+    "kind": "remake"
+  },
+  {
+    "n": 161,
+    "id": "space-rush",
+    "title": "空间",
+    "subtitle": "HARRIER",
+    "blurb": "3D空间里冲，左右躲开火。",
+    "hue": 188,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/space-rush/",
     "kind": "remake"
   }
 ]

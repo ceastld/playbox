@@ -1616,5 +1616,29 @@
     "dir": "g/xenon-run/",
     "url": "./g/xenon-run/",
     "kind": "remake"
+  },
+  {
+    "n": 153,
+    "id": "pole-dash",
+    "title": "杆位",
+    "subtitle": "POLE",
+    "blurb": "赛道上超车，别撞护栏。",
+    "hue": 352,
+    "tag": "复刻",
+    "dir": "g/pole-dash/",
+    "url": "./g/pole-dash/",
+    "kind": "remake"
+  },
+  {
+    "n": 155,
+    "id": "sky-1942",
+    "title": "战机",
+    "subtitle": "1942",
+    "blurb": "纵向卷轴打飞机，打完大编队。",
+    "hue": 200,
+    "tag": "复刻",
+    "dir": "g/sky-1942/",
+    "url": "./g/sky-1942/",
+    "kind": "remake"
   }
 ]
