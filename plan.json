@@ -876,7 +876,7 @@
     "blurb": "针落进移动的碗。",
     "hue": 160,
     "tag": "投",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/pin-bowl/"
   },
   {
@@ -887,7 +887,7 @@
     "blurb": "按顺序揭纱，撕了就输。",
     "hue": 310,
     "tag": "纱",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/veil-lift/"
   },
   {
@@ -920,7 +920,7 @@
     "blurb": "在节拍上拧开塞子。",
     "hue": 22,
     "tag": "塞",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/cork-pop/"
   },
   {
@@ -931,7 +931,7 @@
     "blurb": "按折痕顺序折完一只鹤。",
     "hue": 340,
     "tag": "折",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/fold-crane/"
   },
   {

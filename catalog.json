@@ -725,5 +725,25 @@
     "hue": 300,
     "tag": "梳",
     "dir": "g/comb-teeth/"
+  },
+  {
+    "n": 80,
+    "id": "pin-bowl",
+    "title": "投针",
+    "subtitle": "PINS",
+    "blurb": "针落进移动的碗。",
+    "hue": 160,
+    "tag": "投",
+    "dir": "g/pin-bowl/"
+  },
+  {
+    "n": 81,
+    "id": "veil-lift",
+    "title": "揭纱",
+    "subtitle": "VEIL",
+    "blurb": "按顺序揭纱，撕了就输。",
+    "hue": 310,
+    "tag": "纱",
+    "dir": "g/veil-lift/"
   }
 ]
