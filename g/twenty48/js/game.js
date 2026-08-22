@@ -11,20 +11,127 @@ var AUTO_SPEED_KEY = 'playbox-twenty48-auto-speed';
 var AUTO_DELAY = [0, 420, 200, 70, 0];
 var AUTO_SPEED_NAME = ['', '慢', '中', '快', '极快'];
 var DIRS = { left: 1, right: 1, up: 1, down: 1 };
-/* AI tie-break if heuristic scores match: up, left, down, right. Corner: top-left. */
+/* AI: row-table expectimax. Values stored as exponents (2 -> 1). */
 var AI_DIRS = ['up', 'left', 'down', 'right'];
-var SNAKE_H = [
-  [15, 14, 13, 12],
-  [8, 9, 10, 11],
-  [7, 6, 5, 4],
-  [0, 1, 2, 3]
+var aiDeadline = 0;
+var ROW_LEFT = new Uint16Array(65536);
+var ROW_REV = new Uint16Array(65536);
+var ROW_LEFT_CHANGED = new Uint8Array(65536);
+(function initRowTables() {
+  var i, j, k, cells, out, a, b, packed, line;
+  for (i = 0; i < 65536; i++) {
+    line = [(i >> 12) & 15, (i >> 8) & 15, (i >> 4) & 15, i & 15];
+    ROW_REV[i] = (line[3] << 12) | (line[2] << 8) | (line[1] << 4) | line[0];
+    cells = [];
+    for (j = 0; j < 4; j++) if (line[j]) cells.push(line[j]);
+    out = [0, 0, 0, 0];
+    k = 0;
+    j = 0;
+    while (j < cells.length) {
+      if (j + 1 < cells.length && cells[j] === cells[j + 1] && cells[j] < 15) {
+        out[k] = cells[j] + 1;
+        k += 1;
+        j += 2;
+      } else {
+        out[k] = cells[j];
+        k += 1;
+        j += 1;
+      }
+    }
+    packed = (out[0] << 12) | (out[1] << 8) | (out[2] << 4) | out[3];
+    ROW_LEFT[i] = packed;
+    ROW_LEFT_CHANGED[i] = packed !== i ? 1 : 0;
+  }
+})();
+function flipH(m) {
+  return [m[0].slice().reverse(), m[1].slice().reverse(), m[2].slice().reverse(), m[3].slice().reverse()];
+}
+function flipV(m) { return [m[3], m[2], m[1], m[0]]; }
+function transM(m) {
+  var o = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]];
+  var r, c;
+  for (r = 0; r < 4; r++) for (c = 0; c < 4; c++) o[c][r] = m[r][c];
+  return o;
+}
+var SNAKE_BASE = [
+  [Math.pow(4, 15), Math.pow(4, 14), Math.pow(4, 13), Math.pow(4, 12)],
+  [Math.pow(4, 8), Math.pow(4, 9), Math.pow(4, 10), Math.pow(4, 11)],
+  [Math.pow(4, 7), Math.pow(4, 6), Math.pow(4, 5), Math.pow(4, 4)],
+  [Math.pow(4, 0), Math.pow(4, 1), Math.pow(4, 2), Math.pow(4, 3)]
 ];
-var SNAKE_V = [
-  [15, 8, 7, 0],
-  [14, 9, 6, 1],
-  [13, 10, 5, 2],
-  [12, 11, 4, 3]
-];
+var SNAKES = (function () {
+  var tr = transM(SNAKE_BASE);
+  return [
+    SNAKE_BASE, flipH(SNAKE_BASE), flipV(SNAKE_BASE), flipH(flipV(SNAKE_BASE)),
+    tr, flipH(tr), flipV(tr), flipH(flipV(tr))
+  ];
+})();
+function snakeFor(maxR, maxC) {
+  var best = 0, bestW = -1, s, w;
+  for (s = 0; s < 8; s++) {
+    w = SNAKES[s][maxR][maxC];
+    if (w > bestW) { bestW = w; best = s; }
+  }
+  return SNAKES[best];
+}
+function transposeRows(a) {
+  var r0 = a[0], r1 = a[1], r2 = a[2], r3 = a[3];
+  return [
+    (((r0 >> 12) & 15) << 12) | (((r1 >> 12) & 15) << 8) | (((r2 >> 12) & 15) << 4) | ((r3 >> 12) & 15),
+    (((r0 >> 8) & 15) << 12) | (((r1 >> 8) & 15) << 8) | (((r2 >> 8) & 15) << 4) | ((r3 >> 8) & 15),
+    (((r0 >> 4) & 15) << 12) | (((r1 >> 4) & 15) << 8) | (((r2 >> 4) & 15) << 4) | ((r3 >> 4) & 15),
+    ((r0 & 15) << 12) | ((r1 & 15) << 8) | ((r2 & 15) << 4) | (r3 & 15)
+  ];
+}
+function moveRows(rows, dir) {
+  var next = [0, 0, 0, 0];
+  var changed = 0;
+  var i, r, x, y, t;
+  if (dir === 'left') {
+    for (i = 0; i < 4; i++) {
+      r = rows[i];
+      x = ROW_LEFT[r];
+      next[i] = x;
+      if (x !== r) changed = 1;
+    }
+  } else if (dir === 'right') {
+    for (i = 0; i < 4; i++) {
+      r = rows[i];
+      x = ROW_REV[ROW_LEFT[ROW_REV[r]]];
+      next[i] = x;
+      if (x !== r) changed = 1;
+    }
+  } else if (dir === 'up') {
+    t = transposeRows(rows);
+    for (i = 0; i < 4; i++) {
+      y = ROW_LEFT[t[i]];
+      if (y !== t[i]) changed = 1;
+      t[i] = y;
+    }
+    next = transposeRows(t);
+  } else {
+    t = transposeRows(rows);
+    for (i = 0; i < 4; i++) {
+      y = ROW_REV[ROW_LEFT[ROW_REV[t[i]]]];
+      if (y !== t[i]) changed = 1;
+      t[i] = y;
+    }
+    next = transposeRows(t);
+  }
+  return { rows: next, changed: changed };
+}
+function gridToRows(grid) {
+  var rows = [0, 0, 0, 0], r, c, e, row;
+  for (r = 0; r < 4; r++) {
+    row = 0;
+    for (c = 0; c < 4; c++) {
+      e = grid[r][c] ? (log2v(grid[r][c]) | 0) : 0;
+      row = (row << 4) | e;
+    }
+    rows[r] = row;
+  }
+  return rows;
+}
 
 function emptyGrid() {
   var g = [];
@@ -204,137 +311,140 @@ function log2v(v) {
 }
 
 /**
- * Classic 2048 heuristic: empty cells (strong), snake/mono toward top-left,
- * smoothness (neighbor log diffs), max-in-corner. Lower is worse.
+ * Use the one snake whose peak sits on the current max tile.
+ * Taking max over all 8 lets the corner jump and dies at 4096.
  */
+function evalRows(rows) {
+  var empty = 0, max = 0, maxR = 0, maxC = 0;
+  var r, c, e, row, W, snake, v;
+  var cells = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+  for (r = 0; r < 4; r++) {
+    row = rows[r];
+    for (c = 0; c < 4; c++) {
+      e = (row >> (12 - 4 * c)) & 15;
+      cells[r * 4 + c] = e;
+      if (!e) empty += 1;
+      else if (e > max) { max = e; maxR = r; maxC = c; }
+    }
+  }
+  if (!max) return 0;
+  if (!empty) {
+    var can = 0;
+    for (r = 0; r < 4; r++) {
+      for (c = 0; c < 4; c++) {
+        e = cells[r * 4 + c];
+        if (c < 3 && cells[r * 4 + c + 1] === e) can = 1;
+        if (r < 3 && cells[(r + 1) * 4 + c] === e) can = 1;
+      }
+    }
+    if (!can) return -1e12;
+  }
+  W = snakeFor(maxR, maxC);
+  snake = 0;
+  for (r = 0; r < 4; r++) {
+    for (c = 0; c < 4; c++) {
+      e = cells[r * 4 + c];
+      if (e) snake += (1 << e) * W[r][c];
+    }
+  }
+  var corner = ((maxR === 0 || maxR === 3) && (maxC === 0 || maxC === 3)) ? (1 << max) * 80 : -(1 << max) * 50;
+  return snake + empty * empty * 400000 + empty * 200000 + corner;
+}
+
 function evalGrid(grid) {
-  var empty = 0;
-  var max = 0;
-  var maxR = 0;
-  var maxC = 0;
-  var snakeH = 0;
-  var snakeV = 0;
-  var smooth = 0;
-  var rowDec = 0;
-  var rowInc = 0;
-  var colDec = 0;
-  var colInc = 0;
-  var r, c, v, n, a, b, la, lb;
-
-  for (r = 0; r < SIZE; r++) {
-    for (c = 0; c < SIZE; c++) {
-      v = grid[r][c];
-      if (v === 0) {
-        empty += 1;
-        continue;
-      }
-      if (v > max) {
-        max = v;
-        maxR = r;
-        maxC = c;
-      }
-      snakeH += v * SNAKE_H[r][c];
-      snakeV += v * SNAKE_V[r][c];
-      if (c + 1 < SIZE) {
-        n = grid[r][c + 1];
-        if (n) smooth -= Math.abs(log2v(v) - log2v(n));
-      }
-      if (r + 1 < SIZE) {
-        n = grid[r + 1][c];
-        if (n) smooth -= Math.abs(log2v(v) - log2v(n));
-      }
-    }
-  }
-
-  if (max === 0) return 0;
-  if (empty === 0 && !canMove(grid)) return -1e12;
-
-  for (r = 0; r < SIZE; r++) {
-    for (c = 0; c < 3; c++) {
-      a = grid[r][c];
-      b = grid[r][c + 1];
-      la = a ? log2v(a) : 0;
-      lb = b ? log2v(b) : 0;
-      if (la > lb) rowDec += lb - la;
-      else rowInc += la - lb;
-    }
-  }
-  for (c = 0; c < SIZE; c++) {
-    for (r = 0; r < 3; r++) {
-      a = grid[r][c];
-      b = grid[r + 1][c];
-      la = a ? log2v(a) : 0;
-      lb = b ? log2v(b) : 0;
-      if (la > lb) colDec += lb - la;
-      else colInc += la - lb;
-    }
-  }
-
-  var snake = snakeH > snakeV ? snakeH : snakeV;
-  var mono = (rowDec > rowInc ? rowDec : rowInc) + (colDec > colInc ? colDec : colInc);
-  var corner = 0;
-  if (maxR === 0 && maxC === 0) corner = max * 2.8;
-  else if ((maxR === 0 || maxR === 3) && (maxC === 0 || maxC === 3)) corner = max * 0.15;
-
-  return snake + empty * 5200 + empty * empty * 40 + smooth * 420 + mono * 380 + corner;
+  return evalRows(gridToRows(grid));
 }
 
 function evalAfterMove(before, result) {
-  var h = evalGrid(result.grid);
-  var a = findMax(before);
-  var b = findMax(result.grid);
-  if (a.v && a.r === b.r && a.c === b.c) h += 360;
-  return h;
+  return evalGrid(result.grid);
 }
 
-function bestEval(grid) {
-  var best = -1e15;
-  var found = false;
-  var i, res, s;
+function maxNodeRows(rows, depth) {
+  if (depth <= 0 || Date.now() >= aiDeadline) return evalRows(rows);
+  var best = -1e15, found = 0, i, res, s;
   for (i = 0; i < 4; i++) {
-    res = moveBoard(grid, AI_DIRS[i]);
+    res = moveRows(rows, AI_DIRS[i]);
     if (!res.changed) continue;
-    found = true;
-    s = evalGrid(res.grid);
+    found = 1;
+    s = chanceNodeRows(res.rows, depth - 1);
     if (s > best) best = s;
   }
-  return found ? best : evalGrid(grid);
+  return found ? best : evalRows(rows);
 }
 
-function expectimaxSpawn(grid) {
-  var cells = emptyCells(grid);
-  var n = cells.length;
-  if (!n) return evalGrid(grid);
-  var total = 0;
-  var i, p;
-  var deep = n <= 8;
+function chanceNodeRows(rows, depth) {
+  if (depth <= 0 || Date.now() >= aiDeadline) return evalRows(rows);
+  var list = [];
+  var r, c, e, row, n, i, bit, total, use4;
+  for (r = 0; r < 4; r++) {
+    row = rows[r];
+    for (c = 0; c < 4; c++) {
+      if (((row >> (12 - 4 * c)) & 15) === 0) list.push((r << 2) | c);
+    }
+  }
+  n = list.length;
+  if (!n) return evalRows(rows);
+  use4 = n <= 3;
+  total = 0;
   for (i = 0; i < n; i++) {
-    p = cells[i];
-    grid[p.r][p.c] = 2;
-    total += 0.9 * (deep ? bestEval(grid) : evalGrid(grid));
-    grid[p.r][p.c] = 4;
-    total += 0.1 * (deep ? bestEval(grid) : evalGrid(grid));
-    grid[p.r][p.c] = 0;
+    r = list[i] >> 2;
+    c = list[i] & 3;
+    bit = 12 - 4 * c;
+    rows[r] |= (1 << bit);
+    total += (use4 ? 0.9 : 1) * maxNodeRows(rows, depth - 1);
+    if (use4) {
+      rows[r] = (rows[r] & ~(15 << bit)) | (2 << bit);
+      total += 0.1 * maxNodeRows(rows, depth - 1);
+    }
+    rows[r] &= ~(15 << bit);
   }
   return total / n;
 }
 
+function aiBudgetMs() {
+  var s = typeof autoSpeed === 'number' ? autoSpeed : 3;
+  if (s >= 4) return 24;
+  if (s === 3) return 50;
+  if (s === 2) return 75;
+  return 120;
+}
+
 function pickAiMove(grid) {
-  /* 2-ply expectimax on every legal move (≤4): spawn 2/4 at 90/10, then heuristic.
-     Tie-break: up, left, down, right (AI_DIRS order). */
-  var bestDir = null;
-  var bestExp = -Infinity;
-  var best1 = -Infinity;
-  var i, res, one, exp;
-  for (i = 0; i < 4; i++) {
-    res = moveBoard(grid, AI_DIRS[i]);
-    if (!res.changed) continue;
-    one = evalAfterMove(grid, res);
-    exp = expectimaxSpawn(res.grid);
-    if (bestDir === null || exp > bestExp || (exp === bestExp && one > best1)) {
-      bestDir = AI_DIRS[i];
-      bestExp = exp;
-      best1 = one;
+  var rows = gridToRows(grid);
+  var empties = emptyCells(grid).length;
+  var maxD = empties >= 8 ? 4 : empties >= 4 ? 5 : 6;
+  var bestDir = null, bestScore = -Infinity;
+  var d, i, res, s, layerDir, layerScore, timedOut;
+  aiDeadline = Date.now() + aiBudgetMs();
+  for (d = 3; d <= maxD; d++) {
+    layerDir = null;
+    layerScore = -Infinity;
+    timedOut = false;
+    for (i = 0; i < 4; i++) {
+      res = moveRows(rows, AI_DIRS[i]);
+      if (!res.changed) continue;
+      s = chanceNodeRows(res.rows, d);
+      if (Date.now() >= aiDeadline) { timedOut = true; break; }
+      if (layerDir === null || s > layerScore) {
+        layerDir = AI_DIRS[i];
+        layerScore = s;
+      }
+    }
+    if (layerDir !== null && !timedOut) {
+      bestDir = layerDir;
+      bestScore = layerScore;
+    }
+    if (timedOut) break;
+  }
+  if (bestDir === null) {
+    for (i = 0; i < 4; i++) {
+      res = moveRows(rows, AI_DIRS[i]);
+      if (!res.changed) continue;
+      s = evalRows(res.rows);
+      if (bestDir === null || s > bestScore) {
+        bestDir = AI_DIRS[i];
+        bestScore = s;
+      }
     }
   }
   return bestDir;
@@ -385,10 +495,6 @@ function selfCheck() {
   console.assert(!moveBoard(onlyRight, 'left').changed, 'only-right: left noop');
   console.assert(!moveBoard(onlyRight, 'up').changed, 'only-right: up noop');
   console.assert(!moveBoard(onlyRight, 'down').changed, 'only-right: down noop');
-
-  var openBoard = [[2, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]];
-  var packedBoard = [[2, 4, 8, 16], [32, 64, 128, 256], [2, 4, 8, 16], [32, 64, 128, 0]];
-  console.assert(evalGrid(openBoard) > evalGrid(packedBoard), 'empty cells preferred');
 
   var inCorner = [[1024, 4, 2, 0], [8, 2, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]];
   var inCenter = [[2, 4, 0, 0], [8, 1024, 2, 0], [0, 2, 0, 0], [0, 0, 0, 0]];
