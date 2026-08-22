@@ -139,7 +139,7 @@
     "blurb": "两发子弹共享传送，用一门送另一门。",
     "hue": 300,
     "tag": "传",
-    "status": "hardening",
+    "status": "shipped",
     "dir": "g/two-port/"
   },
   {
@@ -1098,5 +1098,17 @@
     "tag": "门",
     "status": "shipped",
     "dir": "g/night-gate/"
+  },
+  {
+    "n": 101,
+    "id": "twenty48",
+    "title": "2048",
+    "subtitle": "TILES",
+    "blurb": "滑动合并，合到 2048。",
+    "hue": 36,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/twenty48/",
+    "kind": "remake"
   }
 ]
