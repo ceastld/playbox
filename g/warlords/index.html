@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#05030c" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>城砖 · WARL</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2305030c'/%3E%3Crect x='2' y='20' width='10' height='10' rx='1.2' fill='%2314080c' stroke='%23ff5a2a' stroke-width='1.1'/%3E%3Crect x='20' y='20' width='10' height='10' rx='1.2' fill='%23081014' stroke='%2300f0ff' stroke-width='1.1'/%3E%3Crect x='2' y='2' width='10' height='10' rx='1.2' fill='%23140812' stroke='%23ff3db8' stroke-width='1.1'/%3E%3Crect x='20' y='2' width='10' height='10' rx='1.2' fill='%2308120c' stroke='%233dff88' stroke-width='1.1'/%3E%3Ccircle cx='6.4' cy='25.6' r='1.5' fill='%23ffe36b'/%3E%3Ccircle cx='16' cy='16' r='2.1' fill='%23ff8a4a'/%3E%3Ccircle cx='16' cy='16' r='3.4' fill='none' stroke='%23ffe36b' stroke-width='.7' opacity='.7'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>城砖</b>
+        <span>WARL</span>
+      </div>
+      <div class="status">
+        <div class="scores" aria-live="polite">
+          <div class="score" id="score-box">
+            <em>分数</em>
+            <b id="score">0</b>
+            <span id="score-add" class="score-add" hidden>+0</span>
+          </div>
+          <div class="score best">
+            <em>最高</em>
+            <b id="best">0</b>
+          </div>
+        </div>
+        <div class="row">
+          <span id="mode-label">城砖</span>
+          <span id="tag-label">WARL</span>
+          <span class="pips" id="pips" aria-label="四王"></span>
+        </div>
+      </div>
+      <div class="tools">
+        <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
+        <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <canvas id="c" tabindex="0" role="application" aria-label="城砖战场，四角堡垒，盾牌护王"></canvas>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden"></div>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">WARL</p>
+          <h1 id="ov-title">城砖</h1>
+          <p class="lead" id="ov-lead">四角堡垒。盾牌护王，火球砸砖，击中国王即出局。</p>
+          <p class="ops" id="ov-ops">←→ WASD 或鼠标移盾 · 空格接球/发射 · R 重开 · M 静音</p>
+          <div class="ov-actions" id="ov-start">
+            <button type="button" id="btn-siege">围城</button>
+            <button type="button" id="btn-rain">火雨</button>
+          </div>
+          <div class="ov-actions gone" id="ov-end">
+            <button type="button" id="btn-again">再来</button>
+            <button type="button" id="btn-menu">换模式</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">你在左下 · 移盾挡火球 · 空格接住再甩出去 · 最后一座城获胜</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>

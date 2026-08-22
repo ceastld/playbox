@@ -2564,5 +2564,17 @@
     "dir": "g/star-castle/",
     "url": "./g/star-castle/",
     "kind": "remake"
+  },
+  {
+    "n": 233,
+    "id": "warlords",
+    "title": "城砖",
+    "subtitle": "WARL",
+    "blurb": "四角守城，火球砸砖砸人。",
+    "hue": 12,
+    "tag": "复刻",
+    "dir": "g/warlords/",
+    "url": "./g/warlords/",
+    "kind": "remake"
   }
 ]

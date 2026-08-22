@@ -2691,7 +2691,7 @@
     "blurb": "四角守城，火球砸砖砸人。",
     "hue": 12,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/warlords/",
     "kind": "remake"
   },
@@ -2753,6 +2753,18 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/gaplus/",
+    "kind": "remake"
+  },
+  {
+    "n": 239,
+    "id": "star-trench",
+    "title": "星沟",
+    "subtitle": "TRENCH",
+    "blurb": "沿壕沟俯冲，把核心打穿。",
+    "hue": 46,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/star-trench/",
     "kind": "remake"
   }
 ]
