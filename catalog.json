@@ -1016,5 +1016,17 @@
     "dir": "g/snake/",
     "url": "./g/snake/",
     "kind": "remake"
+  },
+  {
+    "n": 103,
+    "id": "minesweeper",
+    "title": "扫雷",
+    "subtitle": "MINES",
+    "blurb": "翻开数字，标出地雷。",
+    "hue": 198,
+    "tag": "复刻",
+    "dir": "g/minesweeper/",
+    "url": "./g/minesweeper/",
+    "kind": "remake"
   }
 ]

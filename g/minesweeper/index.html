@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#05030c" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>扫雷 · MINES</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2305030c'/%3E%3Crect x='4' y='4' width='24' height='24' rx='4' fill='%23141e2a' stroke='%2300f0ff' stroke-width='1.2'/%3E%3Crect x='6.5' y='6.5' width='8' height='8' rx='1.2' fill='%232c4258'/%3E%3Crect x='17.5' y='6.5' width='8' height='8' rx='1.2' fill='%230c141c'/%3E%3Ctext x='21.5' y='13.2' text-anchor='middle' font-size='7' font-family='sans-serif' font-weight='700' fill='%234db8ff'%3E1%3C/text%3E%3Cpolygon points='10,18.2 10,26 16.6,21.4' fill='%23ff3db8'/%3E%3Crect x='9.2' y='18' width='1.4' height='8.4' fill='%23cfe0f2'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>扫雷</b>
+        <span>MINES</span>
+      </div>
+      <div class="meters" aria-live="polite">
+        <div class="meter mines" title="剩余地雷">
+          <em>雷</em>
+          <b id="mine-count">10</b>
+        </div>
+        <div class="meter time" title="用时">
+          <em>时</em>
+          <b id="timer">0</b>
+        </div>
+        <div class="meter best" title="最佳用时">
+          <em>最佳</em>
+          <b id="best">—</b>
+        </div>
+      </div>
+      <div class="tools">
+        <div class="diff" role="radiogroup" aria-label="难度">
+          <button type="button" id="diff-9" aria-pressed="true" title="9×9 · 10 雷">初级</button>
+          <button type="button" id="diff-16" aria-pressed="false" title="16×16 · 40 雷">中级</button>
+        </div>
+        <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
+        <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <div class="board-wrap">
+        <div class="board" id="board" role="grid" tabindex="0" aria-label="雷区"></div>
+      </div>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="overlay" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel" id="panel">
+          <p class="kicker">MINES</p>
+          <h1 id="ov-title">扫清了</h1>
+          <p class="lead" id="ov-lead"></p>
+          <button type="button" id="ov-retry">重开</button>
+        </div>
+      </div>
+    </div>
+
+    <footer class="dock">
+      <div class="mode" id="mode" hidden>
+        <button type="button" id="mode-open" aria-pressed="true">翻开</button>
+        <button type="button" id="mode-flag" aria-pressed="false">插旗</button>
+      </div>
+      <p class="hint">点开空格，右键或长按插旗。数字是周围的雷。</p>
+    </footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>
