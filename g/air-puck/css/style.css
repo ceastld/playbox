@@ -195,6 +195,84 @@ body {
   align-items: center;
 }
 
+.speed-ctl {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 10px 0 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: var(--dim);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  touch-action: auto;
+  cursor: default;
+}
+
+.speed-ctl input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 56px;
+  height: 4px;
+  background: rgba(0, 245, 224, 0.22);
+  border-radius: 99px;
+  outline: none;
+  touch-action: pan-x;
+  cursor: pointer;
+  accent-color: var(--cyan);
+}
+
+.speed-ctl input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--cyan);
+  box-shadow: 0 0 8px rgba(0, 245, 224, 0.7);
+  border: 0;
+  cursor: pointer;
+}
+
+.speed-ctl input[type="range"]::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--cyan);
+  box-shadow: 0 0 8px rgba(0, 245, 224, 0.7);
+  border: 0;
+  cursor: pointer;
+}
+
+.speed-ctl input[type="range"]:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 3px;
+}
+
+#speed-lab {
+  font-weight: 700;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--cyan);
+  text-shadow: 0 0 8px rgba(0, 245, 224, 0.35);
+  min-width: 2.4em;
+  font-style: normal;
+}
+
+#btn-auto {
+  border-color: rgba(0, 245, 224, 0.35);
+  color: #b8fbff;
+}
+
+#btn-auto.on {
+  border-color: rgba(0, 245, 224, 0.7);
+  color: var(--cyan);
+  background: rgba(0, 245, 224, 0.12);
+  box-shadow: 0 0 16px rgba(0, 245, 224, 0.28);
+}
+
 .diff,
 .ov-diff {
   display: flex;
@@ -518,6 +596,8 @@ canvas.press { cursor: grabbing; }
   .score b { font-size: 17px; }
   .tools button,
   .diff button { padding: 7px 8px; font-size: 11px; }
+  .speed-ctl { padding: 0 8px; gap: 4px; height: 32px; font-size: 10px; }
+  .speed-ctl input[type="range"] { width: 48px; }
   .panel { padding: 24px 18px 20px; }
   .hint { font-size: 10px; }
   .ops { font-size: 11px; margin-bottom: 16px; }
@@ -529,6 +609,8 @@ canvas.press { cursor: grabbing; }
   .score { min-width: 48px; padding: 3px 6px 4px; }
   .score em { letter-spacing: 0.1em; }
   .diff button { min-width: 32px; padding: 7px 6px; }
+  .speed-ctl span { display: none; }
+  .speed-ctl input[type="range"] { width: 40px; }
 }
 
 @media (pointer: coarse) {
@@ -536,6 +618,7 @@ canvas.press { cursor: grabbing; }
   .panel button,
   .diff button,
   .ov-diff button { min-height: 42px; }
+  .speed-ctl { height: 42px; }
 }
 
 @media (max-height: 520px) and (orientation: landscape) {
@@ -544,6 +627,9 @@ canvas.press { cursor: grabbing; }
   .brand b { font-size: 16px; }
   .score b { font-size: 16px; }
   .row { display: none; }
+  .speed-ctl span { display: none; }
+  .speed-ctl { height: 32px; padding: 0 8px; }
+  .speed-ctl input[type="range"] { width: 40px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

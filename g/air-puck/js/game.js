@@ -23,6 +23,15 @@
   const BEST_KEY = 'playbox-air-puck-best';
   const MUTE_KEY = 'playbox-air-puck-mute';
   const DIFF_KEY = 'playbox-air-puck-diff';
+  const AUTO_SPEED_KEY = 'playbox-air-puck-auto-speed';
+  const SPEED_LABELS = ['', '慢', '中', '快', '极快'];
+  const AUTO_CFG = [
+    null,
+    { max: 980, react: 0.09, look: 0.42, err: 6 },
+    { max: 1420, react: 0.04, look: 0.5, err: 2 },
+    { max: 2040, react: 0.012, look: 0.58, err: 0 },
+    { max: PTR_MAX, react: 0, look: 0.7, err: 0 }
+  ];
   const REDUCE = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   const MAG = [255, 61, 184];
@@ -56,6 +65,9 @@
   const btnMenu = document.getElementById('btn-menu');
   const btnMute = document.getElementById('btn-mute');
   const btnRetry = document.getElementById('btn-retry');
+  const btnAuto = document.getElementById('btn-auto');
+  const speedEl = document.getElementById('speed');
+  const speedLab = document.getElementById('speed-lab');
   const scoreBEl = document.getElementById('score-b');
   const scoreTEl = document.getElementById('score-t');
   const scoreBBox = document.getElementById('score-b-box');
@@ -91,6 +103,11 @@
   const rings = [];
   const floats = [];
   const motes = [];
+
+  let autoOn = false;
+  let autoSpeed = 3;
+  const autoB = { t: 0, x: VW * 0.5, y: VH * 0.78, phase: 'idle', commit: 0 };
+  const autoT = { t: 0, x: VW * 0.5, y: VH * 0.22, phase: 'idle', commit: 0 };
 
   const G = {
     phase: 'title',
@@ -321,6 +338,95 @@
     }
   }
 
+  function loadAutoSpeed() {
+    try {
+      const n = parseInt(localStorage.getItem(AUTO_SPEED_KEY) || '3', 10);
+      if (!isFinite(n) || n < 1 || n > 4) return 3;
+      return n;
+    } catch (err) {
+      return 3;
+    }
+  }
+
+  function saveAutoSpeed(n) {
+    try {
+      localStorage.setItem(AUTO_SPEED_KEY, String(n));
+    } catch (err) { /* ignore */ }
+  }
+
+  function autoCfg() {
+    return AUTO_CFG[autoSpeed] || AUTO_CFG[3];
+  }
+
+  function syncAutoUi() {
+    if (!btnAuto) return;
+    btnAuto.classList.toggle('on', autoOn);
+    btnAuto.setAttribute('aria-pressed', autoOn ? 'true' : 'false');
+    btnAuto.textContent = autoOn ? '停下' : '自动';
+    btnAuto.setAttribute('aria-label', autoOn ? '停止自动' : '自动');
+  }
+
+  function syncSpeedUi() {
+    if (!speedEl) return;
+    speedEl.value = String(autoSpeed);
+    if (speedLab) speedLab.textContent = SPEED_LABELS[autoSpeed];
+    speedEl.title = SPEED_LABELS[autoSpeed];
+    speedEl.setAttribute('aria-valuetext', SPEED_LABELS[autoSpeed]);
+  }
+
+  function setAutoSpeed(n) {
+    n = parseInt(n, 10);
+    if (!(n >= 1 && n <= 4)) n = 3;
+    autoSpeed = n;
+    saveAutoSpeed(autoSpeed);
+    syncSpeedUi();
+    if (autoOn && G.phase === 'play') playHint();
+  }
+
+  function resetAutoCtl(st, bot) {
+    const h = bot ? homeBot() : homeTop();
+    st.t = 0;
+    st.x = h.x;
+    st.y = h.y;
+    st.phase = 'idle';
+    st.commit = 0;
+  }
+
+  function clearPlayerControl() {
+    keys.w = keys.a = keys.s = keys.d = false;
+    keys.up = keys.down = keys.left = keys.right = false;
+    for (const id in pointers) delete pointers[id];
+    mouse.hover = false;
+    canvas.classList.remove('press');
+  }
+
+  function playHint() {
+    if (G.phase !== 'play') return;
+    if (autoOn) {
+      setHint('托管中 · A 停下 · 速度 ' + SPEED_LABELS[autoSpeed]);
+      return;
+    }
+    if (G.kind === 'two') setHint('WASD 下方 · ↑←↓→ 上方 · 上下半场拖动');
+    else setHint('拖动底侧 · WASD 或方向键 · ' + DIFFS[G.diff].name);
+  }
+
+  function toggleAuto() {
+    autoOn = !autoOn;
+    autoB.commit = 0;
+    autoT.commit = 0;
+    autoB.t = 0;
+    autoT.t = 0;
+    syncAutoUi();
+    if (!autoOn) {
+      playHint();
+      return;
+    }
+    audio.ensure();
+    clearPlayerControl();
+    if (G.phase === 'title') startMatch('ai');
+    else playHint();
+  }
+
   function toast(msg, warn, gold) {
     toastEl.textContent = msg;
     toastEl.classList.toggle('warn', !!warn);
@@ -438,11 +544,11 @@
     ovKicker.textContent = 'HOCKEY';
     ovTitle.textContent = '气球';
     ovLead.textContent = '一磕就飞，对打进门。';
-    ovOps.textContent = '拖动底侧击球 · WASD 或方向键 · 双人分上下';
+    ovOps.textContent = '拖动底侧击球 · WASD 或方向键 · A 自动 · 双人分上下';
     ovStart.classList.remove('gone');
     ovEnd.classList.add('gone');
     ovDiff.classList.remove('gone');
-    setHint('拖动击球 · WASD 或方向键 · 先到七分 · R 重开 · M 静音');
+    setHint('拖动击球 · WASD 或方向键 · A 自动 · 先到七分 · R 重开 · M 静音');
     syncHud();
   }
 
@@ -611,16 +717,14 @@
     G.aiT = 0;
     G.aiX = VW * 0.5;
     G.aiY = VH * 0.22;
+    resetAutoCtl(autoB, true);
+    resetAutoCtl(autoT, false);
     resetMallets();
     G.puck = makePuck(VW * 0.5, VH * 0.62);
     startServe(true);
     hideOverlay();
     audio.start();
-    if (kind === 'two') {
-      setHint('WASD 下方 · ↑←↓→ 上方 · 上下半场拖动');
-    } else {
-      setHint('拖动底侧 · WASD 或方向键 · ' + DIFFS[G.diff].name);
-    }
+    playHint();
     toast(MODE_NAME[kind], false, kind === 'two');
     syncHud();
   }
@@ -673,6 +777,252 @@
       }
     }
     return { x: x, y: y, vx: vx, vy: vy };
+  }
+
+  function stepPuck(s, h) {
+    s.x += s.vx * h;
+    s.y += s.vy * h;
+    s.vx *= Math.exp(-FRICTION * h);
+    s.vy *= Math.exp(-FRICTION * h);
+    const left = WALL + PUCK_R;
+    const right = VW - WALL - PUCK_R;
+    const top = WALL + PUCK_R;
+    const bot = VH - WALL - PUCK_R;
+    if (s.x < left) {
+      s.x = left;
+      if (s.vx < 0) s.vx = -s.vx * WALL_REST;
+    } else if (s.x > right) {
+      s.x = right;
+      if (s.vx > 0) s.vx = -s.vx * WALL_REST;
+    }
+    const openTop = inGoalX(s.x, PUCK_R * 0.2);
+    const openBot = inGoalX(s.x, PUCK_R * 0.2);
+    if (s.y < top && !openTop) {
+      s.y = top;
+      if (s.vy < 0) s.vy = -s.vy * WALL_REST;
+    } else if (s.y > bot && !openBot) {
+      s.y = bot;
+      if (s.vy > 0) s.vy = -s.vy * WALL_REST;
+    }
+    if (openTop && s.y < WALL) s.goal = 1;
+    if (openBot && s.y > VH - WALL) s.goal = -1;
+  }
+
+  function shotAim(px, py, isTop) {
+    const goalY = isTop ? VH + 28 : -28;
+    const leftG = goalX0() + 24;
+    const rightG = goalX1() - 24;
+    const mid = VW * 0.5;
+    const opp = isTop ? G.B : G.T;
+    const opts = [
+      { x: leftG, y: goalY },
+      { x: rightG, y: goalY },
+      { x: mid, y: goalY },
+      { x: 2 * WALL - rightG, y: goalY },
+      { x: 2 * (VW - WALL) - leftG, y: goalY }
+    ];
+    let best = opts[0];
+    let bestS = -1;
+    for (let i = 0; i < opts.length; i++) {
+      const o = opts[i];
+      const dx = o.x - px;
+      const dy = o.y - py;
+      const len = hypot(dx, dy) || 1;
+      const ux = dx / len;
+      const uy = dy / len;
+      let sc = i < 3 ? 10 : 0;
+      if (opp) {
+        const along = (opp.x - px) * ux + (opp.y - py) * uy;
+        const across = (opp.x - px) * uy - (opp.y - py) * ux;
+        if (along > 30 && along < len) sc += Math.abs(across);
+        else sc += 90;
+      } else {
+        sc += 40;
+      }
+      if (sc > bestS) {
+        bestS = sc;
+        best = o;
+      }
+    }
+    return best;
+  }
+
+  function strikePose(px, py, isTop, bounds) {
+    const aim = shotAim(px, py, isTop);
+    const gx = aim.x - px;
+    const gy = aim.y - py;
+    const glen = hypot(gx, gy) || 1;
+    const nx = gx / glen;
+    const ny = gy / glen;
+    const gap = MALLET_R + PUCK_R - 2;
+    return {
+      x: clamp(px - nx * gap, bounds.x0, bounds.x1),
+      y: clamp(py - ny * gap, bounds.y0, bounds.y1),
+      nx: nx,
+      ny: ny
+    };
+  }
+
+  function thinkAutoPlay(m, st, dt, isTop) {
+    const cfg = autoCfg();
+    st.commit = Math.max(0, st.commit - dt);
+    st.t -= dt;
+    const p = G.puck;
+    if (!p || !m) return;
+    const bot = !isTop;
+    const bounds = malletBounds(bot);
+    const home = bot ? homeBot() : homeTop();
+    const behindSign = isTop ? -1 : 1;
+    const comingIn = isTop ? p.vy < 50 : p.vy > -50;
+    const deep = isTop ? p.y < VH * 0.38 : p.y > VH * 0.62;
+    const urgent = comingIn && deep && (inGoalX(p.x, -20) || (isTop ? p.y < WALL + 86 : p.y > VH - WALL - 86));
+
+    if (st.commit > 0 && st.phase === 'hit' && !urgent && !G.serving) return;
+    if (st.t > 0 && !urgent) return;
+    st.t = cfg.react;
+
+    if (G.serving) {
+      const weServe = (bot && G.serveBot) || (isTop && !G.serveBot);
+      if (weServe) {
+        st.phase = 'wind';
+        st.x = clamp(p.x, bounds.x0, bounds.x1);
+        st.y = clamp(p.y + behindSign * (MALLET_R + PUCK_R + 18), bounds.y0, bounds.y1);
+      } else {
+        st.phase = 'idle';
+        st.x = home.x;
+        st.y = home.y;
+      }
+      st.commit = 0;
+      return;
+    }
+
+    const look = cfg.look;
+    const h = 0.008;
+    const nStep = Math.max(1, Math.ceil(look / h));
+    const s = { x: p.x, y: p.y, vx: p.vx, vy: p.vy, goal: 0 };
+    let block = null;
+    let strike = null;
+    let intercept = null;
+
+    for (let i = 1; i <= nStep; i++) {
+      stepPuck(s, h);
+      const t = i * h;
+      const inMyHalf = isTop ? s.y < VH * 0.5 + 28 : s.y > VH * 0.5 - 28;
+      const towardMe = isTop ? s.vy < -70 : s.vy > 70;
+      const inMouth = inGoalX(s.x, 6);
+      const nearGoal = isTop ? s.y < WALL + 130 : s.y > VH - WALL - 130;
+
+      if (towardMe && inMouth && nearGoal) {
+        const defX = clamp(s.x, bounds.x0, bounds.x1);
+        const defY = clamp(
+          isTop
+            ? lerp(WALL + MALLET_R + 10, Math.min(s.y + 8, VH * 0.3), 0.22)
+            : lerp(VH - WALL - MALLET_R - 10, Math.max(s.y - 8, VH * 0.7), 0.22),
+          bounds.y0,
+          bounds.y1
+        );
+        const reach = hypot(defX - m.x, defY - m.y);
+        if (reach <= cfg.max * t + 24) {
+          if (!block || t < block.t) block = { x: defX, y: defY, t: t };
+        }
+      }
+
+      if (inMyHalf && !intercept) {
+        intercept = {
+          x: clamp(s.x, bounds.x0, bounds.x1),
+          y: clamp(isTop ? Math.min(s.y + 18, VH * 0.38) : Math.max(s.y - 18, VH * 0.62), bounds.y0, bounds.y1),
+          t: t
+        };
+      }
+
+      if (inMyHalf && !s.goal) {
+        const pose = strikePose(s.x, s.y, isTop, bounds);
+        const dirOk = isTop ? pose.ny > 0.18 : pose.ny < -0.18;
+        if (dirOk) {
+          const dist = hypot(pose.x - m.x, pose.y - m.y);
+          if (dist <= cfg.max * Math.max(t, 0.05) + 16) {
+            const away = isTop ? s.vy > -40 : s.vy < 40;
+            const q = (isTop ? pose.ny : -pose.ny) * 1.8 + (1 - t) + (away ? 0.45 : 0.1);
+            if (!strike || q > strike.q) {
+              strike = {
+                x: pose.x, y: pose.y, nx: pose.nx, ny: pose.ny,
+                t: t, q: q, px: s.x, py: s.y
+              };
+            }
+          }
+        }
+      }
+      if (s.goal) break;
+    }
+
+    const ownGoal = isTop ? s.goal === 1 : s.goal === -1;
+    if (block && (urgent || ownGoal || !strike || block.t < 0.22)) {
+      st.phase = 'defend';
+      st.x = block.x + (cfg.err ? rand(-cfg.err, cfg.err) : 0);
+      st.y = block.y;
+      st.commit = 0;
+      return;
+    }
+
+    const puckInHalf = isTop ? p.y < VH * 0.5 + 16 : p.y > VH * 0.5 - 16;
+    const wrongSide = isTop ? m.y > p.y + 4 : m.y < p.y - 4;
+    if (puckInHalf && wrongSide && hypot(p.x - m.x, p.y - m.y) < MALLET_R + PUCK_R + 36) {
+      const roomL = p.x - bounds.x0;
+      const roomR = bounds.x1 - p.x;
+      const side = roomL > roomR ? -1 : 1;
+      st.phase = 'wind';
+      st.x = clamp(p.x + side * (MALLET_R + PUCK_R + 16), bounds.x0, bounds.x1);
+      st.y = clamp(p.y + behindSign * (MALLET_R + 10), bounds.y0, bounds.y1);
+      return;
+    }
+
+    if (strike) {
+      const isBehind = isTop ? m.y <= strike.py - 6 : m.y >= strike.py + 6;
+      if (!isBehind) {
+        st.phase = 'wind';
+        st.x = clamp(strike.px, bounds.x0, bounds.x1);
+        st.y = clamp(strike.py + behindSign * (MALLET_R + PUCK_R + 16), bounds.y0, bounds.y1);
+        return;
+      }
+      st.phase = 'hit';
+      st.x = clamp(strike.x + strike.nx * 48, bounds.x0, bounds.x1);
+      st.y = clamp(strike.y + strike.ny * 48, bounds.y0, bounds.y1);
+      const dist = hypot(st.x - m.x, st.y - m.y);
+      st.commit = Math.min(0.28, dist / Math.max(cfg.max, 200) + 0.05);
+      return;
+    }
+
+    if (intercept) {
+      st.phase = 'defend';
+      st.x = intercept.x;
+      st.y = intercept.y;
+      return;
+    }
+
+    const inOpp = isTop ? p.y > VH * 0.5 + 8 : p.y < VH * 0.5 - 8;
+    if (inOpp) {
+      st.phase = 'idle';
+      const nx = clamp(lerp(home.x, p.x, 0.72), bounds.x0, bounds.x1);
+      const ny = isTop ? VH * 0.32 : VH * 0.68;
+      if (hypot(nx - st.x, ny - st.y) > 12) {
+        st.x = nx;
+        st.y = ny;
+      }
+      return;
+    }
+
+    const pose = strikePose(p.x, p.y, isTop, bounds);
+    const isBehind = isTop ? m.y < p.y - 6 : m.y > p.y + 6;
+    if (isBehind) {
+      st.phase = 'hit';
+      st.x = clamp(pose.x + pose.nx * 48, bounds.x0, bounds.x1);
+      st.y = clamp(pose.y + pose.ny * 48, bounds.y0, bounds.y1);
+      st.commit = 0.14;
+    } else {
+      st.phase = 'wind';
+      st.x = clamp(p.x, bounds.x0, bounds.x1);
+      st.y = clamp(p.y + behindSign * (MALLET_R + PUCK_R + 16), bounds.y0, bounds.y1);
+    }
   }
 
   function thinkAI(m, dt, cfg, timerKey, txKey, tyKey, isTop) {
@@ -1223,18 +1573,29 @@
 
     if (!play) return;
 
-    const kb = keyVec(true);
-    const ptrB = pointerFor(true);
-    if (ptrB && !kb.any) moveMallet(G.B, dt, PTR_MAX, ptrB.x, ptrB.y, 0, 0);
-    else if (kb.any) moveMallet(G.B, dt, KEY_MAX, null, null, kb.ax, kb.ay);
-    else moveMallet(G.B, dt, KEY_MAX, null, null, 0, 0);
+    const ac = autoCfg();
+    if (autoOn) {
+      thinkAutoPlay(G.B, autoB, dt, false);
+      moveMallet(G.B, dt, ac.max, autoB.x, autoB.y, 0, 0);
+    } else {
+      const kb = keyVec(true);
+      const ptrB = pointerFor(true);
+      if (ptrB && !kb.any) moveMallet(G.B, dt, PTR_MAX, ptrB.x, ptrB.y, 0, 0);
+      else if (kb.any) moveMallet(G.B, dt, KEY_MAX, null, null, kb.ax, kb.ay);
+      else moveMallet(G.B, dt, KEY_MAX, null, null, 0, 0);
+    }
 
     if (two) {
-      const kt = keyVec(false);
-      const ptrT = pointerFor(false);
-      if (ptrT && !kt.any) moveMallet(G.T, dt, PTR_MAX, ptrT.x, ptrT.y, 0, 0);
-      else if (kt.any) moveMallet(G.T, dt, KEY_MAX, null, null, kt.ax, kt.ay);
-      else moveMallet(G.T, dt, KEY_MAX, null, null, 0, 0);
+      if (autoOn) {
+        thinkAutoPlay(G.T, autoT, dt, true);
+        moveMallet(G.T, dt, ac.max, autoT.x, autoT.y, 0, 0);
+      } else {
+        const kt = keyVec(false);
+        const ptrT = pointerFor(false);
+        if (ptrT && !kt.any) moveMallet(G.T, dt, PTR_MAX, ptrT.x, ptrT.y, 0, 0);
+        else if (kt.any) moveMallet(G.T, dt, KEY_MAX, null, null, kt.ax, kt.ay);
+        else moveMallet(G.T, dt, KEY_MAX, null, null, 0, 0);
+      }
     } else {
       thinkAI(G.T, dt, cfg, 'aiT', 'aiX', 'aiY', true);
       moveMallet(G.T, dt, cfg.max, G.aiX, G.aiY, 0, 0);
@@ -1677,17 +2038,25 @@
   function onKey(e, down) {
     const k = e.key;
     const code = e.code;
-    if (k === 'w' || k === 'W' || code === 'KeyW') keys.w = down;
-    if (k === 'a' || k === 'A' || code === 'KeyA') keys.a = down;
-    if (k === 's' || k === 'S' || code === 'KeyS') keys.s = down;
-    if (k === 'd' || k === 'D' || code === 'KeyD') keys.d = down;
-    if (k === 'ArrowUp' || k === 'Up') keys.up = down;
-    if (k === 'ArrowDown' || k === 'Down') keys.down = down;
-    if (k === 'ArrowLeft' || k === 'Left') keys.left = down;
-    if (k === 'ArrowRight' || k === 'Right') keys.right = down;
+    if (k === 'a' || k === 'A' || code === 'KeyA') {
+      if (down) {
+        e.preventDefault();
+        if (!e.repeat) toggleAuto();
+      }
+      return;
+    }
+    if (!autoOn) {
+      if (k === 'w' || k === 'W' || code === 'KeyW') keys.w = down;
+      if (k === 's' || k === 'S' || code === 'KeyS') keys.s = down;
+      if (k === 'd' || k === 'D' || code === 'KeyD') keys.d = down;
+      if (k === 'ArrowUp' || k === 'Up') keys.up = down;
+      if (k === 'ArrowDown' || k === 'Down') keys.down = down;
+      if (k === 'ArrowLeft' || k === 'Left') keys.left = down;
+      if (k === 'ArrowRight' || k === 'Right') keys.right = down;
+    }
     const block = k === 'ArrowUp' || k === 'ArrowDown' || k === 'ArrowLeft' || k === 'ArrowRight' ||
       k === ' ' || k === 'Spacebar' ||
-      ((k === 'w' || k === 'W' || k === 'a' || k === 'A' || k === 's' || k === 'S' || k === 'd' || k === 'D') &&
+      ((k === 'w' || k === 'W' || k === 's' || k === 'S' || k === 'd' || k === 'D') &&
         !e.metaKey && !e.ctrlKey);
     if (down && block) e.preventDefault();
     if (!down) return;
@@ -1712,6 +2081,10 @@
   canvas.addEventListener('pointerdown', function (e) {
     if (e.button != null && e.button !== 0) return;
     audio.ensure();
+    if (autoOn) {
+      e.preventDefault();
+      return;
+    }
     const w = pointerWorld(e);
     pointers[e.pointerId] = { x: w.x, y: w.y };
     mouse.x = w.x;
@@ -1772,6 +2145,18 @@
     audio.ensure();
     audio.setMuted(!audio.muted);
   });
+  if (btnAuto) {
+    btnAuto.addEventListener('click', function () {
+      toggleAuto();
+    });
+  }
+  function onSpeedInput() {
+    setAutoSpeed(speedEl.value);
+  }
+  if (speedEl) {
+    speedEl.addEventListener('input', onSpeedInput);
+    speedEl.addEventListener('change', onSpeedInput);
+  }
 
   function onDiffClick(e) {
     const btn = e.target.closest('[data-diff]');
@@ -1825,6 +2210,9 @@
 
   loadBest();
   loadDiff();
+  autoSpeed = loadAutoSpeed();
+  syncAutoUi();
+  syncSpeedUi();
   seedMotes();
   resize();
   bootDemo();
