@@ -1030,7 +1030,7 @@
     "blurb": "摆光源，藤朝光长。",
     "hue": 125,
     "tag": "藤",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/vine-climb/"
   },
   {
@@ -1085,7 +1085,7 @@
     "blurb": "木板两端都要有支撑。",
     "hue": 32,
     "tag": "板",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/bridge-plank/"
   },
   {

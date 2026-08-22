@@ -915,5 +915,16 @@
     "tag": "旋",
     "dir": "g/coin-spin/",
     "url": "./g/coin-spin/"
+  },
+  {
+    "n": 94,
+    "id": "vine-climb",
+    "title": "藤上",
+    "subtitle": "VINE",
+    "blurb": "摆光源，藤朝光长。",
+    "hue": 125,
+    "tag": "藤",
+    "dir": "g/vine-climb/",
+    "url": "./g/vine-climb/"
   }
 ]
