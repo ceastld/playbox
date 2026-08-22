@@ -926,5 +926,16 @@
     "tag": "藤",
     "dir": "g/vine-climb/",
     "url": "./g/vine-climb/"
+  },
+  {
+    "n": 96,
+    "id": "flute-hole",
+    "title": "笛孔",
+    "subtitle": "FLUTE",
+    "blurb": "按孔吹出目标短句。",
+    "hue": 270,
+    "tag": "笛",
+    "dir": "g/flute-hole/",
+    "url": "./g/flute-hole/"
   }
 ]

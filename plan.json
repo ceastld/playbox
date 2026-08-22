@@ -1052,7 +1052,7 @@
     "blurb": "按孔吹出目标短句。",
     "hue": 270,
     "tag": "笛",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/flute-hole/"
   },
   {
@@ -1096,7 +1096,7 @@
     "blurb": "门上的纹必须对上你玩过的主题色。",
     "hue": 250,
     "tag": "门",
-    "status": "queued",
+    "status": "writing",
     "dir": "g/night-gate/"
   }
 ]
