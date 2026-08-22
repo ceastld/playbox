@@ -937,5 +937,38 @@
     "tag": "笛",
     "dir": "g/flute-hole/",
     "url": "./g/flute-hole/"
+  },
+  {
+    "n": 93,
+    "id": "sand-timer",
+    "title": "倒沙",
+    "subtitle": "SAND",
+    "blurb": "翻沙漏，让指定的一只最后走完。",
+    "hue": 38,
+    "tag": "沙",
+    "dir": "g/sand-timer/",
+    "url": "./g/sand-timer/"
+  },
+  {
+    "n": 97,
+    "id": "frost-bloom",
+    "title": "霜花",
+    "subtitle": "FROST",
+    "blurb": "结霜长成指定花纹。",
+    "hue": 185,
+    "tag": "霜",
+    "dir": "g/frost-bloom/",
+    "url": "./g/frost-bloom/"
+  },
+  {
+    "n": 98,
+    "id": "jar-firefly",
+    "title": "萤罐",
+    "subtitle": "JAR",
+    "blurb": "捉住萤火虫，放走假的。",
+    "hue": 70,
+    "tag": "萤",
+    "dir": "g/jar-firefly/",
+    "url": "./g/jar-firefly/"
   }
 ]

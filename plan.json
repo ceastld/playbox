@@ -29,7 +29,7 @@
     "blurb": "点一下降温，按住升温，把核心留在安全带。",
     "hue": 18,
     "tag": "稳",
-    "status": "shipped",
+    "status": "hardening",
     "dir": "g/melt-core/"
   },
   {
@@ -40,7 +40,7 @@
     "blurb": "涨潮前把路线画完，水会吞掉你走过的岸。",
     "hue": 200,
     "tag": "速",
-    "status": "shipped",
+    "status": "hardening",
     "dir": "g/tide-trace/"
   },
   {
@@ -51,7 +51,7 @@
     "blurb": "平台只出现在你上一轮起跳的位置。",
     "hue": 268,
     "tag": "跳",
-    "status": "shipped",
+    "status": "hardening",
     "dir": "g/ghost-jump/"
   },
   {
@@ -1019,7 +1019,7 @@
     "blurb": "翻沙漏，让指定的一只最后走完。",
     "hue": 38,
     "tag": "沙",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/sand-timer/"
   },
   {
@@ -1063,7 +1063,7 @@
     "blurb": "结霜长成指定花纹。",
     "hue": 185,
     "tag": "霜",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/frost-bloom/"
   },
   {
@@ -1074,7 +1074,7 @@
     "blurb": "捉住萤火虫，放走假的。",
     "hue": 70,
     "tag": "萤",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/jar-firefly/"
   },
   {
