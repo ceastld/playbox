@@ -31,6 +31,9 @@ var STEP = 1 / 60;
 var TAU = Math.PI * 2;
 var BEST_KEY = 'playbox-joust-kick-best';
 var MUTE_KEY = 'playbox-joust-kick-mute';
+var AUTO_SPEED_KEY = 'playbox-joust-kick-auto-speed';
+var SPEED_LABELS = ['', '慢', '中', '快', '极快'];
+var AUTO_SCALE = [1, 0.52, 0.78, 1, 3.4];
 
 var PLATS = [
   { x: 208, y: 56, w: 224, h: 12 },
@@ -187,6 +190,64 @@ function platCeil(x, y, prevY) {
   return -1;
 }
 
+function higherPlatIndex(ex, ey, biasX) {
+  var i, p, best = -1, bestS = 1e9, s, cx, dx;
+  for (i = 0; i < PLATS.length; i++) {
+    p = PLATS[i];
+    if (p.y >= ey - 10) continue;
+    cx = p.x + p.w * 0.5;
+    dx = Math.abs(wrapDx(cx, ex));
+    s = dx * 0.85 + Math.abs(p.y - (ey - 44)) * 0.4;
+    if (biasX != null) s += Math.abs(wrapDx(cx, biasX)) * 0.32;
+    if (s < bestS) { bestS = s; best = i; }
+  }
+  return best;
+}
+
+function nearestPlatIndex(x, y) {
+  var i, p, best = -1, bestS = 1e9, s, cx, fy;
+  for (i = 0; i < PLATS.length; i++) {
+    p = PLATS[i];
+    cx = p.x + p.w * 0.5;
+    fy = p.y - 12;
+    s = Math.abs(wrapDx(cx, x)) + Math.abs(fy - y) * 0.55;
+    if (y > p.y + 10) s += 36;
+    if (s < bestS) { bestS = s; best = i; }
+  }
+  return best;
+}
+
+function platEdgeToward(pi, x, tx) {
+  var p = PLATS[pi];
+  var dl = Math.abs(wrapDx(p.x + 18, tx));
+  var dr = Math.abs(wrapDx(p.x + p.w - 18, tx));
+  return dl < dr ? p.x + 16 : p.x + p.w - 16;
+}
+
+function underPlatIndex(x, y) {
+  var i, p;
+  for (i = 0; i < PLATS.length; i++) {
+    p = PLATS[i];
+    if (x < p.x + 8 || x > p.x + p.w - 8) continue;
+    if (y - 12 < p.y + p.h + 18 && y + 4 > p.y && y > p.y) return i;
+  }
+  return -1;
+}
+
+function loadAutoSpeed() {
+  try {
+    var n = parseInt(localStorage.getItem(AUTO_SPEED_KEY) || '3', 10);
+    if (!isFinite(n) || n < 1 || n > 4) return 3;
+    return n;
+  } catch (e) {
+    return 3;
+  }
+}
+
+function saveAutoSpeed(n) {
+  try { localStorage.setItem(AUTO_SPEED_KEY, String(n)); } catch (e) { /* ignore */ }
+}
+
 function overlapRiders(a, b) {
   var dx = Math.abs(wrapDx(a.x, b.x));
   var dy = Math.abs(a.y - b.y);
@@ -310,6 +371,18 @@ function selfCheck() {
   if (!xOnPlat(SPAWN_P1.plat, SPAWN_P1.x)) throw new Error('p1 on plat');
   if (!xOnPlat(SPAWN_P2.plat, SPAWN_P2.x)) throw new Error('p2 on plat');
   if (bodyHW({ kind: 'ptero' }) <= bodyHW({ kind: 'bounder' })) throw new Error('ptero bigger');
+  if (SPEED_LABELS.length !== 5 || SPEED_LABELS[3] !== '快') throw new Error('speed labels');
+  if (AUTO_SCALE[3] !== 1 || AUTO_SCALE[4] <= AUTO_SCALE[3]) throw new Error('auto scale');
+  if (loadAutoSpeed() < 1 || loadAutoSpeed() > 4) throw new Error('auto speed range');
+  i = higherPlatIndex(320, 250);
+  if (i < 0) throw new Error('higher plat exists');
+  if (PLATS[i].y >= 250) throw new Error('higher plat is above');
+  if (higherPlatIndex(320, 40) !== -1) throw new Error('no plat above ceiling');
+  if (nearestPlatIndex(SPAWN_P1.x, PLATS[SPAWN_P1.plat].y - 12) !== SPAWN_P1.plat) {
+    throw new Error('nearest spawn plat');
+  }
+  if (underPlatIndex(PLATS[5].x + 40, PLATS[5].y + 20) !== 5) throw new Error('under mid plat');
+  if (underPlatIndex(320, 40) !== -1) throw new Error('open air not under');
 }
 
 selfCheck();
@@ -335,6 +408,9 @@ var btnClassic = document.getElementById('btn-classic');
 var btnTwo = document.getElementById('btn-two');
 var btnMute = document.getElementById('btn-mute');
 var btnRetry = document.getElementById('btn-retry');
+var btnAuto = document.getElementById('btn-auto');
+var speedEl = document.getElementById('speed');
+var speedLab = document.getElementById('speed-lab');
 var btnLeft = document.getElementById('btn-left');
 var btnRight = document.getElementById('btn-right');
 var btnFlap = document.getElementById('btn-flap');
@@ -380,6 +456,8 @@ var keys = {
   l2: false, r2: false, flap2: false, flapHeld2: false
 };
 var ptr = { down: false, id: null, l: false, r: false };
+var autoOn = false;
+var autoSpeed = loadAutoSpeed();
 
 var G = {
   mode: 'title',
@@ -755,9 +833,13 @@ function hudPlay() {
     tagLabel.classList.remove('warn');
   }
   if (G.mode === 'play') {
-    hintEl.textContent = isTwo()
-      ? '其一 ←→ 空格 · 其二 WASD + F · 从上面撞 · 蛋要捡'
-      : '← → 移动 · 空格 / 点按扇翅 · 从上面撞 · 蛋要捡';
+    if (autoOn) {
+      hintEl.textContent = '托管中 · 从上头踢 · A 停下 · 速度 ' + SPEED_LABELS[autoSpeed];
+    } else {
+      hintEl.textContent = isTwo()
+        ? '其一 ←→ 空格 · 其二 WASD + F · 从上面撞 · 蛋要捡'
+        : '← → 移动 · 空格 / 点按扇翅 · 从上面撞 · 蛋要捡';
+    }
   }
 }
 
@@ -962,7 +1044,7 @@ function showTitle() {
   ovKicker.textContent = 'JOUST';
   ovTitle.textContent = '鸵踢';
   ovLead.textContent = '洞窟里扇翅对撞。从更高处撞上去，对方变蛋，捡蛋才算赢。';
-  ovOps.textContent = '← → 移动 · 空格 / 点按扇翅 · 双人 WASD + F · R 重开 · M 静音';
+  ovOps.textContent = '← → 移动 · 空格 / 点按扇翅 · 双人 WASD + F · A 自动 · R 重开 · M 静音';
   ovStart.classList.remove('gone');
   ovEnd.classList.add('gone');
   hintEl.textContent = '从上面撞才算赢 · 同高弹开 · 更低你就完蛋 · 蛋要捡';
@@ -1209,6 +1291,264 @@ function drivePlayer(r, left, right, flapHeld, flapEdge) {
   r.flapHeld = flapHeld;
   if (flapEdge) r.flapBuf = FLAP_BUF;
   if (flapHeld && r.flapCd <= 0) r.flapBuf = FLAP_BUF;
+}
+
+function autoClearSteer(r) {
+  r.wantL = false;
+  r.wantR = false;
+  r.flapHeld = false;
+}
+
+function autoFlap(r) {
+  if (r.y < 44) return;
+  r.flapHeld = true;
+  if (r.flapCd <= 0) r.flapBuf = FLAP_BUF;
+}
+
+function autoSteerX(r, x, dead) {
+  var dx = wrapDx(r.x, x);
+  if (dx < -dead) { r.wantL = true; r.wantR = false; }
+  else if (dx > dead) { r.wantR = true; r.wantL = false; }
+  return dx;
+}
+
+function autoEggStill(e) {
+  var i;
+  for (i = 0; i < G.eggs.length; i++) if (G.eggs[i] === e) return true;
+  return false;
+}
+
+function autoThreatNear(r, range) {
+  var i, p, d, best = null, bestD = range;
+  for (i = 0; i < G.foes.length; i++) {
+    p = G.foes[i];
+    if (!p || p.dead || p.inv > 0) continue;
+    d = Math.abs(wrapDx(r.x, p.x));
+    if (d < bestD && Math.abs(r.y - p.y) < 46) { bestD = d; best = p; }
+  }
+  if (G.ptero && !G.ptero.dead && G.ptero.inv <= 0) {
+    d = Math.abs(wrapDx(r.x, G.ptero.x));
+    if (d < bestD && Math.abs(r.y - G.ptero.y) < 52) best = G.ptero;
+  }
+  return best;
+}
+
+function autoPickPrey(r, ally) {
+  var pool = [];
+  var i, p, d, best = null, bestD = 1e9, second = null, secondD = 1e9, home;
+  home = r.team === 1 ? WORLD_W * 0.72 : WORLD_W * 0.28;
+  for (i = 0; i < G.foes.length; i++) {
+    p = G.foes[i];
+    if (p && !p.dead) pool.push(p);
+  }
+  if (G.ptero && !G.ptero.dead) pool.push(G.ptero);
+  for (i = 0; i < pool.length; i++) {
+    p = pool[i];
+    d = Math.abs(wrapDx(r.x, p.x)) + Math.abs(r.y - p.y) * 0.48;
+    if (p.grounded) d -= 28;
+    if (p.y > r.y + 6) d -= 36;
+    if (p.kind === 'ptero') d -= 12;
+    if (isTwo()) d += Math.abs(wrapDx(home, p.x)) * 0.22;
+    if (d < bestD) { second = best; secondD = bestD; best = p; bestD = d; }
+    else if (d < secondD) { second = p; secondD = d; }
+  }
+  if (ally && !ally.dead && best && ally.ai && ally.ai.tgtKind === 'foe' && ally.ai.tgt === best) {
+    return second;
+  }
+  return best;
+}
+
+function autoPickEgg(r) {
+  var i, e, d, best = null, bestD = 1e9;
+  for (i = 0; i < G.eggs.length; i++) {
+    e = G.eggs[i];
+    d = Math.abs(wrapDx(r.x, e.x)) + Math.abs(r.y - e.y) * 0.7;
+    if (e.age > HATCH_T - 2.4) d -= 55;
+    if (d < bestD) { bestD = d; best = e; }
+  }
+  return best;
+}
+
+function autoWantEgg(r, egg, prey) {
+  var ed, pd, threat;
+  if (!egg) return false;
+  ed = Math.abs(wrapDx(r.x, egg.x)) + Math.abs(r.y - egg.y) * 0.55;
+  if (egg.age > HATCH_T - 2.4 && ed < 280) return true;
+  if (ed > 155) return false;
+  threat = autoThreatNear(r, 34);
+  if (threat && threat.y < r.y + 4 && Math.abs(wrapDx(r.x, threat.x)) < 36) return false;
+  if (!prey) return true;
+  pd = Math.abs(wrapDx(r.x, prey.x)) + Math.abs(r.y - prey.y) * 0.45;
+  if (prey.y < r.y - 10 && pd < 56) return false;
+  return ed < 120 || ed + 10 < pd || G.combo >= 2;
+}
+
+function autoPlatX(pi, towardX) {
+  var p = PLATS[pi];
+  if (xOnPlat(pi, towardX)) return clamp(towardX, p.x + 16, p.x + p.w - 16);
+  return platEdgeToward(pi, p.x + p.w * 0.5, towardX);
+}
+
+function thinkAuto(r, ally, dt) {
+  var prey, egg, dx, eps, high, plat, tx, ty, under, threat, locked, dive;
+  autoClearSteer(r);
+  if (!r || r.dead) {
+    if (r) { r.ai.tgt = null; r.ai.tgtKind = ''; r.ai.chase = false; }
+    return;
+  }
+  r.ai.think -= dt;
+  r.ai.flapCd -= dt;
+  r.ai.phase += dt;
+
+  if (r.y < 40) r.flapBuf = 0;
+
+  if (r.inv > 0.5) {
+    plat = 0;
+    tx = r.team === 1 ? PLATS[0].x + PLATS[0].w - 30 : PLATS[0].x + 30;
+    autoSteerX(r, tx, 14);
+    if (r.y > PLATS[0].y - 4) autoFlap(r);
+    return;
+  }
+
+  if (r.y > LAVA_Y - 62) {
+    autoFlap(r);
+    plat = nearestPlatIndex(r.x, Math.min(r.y, LAVA_Y - 80));
+    if (plat >= 0) autoSteerX(r, PLATS[plat].x + PLATS[plat].w * 0.5, 12);
+    return;
+  }
+
+  under = underPlatIndex(r.x, r.y);
+  if (under >= 0 && !r.grounded) {
+    tx = platEdgeToward(under, r.x, r.x < PLATS[under].x + PLATS[under].w * 0.5
+      ? PLATS[under].x - 20
+      : PLATS[under].x + PLATS[under].w + 20);
+    autoSteerX(r, tx, 8);
+    if (r.y > PLATS[under].y + PLATS[under].h + 22) autoFlap(r);
+    return;
+  }
+
+  if (ally && !ally.dead) {
+    dx = wrapDx(r.x, ally.x);
+    if (Math.abs(dx) < 46 && Math.abs(r.y - ally.y) < 38) {
+      if (dx >= 0) { r.wantL = true; r.wantR = false; }
+      else { r.wantR = true; r.wantL = false; }
+      if (lanceY(r) >= lanceY(ally) - 6) autoFlap(r);
+      if (Math.abs(dx) < 30) return;
+    }
+  }
+
+  locked = r.ai.tgt;
+  if (r.ai.tgtKind === 'egg' && !autoEggStill(locked)) locked = null;
+  if (r.ai.tgtKind === 'foe' && (!locked || locked.dead)) locked = null;
+  if (r.ai.think <= 0 || !locked) {
+    r.ai.think = r.ai.chase ? 0.22 : 0.34;
+    egg = autoPickEgg(r);
+    prey = autoPickPrey(r, ally);
+    if (autoWantEgg(r, egg, prey)) {
+      r.ai.tgt = egg;
+      r.ai.tgtKind = 'egg';
+      r.ai.chase = false;
+    } else if (prey) {
+      r.ai.tgt = prey;
+      r.ai.tgtKind = 'foe';
+    } else {
+      r.ai.tgt = null;
+      r.ai.tgtKind = '';
+      r.ai.chase = false;
+    }
+    locked = r.ai.tgt;
+  }
+
+  if (r.ai.tgtKind === 'egg' && locked) {
+    tx = locked.x;
+    ty = locked.y - 6;
+    autoSteerX(r, tx, 12);
+    if (r.y > ty + 8 || (r.grounded && Math.abs(wrapDx(r.x, tx)) > 18)) autoFlap(r);
+    if (r.y < ty - 16 && r.vy < -30) r.flapHeld = false;
+    return;
+  }
+
+  prey = r.ai.tgtKind === 'foe' ? locked : null;
+  if (!prey) {
+    plat = 0;
+    tx = r.team === 1 ? PLATS[0].x + PLATS[0].w - 30 : PLATS[0].x + 30;
+    autoSteerX(r, tx, 16);
+    if (!r.grounded || r.plat !== 0) {
+      if (r.y > PLATS[0].y - 4) autoFlap(r);
+    }
+    r.ai.chase = false;
+    return;
+  }
+
+  eps = prey.kind === 'ptero' ? PTERO_EPS + 3 : LANCE_EPS + 4;
+  dx = wrapDx(r.x, prey.x + prey.vx * 0.2);
+  high = lanceY(r) < lanceY(prey) - eps;
+  dive = high && Math.abs(dx) < 96;
+  threat = !high && Math.abs(dx) < 48 && prey.y < r.y + 10 && Math.abs(r.y - prey.y) < 44;
+
+  if (threat) {
+    r.ai.chase = false;
+    autoFlap(r);
+    if (Math.abs(dx) < 30) {
+      if (dx > 0) r.wantL = true;
+      else r.wantR = true;
+    } else {
+      plat = higherPlatIndex(prey.x, prey.y);
+      if (plat >= 0) autoSteerX(r, autoPlatX(plat, prey.x), 12);
+    }
+    return;
+  }
+
+  if (dive || high) {
+    r.ai.chase = true;
+    autoSteerX(r, prey.x + prey.vx * 0.14, 11);
+    if (lanceY(r) > lanceY(prey) - eps - 6 || r.vy > 100) autoFlap(r);
+    if (r.grounded && r.plat >= 0 && PLATS[r.plat].y < prey.y - 6) {
+      if (Math.abs(dx) > 14 && xOnPlat(r.plat, r.x + (dx > 0 ? 16 : -16))) {
+        autoClearSteer(r);
+        autoSteerX(r, prey.x, 9);
+        r.flapHeld = false;
+      } else {
+        autoFlap(r);
+        autoSteerX(r, prey.x, 10);
+      }
+    }
+    return;
+  }
+
+  r.ai.chase = false;
+  plat = higherPlatIndex(prey.x, prey.y, r.x);
+
+  if (r.grounded && r.plat >= 0) {
+    if (PLATS[r.plat].y < prey.y - 8) {
+      if (xOnPlat(r.plat, prey.x) || Math.abs(dx) < 30) {
+        autoFlap(r);
+        autoSteerX(r, prey.x, 10);
+        return;
+      }
+      autoSteerX(r, platEdgeToward(r.plat, r.x, prey.x), 8);
+      return;
+    }
+    autoFlap(r);
+    autoSteerX(r, prey.x, 12);
+    return;
+  }
+
+  if (prey.grounded && plat >= 0 && Math.abs(dx) > 70 && r.y > PLATS[plat].y + 4) {
+    tx = autoPlatX(plat, prey.x);
+    ty = PLATS[plat].y - 12;
+    autoSteerX(r, tx, 12);
+    if (r.y > ty + 6) autoFlap(r);
+    if (r.y < ty - 18 && Math.abs(wrapDx(r.x, tx)) < 26) r.flapHeld = false;
+    return;
+  }
+
+  tx = prey.x + prey.vx * 0.16;
+  ty = prey.y - 36;
+  if (ty < 34) ty = 34;
+  autoSteerX(r, tx, 12);
+  if (r.y > ty + 4 || r.grounded) autoFlap(r);
+  if (r.y < 36) r.flapHeld = false;
 }
 
 function dropEgg(x, y, vx, vy, from) {
@@ -1616,16 +1956,18 @@ function tick(dt) {
 
   playSfx = G.mode === 'play';
 
-  p1L = keys.l || ptr.l;
-  p1R = keys.r || ptr.r;
-  p1H = keys.flapHeld;
-  p1E = keys.flap;
-  p2L = keys.l2;
-  p2R = keys.r2;
-  p2H = keys.flapHeld2;
-  p2E = keys.flap2;
-
-  if (G.mode === 'play') {
+  if (G.mode === 'play' && autoOn) {
+    thinkAuto(G.p1, isTwo() ? G.p2 : null, dt);
+    if (isTwo()) thinkAuto(G.p2, G.p1, dt);
+  } else if (G.mode === 'play') {
+    p1L = keys.l || ptr.l;
+    p1R = keys.r || ptr.r;
+    p1H = keys.flapHeld;
+    p1E = keys.flap;
+    p2L = keys.l2;
+    p2R = keys.r2;
+    p2H = keys.flapHeld2;
+    p2E = keys.flap2;
     if (G.p1 && !G.p1.dead) drivePlayer(G.p1, p1L, p1R, p1H, p1E);
     if (isTwo() && G.p2 && !G.p2.dead) drivePlayer(G.p2, p2L, p2R, p2H, p2E);
   }
@@ -2110,20 +2452,29 @@ function draw() {
   drawFlash();
 }
 
+function autoScale() {
+  if (!autoOn || G.mode !== 'play') return 1;
+  return AUTO_SCALE[autoSpeed] || 1;
+}
+
 function frame(ts) {
-  var dt, steps;
+  var dt, steps, turbo, scale, maxSteps;
   if (!lastTs) lastTs = ts;
   dt = (ts - lastTs) / 1000;
   lastTs = ts;
   if (dt > 0.08) dt = 0.08;
   if (!hidden) {
-    if (G.stop > 0) {
+    turbo = autoOn && autoSpeed >= 4 && G.mode === 'play';
+    if (G.stop > 0 && !turbo) {
       G.stop -= dt;
       tickFx(dt);
     } else {
-      acc += dt;
+      if (turbo) G.stop = 0;
+      scale = autoScale();
+      acc += dt * scale;
       steps = 0;
-      while (acc >= STEP && steps < 5) {
+      maxSteps = turbo ? 16 : 5;
+      while (acc >= STEP && steps < maxSteps) {
         tick(STEP);
         acc -= STEP;
         steps++;
@@ -2135,10 +2486,68 @@ function frame(ts) {
   requestAnimationFrame(frame);
 }
 
+function clearPlayerMotion() {
+  keys.l = false;
+  keys.r = false;
+  keys.flap = false;
+  keys.flapHeld = false;
+  keys.l2 = false;
+  keys.r2 = false;
+  keys.flap2 = false;
+  keys.flapHeld2 = false;
+  ptr.down = false;
+  ptr.id = null;
+  ptr.l = false;
+  ptr.r = false;
+  btnLeft.classList.remove('held');
+  btnRight.classList.remove('held');
+  btnFlap.classList.remove('held');
+}
+
+function syncAutoUi() {
+  btnAuto.classList.toggle('on', autoOn);
+  btnAuto.setAttribute('aria-pressed', autoOn ? 'true' : 'false');
+  btnAuto.textContent = autoOn ? '停下' : '自动';
+  btnAuto.setAttribute('aria-label', autoOn ? '停止自动' : '自动');
+}
+
+function syncSpeedUi() {
+  speedEl.value = String(autoSpeed);
+  speedLab.textContent = SPEED_LABELS[autoSpeed];
+  speedEl.title = SPEED_LABELS[autoSpeed];
+  speedEl.setAttribute('aria-valuetext', SPEED_LABELS[autoSpeed]);
+}
+
+function toggleAuto() {
+  autoOn = !autoOn;
+  syncAutoUi();
+  if (autoOn) {
+    audio.ensure();
+    clearPlayerMotion();
+    if (G.mode === 'title') startRun('classic');
+    else if (G.mode === 'play') hudPlay();
+  } else if (G.mode === 'play') {
+    hudPlay();
+  }
+}
+
+function setAutoSpeed(n) {
+  if (n < 1 || n > 4 || !isFinite(n)) n = 3;
+  autoSpeed = n;
+  saveAutoSpeed(autoSpeed);
+  syncSpeedUi();
+  if (autoOn && G.mode === 'play') hudPlay();
+}
+
+function isAutoKey(e) {
+  return e.code === 'KeyA' || e.key === 'a' || e.key === 'A';
+}
+
 /* ---- input ---- */
 function bindPad(el, setter, edge) {
   function down(ev) {
     ev.preventDefault();
+    if (autoOn) return;
     setter(true);
     if (edge) edge();
     el.classList.add('held');
@@ -2181,6 +2590,7 @@ canvas.addEventListener('pointerdown', function (ev) {
   audio.ensure();
   canvas.focus({ preventScroll: true });
   if (G.mode !== 'play') return;
+  if (autoOn) return;
   if (ev.button != null && ev.button !== 0) return;
   ev.preventDefault();
   w = worldFromPtr(ev);
@@ -2215,10 +2625,6 @@ function keyOn(e, down) {
   } else if (k === 'Space') {
     if (down && !e.repeat && G.mode === 'play') keys.flap = true;
     e.preventDefault();
-  } else if (k === 'KeyA') {
-    if (two) keys.l2 = down;
-    else keys.l = down;
-    e.preventDefault();
   } else if (k === 'KeyD') {
     if (two) keys.r2 = down;
     else keys.r = down;
@@ -2241,7 +2647,19 @@ function keyOn(e, down) {
 }
 
 window.addEventListener('keydown', function (e) {
+  if (isAutoKey(e)) {
+    if (e.repeat) return;
+    audio.ensure();
+    toggleAuto();
+    e.preventDefault();
+    return;
+  }
+  if (e.target === speedEl) return;
   if (e.repeat) {
+    if (autoOn) {
+      e.preventDefault();
+      return;
+    }
     keyOn(e, true);
     return;
   }
@@ -2280,15 +2698,35 @@ window.addEventListener('keydown', function (e) {
       return;
     }
   }
+  if (autoOn) {
+    if (
+      e.code === 'ArrowLeft' || e.code === 'ArrowRight' || e.code === 'ArrowUp' ||
+      e.code === 'ArrowDown' || e.code === 'Space' || e.code === 'KeyD' ||
+      e.code === 'KeyS' || e.code === 'KeyW' || e.code === 'KeyF'
+    ) {
+      e.preventDefault();
+    }
+    return;
+  }
   keyOn(e, true);
 });
 
-window.addEventListener('keyup', function (e) { keyOn(e, false); });
+window.addEventListener('keyup', function (e) {
+  if (isAutoKey(e)) {
+    e.preventDefault();
+    return;
+  }
+  if (autoOn) return;
+  keyOn(e, false);
+});
 
 btnMute.addEventListener('click', function () {
   audio.ensure();
   audio.setMuted(!audio.muted);
 });
+btnAuto.addEventListener('click', function () { toggleAuto(); });
+speedEl.addEventListener('input', function () { setAutoSpeed(parseInt(speedEl.value, 10)); });
+speedEl.addEventListener('change', function () { setAutoSpeed(parseInt(speedEl.value, 10)); });
 btnRetry.addEventListener('click', function () {
   audio.ensure();
   retry();
@@ -2325,6 +2763,8 @@ document.addEventListener('visibilitychange', function () {
 });
 
 bestEl.textContent = String(G.best);
+syncSpeedUi();
+syncAutoUi();
 showTitle();
 resize();
 hudPlay();
