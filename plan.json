@@ -3495,7 +3495,7 @@
     "blurb": "斜向俯冲，把油罐和炮台炸掉。",
     "hue": 210,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/zaxxon/",
     "kind": "remake"
   },
@@ -3507,7 +3507,7 @@
     "blurb": "四向砍怪，把走廊清干净。",
     "hue": 28,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/gauntlet/",
     "kind": "remake"
   },
@@ -3545,6 +3545,30 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/power-drift/",
+    "kind": "remake"
+  },
+  {
+    "n": 305,
+    "id": "aleste",
+    "title": "阿莱",
+    "subtitle": "ALST",
+    "blurb": "纵版扫射，把机甲编队打穿。",
+    "hue": 158,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/aleste/",
+    "kind": "remake"
+  },
+  {
+    "n": 306,
+    "id": "cotton",
+    "title": "魔棉",
+    "subtitle": "COTT",
+    "blurb": "骑扫帚扫射，把魔弹打散。",
+    "hue": 328,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/cotton/",
     "kind": "remake"
   }
 ]

@@ -3356,5 +3356,29 @@
     "dir": "g/salamander2/",
     "url": "./g/salamander2/",
     "kind": "remake"
+  },
+  {
+    "n": 300,
+    "id": "zaxxon",
+    "title": "扎克",
+    "subtitle": "ZAXX",
+    "blurb": "斜向俯冲，把油罐和炮台炸掉。",
+    "hue": 210,
+    "tag": "复刻",
+    "dir": "g/zaxxon/",
+    "url": "./g/zaxxon/",
+    "kind": "remake"
+  },
+  {
+    "n": 301,
+    "id": "gauntlet",
+    "title": "地牢",
+    "subtitle": "GAUN",
+    "blurb": "四向砍怪，把走廊清干净。",
+    "hue": 28,
+    "tag": "复刻",
+    "dir": "g/gauntlet/",
+    "url": "./g/gauntlet/",
+    "kind": "remake"
   }
 ]
