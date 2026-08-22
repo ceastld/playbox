@@ -3375,7 +3375,7 @@
     "blurb": "双人机枪扫射，把Boss装甲打穿。",
     "hue": 38,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/gunstar/",
     "kind": "remake"
   },
@@ -3425,6 +3425,18 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/viewtiful/",
+    "kind": "remake"
+  },
+  {
+    "n": 295,
+    "id": "space-harrier",
+    "title": "幻域",
+    "subtitle": "HARR",
+    "blurb": "冲进画面里扫射，把柱怪打爆。",
+    "hue": 268,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/space-harrier/",
     "kind": "remake"
   }
 ]

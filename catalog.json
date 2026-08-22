@@ -3236,5 +3236,17 @@
     "dir": "g/rolling-thunder/",
     "url": "./g/rolling-thunder/",
     "kind": "remake"
+  },
+  {
+    "n": 290,
+    "id": "gunstar",
+    "title": "枪星",
+    "subtitle": "GUNS",
+    "blurb": "双人机枪扫射，把Boss装甲打穿。",
+    "hue": 38,
+    "tag": "复刻",
+    "dir": "g/gunstar/",
+    "url": "./g/gunstar/",
+    "kind": "remake"
   }
 ]
