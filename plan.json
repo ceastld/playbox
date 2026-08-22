@@ -3447,7 +3447,7 @@
     "blurb": "机枪扫射，把前线碉堡打穿。",
     "hue": 140,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/super-contra/",
     "kind": "remake"
   },
@@ -3459,7 +3459,7 @@
     "blurb": "油门追车，把目标撞停。",
     "hue": 12,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/chase-hq/",
     "kind": "remake"
   },
@@ -3485,6 +3485,30 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/salamander2/",
+    "kind": "remake"
+  },
+  {
+    "n": 300,
+    "id": "zaxxon",
+    "title": "扎克",
+    "subtitle": "ZAXX",
+    "blurb": "斜向俯冲，把油罐和炮台炸掉。",
+    "hue": 210,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/zaxxon/",
+    "kind": "remake"
+  },
+  {
+    "n": 301,
+    "id": "gauntlet",
+    "title": "地牢",
+    "subtitle": "GAUN",
+    "blurb": "四向砍怪，把走廊清干净。",
+    "hue": 28,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/gauntlet/",
     "kind": "remake"
   }
 ]

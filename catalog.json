@@ -3296,5 +3296,29 @@
     "dir": "g/viewtiful/",
     "url": "./g/viewtiful/",
     "kind": "remake"
+  },
+  {
+    "n": 296,
+    "id": "super-contra",
+    "title": "超魂",
+    "subtitle": "SCTR",
+    "blurb": "机枪扫射，把前线碉堡打穿。",
+    "hue": 140,
+    "tag": "复刻",
+    "dir": "g/super-contra/",
+    "url": "./g/super-contra/",
+    "kind": "remake"
+  },
+  {
+    "n": 297,
+    "id": "chase-hq",
+    "title": "追缉",
+    "subtitle": "CHASE",
+    "blurb": "油门追车，把目标撞停。",
+    "hue": 12,
+    "tag": "复刻",
+    "dir": "g/chase-hq/",
+    "url": "./g/chase-hq/",
+    "kind": "remake"
   }
 ]
