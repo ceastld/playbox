@@ -1683,7 +1683,7 @@
     "blurb": "踩面包层叠下去，别被厨师追上。",
     "hue": 24,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/burger-stack/",
     "kind": "remake"
   },
@@ -1707,7 +1707,7 @@
     "blurb": "骑车扔报纸，砸窗户扣分。",
     "hue": 88,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/paper-toss/",
     "kind": "remake"
   },
@@ -1719,7 +1719,7 @@
     "blurb": "迷宫里砍怪捡宝物，别把命耗光。",
     "hue": 14,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/gaunt-hall/",
     "kind": "remake"
   },
@@ -1745,6 +1745,42 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/out-run/",
+    "kind": "remake"
+  },
+  {
+    "n": 155,
+    "id": "sky-1942",
+    "title": "战机",
+    "subtitle": "1942",
+    "blurb": "纵向卷轴打飞机，打完大编队。",
+    "hue": 200,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/sky-1942/",
+    "kind": "remake"
+  },
+  {
+    "n": 156,
+    "id": "xenon-run",
+    "title": "异星",
+    "subtitle": "XENON",
+    "blurb": "双形态战机，陆地空中都能打。",
+    "hue": 276,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/xenon-run/",
+    "kind": "remake"
+  },
+  {
+    "n": 157,
+    "id": "crystal-run",
+    "title": "水晶",
+    "subtitle": "CASTLE",
+    "blurb": "迷宫里捡宝石，别被怪物追上。",
+    "hue": 168,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/crystal-run/",
     "kind": "remake"
   }
 ]

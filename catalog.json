@@ -1556,5 +1556,41 @@
     "dir": "g/lift-gun/",
     "url": "./g/lift-gun/",
     "kind": "remake"
+  },
+  {
+    "n": 149,
+    "id": "burger-stack",
+    "title": "汉堡",
+    "subtitle": "BURGER",
+    "blurb": "踩面包层叠下去，别被厨师追上。",
+    "hue": 24,
+    "tag": "复刻",
+    "dir": "g/burger-stack/",
+    "url": "./g/burger-stack/",
+    "kind": "remake"
+  },
+  {
+    "n": 151,
+    "id": "paper-toss",
+    "title": "报童",
+    "subtitle": "PAPER",
+    "blurb": "骑车扔报纸，砸窗户扣分。",
+    "hue": 88,
+    "tag": "复刻",
+    "dir": "g/paper-toss/",
+    "url": "./g/paper-toss/",
+    "kind": "remake"
+  },
+  {
+    "n": 152,
+    "id": "gaunt-hall",
+    "title": "魔宫",
+    "subtitle": "GAUNT",
+    "blurb": "迷宫里砍怪捡宝物，别把命耗光。",
+    "hue": 14,
+    "tag": "复刻",
+    "dir": "g/gaunt-hall/",
+    "url": "./g/gaunt-hall/",
+    "kind": "remake"
   }
 ]

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#05080c" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>报童 · PAPER</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2305080c'/%3E%3Cpath d='M4 22 L16 10 L28 22' fill='none' stroke='%238cff2e' stroke-width='1.4'/%3E%3Crect x='20' y='8' width='8' height='7' rx='.6' fill='%2300f0ff'/%3E%3Crect x='22' y='10' width='4' height='3' fill='%23ffe36b'/%3E%3Ccircle cx='10' cy='22' r='2.2' fill='%23ff3db8'/%3E%3Ccircle cx='16' cy='22' r='2.2' fill='%23ff3db8'/%3E%3Cpath d='M10 22 L16 16 L16 22' stroke='%23c8ff6a' stroke-width='1.3' fill='none'/%3E%3Crect x='6' y='12' width='4' height='3' rx='.4' fill='%23f6f3ff'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>报童</b>
+        <span>PAPER</span>
+      </div>
+      <div class="status">
+        <div class="scores" aria-live="polite">
+          <div class="score" id="score-box">
+            <em>分数</em>
+            <b id="score">0</b>
+            <span id="score-add" class="score-add" hidden>+0</span>
+          </div>
+          <div class="score best">
+            <em>最高</em>
+            <b id="best">0</b>
+          </div>
+          <div class="score combo" id="combo-box">
+            <em>连投</em>
+            <b id="combo">×1</b>
+          </div>
+        </div>
+        <div class="row">
+          <span id="mode-label">周一</span>
+          <span id="route-label">订 0/0</span>
+          <span id="bag-label">报 24</span>
+          <span id="combo-label" class="combo" hidden>连击</span>
+          <span class="pips" id="pips" aria-label="剩余生命"></span>
+        </div>
+      </div>
+      <div class="tools">
+        <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
+        <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <canvas id="c" tabindex="0" role="application" aria-label="报童，骑车沿街把报纸丢上走廊，躲开障碍"></canvas>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden"></div>
+      <div id="pad" class="pad" aria-hidden="true">
+        <button type="button" id="btn-left" aria-label="向左">左</button>
+        <button type="button" id="btn-throw" aria-label="投报">丢</button>
+        <button type="button" id="btn-right" aria-label="向右">右</button>
+      </div>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">PAPER</p>
+          <h1 id="ov-title">报童</h1>
+          <p class="lead" id="ov-lead">骑车沿街把报纸丢上走廊。砸窗就惨了。</p>
+          <p class="ops" id="ov-ops">← → 转向 · 空格丢报 · 点按丢 · R 重开 · M 静音</p>
+          <div class="ov-actions" id="ov-start">
+            <button type="button" id="btn-mon">周一</button>
+            <button type="button" id="btn-sun">周日</button>
+          </div>
+          <div class="ov-actions gone" id="ov-end">
+            <button type="button" id="ov-retry">再骑</button>
+            <button type="button" id="ov-modes">换日</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">← → 转向 · 空格丢最近一户 · 走廊 / 信箱得分 · 砸窗扣命 · R 重开</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>
