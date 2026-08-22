@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#0b0312" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>黑蛛 · WIDOW</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230b0312'/%3E%3Cpolygon points='16,3 28,10 28,22 16,29 4,22 4,10' fill='none' stroke='%23e070ff' stroke-width='1.2'/%3E%3Cpolygon points='16,8 24,12.5 24,19.5 16,24 8,19.5 8,12.5' fill='none' stroke='%23ff4ad6' stroke-width='0.9' opacity='.7'/%3E%3Cellipse cx='16' cy='17.2' rx='4.2' ry='5' fill='%23ff4ad6'/%3E%3Cellipse cx='16' cy='12.6' rx='2.8' ry='2.4' fill='%23e070ff'/%3E%3Cpath d='M16 15.2l-1.1 2.4 1.1-.7 1.1.7z' fill='%2300f0ff'/%3E%3Ccircle cx='7' cy='9' r='1.4' fill='%2300f0ff'/%3E%3Ccircle cx='25' cy='11' r='1.6' fill='%23ffe36b'/%3E%3Ccircle cx='10' cy='24' r='1.3' fill='%237aff6b'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>黑蛛</b>
+        <span>WIDOW</span>
+      </div>
+      <div class="status">
+        <div class="scores" aria-live="polite">
+          <div class="score" id="score-box">
+            <em>分数</em>
+            <b id="score">0</b>
+            <span id="score-add" class="score-add" hidden>+0</span>
+          </div>
+          <div class="score best">
+            <em>最高</em>
+            <b id="best">0</b>
+          </div>
+          <div class="score combo" id="combo-box">
+            <em>连击</em>
+            <b id="combo">×1</b>
+          </div>
+        </div>
+        <div class="row">
+          <span id="stage-label">蛛网</span>
+          <span id="tag-label">WIDOW</span>
+          <span id="egg-label" class="eggs">卵 —</span>
+          <span class="pips" id="pips" aria-label="剩余性命"></span>
+        </div>
+      </div>
+      <div class="tools">
+        <div class="modes" role="radiogroup" aria-label="模式">
+          <button type="button" id="mode-web" aria-pressed="true">蛛网</button>
+          <button type="button" id="mode-swarm" aria-pressed="false">虫潮</button>
+        </div>
+        <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
+        <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <div class="board-wrap">
+        <canvas id="c" tabindex="0" role="application" aria-label="黑蛛场地，蛛网双摇杆，边走边射，虫子从边弹入，卵可踢出网"></canvas>
+      </div>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden"></div>
+      <div id="chain-pop" class="chain-pop hidden" aria-hidden="true">×2</div>
+      <div id="vpad-l" class="vpad left" aria-label="移动摇杆">
+        <div class="vpad-base"><div class="vpad-knob" id="knob-l"></div></div>
+      </div>
+      <div id="vpad-r" class="vpad right" aria-label="射击摇杆">
+        <div class="vpad-base fire"><div class="vpad-knob" id="knob-r"></div></div>
+      </div>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">WIDOW</p>
+          <h1 id="ov-title">黑蛛</h1>
+          <p class="lead" id="ov-lead">六角蛛网上双摇杆走射。<br />虫子从边弹入，卵要踢出网。碰到虫子掉命。</p>
+          <p class="ops" id="ov-ops">WASD 走 · 方向键或 IJKL 射 · 鼠标瞄准空格 · R 重开 · M 静音</p>
+          <div class="ov-actions" id="ov-start">
+            <button type="button" id="btn-web">蛛网</button>
+            <button type="button" id="btn-swarm">虫潮</button>
+          </div>
+          <div class="ov-actions gone" id="ov-end">
+            <button type="button" id="ov-again">再来</button>
+            <button type="button" id="ov-menu">换模式</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">WASD 走 · 方向键或 IJKL 射 · 踢卵出网 · 清波</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>

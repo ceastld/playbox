@@ -2775,7 +2775,7 @@
     "blurb": "云上对射，先打掉他的机翼。",
     "hue": 4,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/red-baron/",
     "kind": "remake"
   },
@@ -2823,7 +2823,7 @@
     "blurb": "双摇杆在蛛网上扫虫，别被粘住。",
     "hue": 300,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/black-widow/",
     "kind": "remake"
   },
@@ -2861,6 +2861,30 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/blasteroids/",
+    "kind": "remake"
+  },
+  {
+    "n": 248,
+    "id": "vanguard",
+    "title": "先锋",
+    "subtitle": "VANG",
+    "blurb": "四向开火钻隧道，别撞能量墙。",
+    "hue": 28,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/vanguard/",
+    "kind": "remake"
+  },
+  {
+    "n": 249,
+    "id": "astro-blaster",
+    "title": "星炮",
+    "subtitle": "GUN",
+    "blurb": "连射编队，打光燃料就完了。",
+    "hue": 24,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/astro-blaster/",
     "kind": "remake"
   }
 ]
