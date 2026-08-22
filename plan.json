@@ -1839,7 +1839,7 @@
     "blurb": "在轨道上滚珠子，别掉下去。",
     "hue": 158,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/marble-mad/",
     "kind": "remake"
   },
@@ -1875,7 +1875,7 @@
     "blurb": "横版打飞机，力场球能挡能射。",
     "hue": 322,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/r-type-run/",
     "kind": "remake"
   },
@@ -1887,7 +1887,7 @@
     "blurb": "压弯飙车，别摔出去。",
     "hue": 18,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/hang-on/",
     "kind": "remake"
   },
@@ -1913,6 +1913,42 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/shinobi-run/",
+    "kind": "remake"
+  },
+  {
+    "n": 169,
+    "id": "spy-hunt",
+    "title": "追猎",
+    "subtitle": "SPY",
+    "blurb": "公路上车里开火，换武器躲陷阱。",
+    "hue": 130,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/spy-hunt/",
+    "kind": "remake"
+  },
+  {
+    "n": 170,
+    "id": "contra-run",
+    "title": "魂斗",
+    "subtitle": "CONTRA",
+    "blurb": "横版边跑边打，八向开火。",
+    "hue": 8,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/contra-run/",
+    "kind": "remake"
+  },
+  {
+    "n": 171,
+    "id": "wonder-isle",
+    "title": "冒险",
+    "subtitle": "WONDER",
+    "blurb": "跑跳打怪，吃水果变身。",
+    "hue": 42,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/wonder-isle/",
     "kind": "remake"
   }
 ]

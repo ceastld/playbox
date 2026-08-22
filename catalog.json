@@ -1724,5 +1724,41 @@
     "dir": "g/after-burn/",
     "url": "./g/after-burn/",
     "kind": "remake"
+  },
+  {
+    "n": 162,
+    "id": "marble-mad",
+    "title": "弹轨",
+    "subtitle": "MARBLE",
+    "blurb": "在轨道上滚珠子，别掉下去。",
+    "hue": 158,
+    "tag": "复刻",
+    "dir": "g/marble-mad/",
+    "url": "./g/marble-mad/",
+    "kind": "remake"
+  },
+  {
+    "n": 165,
+    "id": "r-type-run",
+    "title": "武装",
+    "subtitle": "RTYPE",
+    "blurb": "横版打飞机，力场球能挡能射。",
+    "hue": 322,
+    "tag": "复刻",
+    "dir": "g/r-type-run/",
+    "url": "./g/r-type-run/",
+    "kind": "remake"
+  },
+  {
+    "n": 166,
+    "id": "hang-on",
+    "title": "摩托",
+    "subtitle": "HANGON",
+    "blurb": "压弯飙车，别摔出去。",
+    "hue": 18,
+    "tag": "复刻",
+    "dir": "g/hang-on/",
+    "url": "./g/hang-on/",
+    "kind": "remake"
   }
 ]
