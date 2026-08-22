@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#05030c" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>水晶 · CASTLE</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2305030c'/%3E%3Cpath d='M16 4l7 4v8l-7 4-7-4V8z' fill='%2300f0c8'/%3E%3Cpath d='M9 8l7 4 7-4-7-4z' fill='%237affd8'/%3E%3Cpath d='M9 8v8l7 4V12z' fill='%230a7a68'/%3E%3Ccircle cx='16' cy='11' r='2.4' fill='%23ffe36b'/%3E%3Ccircle cx='23' cy='22' r='2.6' fill='%23ff3db8'/%3E%3Cpath d='M7 22l2-5 2 5-2 3z' fill='%233dff88'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>水晶</b>
+        <span>CASTLE</span>
+      </div>
+      <div class="status">
+        <div class="scores" aria-live="polite">
+          <div class="score" id="score-box">
+            <em>分数</em>
+            <b id="score">0</b>
+            <span id="score-add" class="score-add" hidden>+0</span>
+          </div>
+          <div class="score best">
+            <em>最高</em>
+            <b id="best">0</b>
+          </div>
+          <div class="score">
+            <em>层</em>
+            <b id="floor">1</b>
+          </div>
+          <div class="score combo" id="combo-box">
+            <em>连击</em>
+            <b id="combo">×1</b>
+          </div>
+        </div>
+        <div class="row">
+          <span id="stage-label">庭院</span>
+          <div class="fill gems" id="gem-wrap" title="水晶">
+            <em>晶</em>
+            <div class="fill-track" aria-hidden="true"><i id="gem-bar"></i></div>
+          </div>
+          <span class="pips" id="pips" aria-label="剩余性命"></span>
+        </div>
+      </div>
+      <div class="tools">
+        <div class="modes" role="radiogroup" aria-label="模式">
+          <button type="button" id="mode-camp" aria-pressed="true">城堡</button>
+          <button type="button" id="mode-end" aria-pressed="false">无尽</button>
+        </div>
+        <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
+        <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <div class="board-wrap">
+        <canvas id="c" tabindex="0" role="application" aria-label="等距城堡迷宫，八向跑动收集水晶，跳起晕开树蜂幽灵"></canvas>
+      </div>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden"></div>
+      <div id="chain-pop" class="chain-pop hidden" aria-hidden="true">×2</div>
+      <div id="pad" class="pad">
+        <button type="button" id="btn-up" aria-label="上">上</button>
+        <button type="button" id="btn-left" aria-label="左">左</button>
+        <button type="button" id="btn-jump" aria-label="跳">跳</button>
+        <button type="button" id="btn-right" aria-label="右">右</button>
+        <button type="button" id="btn-down" aria-label="下">下</button>
+      </div>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">CASTLE</p>
+          <h1 id="ov-title">水晶</h1>
+          <p class="lead" id="ov-lead">等距城堡里收齐水晶。跳起能晕开树、蜂和幽灵。<br />传送门会折路，最后一颗会全员扑过来。</p>
+          <p class="ops" id="ov-ops">WASD / 方向键八向跑 · 空格跳跃 · R 重开 · M 静音</p>
+          <div class="ov-actions" id="ov-start">
+            <button type="button" id="btn-campaign">城堡</button>
+            <button type="button" id="btn-endless">无尽</button>
+          </div>
+          <div class="ov-actions gone" id="ov-end">
+            <button type="button" id="ov-again">再来</button>
+            <button type="button" id="ov-menu">换模式</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">收齐水晶 · 跳起晕怪 · 最后一颗会围攻</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>

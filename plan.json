@@ -1779,7 +1779,7 @@
     "blurb": "迷宫里捡宝石，别被怪物追上。",
     "hue": 168,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/crystal-run/",
     "kind": "remake"
   },
@@ -1791,7 +1791,7 @@
     "blurb": "连打冲刺，时机跳远投掷。",
     "hue": 8,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/track-dash/",
     "kind": "remake"
   },
@@ -1803,7 +1803,7 @@
     "blurb": "斜视角飞过要塞，高度要对。",
     "hue": 48,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/zax-iso/",
     "kind": "remake"
   },
@@ -1829,6 +1829,42 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/space-rush/",
+    "kind": "remake"
+  },
+  {
+    "n": 162,
+    "id": "marble-mad",
+    "title": "弹轨",
+    "subtitle": "MARBLE",
+    "blurb": "在轨道上滚珠子，别掉下去。",
+    "hue": 158,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/marble-mad/",
+    "kind": "remake"
+  },
+  {
+    "n": 163,
+    "id": "ikari-run",
+    "title": "怒火",
+    "subtitle": "IKARI",
+    "blurb": "丛林里边走边打，坦克也能开。",
+    "hue": 12,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/ikari-run/",
+    "kind": "remake"
+  },
+  {
+    "n": 164,
+    "id": "after-burn",
+    "title": "超音",
+    "subtitle": "BURNER",
+    "blurb": "3D空战锁敌开火，别被导弹咬。",
+    "hue": 210,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/after-burn/",
     "kind": "remake"
   }
 ]

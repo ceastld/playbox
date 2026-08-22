@@ -1640,5 +1640,41 @@
     "dir": "g/sky-1942/",
     "url": "./g/sky-1942/",
     "kind": "remake"
+  },
+  {
+    "n": 157,
+    "id": "crystal-run",
+    "title": "水晶",
+    "subtitle": "CASTLE",
+    "blurb": "迷宫里捡宝石，别被怪物追上。",
+    "hue": 168,
+    "tag": "复刻",
+    "dir": "g/crystal-run/",
+    "url": "./g/crystal-run/",
+    "kind": "remake"
+  },
+  {
+    "n": 158,
+    "id": "track-dash",
+    "title": "田赛",
+    "subtitle": "TRACK",
+    "blurb": "连打冲刺，时机跳远投掷。",
+    "hue": 8,
+    "tag": "复刻",
+    "dir": "g/track-dash/",
+    "url": "./g/track-dash/",
+    "kind": "remake"
+  },
+  {
+    "n": 159,
+    "id": "zax-iso",
+    "title": "斜城",
+    "subtitle": "ZAXXON",
+    "blurb": "斜视角飞过要塞，高度要对。",
+    "hue": 48,
+    "tag": "复刻",
+    "dir": "g/zax-iso/",
+    "url": "./g/zax-iso/",
+    "kind": "remake"
   }
 ]
