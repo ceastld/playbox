@@ -34,6 +34,12 @@
         </div>
       </div>
       <div class="tools">
+        <label class="speed" title="速度">
+          <span>速度</span>
+          <input type="range" id="speed" min="1" max="4" step="1" value="3" aria-label="速度" />
+          <em id="speed-lab">快</em>
+        </label>
+        <button type="button" id="btn-auto" title="A" aria-label="自动" aria-pressed="false">自动</button>
         <button type="button" id="btn-mode" title="切换模式并重开" aria-label="模式 经典">经典</button>
         <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
         <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
@@ -53,7 +59,7 @@
           <p class="kicker" id="ov-kicker">GATES</p>
           <h1 id="ov-title">门蛇</h1>
           <p class="lead" id="ov-lead">钻门换边，撞墙仍死。<br>同色霓虹门成对，钻进去从另一扇出来，朝向不变。<br>出口被身子占着就死。</p>
-          <p class="ops" id="ov-ops">方向键 / WASD 或滑动转弯 · R 重开 · M 静音</p>
+          <p class="ops" id="ov-ops">方向键 / W S D 或滑动转弯 · A 自动 · R 重开 · M 静音</p>
           <div class="ov-actions">
             <button type="button" id="ov-classic" title="门钉在原位">经典</button>
             <button type="button" id="ov-chaos" title="每吃五颗，门会换位">乱门</button>
@@ -63,7 +69,7 @@
       </div>
     </div>
 
-    <footer class="hint" id="hint">钻进同色门，从另一扇出来。墙是实心的，不会穿到对侧。</footer>
+    <footer class="hint" id="hint">钻进同色门，从另一扇出来。墙是实心的，不会穿到对侧。A 自动。</footer>
   </div>
   <script src="js/game.js"></script>
 </body>
