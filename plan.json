@@ -2403,7 +2403,7 @@
     "blurb": "一边走一边打，人要护住。",
     "hue": 178,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/robotron/",
     "kind": "remake"
   },
@@ -2453,6 +2453,18 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/juno-first/",
+    "kind": "remake"
+  },
+  {
+    "n": 214,
+    "id": "wizard-wor",
+    "title": "巫廊",
+    "subtitle": "WOR",
+    "blurb": "迷宫里对射，别让怪摸到。",
+    "hue": 276,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/wizard-wor/",
     "kind": "remake"
   }
 ]

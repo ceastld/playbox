@@ -2264,5 +2264,17 @@
     "dir": "g/gyruss/",
     "url": "./g/gyruss/",
     "kind": "remake"
+  },
+  {
+    "n": 209,
+    "id": "robotron",
+    "title": "狂扫",
+    "subtitle": "ROBO",
+    "blurb": "一边走一边打，人要护住。",
+    "hue": 178,
+    "tag": "复刻",
+    "dir": "g/robotron/",
+    "url": "./g/robotron/",
+    "kind": "remake"
   }
 ]
