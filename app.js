@@ -453,11 +453,18 @@
     }
   }
 
+  function hrefOf(g) {
+    if (g.url) return g.url;
+    if (g.dir) return g.dir.startsWith(".") ? g.dir : "./" + g.dir;
+    return "./g/" + g.id + "/";
+  }
+
   function openGame(g) {
     playTitle.textContent = g.title;
     playSub.textContent = g.subtitle || "";
-    openTab.href = g.url;
-    frame.src = g.url;
+    const src = hrefOf(g);
+    openTab.href = src;
+    frame.src = src;
     lobby.classList.add("hidden");
     play.classList.remove("hidden");
     history.replaceState({ play: g.id }, "", "#/" + g.id);

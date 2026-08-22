@@ -484,7 +484,8 @@
     "blurb": "只接一种颜色的雪，别的要躲开。",
     "hue": 210,
     "tag": "接",
-    "dir": "g/snow-catch/"
+    "dir": "g/snow-catch/",
+    "url": "./g/snow-catch/"
   },
   {
     "n": 56,
@@ -494,7 +495,8 @@
     "blurb": "门闪一下，记住哪扇后面有钥。",
     "hue": 280,
     "tag": "记",
-    "dir": "g/door-peek/"
+    "dir": "g/door-peek/",
+    "url": "./g/door-peek/"
   },
   {
     "n": 58,
@@ -504,7 +506,8 @@
     "blurb": "绕线不交叉，绕满一个球。",
     "hue": 330,
     "tag": "绕",
-    "dir": "g/yarn-ball/"
+    "dir": "g/yarn-ball/",
+    "url": "./g/yarn-ball/"
   },
   {
     "n": 54,
@@ -514,7 +517,8 @@
     "blurb": "画一条小路让蚁列走到糖。",
     "hue": 35,
     "tag": "径",
-    "dir": "g/ant-line/"
+    "dir": "g/ant-line/",
+    "url": "./g/ant-line/"
   },
   {
     "n": 57,
@@ -524,7 +528,8 @@
     "blurb": "只踩在扩散的涟漪环上过河。",
     "hue": 188,
     "tag": "波",
-    "dir": "g/ripple-step/"
+    "dir": "g/ripple-step/",
+    "url": "./g/ripple-step/"
   },
   {
     "n": 59,
@@ -534,7 +539,8 @@
     "blurb": "三根引线，剪掉假的那根。",
     "hue": 12,
     "tag": "剪",
-    "dir": "g/fuse-cut/"
+    "dir": "g/fuse-cut/",
+    "url": "./g/fuse-cut/"
   },
   {
     "n": 60,
@@ -544,7 +550,8 @@
     "blurb": "转圆盘对上今夜月相。",
     "hue": 255,
     "tag": "月",
-    "dir": "g/moon-phase/"
+    "dir": "g/moon-phase/",
+    "url": "./g/moon-phase/"
   },
   {
     "n": 61,
@@ -554,7 +561,8 @@
     "blurb": "按住瞄准，松手打水漂到对岸。",
     "hue": 195,
     "tag": "漂",
-    "dir": "g/pebble-skip/"
+    "dir": "g/pebble-skip/",
+    "url": "./g/pebble-skip/"
   },
   {
     "n": 62,
@@ -564,7 +572,8 @@
     "blurb": "灯笼上浮，别让它们撞到一起。",
     "hue": 40,
     "tag": "灯",
-    "dir": "g/lantern-float/"
+    "dir": "g/lantern-float/",
+    "url": "./g/lantern-float/"
   },
   {
     "n": 63,
@@ -574,7 +583,8 @@
     "blurb": "印落下前把图案对齐纸。",
     "hue": 350,
     "tag": "印",
-    "dir": "g/stamp-align/"
+    "dir": "g/stamp-align/",
+    "url": "./g/stamp-align/"
   },
   {
     "n": 64,
@@ -584,7 +594,8 @@
     "blurb": "擦出刚够看见出口的一块。",
     "hue": 170,
     "tag": "雾",
-    "dir": "g/fog-wipe/"
+    "dir": "g/fog-wipe/",
+    "url": "./g/fog-wipe/"
   },
   {
     "n": 65,
@@ -594,7 +605,8 @@
     "blurb": "压弹簧到高度，松手弹到平台。",
     "hue": 140,
     "tag": "弹",
-    "dir": "g/coil-spring/"
+    "dir": "g/coil-spring/",
+    "url": "./g/coil-spring/"
   },
   {
     "n": 66,
@@ -604,7 +616,8 @@
     "blurb": "按重量把鸟分到不同树枝。",
     "hue": 95,
     "tag": "栖",
-    "dir": "g/bird-perch/"
+    "dir": "g/bird-perch/",
+    "url": "./g/bird-perch/"
   },
   {
     "n": 68,
@@ -614,7 +627,8 @@
     "blurb": "按顺序开阀，压力到红就炸。",
     "hue": 8,
     "tag": "汽",
-    "dir": "g/steam-valve/"
+    "dir": "g/steam-valve/",
+    "url": "./g/steam-valve/"
   },
   {
     "n": 67,
@@ -624,7 +638,8 @@
     "blurb": "锁住骰面组成密码。",
     "hue": 16,
     "tag": "骰",
-    "dir": "g/dice-lock/"
+    "dir": "g/dice-lock/",
+    "url": "./g/dice-lock/"
   },
   {
     "n": 69,
@@ -634,7 +649,8 @@
     "blurb": "转木棍让影子扫过刻度。",
     "hue": 42,
     "tag": "影",
-    "dir": "g/shadow-clock/"
+    "dir": "g/shadow-clock/",
+    "url": "./g/shadow-clock/"
   },
   {
     "n": 70,
@@ -644,7 +660,8 @@
     "blurb": "撒屑让鸟走出迷宫。",
     "hue": 25,
     "tag": "屑",
-    "dir": "g/crumb-trail/"
+    "dir": "g/crumb-trail/",
+    "url": "./g/crumb-trail/"
   },
   {
     "n": 71,
@@ -654,7 +671,8 @@
     "blurb": "在冰块裂开前凿出通路。",
     "hue": 190,
     "tag": "凿",
-    "dir": "g/ice-carve/"
+    "dir": "g/ice-carve/",
+    "url": "./g/ice-carve/"
   },
   {
     "n": 72,
@@ -664,7 +682,8 @@
     "blurb": "把蛾从火焰旁引到安全灯。",
     "hue": 50,
     "tag": "蛾",
-    "dir": "g/moth-lamp/"
+    "dir": "g/moth-lamp/",
+    "url": "./g/moth-lamp/"
   },
   {
     "n": 73,
@@ -674,7 +693,8 @@
     "blurb": "两边配重，让两边同时落地。",
     "hue": 215,
     "tag": "轮",
-    "dir": "g/pulley-two/"
+    "dir": "g/pulley-two/",
+    "url": "./g/pulley-two/"
   },
   {
     "n": 76,
@@ -684,7 +704,8 @@
     "blurb": "放线收线，让风筝停在窗口。",
     "hue": 200,
     "tag": "鸢",
-    "dir": "g/kite-line/"
+    "dir": "g/kite-line/",
+    "url": "./g/kite-line/"
   },
   {
     "n": 77,
@@ -694,7 +715,8 @@
     "blurb": "倾斜木板让珠子掉进洞。",
     "hue": 265,
     "tag": "珠",
-    "dir": "g/bead-drop/"
+    "dir": "g/bead-drop/",
+    "url": "./g/bead-drop/"
   },
   {
     "n": 78,
@@ -704,7 +726,8 @@
     "blurb": "把房间回声的节奏拍回去。",
     "hue": 320,
     "tag": "拍",
-    "dir": "g/echo-clap/"
+    "dir": "g/echo-clap/",
+    "url": "./g/echo-clap/"
   },
   {
     "n": 74,
@@ -714,7 +737,8 @@
     "blurb": "倒到水位线，洒出来重来。",
     "hue": 10,
     "tag": "斟",
-    "dir": "g/tea-pour/"
+    "dir": "g/tea-pour/",
+    "url": "./g/tea-pour/"
   },
   {
     "n": 75,
@@ -724,7 +748,8 @@
     "blurb": "滑动梳齿解开缠线。",
     "hue": 300,
     "tag": "梳",
-    "dir": "g/comb-teeth/"
+    "dir": "g/comb-teeth/",
+    "url": "./g/comb-teeth/"
   },
   {
     "n": 80,
@@ -734,7 +759,8 @@
     "blurb": "针落进移动的碗。",
     "hue": 160,
     "tag": "投",
-    "dir": "g/pin-bowl/"
+    "dir": "g/pin-bowl/",
+    "url": "./g/pin-bowl/"
   },
   {
     "n": 81,
@@ -744,6 +770,7 @@
     "blurb": "按顺序揭纱，撕了就输。",
     "hue": 310,
     "tag": "纱",
-    "dir": "g/veil-lift/"
+    "dir": "g/veil-lift/",
+    "url": "./g/veil-lift/"
   }
 ]
