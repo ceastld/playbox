@@ -2312,5 +2312,17 @@
     "dir": "g/juno-first/",
     "url": "./g/juno-first/",
     "kind": "remake"
+  },
+  {
+    "n": 210,
+    "id": "mappy",
+    "title": "米皮",
+    "subtitle": "MAPPY",
+    "blurb": "蹦床上楼，门一关夹住猫。",
+    "hue": 12,
+    "tag": "复刻",
+    "dir": "g/mappy/",
+    "url": "./g/mappy/",
+    "kind": "remake"
   }
 ]

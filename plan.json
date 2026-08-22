@@ -2415,7 +2415,7 @@
     "blurb": "蹦床上楼，门一关夹住猫。",
     "hue": 12,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/mappy/",
     "kind": "remake"
   },
@@ -2501,6 +2501,18 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/congo-bongo/",
+    "kind": "remake"
+  },
+  {
+    "n": 218,
+    "id": "gorf",
+    "title": "戈夫",
+    "subtitle": "GORF",
+    "blurb": "五关连打，飞船一路往上冲。",
+    "hue": 262,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/gorf/",
     "kind": "remake"
   }
 ]
