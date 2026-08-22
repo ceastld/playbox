@@ -2091,7 +2091,7 @@
     "blurb": "吐泡困住，再顶破。",
     "hue": 48,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/bubble-twin/",
     "kind": "remake"
   },
@@ -2141,6 +2141,18 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/street-fist/",
+    "kind": "remake"
+  },
+  {
+    "n": 188,
+    "id": "xevi-run",
+    "title": "空袭",
+    "subtitle": "XEVI",
+    "blurb": "天上打、地上轰。",
+    "hue": 84,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/xevi-run/",
     "kind": "remake"
   }
 ]

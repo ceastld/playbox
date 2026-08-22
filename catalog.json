@@ -1952,5 +1952,17 @@
     "dir": "g/kung-leap/",
     "url": "./g/kung-leap/",
     "kind": "remake"
+  },
+  {
+    "n": 183,
+    "id": "bubble-twin",
+    "title": "泡龙",
+    "subtitle": "BUB",
+    "blurb": "吐泡困住，再顶破。",
+    "hue": 48,
+    "tag": "复刻",
+    "dir": "g/bubble-twin/",
+    "url": "./g/bubble-twin/",
+    "kind": "remake"
   }
 ]
