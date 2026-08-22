@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#030a06" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>河袭 · RIVER</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23030a06'/%3E%3Crect x='0' y='0' width='9' height='32' fill='%23071a10'/%3E%3Crect x='23' y='0' width='9' height='32' fill='%23071a10'/%3E%3Crect x='9' y='0' width='14' height='32' fill='%23073a38'/%3E%3Crect x='8.2' y='0' width='1.4' height='32' fill='%232eff88'/%3E%3Crect x='22.4' y='0' width='1.4' height='32' fill='%232eff88'/%3E%3Crect x='11' y='4' width='10' height='2.4' rx='.4' fill='%23ff3db8'/%3E%3Crect x='13' y='16' width='6' height='3' rx='.6' fill='%23ffe36b'/%3E%3Cpath d='M16 22l3 6h-2l-1 2-1-2h-2z' fill='%2300f0ff'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>河袭</b>
+        <span>RIVER</span>
+      </div>
+      <div class="status">
+        <div class="scores" aria-live="polite">
+          <div class="score" id="score-box">
+            <em>分数</em>
+            <b id="score">0</b>
+            <span id="score-add" class="score-add" hidden>+0</span>
+          </div>
+          <div class="score best">
+            <em>最高</em>
+            <b id="best">0</b>
+          </div>
+        </div>
+        <div class="row">
+          <span id="stage-label">第 1 段</span>
+          <span id="tag-label">经典</span>
+          <div class="fill fuel" id="fuel-wrap" title="燃油">
+            <em>油</em>
+            <div class="fill-track" aria-hidden="true"><i id="fuel-bar"></i></div>
+          </div>
+          <span id="combo-label" class="combo" hidden>连击</span>
+          <span class="pips" id="pips" aria-label="剩余生命"></span>
+        </div>
+      </div>
+      <div class="tools">
+        <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
+        <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <canvas id="c" tabindex="0" role="application" aria-label="河袭游戏区，沿河道向上飞，开火打船直升机油罐和桥"></canvas>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden"></div>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">RIVER</p>
+          <h1 id="ov-title">河袭</h1>
+          <p class="lead" id="ov-lead">沿河道飞，打船打桥，别撞岸。油尽也会坠。</p>
+          <p class="ops" id="ov-ops">← → 转向 · ↑ 加速 ↓ 减速 · 空格开火 · R 重开 · M 静音</p>
+          <div class="ov-actions">
+            <button type="button" id="btn-classic">经典</button>
+            <button type="button" id="btn-rapids">急流</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">← → 转向 · ↑ 加速 · 空格开火 · 飞过油罐或打掉都能补油</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>

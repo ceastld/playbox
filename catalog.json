@@ -1472,5 +1472,41 @@
     "dir": "g/ice-peak/",
     "url": "./g/ice-peak/",
     "kind": "remake"
+  },
+  {
+    "n": 143,
+    "id": "river-raid",
+    "title": "河袭",
+    "subtitle": "RIVER",
+    "blurb": "沿河道飞，打船打桥，别撞岸。",
+    "hue": 142,
+    "tag": "复刻",
+    "dir": "g/river-raid/",
+    "url": "./g/river-raid/",
+    "kind": "remake"
+  },
+  {
+    "n": 144,
+    "id": "tapper-pour",
+    "title": "酒保",
+    "subtitle": "TAP",
+    "blurb": "倒酒滑过去，空杯滑回来接住。",
+    "hue": 12,
+    "tag": "复刻",
+    "dir": "g/tapper-pour/",
+    "url": "./g/tapper-pour/",
+    "kind": "remake"
+  },
+  {
+    "n": 145,
+    "id": "scram-run",
+    "title": "地平",
+    "subtitle": "SCRAM",
+    "blurb": "贴地飞，炸炮打油，别撞山。",
+    "hue": 18,
+    "tag": "复刻",
+    "dir": "g/scram-run/",
+    "url": "./g/scram-run/",
+    "kind": "remake"
   }
 ]

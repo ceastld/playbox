@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#05030c" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>酒保 · TAP</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2305030c'/%3E%3Cpath d='M4 8h24M4 14h24M4 20h24M4 26h24' stroke='%23ff6a22' stroke-width='1.6' stroke-linecap='round'/%3E%3Crect x='24' y='6' width='3.2' height='5' rx='.6' fill='%2300f0ff'/%3E%3Crect x='24' y='12' width='3.2' height='5' rx='.6' fill='%2300f0ff'/%3E%3Crect x='24' y='18' width='3.2' height='5' rx='.6' fill='%2300f0ff'/%3E%3Crect x='24' y='24' width='3.2' height='5' rx='.6' fill='%2300f0ff'/%3E%3Cpath d='M18 13h4v4h-4z' fill='%23ffe36b'/%3E%3Cpath d='M7 19h3.4v3.2H7z' fill='%23ff3db8'/%3E%3Cpath d='M12 8.2h3.2v2.6H12z' fill='%2300f0ff'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>酒保</b>
+        <span>TAP</span>
+      </div>
+      <div class="status">
+        <div class="scores" aria-live="polite">
+          <div class="score" id="score-box">
+            <em>分数</em>
+            <b id="score">0</b>
+            <span id="score-add" class="score-add" hidden>+0</span>
+          </div>
+          <div class="score">
+            <em>巡</em>
+            <b id="round">1</b>
+          </div>
+          <div class="score best">
+            <em>最高</em>
+            <b id="best">0</b>
+          </div>
+          <div class="score combo" id="combo-box">
+            <em>连击</em>
+            <b id="combo">×0</b>
+          </div>
+        </div>
+        <div class="row">
+          <span id="mode-label">经典</span>
+          <span id="wave-label">开台</span>
+          <span class="pips" id="pips" aria-label="剩余性命"></span>
+        </div>
+      </div>
+      <div class="tools">
+        <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
+        <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <canvas id="c" tabindex="0" role="application" aria-label="酒保，四条吧台斟酒接空杯"></canvas>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden"></div>
+      <div id="pad" class="pad">
+        <button type="button" id="btn-up" aria-label="上台">上</button>
+        <button type="button" id="btn-down" aria-label="下台">下</button>
+        <button type="button" id="btn-left" aria-label="向左">左</button>
+        <button type="button" id="btn-right" aria-label="向右">右</button>
+        <button type="button" id="btn-pour" aria-label="斟酒">斟</button>
+      </div>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">TAP</p>
+          <h1 id="ov-title">酒保</h1>
+          <p class="lead" id="ov-lead">四条吧台，把酒滑给客人。空杯飞回来，接住才算。客人摸到龙头就砸了。</p>
+          <p class="ops" id="ov-ops">方向键或 WASD 换台滑步 · 空格斟酒 · 触屏方向+斟 · R 重开 · M 静音</p>
+          <div class="ov-actions" id="ov-start">
+            <button type="button" id="btn-classic">经典</button>
+            <button type="button" id="btn-party">狂欢</button>
+          </div>
+          <div class="ov-actions gone" id="ov-end">
+            <button type="button" id="ov-retry">再来</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">空格斟酒 · 接住空杯 · 客人别摸到龙头</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>

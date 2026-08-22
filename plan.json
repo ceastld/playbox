@@ -1611,7 +1611,7 @@
     "blurb": "沿河道飞，打船打桥，别撞岸。",
     "hue": 142,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/river-raid/",
     "kind": "remake"
   },
@@ -1623,7 +1623,7 @@
     "blurb": "倒酒滑过去，空杯滑回来接住。",
     "hue": 12,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/tapper-pour/",
     "kind": "remake"
   },
@@ -1635,7 +1635,7 @@
     "blurb": "贴地飞，炸炮打油，别撞山。",
     "hue": 18,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/scram-run/",
     "kind": "remake"
   },
@@ -1661,6 +1661,42 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/time-loop/",
+    "kind": "remake"
+  },
+  {
+    "n": 148,
+    "id": "defend-line",
+    "title": "防线",
+    "subtitle": "DEFEND",
+    "blurb": "横扫地平线，救人打虫。",
+    "hue": 118,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/defend-line/",
+    "kind": "remake"
+  },
+  {
+    "n": 149,
+    "id": "burger-stack",
+    "title": "汉堡",
+    "subtitle": "BURGER",
+    "blurb": "踩面包层叠下去，别被厨师追上。",
+    "hue": 24,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/burger-stack/",
+    "kind": "remake"
+  },
+  {
+    "n": 150,
+    "id": "lift-gun",
+    "title": "电梯",
+    "subtitle": "LIFT",
+    "blurb": "钻电梯打间谍，搜机密。",
+    "hue": 44,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/lift-gun/",
     "kind": "remake"
   }
 ]
