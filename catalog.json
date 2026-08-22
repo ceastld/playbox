@@ -3176,5 +3176,17 @@
     "dir": "g/toki/",
     "url": "./g/toki/",
     "kind": "remake"
+  },
+  {
+    "n": 285,
+    "id": "kiwi",
+    "title": "奇异",
+    "subtitle": "KIWI",
+    "blurb": "弹跳射弹，把伙伴从关卡里救出来。",
+    "hue": 72,
+    "tag": "复刻",
+    "dir": "g/kiwi/",
+    "url": "./g/kiwi/",
+    "kind": "remake"
   }
 ]

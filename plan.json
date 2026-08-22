@@ -3315,7 +3315,7 @@
     "blurb": "弹跳射弹，把伙伴从关卡里救出来。",
     "hue": 72,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/kiwi/",
     "kind": "remake"
   },
@@ -3365,6 +3365,18 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/rolling-thunder/",
+    "kind": "remake"
+  },
+  {
+    "n": 290,
+    "id": "gunstar",
+    "title": "枪星",
+    "subtitle": "GUNS",
+    "blurb": "双人机枪扫射，把Boss装甲打穿。",
+    "hue": 38,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/gunstar/",
     "kind": "remake"
   }
 ]
