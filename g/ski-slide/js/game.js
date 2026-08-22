@@ -22,7 +22,10 @@
   const COMBO_WIN = 1.55;
   const BEST_KEY = 'playbox-ski-slide-best';
   const MUTE_KEY = 'playbox-ski-slide-mute';
-  const OPS = '← → 转向 · ↓ 猫腰 · 拖指 / 倾斜 · R 重开';
+  const AUTO_SPEED_KEY = 'playbox-ski-slide-auto-speed';
+  const SPEED_LABELS = ['', '慢', '中', '快', '极快'];
+  const AUTO_SCALE = [1, 0.45, 0.72, 1, 2.55];
+  const OPS = '← → 转向 · ↓ 猫腰 · 拖指 / 倾斜 · R 重开 · A 自动';
   const REDUCE = typeof window !== 'undefined' && window.matchMedia
     ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
     : false;
@@ -51,6 +54,9 @@
   const ovModes = document.getElementById('ov-modes');
   const btnMute = document.getElementById('btn-mute');
   const btnRetry = document.getElementById('btn-retry');
+  const btnAuto = document.getElementById('btn-auto');
+  const speedEl = document.getElementById('speed');
+  const speedLab = document.getElementById('speed-lab');
   const distEl = document.getElementById('dist');
   const scoreEl = document.getElementById('score');
   const bestEl = document.getElementById('best');
@@ -78,6 +84,9 @@
   let kickTok = 0;
   let comboTok = 0;
   let tiltOn = false;
+  let autoOn = false;
+  let autoSpeed = 3;
+  let autoWant = 0;
 
   const keys = { l: false, r: false, tuck: false, brake: false };
   const pointer = { down: false, x: VW * 0.5, y: SKIER_SY + 80, id: null };
@@ -326,6 +335,18 @@
     } catch (err) { /* ignore */ }
   }
 
+  function loadAutoSpeed() {
+    try {
+      const n = parseInt(localStorage.getItem(AUTO_SPEED_KEY) || '3', 10);
+      if (n >= 1 && n <= 4) return n;
+    } catch (err) { /* ignore */ }
+    return 3;
+  }
+
+  function saveAutoSpeed(n) {
+    try { localStorage.setItem(AUTO_SPEED_KEY, String(n)); } catch (err) { /* ignore */ }
+  }
+
   function toast(msg, warn, gold) {
     if (!toastEl) return;
     toastEl.textContent = msg;
@@ -389,11 +410,12 @@
         gateLabel.textContent = '';
       }
     }
-    if (G.mode === 'title') setHint(OPS);
+    if (autoOn && G.mode === 'play') setHint('自动托管 · A 停下 · 速度可调');
+    else if (G.mode === 'title') setHint(OPS);
     else if (G.mode === 'dead') setHint('R 再滑 · 最远已记下');
     else if (G.yeti) setHint('雪人在追 · 猫腰拉开 · 别撞树');
     else if (isGate()) setHint('穿旗门 · 漏门扣分减速 · ↓ 猫腰');
-    else setHint('← → 转向 · ↓ 猫腰加速 · 擦边连击 · R 重开');
+    else setHint('← → 转向 · ↓ 猫腰加速 · 擦边连击 · R 重开 · A 自动');
   }
 
   function showTitle() {
@@ -582,6 +604,7 @@
     G.skier.sqx = 1;
     G.skier.sqy = 1;
     G.skier._brake = false;
+    autoWant = 0;
     pointer.down = false;
     pointer.id = null;
     G.cam.x = 0;
@@ -885,6 +908,212 @@
     return G.skier.tuck > 0.6 ? 8.2 : 10;
   }
 
+  function nextOpenGate(skip) {
+    let n = skip | 0;
+    for (let i = 0; i < G.gates.length; i++) {
+      const g = G.gates[i];
+      if (g.done) continue;
+      if (g.y < G.skier.y - 6) continue;
+      if (n === 0) return g;
+      n -= 1;
+    }
+    return null;
+  }
+
+  function autoSim(hWant, tuckOn) {
+    const s = G.skier;
+    const sr = tuckOn ? 8.2 : 10;
+    const turn = tuckOn ? TURN_TUCK : TURN;
+    const distMul = 1 + Math.min(0.32, G.dist / 920);
+    const gate = isGate() ? nextOpenGate(0) : null;
+    let x = s.x;
+    let y = s.y;
+    let h = s.h;
+    let minD = 72;
+    let xAtGate = null;
+    const dt = 0.028;
+    const lookY = gate ? 360 : 300;
+    let t = 0;
+    for (let i = 0; i < 56; i++) {
+      t += dt;
+      if (h < hWant) h = Math.min(hWant, h + turn * dt);
+      else if (h > hWant) h = Math.max(hWant, h - turn * dt);
+      let spd = lerp(BASE_SPD, TUCK_SPD, tuckOn ? 1 : 0);
+      spd *= 0.44 + 0.56 * Math.pow(Math.max(0, Math.cos(h)), 1.05);
+      spd *= distMul;
+      x += Math.sin(h) * spd * dt;
+      y += Math.cos(h) * spd * dt;
+      if (gate && xAtGate == null && y >= gate.y) xAtGate = x;
+      for (let j = 0; j < G.obs.length; j++) {
+        const o = G.obs[j];
+        if (!o.r) continue;
+        const ody = o.y - y;
+        if (ody < -16 || ody > 26) continue;
+        const pad = o.type === 'pole' ? 6 : 3;
+        const gap = hypot(x - o.x, y - o.y) - sr - o.r - pad;
+        if (gap < minD) minD = gap;
+        if (gap < 0) {
+          return { hit: 1, minD: gap, x: x, y: y, h: h, xAtGate: xAtGate };
+        }
+      }
+      for (let j = 0; j < G.dogs.length; j++) {
+        const dog = G.dogs[j];
+        const dx = dog.x + dog.vx * t;
+        const dy = dog.y + dog.vy * t;
+        const gap = hypot(x - dx, y - dy) - sr - dog.r - 3;
+        if (gap < minD) minD = gap;
+        if (gap < 0) {
+          return { hit: 1, minD: gap, x: x, y: y, h: h, xAtGate: xAtGate };
+        }
+      }
+      if (y - s.y >= lookY) break;
+    }
+    return { hit: 0, minD: minD, x: x, y: y, h: h, xAtGate: xAtGate };
+  }
+
+  function autoPick() {
+    const s = G.skier;
+    const gate = isGate() ? nextOpenGate(0) : null;
+    const cands = [];
+    function addH(h) {
+      h = clamp(h, -MAX_ANG, MAX_ANG);
+      for (let i = 0; i < cands.length; i++) {
+        if (Math.abs(cands[i] - h) < 0.025) return;
+      }
+      cands.push(h);
+    }
+    addH(0);
+    addH(s.h);
+    addH(autoWant);
+    for (let i = -6; i <= 6; i++) addH(i * 0.18);
+    addH(-MAX_ANG);
+    addH(MAX_ANG);
+    if (gate) {
+      const dy = Math.max(36, gate.y - s.y);
+      const gh = Math.atan2(gate.x - s.x, dy);
+      addH(gh);
+      addH(gh - 0.1);
+      addH(gh + 0.1);
+      addH(gh - 0.2);
+      addH(gh + 0.2);
+      const g2 = nextOpenGate(1);
+      if (g2) {
+        addH(Math.atan2(g2.x - s.x, Math.max(36, g2.y - s.y)));
+      }
+    }
+
+    const yeti = !!G.yeti;
+    let bestH = 0;
+    let bestS = -1e12;
+    let bestClear = 0;
+    let bestNeedTurn = 0;
+    for (let i = 0; i < cands.length; i++) {
+      const h0 = cands[i];
+      const sharp = Math.abs(h0 - s.h) > 0.55;
+      let tuckTry = !sharp && Math.abs(h0) < (yeti ? 0.62 : 0.42);
+      if (gate && gate.y - s.y < 220 && Math.abs(s.x - gate.x) > 14) tuckTry = false;
+      const sim = autoSim(h0, tuckTry);
+      let score;
+      if (sim.hit) {
+        score = -12000 + (sim.y - s.y) * 14 + sim.minD * 40;
+      } else {
+        score = Math.min(8, sim.minD) * 1.5;
+        if (sim.minD < 5) score -= (5 - sim.minD) * 40;
+        score += Math.cos(h0) * 120;
+        score -= Math.abs(h0) * 55;
+        score -= Math.abs(h0 - s.h) * 12;
+        score -= Math.abs(h0 - autoWant) * 14;
+        if (yeti) score += (1 - Math.abs(h0) / MAX_ANG) * 90;
+        if (tuckTry) score += 14;
+      }
+      if (gate) {
+        const gx = sim.xAtGate != null ? sim.xAtGate : sim.x;
+        const half = Math.max(10, gate.w * 0.5 - 20);
+        const err = Math.abs(gx - gate.x);
+        if (err > half) score -= 900 + (err - half) * 14;
+        else score += 160 - err * 1.1;
+        const aim = Math.atan2(gate.x - s.x, Math.max(36, gate.y - s.y));
+        score -= Math.abs(h0 - aim) * 22;
+      }
+      if (score > bestS) {
+        bestS = score;
+        bestH = h0;
+        bestClear = sim.hit ? 0 : sim.minD;
+        bestNeedTurn = Math.abs(h0 - s.h);
+      }
+    }
+    let tuck = 0;
+    if (bestClear > (yeti ? 38 : 78) && bestNeedTurn < 0.48 && Math.abs(bestH) < (yeti ? 0.58 : 0.4)) {
+      tuck = 1;
+    }
+    if (yeti && Math.abs(bestH) < 0.5 && bestClear > 28) tuck = 1;
+    if (gate) {
+      const dy = gate.y - s.y;
+      if (dy < 140 && Math.abs(s.x - gate.x) > gate.w * 0.22) tuck = 0;
+    }
+    return { h: bestH, tuck: tuck };
+  }
+
+  function autoSteer(dt) {
+    const s = G.skier;
+    const pick = autoPick();
+    autoWant = pick.h;
+    const tuck = pick.tuck;
+    const rate = tuck > 0.5 ? 5.2 : 9.5;
+    s.h = clamp(lerp(s.h, autoWant, 1 - Math.exp(-dt * rate)), -MAX_ANG, MAX_ANG);
+    s.tuck = lerp(s.tuck, tuck, 1 - Math.exp(-dt * 10));
+    s._brake = false;
+  }
+
+  function clearPlayerSteer() {
+    keys.l = false;
+    keys.r = false;
+    keys.tuck = false;
+    keys.brake = false;
+    pointer.down = false;
+    pointer.id = null;
+  }
+
+  function syncAutoUi() {
+    if (!btnAuto) return;
+    btnAuto.classList.toggle('on', autoOn);
+    btnAuto.setAttribute('aria-pressed', autoOn ? 'true' : 'false');
+    btnAuto.textContent = autoOn ? '停下' : '自动';
+    btnAuto.setAttribute('aria-label', autoOn ? '停止自动' : '自动');
+  }
+
+  function syncSpeedUi() {
+    if (!speedEl) return;
+    speedEl.value = String(autoSpeed);
+    if (speedLab) speedLab.textContent = SPEED_LABELS[autoSpeed];
+    speedEl.title = SPEED_LABELS[autoSpeed];
+    speedEl.setAttribute('aria-valuetext', SPEED_LABELS[autoSpeed]);
+  }
+
+  function toggleAuto() {
+    autoOn = !autoOn;
+    autoWant = G.skier.h;
+    clearPlayerSteer();
+    syncAutoUi();
+    if (autoOn) {
+      audio.ensure();
+      if (G.mode === 'title') startGame('free');
+    }
+    syncHud();
+  }
+
+  function setAutoSpeed(n) {
+    if (n < 1 || n > 4 || !isFinite(n)) n = 3;
+    autoSpeed = n;
+    saveAutoSpeed(autoSpeed);
+    syncSpeedUi();
+  }
+
+  function autoScale() {
+    if (!autoOn || G.mode !== 'play') return 1;
+    return AUTO_SCALE[autoSpeed] || 1;
+  }
+
   function readSteer(dt) {
     const s = G.skier;
     let want = s.h;
@@ -911,6 +1140,11 @@
       s.h = lerp(s.h, want, 1 - Math.exp(-dt * 7));
       s.tuck = lerp(s.tuck, tuck, 1 - Math.exp(-dt * 8));
       s._brake = false;
+      return;
+    }
+
+    if (autoOn && G.mode === 'play') {
+      autoSteer(dt);
       return;
     }
 
@@ -1711,7 +1945,35 @@
         e.preventDefault();
         return;
       }
-      if (e.code === 'ArrowLeft' || e.code === 'KeyA') { keys.l = true; e.preventDefault(); }
+      if (e.code === 'KeyA') {
+        if (!e.repeat) toggleAuto();
+        e.preventDefault();
+        return;
+      }
+      if (e.target === speedEl) return;
+      if (autoOn) {
+        if (
+          e.code === 'ArrowLeft' || e.code === 'ArrowRight' ||
+          e.code === 'ArrowDown' || e.code === 'ArrowUp' ||
+          e.code === 'KeyD' || e.code === 'KeyS' || e.code === 'KeyW' ||
+          e.code === 'Space'
+        ) {
+          e.preventDefault();
+        }
+        if (overlayOpen()) {
+          if (e.code === 'Enter' || e.code === 'Digit1' || e.code === 'Numpad1' || e.code === 'Space') {
+            if (G.mode === 'title') startGame('free');
+            else if (G.mode === 'dead') startGame(G.kind);
+            e.preventDefault();
+          }
+          if (e.code === 'Digit2' || e.code === 'Numpad2') {
+            startGame('gate');
+            e.preventDefault();
+          }
+        }
+        return;
+      }
+      if (e.code === 'ArrowLeft') { keys.l = true; e.preventDefault(); }
       if (e.code === 'ArrowRight' || e.code === 'KeyD') { keys.r = true; e.preventDefault(); }
       if (e.code === 'ArrowDown' || e.code === 'KeyS') { keys.tuck = true; e.preventDefault(); }
       if (e.code === 'ArrowUp' || e.code === 'KeyW') { keys.brake = true; e.preventDefault(); }
@@ -1728,7 +1990,7 @@
       }
     });
     window.addEventListener('keyup', function (e) {
-      if (e.code === 'ArrowLeft' || e.code === 'KeyA') keys.l = false;
+      if (e.code === 'ArrowLeft') keys.l = false;
       if (e.code === 'ArrowRight' || e.code === 'KeyD') keys.r = false;
       if (e.code === 'ArrowDown' || e.code === 'KeyS') keys.tuck = false;
       if (e.code === 'ArrowUp' || e.code === 'KeyW') keys.brake = false;
@@ -1737,6 +1999,10 @@
       audio.ensure();
       tryTilt();
       if (overlayOpen()) return;
+      if (autoOn) {
+        e.preventDefault();
+        return;
+      }
       const p = pointerToView(e);
       pointer.down = true;
       pointer.x = p.x;
@@ -1772,6 +2038,15 @@
       audio.ensure();
       audio.setMuted(!audio.muted);
     });
+    if (btnAuto) btnAuto.addEventListener('click', function () { toggleAuto(); });
+    if (speedEl) {
+      speedEl.addEventListener('input', function () {
+        setAutoSpeed(parseInt(speedEl.value, 10));
+      });
+      speedEl.addEventListener('change', function () {
+        setAutoSpeed(parseInt(speedEl.value, 10));
+      });
+    }
     btnRetry.addEventListener('click', function () {
       audio.ensure();
       restart();
@@ -1803,15 +2078,18 @@
     last = now;
     if (dt > 0.05) dt = 0.05;
     if (hidden) return;
-    if (G.stop > 0) {
+    const turbo = autoOn && autoSpeed >= 4 && G.mode === 'play';
+    if (G.stop > 0 && !turbo) {
       G.stop -= dt;
       updateFx(dt);
       draw();
       return;
     }
-    acc += dt;
+    if (turbo) G.stop = 0;
+    acc += dt * autoScale();
     let steps = 0;
-    while (acc >= STEP && steps < 5) {
+    const maxSteps = turbo ? 12 : 5;
+    while (acc >= STEP && steps < maxSteps) {
       update(STEP);
       acc -= STEP;
       steps += 1;
@@ -1823,6 +2101,7 @@
 
   function boot() {
     G.best = loadBest();
+    autoSpeed = loadAutoSpeed();
     try {
       if (localStorage.getItem(MUTE_KEY) === '1') audio.setMuted(true);
       else audio.setMuted(false);
@@ -1830,6 +2109,8 @@
       audio.setMuted(false);
     }
     bind();
+    syncAutoUi();
+    syncSpeedUi();
     resize();
     showTitle();
     requestAnimationFrame(frame);
