@@ -2511,7 +2511,7 @@
     "blurb": "五关连打，飞船一路往上冲。",
     "hue": 262,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/gorf/",
     "kind": "remake"
   },
@@ -2561,6 +2561,18 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/crazy-climb/",
+    "kind": "remake"
+  },
+  {
+    "n": 223,
+    "id": "alibaba",
+    "title": "宝洞",
+    "subtitle": "ALI",
+    "blurb": "迷宫里抢金币，别让守卫堵住门。",
+    "hue": 44,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/alibaba/",
     "kind": "remake"
   }
 ]

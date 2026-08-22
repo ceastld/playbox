@@ -2372,5 +2372,17 @@
     "dir": "g/congo-bongo/",
     "url": "./g/congo-bongo/",
     "kind": "remake"
+  },
+  {
+    "n": 218,
+    "id": "gorf",
+    "title": "戈夫",
+    "subtitle": "GORF",
+    "blurb": "五关连打，飞船一路往上冲。",
+    "hue": 262,
+    "tag": "复刻",
+    "dir": "g/gorf/",
+    "url": "./g/gorf/",
+    "kind": "remake"
   }
 ]
