@@ -3435,7 +3435,7 @@
     "blurb": "冲进画面里扫射，把柱怪打爆。",
     "hue": 268,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/space-harrier/",
     "kind": "remake"
   },
@@ -3471,7 +3471,7 @@
     "blurb": "念力扫射，把机械兵打散。",
     "hue": 312,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/psycho-soldier/",
     "kind": "remake"
   },
@@ -3483,7 +3483,7 @@
     "blurb": "横扫蛇形母舰，把核心打穿。",
     "hue": 174,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/salamander2/",
     "kind": "remake"
   },
@@ -3509,6 +3509,42 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/gauntlet/",
+    "kind": "remake"
+  },
+  {
+    "n": 302,
+    "id": "donpachi",
+    "title": "弹蜂",
+    "subtitle": "DONP",
+    "blurb": "弹幕对撞，把蜂巢核心打穿。",
+    "hue": 52,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/donpachi/",
+    "kind": "remake"
+  },
+  {
+    "n": 303,
+    "id": "gunbird",
+    "title": "枪鸟",
+    "subtitle": "GBRD",
+    "blurb": "纵版扫射，把空中编队打散。",
+    "hue": 18,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/gunbird/",
+    "kind": "remake"
+  },
+  {
+    "n": 304,
+    "id": "power-drift",
+    "title": "漂移",
+    "subtitle": "DRFT",
+    "blurb": "卡丁甩尾，把赛道对手甩开。",
+    "hue": 22,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/power-drift/",
     "kind": "remake"
   }
 ]

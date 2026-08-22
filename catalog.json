@@ -3320,5 +3320,41 @@
     "dir": "g/chase-hq/",
     "url": "./g/chase-hq/",
     "kind": "remake"
+  },
+  {
+    "n": 295,
+    "id": "space-harrier",
+    "title": "幻域",
+    "subtitle": "HARR",
+    "blurb": "冲进画面里扫射，把柱怪打爆。",
+    "hue": 268,
+    "tag": "复刻",
+    "dir": "g/space-harrier/",
+    "url": "./g/space-harrier/",
+    "kind": "remake"
+  },
+  {
+    "n": 298,
+    "id": "psycho-soldier",
+    "title": "超女",
+    "subtitle": "PSYC",
+    "blurb": "念力扫射，把机械兵打散。",
+    "hue": 312,
+    "tag": "复刻",
+    "dir": "g/psycho-soldier/",
+    "url": "./g/psycho-soldier/",
+    "kind": "remake"
+  },
+  {
+    "n": 299,
+    "id": "salamander2",
+    "title": "沙罗",
+    "subtitle": "SALA",
+    "blurb": "横扫蛇形母舰，把核心打穿。",
+    "hue": 174,
+    "tag": "复刻",
+    "dir": "g/salamander2/",
+    "url": "./g/salamander2/",
+    "kind": "remake"
   }
 ]

@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" fill="#120814"/>
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1a0824"/>
+      <stop offset="0.4" stop-color="#3a1460"/>
+      <stop offset="0.56" stop-color="#c46aff"/>
+      <stop offset="1" stop-color="#1a1028"/>
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="56" height="56" rx="10" fill="url(#sky)"/>
+  <circle cx="46" cy="14" r="3.4" fill="#ffe36b"/>
+  <path d="M4 30 L16 24 L28 28 L40 22 L52 27 L60 23 V34 H4Z" fill="#280c38" opacity=".92"/>
+  <path d="M8 60 L26 32 L38 32 L56 60Z" fill="#201028"/>
+  <path d="M12 60 L27 36 L37 36 L52 60Z" fill="#c46aff" opacity=".28"/>
+  <path d="M18 60 L29 42 L35 42 L46 60Z" fill="#ff4ad2" opacity=".2"/>
+  <rect x="12" y="48" width="8" height="8" fill="#3a1848"/>
+  <rect x="20" y="48" width="8" height="8" fill="#6a2a78"/>
+  <rect x="28" y="48" width="8" height="8" fill="#3a1848"/>
+  <rect x="36" y="48" width="8" height="8" fill="#6a2a78"/>
+  <rect x="44" y="48" width="8" height="8" fill="#3a1848"/>
+  <path d="M12 50 L16 34 L20 50Z" fill="#2a8858"/>
+  <rect x="15.2" y="48" width="1.6" height="7" fill="#4a2818"/>
+  <ellipse cx="48" cy="44" rx="5.2" ry="3.2" fill="#ff4ad2"/>
+  <rect x="46.6" y="44" width="2.8" height="8" fill="#e8d8c0"/>
+  <circle cx="22" cy="20" r="2.2" fill="#ff4ad2"/>
+  <circle cx="38" cy="18" r="1.5" fill="#c46aff"/>
+  <ellipse cx="32" cy="50" rx="7" ry="2.2" fill="#8a4cff" opacity=".7"/>
+  <rect x="30.4" y="38" width="3.2" height="10" rx=".5" fill="#e8c8ff"/>
+  <circle cx="32" cy="36" r="2.1" fill="#fff4ea"/>
+  <path d="M30 40h4l-1 5h-2z" fill="#ff4ad2"/>
+  <path d="M18 54 L12 60" stroke="#c46aff" stroke-width=".7" opacity=".55"/>
+  <path d="M46 54 L54 60" stroke="#ff4ad2" stroke-width=".7" opacity=".55"/>
+</svg>
