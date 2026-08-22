@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#05030c" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>翻碟 · OTHELLO</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2305030c'/%3E%3Crect x='4' y='4' width='24' height='24' rx='4' fill='%230a160e' stroke='%233dff88' stroke-width='1.3'/%3E%3Ccircle cx='13' cy='13' r='4.1' fill='%23efece4'/%3E%3Ccircle cx='19' cy='13' r='4.1' fill='%230c0e14' stroke='%2300f0ff' stroke-width='.7'/%3E%3Ccircle cx='13' cy='19' r='4.1' fill='%230c0e14' stroke='%2300f0ff' stroke-width='.7'/%3E%3Ccircle cx='19' cy='19' r='4.1' fill='%23efece4'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>翻碟</b>
+        <span>OTHELLO</span>
+      </div>
+      <div class="meters" aria-live="polite">
+        <div class="meter black" id="meter-black">
+          <em id="lab-black">你</em>
+          <b id="count-black">2</b>
+        </div>
+        <div class="meter white" id="meter-white">
+          <em id="lab-white">机</em>
+          <b id="count-white">2</b>
+        </div>
+        <div class="meter best" id="meter-best" title="对机最佳碟数">
+          <em>最佳</em>
+          <b id="best">—</b>
+        </div>
+      </div>
+      <div class="tools">
+        <div class="modes" role="radiogroup" aria-label="模式">
+          <button type="button" id="mode-ai" aria-pressed="true" title="对机">对机</button>
+          <button type="button" id="mode-pvp" aria-pressed="false" title="双人同机">双人</button>
+        </div>
+        <div class="diff" id="diff-group" role="radiogroup" aria-label="难度">
+          <button type="button" id="diff-easy" aria-pressed="false" title="简">简</button>
+          <button type="button" id="diff-mid" aria-pressed="true" title="中">中</button>
+          <button type="button" id="diff-hard" aria-pressed="false" title="难">难</button>
+        </div>
+        <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
+        <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <div class="board-wrap">
+        <div class="board" id="board" tabindex="0" role="grid" aria-label="翻碟棋盘，八乘八"></div>
+      </div>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+      <div id="overlay" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="ov-title" aria-hidden="true">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">OTHELLO</p>
+          <h1 id="ov-title">赢了</h1>
+          <p class="lead" id="ov-lead"></p>
+          <div class="ov-actions">
+            <button type="button" id="ov-retry">重开</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="dock">
+      <p class="status" id="status">黑走</p>
+      <p class="hint">夹住就翻。点亮格落子。方向键选格，空格落下。R 重开，M 静音。</p>
+    </footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>

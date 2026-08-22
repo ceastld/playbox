@@ -1124,5 +1124,41 @@
     "dir": "g/wall-pong/",
     "url": "./g/wall-pong/",
     "kind": "remake"
+  },
+  {
+    "n": 112,
+    "id": "rev-disc",
+    "title": "翻碟",
+    "subtitle": "OTHELLO",
+    "blurb": "夹住就翻，占满为止。",
+    "hue": 120,
+    "tag": "复刻",
+    "dir": "g/rev-disc/",
+    "url": "./g/rev-disc/",
+    "kind": "remake"
+  },
+  {
+    "n": 118,
+    "id": "fruit-cut",
+    "title": "斩果",
+    "subtitle": "SLASH",
+    "blurb": "一刀切开，果汁四溅。",
+    "hue": 350,
+    "tag": "复刻",
+    "dir": "g/fruit-cut/",
+    "url": "./g/fruit-cut/",
+    "kind": "remake"
+  },
+  {
+    "n": 121,
+    "id": "stack-crash",
+    "title": "叠崩",
+    "subtitle": "STACK",
+    "blurb": "叠上去，切齐才爽。",
+    "hue": 55,
+    "tag": "复刻",
+    "dir": "g/stack-crash/",
+    "url": "./g/stack-crash/",
+    "kind": "remake"
   }
 ]
