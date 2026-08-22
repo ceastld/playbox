@@ -1575,7 +1575,7 @@
     "blurb": "挖地道，泵爆地下怪。",
     "hue": 48,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/lode-dig/",
     "kind": "remake"
   },
@@ -1625,6 +1625,18 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/tapper-pour/",
+    "kind": "remake"
+  },
+  {
+    "n": 145,
+    "id": "scram-run",
+    "title": "地平",
+    "subtitle": "SCRAM",
+    "blurb": "贴地飞，炸炮打油，别撞山。",
+    "hue": 18,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/scram-run/",
     "kind": "remake"
   }
 ]

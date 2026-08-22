@@ -1436,5 +1436,17 @@
     "dir": "g/moon-run/",
     "url": "./g/moon-run/",
     "kind": "remake"
+  },
+  {
+    "n": 140,
+    "id": "lode-dig",
+    "title": "矿掘",
+    "subtitle": "DIG",
+    "blurb": "挖地道，泵爆地下怪。",
+    "hue": 48,
+    "tag": "复刻",
+    "dir": "g/lode-dig/",
+    "url": "./g/lode-dig/",
+    "kind": "remake"
   }
 ]
