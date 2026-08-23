@@ -3675,7 +3675,7 @@
     "blurb": "弹幕对撞，把要塞核心打穿。",
     "hue": 8,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/ketsui/",
     "kind": "remake"
   },
@@ -3687,7 +3687,7 @@
     "blurb": "纵版扫虫，把虫海弹幕打散。",
     "hue": 118,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/mushihimesama/",
     "kind": "remake"
   },
@@ -3699,7 +3699,7 @@
     "blurb": "横扫魔弹，把元素核心打爆。",
     "hue": 24,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/dimahoo/",
     "kind": "remake"
   },
@@ -3711,7 +3711,7 @@
     "blurb": "反射弹幕，把火核打穿。",
     "hue": 14,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/mars-matrix/",
     "kind": "remake"
   },
@@ -3723,8 +3723,68 @@
     "blurb": "反射弹幕，把巨型机打散。",
     "hue": 206,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/giga-wing/",
+    "kind": "remake"
+  },
+  {
+    "n": 320,
+    "id": "battle-garegga",
+    "title": "黑翼",
+    "subtitle": "GARE",
+    "blurb": "纵版扫射，把黑翼编队打散。",
+    "hue": 220,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/battle-garegga/",
+    "kind": "remake"
+  },
+  {
+    "n": 321,
+    "id": "dangun-feveron",
+    "title": "热铳",
+    "subtitle": "FEVE",
+    "blurb": "近身热弹，把舞厅核心打穿。",
+    "hue": 12,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/dangun-feveron/",
+    "kind": "remake"
+  },
+  {
+    "n": 322,
+    "id": "ibara",
+    "title": "茨",
+    "subtitle": "IBAR",
+    "blurb": "纵版荆弹，把要塞打穿。",
+    "hue": 96,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/ibara/",
+    "kind": "remake"
+  },
+  {
+    "n": 323,
+    "id": "varth",
+    "title": "瓦特",
+    "subtitle": "VRTH",
+    "blurb": "纵版扫射，把机甲编队打散。",
+    "hue": 168,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/varth/",
+    "kind": "remake"
+  },
+  {
+    "n": 324,
+    "id": "armed-police",
+    "title": "武警",
+    "subtitle": "BATR",
+    "blurb": "纵版摩托扫射，把空中编队打穿。",
+    "hue": 36,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/armed-police/",
     "kind": "remake"
   }
 ]

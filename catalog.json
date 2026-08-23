@@ -3536,5 +3536,65 @@
     "dir": "g/guwange/",
     "url": "./g/guwange/",
     "kind": "remake"
+  },
+  {
+    "n": 315,
+    "id": "ketsui",
+    "title": "决战",
+    "subtitle": "KETU",
+    "blurb": "弹幕对撞，把要塞核心打穿。",
+    "hue": 8,
+    "tag": "复刻",
+    "dir": "g/ketsui/",
+    "url": "./g/ketsui/",
+    "kind": "remake"
+  },
+  {
+    "n": 316,
+    "id": "mushihimesama",
+    "title": "虫姬",
+    "subtitle": "MUSHI",
+    "blurb": "纵版扫虫，把虫海弹幕打散。",
+    "hue": 118,
+    "tag": "复刻",
+    "dir": "g/mushihimesama/",
+    "url": "./g/mushihimesama/",
+    "kind": "remake"
+  },
+  {
+    "n": 317,
+    "id": "dimahoo",
+    "title": "魔炮",
+    "subtitle": "DIMA",
+    "blurb": "横扫魔弹，把元素核心打爆。",
+    "hue": 24,
+    "tag": "复刻",
+    "dir": "g/dimahoo/",
+    "url": "./g/dimahoo/",
+    "kind": "remake"
+  },
+  {
+    "n": 318,
+    "id": "mars-matrix",
+    "title": "火阵",
+    "subtitle": "MARS",
+    "blurb": "反射弹幕，把火核打穿。",
+    "hue": 14,
+    "tag": "复刻",
+    "dir": "g/mars-matrix/",
+    "url": "./g/mars-matrix/",
+    "kind": "remake"
+  },
+  {
+    "n": 319,
+    "id": "giga-wing",
+    "title": "巨翼",
+    "subtitle": "GIGA",
+    "blurb": "反射弹幕，把巨型机打散。",
+    "hue": 206,
+    "tag": "复刻",
+    "dir": "g/giga-wing/",
+    "url": "./g/giga-wing/",
+    "kind": "remake"
   }
 ]
