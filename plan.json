@@ -4155,7 +4155,7 @@
     "blurb": "纵版战机，把机群从云里打穿。",
     "hue": 196,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/p47/",
     "kind": "remake"
   },
@@ -4167,7 +4167,7 @@
     "blurb": "横版加装，把核心从轨道打穿。",
     "hue": 214,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/plus-alpha/",
     "kind": "remake"
   },
@@ -4205,6 +4205,30 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/liekong/",
+    "kind": "remake"
+  },
+  {
+    "n": 360,
+    "id": "sky-ace",
+    "title": "空霸",
+    "subtitle": "SKAC",
+    "blurb": "纵版空霸，把弹幕从云里打穿。",
+    "hue": 198,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/sky-ace/",
+    "kind": "remake"
+  },
+  {
+    "n": 361,
+    "id": "nuke-raid",
+    "title": "核袭",
+    "subtitle": "NUKE",
+    "blurb": "纵版核弹，把堡垒从地上打塌。",
+    "hue": 18,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/nuke-raid/",
     "kind": "remake"
   }
 ]
