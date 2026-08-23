@@ -4904,5 +4904,53 @@
     "dir": "g/radiant-silvergun/",
     "url": "./g/radiant-silvergun/",
     "kind": "remake"
+  },
+  {
+    "n": 429,
+    "id": "gradius2",
+    "title": "巡二",
+    "subtitle": "GRD2",
+    "blurb": "横版巡二，把核心从空里打穿。",
+    "hue": 198,
+    "tag": "复刻",
+    "dir": "g/gradius2/",
+    "url": "./g/gradius2/",
+    "kind": "remake"
+  },
+  {
+    "n": 430,
+    "id": "r-type-leo",
+    "title": "武装狮",
+    "subtitle": "RTLE",
+    "blurb": "横版武装狮，把机群从核里打穿。",
+    "hue": 52,
+    "tag": "复刻",
+    "dir": "g/r-type-leo/",
+    "url": "./g/r-type-leo/",
+    "kind": "remake"
+  },
+  {
+    "n": 431,
+    "id": "ghouls-n-ghosts",
+    "title": "鬼铠",
+    "subtitle": "GNGH",
+    "blurb": "横版鬼铠，把亡灵从坟里斩穿。",
+    "hue": 12,
+    "tag": "复刻",
+    "dir": "g/ghouls-n-ghosts/",
+    "url": "./g/ghouls-n-ghosts/",
+    "kind": "remake"
+  },
+  {
+    "n": 433,
+    "id": "daytona",
+    "title": "沙圈",
+    "subtitle": "DAYT",
+    "blurb": "进屏沙圈，把对手从弯里甩开。",
+    "hue": 28,
+    "tag": "复刻",
+    "dir": "g/daytona/",
+    "url": "./g/daytona/",
+    "kind": "remake"
   }
 ]

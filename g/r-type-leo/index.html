@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#100c04" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>武装狮 · RTLE</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23100c04'/%3E%3Cpath d='M0 0h32v6H0zM0 26h32v6H0z' fill='%231a1408'/%3E%3Cpath d='M0 6h32M0 26h32' stroke='%23ffd43a' stroke-width='1.1'/%3E%3Cpath d='M5 16l8-3.2V19z' fill='%23ffd43a'/%3E%3Crect x='10' y='14.1' width='7.2' height='3.8' rx='.5' fill='%23fff6e4'/%3E%3Cpath d='M16 10l3 2-3 2zM16 18l3 2-3 2z' fill='%235af0ff'/%3E%3Crect x='18' y='15.2' width='8' height='1.6' rx='.4' fill='%23ffd43a'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>武装狮</b>
+        <span>RTLE</span>
+      </div>
+      <div class="status">
+        <div class="scores" aria-live="polite">
+          <div class="score" id="score-box">
+            <em>分数</em>
+            <b id="score">0</b>
+            <span id="score-add" class="score-add" hidden>+0</span>
+          </div>
+          <div class="score best">
+            <em>最高</em>
+            <b id="best">0</b>
+          </div>
+        </div>
+        <div class="row">
+          <span id="stage-label">狮原</span>
+          <span id="tag-label">武装狮</span>
+          <span id="bit-label" class="form front">双比特</span>
+          <span id="pwr-label" class="pwr">扇 0</span>
+          <div class="fill" id="blast-wrap" title="比特激光">
+            <em>激</em>
+            <div class="fill-track" aria-hidden="true"><i id="blast-bar"></i></div>
+          </div>
+          <span id="combo-label" class="combo" hidden>连击</span>
+          <span class="pips" id="pips" aria-label="剩余生命"></span>
+        </div>
+      </div>
+      <div class="tools">
+        <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
+        <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <canvas id="c" tabindex="0" role="application" aria-label="武装狮游戏区，横向卷轴，空格宽幅扇弹，Shift 或 Z 比特激光"></canvas>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden"></div>
+      <div id="pad" class="pad">
+        <button type="button" id="btn-blast" aria-label="比特激光">激</button>
+      </div>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">RTLE</p>
+          <h1 id="ov-title">武装狮</h1>
+          <p class="lead" id="ov-lead">没有力爪。比特贴着舰自动打，空格放宽幅扇弹，Shift / Z 打出比特激光。过关打核心。</p>
+          <p class="ops" id="ov-ops">←↑↓→ / WASD 飞 · 空格射击 · Shift / Z 比特激光 · R 重开 · M 静音</p>
+          <div class="ov-actions" id="ov-start">
+            <button type="button" id="btn-raid">武装狮</button>
+            <button type="button" id="btn-storm">狮核</button>
+          </div>
+          <div class="ov-actions gone" id="ov-end">
+            <button type="button" id="ov-retry">再来</button>
+            <button type="button" id="ov-modes">换模式</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">比特贴舰打 · 空格宽幅扇弹 · Shift / Z 比特激光</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>

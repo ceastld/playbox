@@ -5043,7 +5043,7 @@
     "blurb": "横版巡二，把核心从空里打穿。",
     "hue": 198,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/gradius2/",
     "kind": "remake"
   },
@@ -5055,7 +5055,7 @@
     "blurb": "横版武装狮，把机群从核里打穿。",
     "hue": 52,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/r-type-leo/",
     "kind": "remake"
   },
@@ -5067,7 +5067,7 @@
     "blurb": "横版鬼铠，把亡灵从坟里斩穿。",
     "hue": 12,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/ghouls-n-ghosts/",
     "kind": "remake"
   },
@@ -5091,8 +5091,56 @@
     "blurb": "进屏沙圈，把对手从弯里甩开。",
     "hue": 28,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/daytona/",
+    "kind": "remake"
+  },
+  {
+    "n": 434,
+    "id": "thunder-force2",
+    "title": "雷突",
+    "subtitle": "TF02",
+    "blurb": "横版雷突，把机群从星里打穿。",
+    "hue": 164,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/thunder-force2/",
+    "kind": "remake"
+  },
+  {
+    "n": 435,
+    "id": "shinobi2",
+    "title": "忍二",
+    "subtitle": "SHN2",
+    "blurb": "横版忍二，把忍者从巷里斩穿。",
+    "hue": 44,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/shinobi2/",
+    "kind": "remake"
+  },
+  {
+    "n": 436,
+    "id": "streets-of-rage2",
+    "title": "怒二",
+    "subtitle": "SOR2",
+    "blurb": "横版怒二，把暴徒从街上打穿。",
+    "hue": 6,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/streets-of-rage2/",
+    "kind": "remake"
+  },
+  {
+    "n": 437,
+    "id": "wonder-boy",
+    "title": "仙童",
+    "subtitle": "WBOY",
+    "blurb": "横版仙童，把魔物从林里砸穿。",
+    "hue": 78,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/wonder-boy/",
     "kind": "remake"
   }
 ]
