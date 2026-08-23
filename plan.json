@@ -4071,7 +4071,7 @@
     "blurb": "天马斩月，把星核一刀劈开。",
     "hue": 268,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/phelios/",
     "kind": "remake"
   },
@@ -4107,7 +4107,7 @@
     "blurb": "对战弹幕，把对手从星核打出。",
     "hue": 310,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/twinkle-star/",
     "kind": "remake"
   },
@@ -4145,6 +4145,30 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/dragoon/",
+    "kind": "remake"
+  },
+  {
+    "n": 355,
+    "id": "p47",
+    "title": "雷击",
+    "subtitle": "P47A",
+    "blurb": "纵版战机，把机群从云里打穿。",
+    "hue": 196,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/p47/",
+    "kind": "remake"
+  },
+  {
+    "n": 356,
+    "id": "plus-alpha",
+    "title": "加甲",
+    "subtitle": "PALS",
+    "blurb": "横版加装，把核心从轨道打穿。",
+    "hue": 214,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/plus-alpha/",
     "kind": "remake"
   }
 ]

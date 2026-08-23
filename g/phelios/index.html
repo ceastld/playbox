@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#0c0818" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>月刃 · PHEL</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230c0818'/%3E%3Ccircle cx='23' cy='8' r='4.2' fill='%23dce6ff'/%3E%3Ccircle cx='21.4' cy='7.4' r='3.2' fill='%230c0818'/%3E%3Cpath d='M6 22c3-7 7-9 12-8-1 4 2 6 7 8' fill='none' stroke='%23c8b4ff' stroke-width='1.6'/%3E%3Cpath d='M8 20c4-2 8-1 12 2' fill='none' stroke='%23ffe36b' stroke-width='1.2'/%3E%3Cellipse cx='14' cy='18' rx='6' ry='3.2' fill='%23ece8ff'/%3E%3Cpath d='M8 18l-3-2 2 4z' fill='%23c8b4ff'/%3E%3Ccircle cx='18' cy='16' r='2.1' fill='%23fff8f0'/%3E%3Cpath d='M19 15l8-3-6 4.2z' fill='%23ffe36b'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>月刃</b>
+        <span>PHEL</span>
+      </div>
+      <div class="status">
+        <div class="scores" aria-live="polite">
+          <div class="score" id="score-box">
+            <em>分数</em>
+            <b id="score">0</b>
+            <span id="score-add" class="score-add" hidden>+0</span>
+          </div>
+          <div class="score best">
+            <em>最高</em>
+            <b id="best">0</b>
+          </div>
+        </div>
+        <div class="row">
+          <span id="stage-label">银柱</span>
+          <span id="tag-label">月刃</span>
+          <div class="fill" id="prog-wrap" title="关卡进度">
+            <em>程</em>
+            <div class="fill-track" aria-hidden="true"><i id="prog-bar"></i></div>
+          </div>
+          <div class="fill slash" id="slash-wrap" title="月斩冷却">
+            <em>斩</em>
+            <div class="fill-track" aria-hidden="true"><i id="slash-bar"></i></div>
+          </div>
+          <span id="combo-label" class="combo" hidden>连击</span>
+          <span class="pips" id="pips" aria-label="剩余生命"></span>
+        </div>
+      </div>
+      <div class="tools">
+        <button type="button" id="btn-slash" title="Shift / Z" aria-label="月斩">斩</button>
+        <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
+        <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <canvas id="c" tabindex="0" role="application" aria-label="月刃，骑飞马冲进神域，弓箭打远，月刃斩近，撞了扣命"></canvas>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden"></div>
+      <div id="chain-pop" class="chain-pop hidden" aria-hidden="true">×2</div>
+      <div id="pad" class="pad">
+        <button type="button" id="btn-pad-shot" aria-label="射箭">射</button>
+        <button type="button" id="btn-pad-slash" aria-label="月斩">斩</button>
+      </div>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">PHEL</p>
+          <h1 id="ov-title">月刃</h1>
+          <p class="lead" id="ov-lead">骑飞马冲进神域。弓箭打远，月刃斩近。撞了扣命。短关之后是头目。</p>
+          <p class="ops" id="ov-ops">方向 / WASD 飞 · 空格射箭 · Shift / Z 月斩 · R 重开 · M 静音</p>
+          <div class="ov-actions" id="ov-start">
+            <button type="button" id="btn-moon">月刃</button>
+            <button type="button" id="btn-sea">星海</button>
+          </div>
+          <div class="ov-actions gone" id="ov-end">
+            <button type="button" id="ov-retry">再飞</button>
+            <button type="button" id="ov-modes">换模式</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">方向飞 · 空格射箭 · Shift 月斩 · 近身斩更狠 · 撞了扣命</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>

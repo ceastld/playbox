@@ -3956,5 +3956,29 @@
     "dir": "g/daioh/",
     "url": "./g/daioh/",
     "kind": "remake"
+  },
+  {
+    "n": 348,
+    "id": "phelios",
+    "title": "月刃",
+    "subtitle": "PHEL",
+    "blurb": "天马斩月，把星核一刀劈开。",
+    "hue": 268,
+    "tag": "复刻",
+    "dir": "g/phelios/",
+    "url": "./g/phelios/",
+    "kind": "remake"
+  },
+  {
+    "n": 351,
+    "id": "twinkle-star",
+    "title": "星闪",
+    "subtitle": "TWIN",
+    "blurb": "对战弹幕，把对手从星核打出。",
+    "hue": 310,
+    "tag": "复刻",
+    "dir": "g/twinkle-star/",
+    "url": "./g/twinkle-star/",
+    "kind": "remake"
   }
 ]
