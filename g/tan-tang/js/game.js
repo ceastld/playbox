@@ -16,9 +16,20 @@
   const LOFT_W = 20;
   const LOFT_B = 0.55;
   const WIND_K = 2.05;
+  const GRID = 48;
+  const STAM_MAX = 100;
+  const LEAP_DX = 80;
+  const LEAP_H = 56;
+  const LEAP_T = 0.34;
+  const WARP_R = 220;
   const BEST_KEY = 'playbox-tan-tang-best';
   const MUTE_KEY = 'playbox-tan-tang-mute';
-  const OPS = '← → 走 · ↑ ↓ 角 · 空格/Z 蓄力 · 1/2/3 武器 · R 重开 · M 静音';
+  const OPS = '← → 走 · ↑ ↓ 角 · 空格/Z 蓄力 · 1 弹堂 · 2 堂核 · 3 演习场 · R 重开 · M 静音';
+  const OPS_PLAY = 'Q飞步 E影挪 C霓弹 V鼓息 F殿破 X过 · 65°查表 · Tab尺';
+  const OPS_DRILL = '演习 · 表随距离变 · 空格仍能打木桩';
+  const TABLE65 = [0, 20, 28, 34, 39, 44, 48, 52, 55, 59, 62, 65, 68, 71, 73, 76, 78, 81, 83, 85, 88];
+  const ITEM_MAX = { leap: 2, warp: 1, neon: 2, drum: 1 };
+  const ITEM_COST = { leap: 35, warp: 25, neon: 0, drum: 0 };
   const MAP_NAME = { plain: '平原', canyon: '峡谷', twin: '双台' };
   const MAP_IDS = ['plain', 'canyon', 'twin'];
 
@@ -28,12 +39,14 @@
   const HOT = [139, 92, 255];
   const WHT = [244, 238, 255];
   const DIRT = [92, 68, 48];
+  const ICE = [160, 220, 255];
 
   const WEPS = [
     { id: 0, name: '普通弹', direct: 32, splash: 36, crater: 30, spd: 1.00 },
     { id: 1, name: '高爆', direct: 24, splash: 56, crater: 48, spd: 0.88 },
     { id: 2, name: '穿透', direct: 30, splash: 32, crater: 26, spd: 1.06 }
   ];
+  const NEON = { id: 3, name: '霓弹', direct: 8, splash: 28, crater: 18, spd: 1.00 };
 
   const hasDom = typeof document !== 'undefined';
   const REDUCE = typeof window !== 'undefined' && window.matchMedia
@@ -92,6 +105,21 @@
   const stageEl = el('stage');
   const wepsEl = el('weps');
   const padEl = el('pad');
+  const btnDrill = el('btn-drill');
+  const itemsEl = el('items');
+  const rageLabel = el('rage-label');
+  const ghostLabel = el('ghost-label');
+  const foeNameEl = el('foe-name');
+  const stP = el('st-p');
+  const stF = el('st-f');
+  const rgP = el('rg-p');
+  const rgF = el('rg-f');
+  const drillTable = el('drill-table');
+  const dtRows = el('dt-rows');
+  const dtInfo = el('dt-info');
+  const dt65 = el('dt-65');
+  const dt90 = el('dt-90');
+  const drillWindEl = el('drill-wind');
 
   const view = { w: 1, h: 1, dpr: 1, scale: 1, ox: 0, oy: 0 };
   const keys = { l: false, r: false, u: false, d: false, fire: false };
@@ -126,7 +154,21 @@
     p: null,
     f: null,
     shot: null,
-    charging: false
+    charging: false,
+    stam: STAM_MAX,
+    neonOn: false,
+    busy: null,
+    busyT: 0,
+    ruler: true,
+    drillWind: 'rand',
+    ghost: null,
+    ghostPend: null,
+    pointer: { x: 480, y: 200 },
+    warpX: 0,
+    lastKind: 'hall',
+    stakeT: 0,
+    frozenT: 0,
+    aiLastNeonTurn: -9
   };
 
   const particles = [];
@@ -152,12 +194,35 @@
   let chargeGain = null;
 
   function dmgMul() { return G.kind === 'core' ? 1.15 : 1; }
-  function maxHp() { return G.kind === 'core' ? 60 : 100; }
+  function maxHp(side) {
+    if (G.kind === 'drill' && side === 'f') return 9999;
+    return G.kind === 'core' ? 60 : 100;
+  }
   function windMax() { return G.kind === 'core' ? 14 : 8; }
   function overlayOpen() { return !!(overlay && !overlay.classList.contains('hidden')); }
   function curUnit() { return G.turn === 'p' ? G.p : G.f; }
   function otherUnit(u) { return u === G.p ? G.f : G.p; }
-  function wepOf() { return WEPS[G.wep] || WEPS[0]; }
+  function wepOf() { return G.neonOn ? NEON : (WEPS[G.wep] || WEPS[0]); }
+  function kindName() {
+    return G.kind === 'core' ? '堂核' : G.kind === 'drill' ? '演习场' : '弹堂';
+  }
+  function addRage(u, n) {
+    if (!u || u.stake) return;
+    u.rage = clamp((u.rage || 0) + n, 0, 100);
+    if (u.rage >= 100 && !u.ragedPrompted) {
+      u.ragedPrompted = true;
+      toast('怒满 · F 殿破', false, true);
+    }
+  }
+  function resetItems(u) {
+    if (!u) return;
+    u.items = { leap: ITEM_MAX.leap, warp: ITEM_MAX.warp, neon: ITEM_MAX.neon, drum: ITEM_MAX.drum };
+  }
+  function facingOf(u) {
+    if (!u) return 1;
+    if (u.face === -1 || u.face === 1) return u.face;
+    return u.ang > 90 ? -1 : 1;
+  }
 
   function groundAt(x) {
     const H = G.H;
@@ -218,14 +283,16 @@
 
   function makeUnit(side) {
     const x = spawnX(G.mapId, side);
+    const stake = G.kind === 'drill' && side === 'f';
     const u = {
       side: side,
-      name: side === 'p' ? '岚丸' : '烬丸',
+      name: side === 'p' ? '岚丸' : (stake ? '石俑' : '烬丸'),
+      stake: stake,
       x: x,
       y: 0,
       r: UNIT_R,
-      hp: maxHp(),
-      max: maxHp(),
+      hp: maxHp(side),
+      max: maxHp(side),
       ang: side === 'p' ? 65 : 115,
       vy: 0,
       grounded: true,
@@ -234,13 +301,24 @@
       hitT: 0,
       walkT: 0,
       face: side === 'p' ? 1 : -1,
-      flash: 0
+      flash: 0,
+      stam: STAM_MAX,
+      rage: 0,
+      ult: false,
+      frozen: 0,
+      ragedPrompted: false,
+      items: { leap: ITEM_MAX.leap, warp: ITEM_MAX.warp, neon: ITEM_MAX.neon, drum: ITEM_MAX.drum }
     };
     u.y = groundAt(u.x) - u.r;
     return u;
   }
 
   function rollWind() {
+    if (G.kind === 'drill') {
+      if (G.drillWind === '0') { G.wind = 0; return; }
+      if (G.drillWind === '4r') { G.wind = 4; return; }
+      if (G.drillWind === '4l') { G.wind = -4; return; }
+    }
     const m = windMax();
     let w;
     if (G.kind === 'core' && Math.random() < 0.55) {
@@ -559,18 +637,29 @@
       const o = JSON.parse(raw);
       G.winStreak = Math.max(0, parseInt(o.winStreak, 10) || 0);
       G.bestTurns = Math.max(0, parseInt(o.bestTurns, 10) || 0);
-      if (o.mode === 'core' || o.mode === 'hall') G.kind = o.mode;
+      if (o.mode === 'core' || o.mode === 'hall') { G.kind = o.mode; G.lastKind = o.mode; }
       if (o.map === 'plain' || o.map === 'canyon' || o.map === 'twin') G.mapId = o.map;
+      if (o.ruler === false) G.ruler = false;
+      else G.ruler = true;
+      if (o.drillWind === '0' || o.drillWind === '4l' || o.drillWind === '4r' || o.drillWind === 'rand') {
+        G.drillWind = o.drillWind;
+      }
     } catch (err) { /* */ }
   }
 
   function saveBest() {
     try {
+      const mode = (G.kind === 'core' || G.lastKind === 'core') && G.kind !== 'hall' && G.kind !== 'drill'
+        ? 'core'
+        : (G.kind === 'core' ? 'core' : 'hall');
+      const saveMode = G.kind === 'drill' ? (G.lastKind === 'core' ? 'core' : 'hall') : (G.kind === 'core' ? 'core' : 'hall');
       localStorage.setItem(BEST_KEY, JSON.stringify({
         winStreak: G.winStreak,
         bestTurns: G.bestTurns,
-        mode: G.kind,
-        map: G.mapId
+        mode: saveMode,
+        map: G.mapId,
+        ruler: !!G.ruler,
+        drillWind: G.drillWind || 'rand'
       }));
     } catch (err) { /* */ }
   }
@@ -610,7 +699,7 @@
     if (scoreEl) scoreEl.textContent = String(G.winStreak);
     if (bestEl) bestEl.textContent = G.bestTurns > 0 ? String(G.bestTurns) + '回' : '—';
     if (stageLabel) {
-      stageLabel.textContent = G.kind === 'core' ? '堂核' : '弹堂';
+      stageLabel.textContent = kindName();
       stageLabel.classList.toggle('hot', G.kind === 'core');
     }
     if (mapLabel) mapLabel.textContent = MAP_NAME[G.mapId] || '平原';
@@ -618,7 +707,29 @@
     const u = curUnit() || G.p;
     if (angLabel) angLabel.textContent = '角 ' + Math.round((u && u.ang) || 65) + '°';
     if (powLabel) powLabel.textContent = '力 ' + Math.round(G.power);
-    if (walkLabel) walkLabel.textContent = '步 ' + Math.max(0, Math.round(G.walk));
+    const stam = (G.p && G.turn === 'p') ? G.p.stam : (u && u.stam != null ? u.stam : G.stam);
+    if (walkLabel) walkLabel.textContent = '体 ' + Math.max(0, Math.round(G.p ? G.p.stam : stam));
+    if (rageLabel) rageLabel.textContent = '怒 ' + Math.max(0, Math.round((G.p && G.p.rage) || 0));
+    if (ghostLabel) {
+      if (G.ghost && G.mode === 'play') {
+        ghostLabel.classList.remove('gone');
+        ghostLabel.textContent = '上 ' + Math.round(G.ghost.ang) + '°/' + Math.round(G.ghost.power);
+      } else {
+        ghostLabel.classList.add('gone');
+      }
+    }
+    if (foeNameEl) foeNameEl.textContent = G.f && G.f.stake ? '石俑' : '烬丸';
+    function bar(node, t) { if (node) node.style.transform = 'scaleX(' + clamp(t, 0, 1) + ')'; }
+    if (G.p) {
+      bar(stP, G.p.stam / STAM_MAX);
+      bar(rgP, (G.p.rage || 0) / 100);
+    }
+    if (G.f) {
+      bar(stF, (G.f.stam || 0) / STAM_MAX);
+      bar(rgF, (G.f.rage || 0) / 100);
+    }
+    syncItems();
+    syncDrillHud();
     if (comboEl) {
       if (G.combo >= 2 && G.mode === 'play') {
         comboEl.hidden = false;
@@ -634,6 +745,97 @@
       if (hpF) hpF.style.transform = 'scaleX(' + clamp(G.f.hp / G.f.max, 0, 1) + ')';
     }
     syncWeps();
+  }
+
+  function syncItems() {
+    const bag = G.p && G.p.items ? G.p.items : ITEM_MAX;
+    const map = { leap: 'n-leap', warp: 'n-warp', neon: 'n-neon', drum: 'n-drum' };
+    Object.keys(map).forEach(function (k) {
+      const n = el(map[k]);
+      if (n) n.textContent = String(bag[k] != null ? bag[k] : 0);
+      const btn = el(k === 'leap' ? 'btn-leap' : k === 'warp' ? 'btn-warp' : k === 'neon' ? 'btn-neon' : 'btn-drum');
+      if (btn) {
+        const left = bag[k] || 0;
+        const cost = ITEM_COST[k];
+        const stam = G.p ? G.p.stam : 0;
+        btn.classList.toggle('empty', left <= 0 || stam < cost);
+        btn.classList.toggle('on', k === 'neon' && G.neonOn);
+      }
+    });
+    if (el('btn-ult')) {
+      el('btn-ult').classList.toggle('armed', !!(G.p && (G.p.rage >= 100 || G.p.ult)));
+      el('btn-ult').classList.toggle('empty', !(G.p && (G.p.rage >= 100 || G.p.ult)));
+    }
+  }
+
+  function syncDrillWind() {
+    if (!drillWindEl) return;
+    const btns = drillWindEl.querySelectorAll('button');
+    for (let i = 0; i < btns.length; i++) {
+      btns[i].classList.toggle('on', btns[i].getAttribute('data-dw') === G.drillWind);
+    }
+  }
+
+  function mottoGrid(u) {
+    if (!u) return 1;
+    const e = elev(u.ang);
+    if (e >= 82) return clamp(Math.round(Math.abs(90 - e)), 0, 20);
+    let best = 1, bd = 1e9;
+    for (let g = 1; g <= 20; g++) {
+      const d = Math.abs(TABLE65[g] - G.power);
+      if (d < bd) { bd = d; best = g; }
+    }
+    return best;
+  }
+
+  function schoolTips(from, to) {
+    const face = facingOf(from);
+    const dx = (to.x - from.x) * face;
+    const grids = clamp(Math.round(Math.abs(dx) / GRID), 1, 20);
+    const dh = (groundAt(from.x) - groundAt(to.x)) / GRID;
+    const along = G.wind * face;
+    const elev65 = clamp(65 + 2 * along, 5, 175);
+    const ang65 = face > 0 ? elev65 : 180 - elev65;
+    const pow65 = clamp(TABLE65[grids] + Math.round(3 * dh), 12, 100);
+    const elev90 = clamp(90 - grids + 2 * along - Math.round(dh), 5, 175);
+    const ang90 = face > 0 ? elev90 : 180 - elev90;
+    return {
+      grids: Math.abs(to.x - from.x) / GRID,
+      dh: dh,
+      along: along,
+      ang65: ang65,
+      pow65: pow65,
+      ang90: ang90,
+      g: grids
+    };
+  }
+
+  function syncDrillHud() {
+    if (!drillTable) return;
+    const on = G.kind === 'drill' && G.mode === 'play';
+    drillTable.classList.toggle('gone', !on);
+    if (!on || !G.p || !G.f) return;
+    const tip = schoolTips(G.p, G.f);
+    if (dtRows && !dtRows.childElementCount) {
+      for (let g = 1; g <= 20; g++) {
+        const sp = document.createElement('span');
+        sp.setAttribute('data-g', String(g));
+        sp.textContent = g + '格 ' + TABLE65[g];
+        dtRows.appendChild(sp);
+      }
+    }
+    if (dtRows) {
+      const kids = dtRows.children;
+      for (let i = 0; i < kids.length; i++) {
+        kids[i].classList.toggle('on', (kids[i].getAttribute('data-g') | 0) === tip.g);
+      }
+    }
+    const sign = tip.dh >= 0 ? '+' : '';
+    if (dtInfo) {
+      dtInfo.textContent = '距 ' + tip.grids.toFixed(1) + ' 格  Δh ' + sign + tip.dh.toFixed(1) + ' 格  风_along ' + tip.along;
+    }
+    if (dt65) dt65.textContent = '65° 建议  角 ' + Math.round(tip.ang65) + '°  力 ' + tip.pow65;
+    if (dt90) dt90.textContent = '90° 建议  角 ' + Math.round(tip.ang90) + '°  力 95';
   }
 
   function hitStop(sec) {
@@ -708,6 +910,8 @@
         wrap.classList.add('flash');
       }
     }
+    if (why !== 'fall' && why !== 'void') addRage(u, Math.floor(dmg * 0.55));
+    if (why === 'fall') addRage(u, Math.floor(dmg * 0.55));
     audio.hit();
     return dmg;
   }
@@ -728,9 +932,14 @@
         const spl = wep.direct * 0.72 * fall * mul;
         if (spl > dmg) dmg = spl;
       }
+      if (shooter && shooter.ult) dmg *= 1.6;
       if (dmg >= 1) {
         const dealt = hurt(u, dmg, 'blast');
-        if (dealt > 0 && u !== shooter) any = true;
+        if (dealt > 0 && u !== shooter) {
+          any = true;
+          if (shooter && !shooter.stake) addRage(shooter, Math.floor(dealt * 0.45));
+          if (wep && wep.id === 3 && u !== shooter) u.frozen = 1;
+        }
       }
     }
     return any;
@@ -774,9 +983,15 @@
       u.fall += Math.max(0, ny - u.y);
       u.y = ny;
       if (u.y > VH + 40) {
+        addRage(u, 20);
         u.hp = 0;
+        u.rage = 0;
         floatText(u.x, VH - 40, '坠亡', MAG, true);
         audio.fall();
+        if (G.kind === 'drill') {
+          G.stakeT = u.stake ? 1.2 : 0.4;
+          if (!u.stake) G.needPlayerUp = true;
+        }
         return;
       }
       if (u.y >= gy) {
@@ -803,6 +1018,20 @@
   }
 
   function checkEnd() {
+    if (G.kind === 'drill') {
+      if (G.p && G.p.hp <= 0) {
+        const x = spawnX(G.mapId, 'p');
+        G.p.hp = G.p.max;
+        G.p.x = x;
+        G.p.y = groundAt(x) - G.p.r;
+        G.p.grounded = true;
+        G.p.vy = 0;
+        G.p.fall = 0;
+        toast('岚丸回堂', true, false);
+      }
+      if (G.f && G.f.hp <= 0) G.stakeT = Math.max(G.stakeT, 1.2);
+      return false;
+    }
     const pd = !G.p || G.p.hp <= 0;
     const fd = !G.f || G.f.hp <= 0;
     if (!pd && !fd) return false;
@@ -838,20 +1067,38 @@
   }
 
   function beginTurn(who) {
+    if (G.kind === 'drill') who = 'p';
     G.turn = who;
     G.phase = 'aim';
     G.charging = false;
+    G.busy = null;
+    G.busyT = 0;
     G.power = TAP_POW;
     G.walk = WALK_PX;
     G.timeout = TURN_T;
     G.shot = null;
     trail.length = 0;
+    const u = who === 'p' ? G.p : G.f;
+    if (u) {
+      u.stam = STAM_MAX;
+      if (G.kind === 'drill') resetItems(u);
+    }
+    G.stam = u ? u.stam : STAM_MAX;
     rollWind();
     if (who === 'p') G.turns += 1;
     audio.chargeStop();
+    if (u && u.frozen) {
+      toast(u.name + ' 被冻结', true, false);
+      G.phase = 'frozenWait';
+      G.frozenT = 0.55;
+      u.frozen = 0;
+      if (u.ult) u.ult = false;
+      syncHud();
+      return;
+    }
     toast(who === 'p' ? '岚丸的回合 · 风 ' + windText() : '烬丸瞄准中 · 风 ' + windText(), false, who === 'p');
-    setHint(who === 'p' ? '走位拉角，空格蓄力松手打 · 风 ' + windText() : '烬丸拉炮…', who === 'p' ? '' : 'warn');
-    if (who === 'f') startAI();
+    setHint(G.kind === 'drill' ? OPS_DRILL : (who === 'p' ? OPS_PLAY : '烬丸拉炮…'), who === 'p' ? '' : 'warn');
+    if (who === 'f' && G.kind !== 'drill') startAI();
     syncHud();
     cam.tx = VW * 0.5;
     cam.ty = VH * 0.5;
@@ -860,6 +1107,7 @@
 
   function startCharge() {
     if (G.mode !== 'play' || G.phase !== 'aim' || G.turn !== 'p') return;
+    if (G.busy) return;
     G.phase = 'charge';
     G.charging = true;
     G.power = TAP_POW;
@@ -882,6 +1130,10 @@
     const sx = u.x + Math.cos(th) * nose;
     const sy = u.y - 4 - Math.sin(th) * nose;
     const spd = muzzleSpeed(G.power, u.ang, wep);
+    if (G.neonOn) {
+      if (u.items && u.items.neon > 0) u.items.neon -= 1;
+      G.neonOn = false;
+    }
     G.shot = {
       x: sx,
       y: sy,
@@ -891,18 +1143,28 @@
       owner: u,
       pierced: false,
       fuse: 0,
-      life: 0
+      life: 0,
+      ult: !!u.ult
     };
+    if (u.side === 'p') {
+      G.ghostPend = { x: sx, y: sy, ang: u.ang, power: Math.round(G.power), wepId: wep.id, wind: G.wind, points: [] };
+    }
     trail.length = 0;
     G.phase = 'fly';
     G.charging = false;
+    G.busy = null;
     audio.fire(wep);
-    burst(sx, sy, u.side === 'p' ? CYN : MAG, 8, 80, 0.25);
+    if (wep.id === 3) audio.beep(520, 0.1, 'triangle', 0.04, 180);
+    if (u.ult) audio.beep(90, 0.28, 'sine', 0.06, 36);
+    burst(sx, sy, u.ult ? GOLD : (wep.id === 3 ? ICE : (u.side === 'p' ? CYN : MAG)), 8, 80, 0.25);
     u.walkT = 0;
   }
 
   function explode(x, y, wep, owner, fromHit) {
-    carve(x, y, wep.crater);
+    let crater = wep.crater;
+    const wasUlt = !!(owner && owner.ult);
+    if (wasUlt) crater = Math.round(crater * 1.35);
+    carve(x, y, crater);
     if (wep.id === 2 && G.shot && G.shot.pierced) {
       const s = hypot(G.shot.vx, G.shot.vy) || 1;
       const ux = G.shot.vx / s;
@@ -912,13 +1174,19 @@
     const hit = applyBlast(x, y, wep, owner) || fromHit;
     burst(x, y, hit ? (owner && owner.side === 'p' ? CYN : MAG) : DIRT, hit ? 28 : 16, hit ? 260 : 180, 0.55);
     burst(x, y, GOLD, hit ? 10 : 4, 140, 0.35);
-    ringAt(x, y, hit ? GOLD : HOT, wep.crater * 1.6);
+    ringAt(x, y, hit ? GOLD : HOT, crater * 1.6);
     audio.boom(hit, wep);
+    if (wasUlt) {
+      floatText(x, y - 48, '殿破', GOLD, true);
+      screenFlash(GOLD, 0.45);
+      hitStop(0.08);
+      kick(6.5);
+    }
     if (hit) {
       audio.hit();
       hitStop(fromHit ? 0.066 : 0.048);
       kick(fromHit ? 6.2 : 4.4);
-      screenFlash(owner && owner.side === 'p' ? CYN : MAG, 0.28);
+      screenFlash(wasUlt ? GOLD : (owner && owner.side === 'p' ? CYN : MAG), wasUlt ? 0.45 : 0.28);
       G.combo += 1;
       if (G.combo >= 2) {
         floatText(x, y - 36, '连堂 ×' + G.combo, GOLD, true);
@@ -933,6 +1201,18 @@
       G.combo = 0;
       audio.dirt();
       kick(2.1);
+    }
+    if (owner && owner.ult) owner.ult = false;
+    if (G.ghostPend) {
+      const pts = trail.slice();
+      pts.push({ x: x, y: y, a: 1 });
+      G.ghost = {
+        x: G.ghostPend.x, y: G.ghostPend.y,
+        ang: G.ghostPend.ang, power: G.ghostPend.power,
+        wepId: G.ghostPend.wepId, wind: G.ghostPend.wind,
+        points: pts
+      };
+      G.ghostPend = null;
     }
     ungroundIfAir(G.p);
     ungroundIfAir(G.f);
@@ -955,6 +1235,7 @@
     s.y += s.vy * dt;
     trail.push({ x: s.x, y: s.y, a: 1 });
     if (trail.length > 28) trail.shift();
+    if (G.ghostPend) G.ghostPend.points = trail.slice();
     cam.tx = clamp(s.x, 180, VW - 180);
     cam.ty = clamp(s.y, 140, VH - 80);
     cam.tz = 1.12;
@@ -996,6 +1277,188 @@
     }
   }
 
+
+  function playerCanAct() {
+    return G.mode === 'play' && G.turn === 'p' && G.phase === 'aim' && !G.busy;
+  }
+
+  function toastDeny(msg) { toast(msg, true, false); }
+
+  function useLeap(u) {
+    if (!u || G.phase !== 'aim' || G.busy) return false;
+    if (u.frozen) return false;
+    if (!u.grounded) { if (u.side === 'p') toastDeny('空中不能飞步'); return false; }
+    if (!u.items || u.items.leap <= 0) { if (u.side === 'p') toastDeny('本局已用完'); return false; }
+    if (u.stam < ITEM_COST.leap) { if (u.side === 'p') toastDeny('体力不足'); return false; }
+    let dir = facingOf(u);
+    if (u.side === 'p') {
+      if (keys.l || padHold.l) dir = -1;
+      if (keys.r || padHold.r) dir = 1;
+    }
+    u.items.leap -= 1;
+    u.stam -= ITEM_COST.leap;
+    u.face = dir;
+    G.busy = 'leap';
+    G.busyT = 0;
+    G.leap = { u: u, x0: u.x, y0: u.y, dir: dir };
+    u.grounded = false;
+    toast('飞步', false, false);
+    audio.ensure();
+    audio.beep(420, 0.09, 'sine', 0.04, 720);
+    burst(u.x, u.y, CYN, 6, 70, 0.2);
+    syncHud();
+    return true;
+  }
+
+  function stepLeap(dt) {
+    const L = G.leap;
+    if (!L || !L.u) { G.busy = null; return; }
+    G.busyT += dt;
+    const s = clamp(G.busyT / LEAP_T, 0, 1);
+    const x1 = clamp(L.x0 + LEAP_DX * L.dir, 22, VW - 22);
+    L.u.x = L.x0 + (x1 - L.x0) * s;
+    L.u.y = L.y0 - 4 * LEAP_H * s * (1 - s);
+    L.u.walkT = 0.08;
+    if (s >= 1) {
+      L.u.x = x1;
+      L.u.vy = 0;
+      L.u.fall = 0;
+      ungroundIfAir(L.u);
+      if (L.u.grounded) L.u.y = groundAt(L.u.x) - L.u.r;
+      G.busy = null;
+      G.leap = null;
+      if (G.phase === 'aim') { /* stay aim */ }
+    }
+  }
+
+  function validWarpX(from, x) {
+    x = clamp(x, 22, VW - 22);
+    const dx = x - from.x;
+    const gy = groundAt(x);
+    const dy = (gy - from.r) - from.y;
+    if (hypot(dx, dy) > WARP_R) {
+      const k = WARP_R / hypot(dx, dy);
+      x = clamp(from.x + dx * k, 22, VW - 22);
+    }
+    return x;
+  }
+
+  function beginWarp(u) {
+    if (!u || G.phase !== 'aim' || G.busy) return false;
+    if (!u.items || u.items.warp <= 0) { if (u.side === 'p') toastDeny('本局已用完'); return false; }
+    if (u.stam < ITEM_COST.warp) { if (u.side === 'p') toastDeny('体力不足'); return false; }
+    G.busy = 'warpAim';
+    G.warpX = validWarpX(u, G.pointer.x);
+    toast('影挪 · 点地确认', false, false);
+    return true;
+  }
+
+  function confirmWarp(u) {
+    if (G.busy !== 'warpAim' || !u) return false;
+    const x = validWarpX(u, G.warpX);
+    u.items.warp -= 1;
+    u.stam -= ITEM_COST.warp;
+    u.x = x;
+    u.y = Math.max(24, groundAt(x) - u.r);
+    u.vy = 0;
+    u.fall = 0;
+    ungroundIfAir(u);
+    G.busy = null;
+    toast('影挪', false, true);
+    audio.ensure();
+    audio.beep(880, 0.08, 'triangle', 0.04, 1400);
+    burst(u.x, u.y, CYN, 10, 90, 0.22);
+    syncHud();
+    return true;
+  }
+
+  function cancelWarp() {
+    if (G.busy !== 'warpAim') return;
+    G.busy = null;
+    toast('取消影挪', false, false);
+  }
+
+  function toggleNeon(u) {
+    if (!u || G.phase !== 'aim' || G.busy) return false;
+    if (!u.items || u.items.neon <= 0) { if (u.side === 'p') toastDeny('本局已用完'); return false; }
+    G.neonOn = !G.neonOn;
+    toast(G.neonOn ? '霓弹 · 本发' : '卸下霓弹', false, G.neonOn);
+    syncHud();
+    return true;
+  }
+
+  function useDrum(u) {
+    if (!u || G.phase !== 'aim' || G.busy) return false;
+    if (!u.items || u.items.drum <= 0) { if (u.side === 'p') toastDeny('本局已用完'); return false; }
+    u.items.drum -= 1;
+    if (u.rage >= 100) toast('怒已满', false, true);
+    else {
+      addRage(u, 50);
+      toast('鼓息', false, true);
+    }
+    audio.ensure();
+    audio.beep(330, 0.08, 'sine', 0.04, 660);
+    audio.beep(520, 0.12, 'triangle', 0.03, 880);
+    burst(u.x, u.y, GOLD, 8, 70, 0.22);
+    syncHud();
+    return true;
+  }
+
+  function useUlt(u) {
+    if (!u || G.phase !== 'aim' || G.busy) return false;
+    if (u.ult) { toast('殿破已点亮', false, true); return false; }
+    if ((u.rage || 0) < 100) { if (u.side === 'p') toastDeny('怒气未满'); return false; }
+    u.rage = 0;
+    u.ult = true;
+    toast('殿破 · 下一发', false, true);
+    audio.ensure();
+    audio.beep(140, 0.16, 'sine', 0.05, 60);
+    syncHud();
+    return true;
+  }
+
+  function skipTurn() {
+    if (G.mode !== 'play' || G.phase !== 'aim' || G.busy) return;
+    const u = curUnit();
+    if (u && u.ult) u.ult = false;
+    G.neonOn = false;
+    G.combo = 0;
+    G.charging = false;
+    audio.chargeStop();
+    toast('跳过', false, false);
+    G.phase = 'settle';
+    G.settleT = 0.10;
+    syncHud();
+  }
+
+  function onItem(id) {
+    if (G.mode !== 'play') return;
+    if (G.turn !== 'p') return;
+    const u = G.p;
+    if (id === 'leap') useLeap(u);
+    else if (id === 'warp') {
+      if (G.busy === 'warpAim') confirmWarp(u);
+      else beginWarp(u);
+    } else if (id === 'neon') toggleNeon(u);
+    else if (id === 'drum') useDrum(u);
+    else if (id === 'ult') useUlt(u);
+    else if (id === 'skip') skipTurn();
+  }
+
+  function pitDepth(u) {
+    if (!u) return 0;
+    const g = groundAt(u.x);
+    const gl = groundAt(clamp(u.x - 48, 0, VW - 1));
+    const gr = groundAt(clamp(u.x + 48, 0, VW - 1));
+    return g - (gl + gr) * 0.5;
+  }
+
+  function thinLedge(u) {
+    if (!u) return false;
+    const g0 = groundAt(u.x);
+    return (groundAt(clamp(u.x - 36, 0, VW - 1)) - g0 > 28) || (groundAt(clamp(u.x + 36, 0, VW - 1)) - g0 > 28);
+  }
+
   let AI = { wait: 0, walked: false, ang: 65, pow: 70, wep: 0, stage: 0 };
 
   function pickAIWeapon() {
@@ -1016,12 +1479,24 @@
     if (!imp || !G.p) return -1e9;
     const t = G.p;
     const d = hypot(imp.x - t.x, imp.y - t.y);
-    if (imp.hit === t) return 12000 - imp.t * 40;
-    if (d < wep.splash) return 5000 - d * 28;
     const feet = hypot(imp.x - t.x, imp.y - (t.y + t.r));
-    if (feet < 40) return 1800 - feet * 16;
     const mid = Math.abs(imp.x - (from.x + t.x) * 0.5);
-    return 200 - d * 0.45 - mid * 0.05;
+    let score = 200 - d * 0.45 - mid * 0.05;
+    if (imp.hit === t) score = 12000 - imp.t * 40;
+    else if (d < wep.splash) score = 5000 - d * 28;
+    else if (feet < 40) score = 1800 - feet * 16;
+    let bury = 0;
+    const feetX = Math.abs(imp.x - t.x);
+    if (feetX < 34 && wep.crater >= 30) bury += 900 + wep.crater * 0.7 * 8;
+    if (pitDepth(t) > 28 && feetX < 50) bury += 1400;
+    score += bury;
+    const selfD = hypot(imp.x - from.x, imp.y - from.y);
+    if (selfD < wep.splash * 0.45) {
+      const fall = Math.pow(1 - selfD / wep.splash, 1.1);
+      const spl = wep.direct * 0.72 * fall * dmgMul();
+      if (from.hp <= spl) score -= 20000;
+    }
+    return score;
   }
 
   function solveAI(from) {
@@ -1051,10 +1526,7 @@
     return best;
   }
 
-  function startAI() {
-    G.wep = pickAIWeapon();
-    syncWeps();
-    const from = G.f;
+  function planAIMove(from) {
     let best = solveAI(from);
     let walkTo = from.x;
     const tries = [-72, -40, 40, 72];
@@ -1072,22 +1544,158 @@
     }
     from.x = ox;
     from.y = oy;
+    return { best: best, walkTo: walkTo };
+  }
+
+  function pickAIWarp(from) {
+    if (!from.items || from.items.warp <= 0 || from.stam < 25) return 0;
+    if (G.turns <= 1) return 0;
+    const foe = G.p;
+    if (pitDepth(from) >= 40) {
+      let bestX = 0, bestY = 1e9, bestD = 0;
+      for (let i = 0; i < 16; i++) {
+        const a = i * TAU / 16;
+        const x = clamp(from.x + Math.cos(a) * 180, 22, VW - 22);
+        if (Math.abs(x - from.x) > WARP_R) continue;
+        const gy = groundAt(x);
+        const dFoe = Math.abs(x - foe.x);
+        if (gy < bestY - 8 || (Math.abs(gy - bestY) < 8 && dFoe > bestD)) {
+          if (dFoe >= GRID * 3) { bestY = gy; bestX = x; bestD = dFoe; }
+        }
+      }
+      if (bestX) return bestX;
+    }
+    if (thinLedge(from) && from.hp <= 35) {
+      for (let dx = -200; dx <= 200; dx += 20) {
+        const x = clamp(from.x + dx, 22, VW - 22);
+        if (Math.abs(x - from.x) > WARP_R) continue;
+        const g0 = groundAt(x);
+        const gl = groundAt(clamp(x - 20, 0, VW - 1));
+        const gr = groundAt(clamp(x + 20, 0, VW - 1));
+        if (Math.abs(gl - g0) < 10 && Math.abs(gr - g0) < 10) return x;
+      }
+    }
+    let bestX = 0, bestSc = solveAI(from).score;
+    const dists = [80, 150, 220];
+    for (let i = 0; i < 8; i++) {
+      const a = i * TAU / 8;
+      for (let k = 0; k < dists.length; k++) {
+        const x = clamp(from.x + Math.cos(a) * dists[k], 22, VW - 22);
+        if (hypot(x - from.x, 0) > WARP_R) continue;
+        const ox = from.x, oy = from.y;
+        from.x = x;
+        from.y = groundAt(x) - from.r;
+        const sc = solveAI(from).score;
+        from.x = ox; from.y = oy;
+        if (sc > bestSc + 400) { bestSc = sc; bestX = x; }
+      }
+    }
+    return bestX;
+  }
+
+  function startAI() {
+    G.wep = pickAIWeapon();
+    G.neonOn = false;
+    syncWeps();
+    const from = G.f;
+    const plan = { drum: false, warp: 0, leap: 0, neon: false, ult: false };
+    const score0 = solveAI(from).score;
+    if (from.items && from.items.drum > 0) {
+      if (from.rage <= 50) plan.drum = true;
+      else if (from.rage < 100 && score0 >= 8000 && from.rage + 50 >= 100) plan.drum = true;
+    }
+    const warpX = pickAIWarp(from);
+    if (warpX) plan.warp = warpX;
+    if (!plan.warp && from.items && from.items.leap > 0 && from.stam >= 35) {
+      const ox = from.x, oy = from.y;
+      let leapDir = 0;
+      const opts = [1, -1];
+      for (let i = 0; i < opts.length; i++) {
+        const nx = clamp(ox + LEAP_DX * opts[i], 22, VW - 22);
+        from.x = nx;
+        from.y = groundAt(nx) - from.r;
+        const sc = solveAI(from).score;
+        if (sc > score0 + 220) { leapDir = opts[i]; }
+      }
+      from.x = ox; from.y = oy;
+      if (pitDepth(from) >= 40) {
+        const gL = groundAt(clamp(from.x - 80, 0, VW - 1));
+        const gR = groundAt(clamp(from.x + 80, 0, VW - 1));
+        if (gL < groundAt(from.x) - 10) leapDir = -1;
+        if (gR < groundAt(from.x) - 10) leapDir = 1;
+      }
+      if (G.kind === 'core' && from.hp <= 18 && G.p && G.p.rage >= 80) {
+        leapDir = from.x < G.p.x ? -1 : 1;
+      }
+      plan.leap = leapDir;
+    }
+    const moved = planAIMove(from);
+    let best = moved.best;
+    if (from.items && from.items.neon > 0 && G.turns - G.aiLastNeonTurn >= 2 && G.p && G.p.hp > 12 && best.score >= 4000) {
+      const lead = from.hp - G.p.hp >= 15;
+      const breakRage = G.p.rage >= 80;
+      const ledge = thinLedge(G.p);
+      if (lead || breakRage || ledge) plan.neon = true;
+    }
+    if ((from.rage >= 100 || (plan.drum && from.rage + 50 >= 100)) && best.score >= 5000) plan.ult = true;
     const loose = G.kind === 'core' ? 0 : 1;
     const aj = loose ? 3 : 1.5;
     const pj = loose ? 4 : 2;
     best.ang = clamp(best.ang + rand(-aj, aj), 5, 175);
     best.pow = clamp(best.pow + rand(-pj, pj), 16, 100);
-    AI.wait = 0.28;
+    AI.wait = 0.2;
     AI.walked = false;
-    AI.walkTo = walkTo;
+    AI.walkTo = moved.walkTo;
     AI.ang = best.ang;
     AI.pow = best.pow;
-    AI.stage = 0;
+    AI.score = best.score;
+    AI.plan = plan;
+    AI.stage = 'prep';
   }
 
   function stepAI(dt) {
     const u = G.f;
     if (!u) return;
+    if (AI.stage === 'prep') {
+      AI.wait -= dt;
+      if (AI.wait > 0) return;
+      const plan = AI.plan || {};
+      if (plan.drum) { useDrum(u); plan.drum = false; AI.wait = 0.18; return; }
+      if (plan.warp) {
+        G.warpX = plan.warp;
+        G.busy = 'warpAim';
+        confirmWarp(u);
+        plan.warp = 0;
+        const moved = planAIMove(u);
+        AI.walkTo = moved.walkTo;
+        AI.ang = moved.best.ang;
+        AI.pow = moved.best.pow;
+        AI.wait = 0.16;
+        return;
+      }
+      if (plan.leap) {
+        u.face = plan.leap;
+        useLeap(u);
+        plan.leap = 0;
+        AI.stage = 'leap';
+        return;
+      }
+      if (plan.neon) { G.neonOn = true; G.aiLastNeonTurn = G.turns; }
+      if (plan.ult && u.rage >= 100) useUlt(u);
+      AI.stage = 0;
+      AI.wait = 0.16;
+      return;
+    }
+    if (AI.stage === 'leap') {
+      if (G.busy === 'leap') return;
+      const moved = planAIMove(u);
+      AI.walkTo = moved.walkTo;
+      AI.ang = moved.best.ang;
+      AI.pow = moved.best.pow;
+      AI.stage = 0;
+      AI.wait = 0.12;
+      return;
+    }
     if (AI.stage === 0) {
       AI.wait -= dt;
       if (AI.wait > 0) return;
@@ -1095,11 +1703,12 @@
     }
     if (AI.stage === 1) {
       const dx = AI.walkTo - u.x;
-      if (Math.abs(dx) > 2 && G.walk > 0) {
+      if (Math.abs(dx) > 2 && G.walk > 0 && u.stam > 0) {
         const dir = dx > 0 ? 1 : -1;
-        const step = Math.min(G.walk, 78 * dt, Math.abs(dx));
+        const step = Math.min(G.walk, u.stam, 78 * dt, Math.abs(dx));
         u.x = clamp(u.x + dir * step, 22, VW - 22);
         G.walk -= step;
+        u.stam -= step;
         u.face = dir;
         u.walkT = 0.1;
         ungroundIfAir(u);
@@ -1134,21 +1743,22 @@
   }
 
   function walkPlayer(dt) {
-    if (G.turn !== 'p' || G.phase !== 'aim') return;
+    if (G.turn !== 'p' || G.phase !== 'aim' || G.busy) return;
     let dir = 0;
     if (keys.l || padHold.l) dir -= 1;
     if (keys.r || padHold.r) dir += 1;
-    if (!dir || G.walk <= 0) return;
-    const step = Math.min(G.walk, 90 * dt);
+    if (!dir || G.walk <= 0 || G.p.stam <= 0) return;
+    const step = Math.min(G.walk, G.p.stam, 90 * dt);
     G.p.x = clamp(G.p.x + dir * step, 22, VW - 22);
     G.walk -= step;
+    G.p.stam -= step;
     G.p.face = dir;
     G.p.walkT = 0.12;
     ungroundIfAir(G.p);
   }
 
   function aimPlayer(dt) {
-    if (G.turn !== 'p' || (G.phase !== 'aim' && G.phase !== 'charge')) return;
+    if (G.turn !== 'p' || G.busy || (G.phase !== 'aim' && G.phase !== 'charge')) return;
     let dir = 0;
     if (keys.u || padHold.u) dir += 1;
     if (keys.d || padHold.d) dir -= 1;
@@ -1166,6 +1776,12 @@
     G.turns = 0;
     G.wep = 0;
     G.power = TAP_POW;
+    G.neonOn = false;
+    G.busy = null;
+    G.ghost = null;
+    G.ghostPend = null;
+    G.stakeT = 0;
+    G.aiLastNeonTurn = -9;
     particles.length = 0;
     floats.length = 0;
     rings.length = 0;
@@ -1176,15 +1792,20 @@
   }
 
   function startGame(kind) {
-    G.kind = kind === 'core' ? 'core' : 'hall';
+    if (kind === 'drill') G.kind = 'drill';
+    else if (kind === 'core') { G.kind = 'core'; G.lastKind = 'core'; }
+    else { G.kind = 'hall'; G.lastKind = 'hall'; }
     G.mode = 'play';
     resetWorld();
     hideOverlay();
     audio.start();
     beginTurn('p');
-    toast((G.kind === 'core' ? '堂核 · 薄血狂风' : '弹堂 · 看风拉角') + ' · ' + MAP_NAME[G.mapId], G.kind === 'core', G.kind !== 'core');
-    saveBest();
+    const msg = G.kind === 'core' ? '堂核 · 薄血狂风' : G.kind === 'drill' ? '演习场 · 对着表练' : '弹堂 · 看风拉角';
+    toast(msg + ' · ' + MAP_NAME[G.mapId], G.kind === 'core', G.kind !== 'core');
+    if (G.kind !== 'drill') saveBest();
+    else saveBest();
     syncHud();
+    syncDrillWind();
   }
 
   function goTitle() {
@@ -1194,8 +1815,9 @@
     rollWind();
     audio.chargeStop();
     showOverlay('title', '弹堂', '看风，拉满或点射，把对面从石殿上轰下去。');
-    setHint('1 / 回车 / 空格 弹堂 · 2 堂核 · 点地图换地形');
+    setHint('1 / 回车 / 空格 弹堂 · 2 堂核 · 3 演习场 · 点地图换地形');
     syncMaps();
+    syncDrillWind();
     syncHud();
   }
 
@@ -1275,6 +1897,19 @@
     }
     if (G.p) stepUnitPhys(G.p, dt);
     if (G.f) stepUnitPhys(G.f, dt);
+    if (G.stakeT > 0) {
+      G.stakeT -= dt;
+      if (G.stakeT <= 0 && G.f) {
+        const x = spawnX(G.mapId, 'f');
+        G.f.hp = G.f.max;
+        G.f.x = x;
+        G.f.y = groundAt(x) - G.f.r;
+        G.f.grounded = true;
+        G.f.vy = 0;
+        G.f.fall = 0;
+        floatText(x, G.f.y - 20, '归位', GOLD, false);
+      }
+    }
     if (G.mode === 'play' && G.phase !== 'fly' && G.phase !== 'settle') {
       if ((G.p && G.p.hp <= 0) || (G.f && G.f.hp <= 0)) {
         if (checkEnd()) return;
@@ -1287,22 +1922,33 @@
     }
     if (G.mode !== 'play') return;
 
+    if (G.phase === 'frozenWait') {
+      G.frozenT -= dt;
+      if (G.frozenT <= 0) {
+        if (G.kind === 'drill') beginTurn('p');
+        else beginTurn(G.turn === 'p' ? 'f' : 'p');
+      }
+      return;
+    }
+    if (G.busy === 'leap') stepLeap(dt);
     if (G.phase === 'aim' || G.phase === 'charge') {
       G.timeout -= dt;
-      if (G.timeout <= 0 && G.turn === 'p') {
+      if (G.timeout <= 0 && (G.turn === 'p' || G.turn === 'f') && !G.busy) {
         G.power = 50;
-        fire(G.p);
+        fire(curUnit());
         toast('超时 · 半力打出', true, false);
         return;
       }
       if (G.turn === 'p') {
-        walkPlayer(dt);
-        aimPlayer(dt);
-        if (G.phase === 'charge') {
+        if (!G.busy) {
+          walkPlayer(dt);
+          aimPlayer(dt);
+        }
+        if (G.phase === 'charge' && !G.busy) {
           G.power = Math.min(100, G.power + (100 - TAP_POW) / CHARGE_T * dt);
           audio.chargeTick(G.power);
         }
-      } else {
+      } else if (G.kind !== 'drill') {
         stepAI(dt);
       }
       syncHud();
@@ -1312,7 +1958,8 @@
       G.settleT -= dt;
       if (G.settleT <= 0 && unitsSettled()) {
         if (checkEnd()) return;
-        beginTurn(G.turn === 'p' ? 'f' : 'p');
+        if (G.kind === 'drill') beginTurn('p');
+        else beginTurn(G.turn === 'p' ? 'f' : 'p');
       }
     }
   }
@@ -1576,6 +2223,27 @@
       g.stroke();
       g.restore();
     }
+    if (u.side === 'p' && G.ghost && G.turn === 'p' && (G.phase === 'aim' || G.phase === 'charge')) {
+      const gh = G.ghost.ang * Math.PI / 180;
+      g.save();
+      g.strokeStyle = 'rgba(255,227,107,0.35)';
+      g.lineWidth = 1.4;
+      g.beginPath();
+      g.arc(x0, y0, 10, 0, TAU);
+      g.stroke();
+      g.beginPath();
+      g.moveTo(x0, y0);
+      g.lineTo(x0 + Math.cos(gh) * 36, y0 - Math.sin(gh) * 36);
+      g.stroke();
+      g.restore();
+    }
+    if (u.frozen) {
+      g.strokeStyle = rgba(ICE, 0.7);
+      g.lineWidth = 2;
+      g.beginPath();
+      g.arc(u.x, u.y, 18, 0, TAU);
+      g.stroke();
+    }
   }
 
   function drawUnitHp(g, u) {
@@ -1591,7 +2259,7 @@
   function drawShot(g) {
     const s = G.shot;
     if (!s) return;
-    const rgb = s.owner && s.owner.side === 'p' ? CYN : MAG;
+    const rgb = s.ult ? GOLD : (s.wep && s.wep.id === 3 ? ICE : (s.owner && s.owner.side === 'p' ? CYN : MAG));
     g.save();
     g.lineCap = 'round';
     for (let i = 1; i < trail.length; i++) {
@@ -1628,6 +2296,106 @@
     }
   }
 
+
+  function drawRuler(g) {
+    if (G.mode !== 'play') return;
+    if (!G.ruler && G.kind !== 'drill') return;
+    const u = curUnit();
+    if (!u) return;
+    const hi = mottoGrid(u);
+    g.save();
+    g.font = 'bold 10px Segoe UI, PingFang SC, sans-serif';
+    g.textAlign = 'center';
+    for (let n = -20; n <= 20; n++) {
+      const x = u.x + n * GRID;
+      if (x < 2 || x > VW - 2) continue;
+      const gy = groundAt(x);
+      const h = 22;
+      const y1 = gy - 4;
+      const y0 = y1 - h;
+      const strong = n % 5 === 0;
+      const on = Math.abs(n) === hi;
+      g.strokeStyle = on ? 'rgba(255,227,107,0.70)' : (strong ? 'rgba(255,227,107,0.50)' : 'rgba(255,227,107,0.35)');
+      g.lineWidth = on ? 2 : 1;
+      g.beginPath();
+      g.moveTo(x, y0);
+      g.lineTo(x, y1);
+      g.stroke();
+      if (strong) {
+        g.fillStyle = on ? 'rgba(255,227,107,0.85)' : 'rgba(255,227,107,0.45)';
+        g.fillText(String(n), x, y0 - 3);
+      }
+    }
+    g.restore();
+  }
+
+  function drawGhostPath(g) {
+    if (!G.ghost || G.mode !== 'play' || G.turn !== 'p') return;
+    if (G.phase !== 'aim' && G.phase !== 'charge') return;
+    const pts = G.ghost.points;
+    if (!pts || pts.length < 2) return;
+    g.save();
+    g.setLineDash([5, 6]);
+    g.strokeStyle = 'rgba(255,227,107,0.30)';
+    g.lineWidth = 1.6;
+    g.beginPath();
+    g.moveTo(pts[0].x, pts[0].y);
+    for (let i = 1; i < pts.length; i++) g.lineTo(pts[i].x, pts[i].y);
+    g.stroke();
+    g.restore();
+  }
+
+  function drawWarpAim(g) {
+    if (G.busy !== 'warpAim') return;
+    const u = curUnit();
+    if (!u) return;
+    g.save();
+    g.strokeStyle = 'rgba(0,232,255,0.35)';
+    g.setLineDash([6, 5]);
+    g.beginPath();
+    g.arc(u.x, u.y, WARP_R, 0, TAU);
+    g.stroke();
+    const x = validWarpX(u, G.warpX);
+    const y = groundAt(x) - u.r;
+    g.setLineDash([]);
+    g.fillStyle = 'rgba(0,232,255,0.35)';
+    g.beginPath();
+    g.arc(x, y, 8, 0, TAU);
+    g.fill();
+    g.restore();
+  }
+
+  function drawPredict(g) {
+    if (G.kind !== 'drill' || G.mode !== 'play') return;
+    if (G.phase !== 'aim' && G.phase !== 'charge') return;
+    const u = G.p;
+    if (!u) return;
+    const wep = wepOf();
+    const th = u.ang * Math.PI / 180;
+    let x = u.x + Math.cos(th) * 18;
+    let y = u.y - 4 - Math.sin(th) * 18;
+    const spd = muzzleSpeed(G.power, u.ang, wep);
+    let vx = Math.cos(th) * spd;
+    let vy = -Math.sin(th) * spd;
+    const acc = G.wind * WIND_K;
+    const dt = 1 / 60;
+    g.save();
+    g.strokeStyle = 'rgba(255,227,107,0.35)';
+    g.lineWidth = 1.2;
+    g.beginPath();
+    g.moveTo(x, y);
+    for (let i = 0; i < 180; i++) {
+      vx += acc * dt;
+      vy += GRAV * dt;
+      x += vx * dt;
+      y += vy * dt;
+      g.lineTo(x, y);
+      if (x < 2 || x > VW - 2 || y > VH + 8 || inGround(x, y)) break;
+    }
+    g.stroke();
+    g.restore();
+  }
+
   function draw() {
     if (!ctx || !canvas) return;
     const dpr = view.dpr;
@@ -1650,6 +2418,10 @@
     drawWind(ctx);
     if (terrainDirty) paintTerrain();
     if (terrainCv) ctx.drawImage(terrainCv, 0, 0);
+    drawRuler(ctx);
+    drawGhostPath(ctx);
+    drawPredict(ctx);
+    drawWarpAim(ctx);
 
     if (G.p && G.p.hp > 0) {
       drawSpriteUnit(ctx, G.p);
@@ -1771,10 +2543,27 @@
     if (G.mode === 'title') {
       if (k === '1' || k === 'Enter') { startGame('hall'); return; }
       if (k === '2') { startGame('core'); return; }
+      if (k === '3') { startGame('drill'); return; }
       if (k === '[') { setMap(MAP_IDS[(MAP_IDS.indexOf(G.mapId) + 2) % 3]); return; }
       if (k === ']') { setMap(MAP_IDS[(MAP_IDS.indexOf(G.mapId) + 1) % 3]); return; }
       return;
     }
+    if (k === 'Escape' || k === 'Esc') { cancelWarp(); return; }
+    if (k === 'Tab') {
+      e.preventDefault();
+      if (G.kind !== 'drill') {
+        G.ruler = !G.ruler;
+        saveBest();
+        toast(G.ruler ? '格尺开' : '格尺关', false, false);
+      }
+      return;
+    }
+    if (k === 'q' || k === 'Q') { onItem('leap'); return; }
+    if (k === 'e' || k === 'E') { onItem('warp'); return; }
+    if (k === 'c' || k === 'C') { onItem('neon'); return; }
+    if (k === 'v' || k === 'V') { onItem('drum'); return; }
+    if (k === 'f' || k === 'F') { onItem('ult'); return; }
+    if (k === 'x' || k === 'X') { onItem('skip'); return; }
     if (k === '1') setWep(0);
     if (k === '2') setWep(1);
     if (k === '3') setWep(2);
@@ -1865,6 +2654,44 @@
     const ai = traceShot(mx, my, sol.ang, sol.pow, 0, WEPS[0], G.H, G.f);
     const miss = hypot(ai.x - 152, ai.y - G.p.y);
     ok('AI near-hit', miss < 90, 'miss ' + Math.round(miss) + ' ang ' + Math.round(sol.ang) + ' pow ' + Math.round(sol.pow));
+    function rangeFlat(power) {
+      const Hflat = 400;
+      const x0 = 200;
+      const y0 = Hflat - UNIT_R - 4;
+      const th = 65 * Math.PI / 180;
+      const spd = muzzleSpeed(power, 65, WEPS[0]);
+      let vx = Math.cos(th) * spd;
+      let vy = -Math.sin(th) * spd;
+      let x = x0;
+      let y = y0;
+      const dt = 1 / 60;
+      for (let i = 0; i < 800; i++) {
+        vy += GRAV * dt;
+        x += vx * dt;
+        y += vy * dt;
+        if (y >= Hflat) return (x - x0) / GRID;
+      }
+      return (x - x0) / GRID;
+    }
+    let tableOk = true;
+    let worst = 0;
+    for (let g = 1; g <= 20; g++) {
+      const got = rangeFlat(TABLE65[g]);
+      const err = Math.abs(got - g);
+      if (err > worst) worst = err;
+      if (err > 0.4) tableOk = false;
+    }
+    ok('65 table vs ruler <=0.4', tableOk, 'worst ' + worst.toFixed(2));
+    ok('grid 48', GRID === 48);
+    ok('ruler default on', G.ruler !== false);
+    ok('neon dmg 8', NEON.direct === 8 && NEON.splash === 28 && NEON.crater === 18);
+    ok('warp cost 25', ITEM_COST.warp === 25);
+    ok('drum cost 0', ITEM_COST.drum === 0);
+    const frozenU = { frozen: 1, name: '烬丸' };
+    ok('freeze flag', frozenU.frozen === 1);
+    const ultMul = 32 * 1 * 1.6;
+    ok('hallbreak x1.6', Math.round(ultMul) === 51);
+
     const text = out.join('\n');
     if (typeof console !== 'undefined') console.log(text);
     return out.every(function (l) { return l.indexOf('OK') === 0; });
@@ -1891,7 +2718,14 @@
     audio.ensure();
     if (overlayOpen()) return;
     const w = worldFromEvent(e);
-    if (G.mode === 'play' && G.turn === 'p' && (G.phase === 'aim' || G.phase === 'charge')) {
+    G.pointer.x = w.x; G.pointer.y = w.y;
+    if (G.busy === 'warpAim' && G.turn === 'p') {
+      G.warpX = w.x;
+      confirmWarp(G.p);
+      e.preventDefault();
+      return;
+    }
+    if (G.mode === 'play' && G.turn === 'p' && (G.phase === 'aim' || G.phase === 'charge') && !G.busy) {
       aimFromPointer(w.x, w.y, G.p);
       if (G.phase === 'aim') startCharge();
     }
@@ -1900,8 +2734,10 @@
   }, { passive: false });
   canvas.addEventListener('pointermove', function (e) {
     if (overlayOpen()) return;
-    if (G.mode === 'play' && G.turn === 'p' && (G.phase === 'aim' || G.phase === 'charge')) {
-      const w = worldFromEvent(e);
+    const w = worldFromEvent(e);
+    G.pointer.x = w.x; G.pointer.y = w.y;
+    if (G.busy === 'warpAim') G.warpX = w.x;
+    if (G.mode === 'play' && G.turn === 'p' && (G.phase === 'aim' || G.phase === 'charge') && !G.busy) {
       aimFromPointer(w.x, w.y, G.p);
     }
   });
@@ -1911,7 +2747,7 @@
   canvas.addEventListener('pointercancel', function () {
     releaseCharge();
   });
-  canvas.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+  canvas.addEventListener('contextmenu', function (e) { e.preventDefault(); cancelWarp(); });
 
   window.addEventListener('keydown', function (e) { onKey(e, true); });
   window.addEventListener('keyup', function (e) { onKey(e, false); });
@@ -1927,6 +2763,33 @@
 
   if (btnHall) btnHall.addEventListener('click', function () { audio.ensure(); startGame('hall'); });
   if (btnCore) btnCore.addEventListener('click', function () { audio.ensure(); startGame('core'); });
+  if (btnDrill) btnDrill.addEventListener('click', function () { audio.ensure(); startGame('drill'); });
+  if (itemsEl) {
+    itemsEl.addEventListener('click', function (e) {
+      const b = e.target.closest('button');
+      if (!b) return;
+      audio.ensure();
+      onItem(b.getAttribute('data-item'));
+    });
+  }
+  if (padEl) {
+    padEl.addEventListener('click', function (e) {
+      const b = e.target.closest('[data-item]');
+      if (!b) return;
+      audio.ensure();
+      onItem(b.getAttribute('data-item'));
+    });
+  }
+  if (drillWindEl) {
+    drillWindEl.addEventListener('click', function (e) {
+      const b = e.target.closest('button');
+      if (!b) return;
+      audio.ensure();
+      G.drillWind = b.getAttribute('data-dw') || 'rand';
+      syncDrillWind();
+      saveBest();
+    });
+  }
   if (ovRetry) ovRetry.addEventListener('click', function () { audio.ensure(); restart(); });
   if (ovModes) ovModes.addEventListener('click', function () { audio.ensure(); goTitle(); });
   if (btnMute) btnMute.addEventListener('click', function () { audio.ensure(); audio.setMuted(!audio.muted); });

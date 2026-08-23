@@ -36,19 +36,29 @@
           <span id="wind-label" class="wind">风 · 0</span>
           <span id="ang-label">角 65°</span>
           <span id="pow-label">力 12</span>
-          <span id="walk-label">步 96</span>
+          <span id="walk-label">体 100</span>
+          <span id="rage-label">怒 0</span>
+          <span id="ghost-label" class="ghost-lab gone">上 —</span>
           <span id="combo-label" class="combo" hidden>连堂</span>
         </div>
         <div class="hp-row" aria-hidden="false">
           <div class="hp hp-p">
             <i>岚丸</i>
             <b id="hp-p-n">100</b>
-            <span class="hp-bar"><em id="hp-p"></em></span>
+            <span class="bars">
+              <span class="hp-bar"><em id="hp-p"></em></span>
+              <span class="st-bar" title="体力"><em id="st-p"></em></span>
+              <span class="rg-bar" title="怒气"><em id="rg-p"></em></span>
+            </span>
           </div>
           <div class="hp hp-f">
-            <i>烬丸</i>
+            <i id="foe-name">烬丸</i>
             <b id="hp-f-n">100</b>
-            <span class="hp-bar"><em id="hp-f"></em></span>
+            <span class="bars">
+              <span class="hp-bar"><em id="hp-f"></em></span>
+              <span class="st-bar" title="体力"><em id="st-f"></em></span>
+              <span class="rg-bar" title="怒气"><em id="rg-f"></em></span>
+            </span>
           </div>
         </div>
       </div>
@@ -58,6 +68,14 @@
           <button type="button" data-w="1" title="2">高爆</button>
           <button type="button" data-w="2" title="3">穿透</button>
         </div>
+        <div class="items" id="items" aria-label="道具">
+          <button type="button" data-item="leap" id="btn-leap" title="Q">飞步 <b id="n-leap">2</b></button>
+          <button type="button" data-item="warp" id="btn-warp" title="E">影挪 <b id="n-warp">1</b></button>
+          <button type="button" data-item="neon" id="btn-neon" title="C">霓弹 <b id="n-neon">2</b></button>
+          <button type="button" data-item="drum" id="btn-drum" title="V">鼓息 <b id="n-drum">1</b></button>
+          <button type="button" data-item="ult" id="btn-ult" title="F">殿破</button>
+          <button type="button" data-item="skip" id="btn-skip" title="X">过</button>
+        </div>
         <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
         <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
       </div>
@@ -66,21 +84,36 @@
     <div class="stage" id="stage">
       <canvas id="c" tabindex="0" role="application" aria-label="弹堂对决，走位拉角蓄力轰对面"></canvas>
       <div class="scan" aria-hidden="true"></div>
+      <div id="drill-table" class="drill-table gone" aria-hidden="true">
+        <div class="dt-title">65° 无风表</div>
+        <div id="dt-rows" class="dt-rows"></div>
+        <p id="dt-info">距 —</p>
+        <p id="dt-65">65° 建议 —</p>
+        <p id="dt-90">90° 建议 —</p>
+      </div>
       <div id="toast" class="toast hidden"></div>
       <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
         <div class="panel" id="panel">
           <p class="kicker" id="ov-kicker">TAN HALL</p>
           <h1 id="ov-title">弹堂</h1>
           <p class="lead" id="ov-lead">看风，拉满或点射，把对面从石殿上轰下去。</p>
-          <p class="ops" id="ov-ops">← → 走 · ↑ ↓ 角 · 空格/Z 蓄力 · 1 弹堂 · 2 堂核 · R 重开 · M 静音</p>
+          <p class="ops" id="ov-ops">← → 走 · ↑ ↓ 角 · 空格/Z 蓄力 · 1 弹堂 · 2 堂核 · 3 演习场 · R 重开 · M 静音</p>
           <div class="maps" id="ov-maps">
             <button type="button" data-map="plain" class="on" id="map-plain">平原</button>
             <button type="button" data-map="canyon" id="map-canyon">峡谷</button>
             <button type="button" data-map="twin" id="map-twin">双台</button>
           </div>
+          <div class="drill-wind" id="drill-wind" aria-label="演习锁风">
+            <em>锁风</em>
+            <button type="button" data-dw="rand" class="on">随机</button>
+            <button type="button" data-dw="0">0</button>
+            <button type="button" data-dw="4r">→4</button>
+            <button type="button" data-dw="4l">←4</button>
+          </div>
           <div class="ov-actions" id="ov-start">
             <button type="button" id="btn-hall">弹堂</button>
             <button type="button" id="btn-core">堂核</button>
+            <button type="button" id="btn-drill">演习场</button>
           </div>
           <div class="ov-actions gone" id="ov-end">
             <button type="button" id="ov-retry">再来</button>
@@ -89,11 +122,20 @@
         </div>
       </div>
       <div class="pad" id="pad" aria-label="触控键">
-        <button type="button" data-pad="l">左</button>
-        <button type="button" data-pad="r">右</button>
-        <button type="button" data-pad="u">仰</button>
-        <button type="button" data-pad="d">俯</button>
-        <button type="button" data-pad="fire" class="fire">蓄</button>
+        <div class="pad-row pad-items">
+          <button type="button" data-item="leap">飞</button>
+          <button type="button" data-item="warp">影</button>
+          <button type="button" data-item="neon">霓</button>
+          <button type="button" data-item="drum">鼓</button>
+          <button type="button" data-item="skip">过</button>
+        </div>
+        <div class="pad-row">
+          <button type="button" data-pad="l">左</button>
+          <button type="button" data-pad="r">右</button>
+          <button type="button" data-pad="u">仰</button>
+          <button type="button" data-pad="d">俯</button>
+          <button type="button" data-pad="fire" class="fire">蓄</button>
+        </div>
       </div>
     </div>
 
