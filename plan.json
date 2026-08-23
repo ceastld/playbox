@@ -5415,7 +5415,7 @@
     "blurb": "横版雷三，把敌舰从航线轰穿。",
     "hue": 200,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/thunder-force3/",
     "kind": "remake"
   },
@@ -5427,7 +5427,7 @@
     "blurb": "横版忍影3，把忍者从巷里斩穿。",
     "hue": 12,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/ninja-gaiden3/",
     "kind": "remake"
   },
@@ -5439,7 +5439,7 @@
     "blurb": "横版斧三，把魔物从荒原劈穿。",
     "hue": 32,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/golden-axe3/",
     "kind": "remake"
   },
@@ -5451,7 +5451,7 @@
     "blurb": "横版双截3，把暴徒从街上打穿。",
     "hue": 8,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/double-dragon3/",
     "kind": "remake"
   },
@@ -5463,8 +5463,68 @@
     "blurb": "横版仙童3，把魔物从岛里砸穿。",
     "hue": 92,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/wonder-boy3/",
+    "kind": "remake"
+  },
+  {
+    "n": 465,
+    "id": "castlevania3",
+    "title": "魔城3",
+    "subtitle": "CV3",
+    "blurb": "横版魔城3，把亡灵从厅里斩穿。",
+    "hue": 272,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/castlevania3/",
+    "kind": "remake"
+  },
+  {
+    "n": 466,
+    "id": "after-burner2",
+    "title": "超燃2",
+    "subtitle": "AB2",
+    "blurb": "横版超燃2，把敌机从航线轰穿。",
+    "hue": 14,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/after-burner2/",
+    "kind": "remake"
+  },
+  {
+    "n": 467,
+    "id": "alien-soldier",
+    "title": "异兵",
+    "subtitle": "ALNS",
+    "blurb": "横版异兵，把异形从航线打穿。",
+    "hue": 128,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/alien-soldier/",
+    "kind": "remake"
+  },
+  {
+    "n": 468,
+    "id": "r-type-delta",
+    "title": "武装Δ",
+    "subtitle": "RTD",
+    "blurb": "横版武装Δ，把生体从航线轰穿。",
+    "hue": 188,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/r-type-delta/",
+    "kind": "remake"
+  },
+  {
+    "n": 469,
+    "id": "metalslug4",
+    "title": "金弹4",
+    "subtitle": "MSL4",
+    "blurb": "横版金弹4，把敌军从航线打穿。",
+    "hue": 42,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/metalslug4/",
     "kind": "remake"
   }
 ]
