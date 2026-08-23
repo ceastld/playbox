@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#04140c" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>异兵 · ALNS</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2304140c'/%3E%3Crect x='2' y='2' width='28' height='28' rx='4' fill='%23081c12' stroke='%232dff78' stroke-width='1.4'/%3E%3Cpath d='M4 24h24' stroke='%2300f0ff' stroke-width='1.2' opacity='.5'/%3E%3Cpath d='M11 11l5-5 5 5' fill='%23ffe36b'/%3E%3Crect x='12' y='11' width='8' height='5' rx='1' fill='%232dff78'/%3E%3Crect x='13.2' y='12.2' width='5.6' height='2.4' fill='%2304140c'/%3E%3Crect x='13' y='16' width='6' height='6' rx='.7' fill='%237dffb0'/%3E%3Cpath d='M9 15l-4 2 4 2zM23 15l4 2-4 2z' fill='%2300f0ff'/%3E%3Crect x='19' y='17' width='7' height='1.4' rx='.3' fill='%23ffe36b'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>异兵</b>
+        <span>ALNS</span>
+      </div>
+      <div class="status">
+        <div class="scores" aria-live="polite">
+          <div class="score" id="score-box">
+            <em>分数</em>
+            <b id="score">0</b>
+            <span id="score-add" class="score-add" hidden>+0</span>
+          </div>
+          <div class="score best">
+            <em>最高</em>
+            <b id="best">0</b>
+          </div>
+          <div class="score combo" id="combo-box">
+            <em>连击</em>
+            <b id="combo">×1</b>
+          </div>
+        </div>
+        <div class="row">
+          <span id="stage-label">锈廊</span>
+          <span id="tag-label">异兵</span>
+          <span id="gun-label" class="gun phoenix">凰弹</span>
+          <div class="fill" id="force-wrap" title="力场">
+            <em>力</em>
+            <div class="fill-track" aria-hidden="true"><i id="force-bar"></i></div>
+          </div>
+          <div class="fill boss" id="boss-wrap" hidden title="关底">
+            <em id="boss-name">颚门</em>
+            <div class="fill-track" aria-hidden="true"><i id="boss-bar"></i></div>
+          </div>
+          <span class="pips" id="pips" aria-label="剩余性命"></span>
+        </div>
+      </div>
+      <div class="tools">
+        <div class="modes" role="radiogroup" aria-label="模式">
+          <button type="button" id="mode-soldier" aria-pressed="true">异兵</button>
+          <button type="button" id="mode-core" aria-pressed="false">兵核</button>
+        </div>
+        <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
+        <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <div class="board-wrap">
+        <canvas id="c" tabindex="0" role="application" aria-label="异兵，侧向奔跑悬浮，射击冲刺蓄力场，撞上即死"></canvas>
+      </div>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden"></div>
+      <div id="chain-pop" class="chain-pop hidden" aria-hidden="true">×2</div>
+      <div id="pad" class="pad">
+        <button type="button" id="btn-up" aria-label="升空">升</button>
+        <button type="button" id="btn-left" aria-label="左">左</button>
+        <button type="button" id="btn-fire" aria-label="开火">射</button>
+        <button type="button" id="btn-right" aria-label="右">右</button>
+        <button type="button" id="btn-down" aria-label="俯冲">降</button>
+        <button type="button" id="btn-dash" aria-label="冲刺">冲</button>
+      </div>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">ALNS</p>
+          <h1 id="ov-title">异兵</h1>
+          <p class="lead" id="ov-lead">八向悬浮，冲刺穿弹，蓄力放力场。<br />撞上即死。打完航线再拆关底。</p>
+          <p class="ops" id="ov-ops">方向 / WASD 走与悬浮 · 空格/Z 射击（按住蓄力）· Shift 冲刺 · R 重开 · M 静音</p>
+          <div class="ov-actions" id="ov-start">
+            <button type="button" id="btn-soldier">异兵</button>
+            <button type="button" id="btn-core">兵核</button>
+          </div>
+          <div class="ov-actions gone" id="ov-end">
+            <button type="button" id="ov-again">再来</button>
+            <button type="button" id="ov-menu">换模式</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">悬浮 · 空格射击蓄力 · Shift 冲刺 · 撞上即死</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>

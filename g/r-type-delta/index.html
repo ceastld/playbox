@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#04181e" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>武装Δ · RTD</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2304181e'/%3E%3Cpath d='M0 0h32v6H0zM0 26h32v6H0z' fill='%23062028'/%3E%3Cpath d='M0 6h32M0 26h32' stroke='%232ad4e0' stroke-width='1.1'/%3E%3Cpath d='M5 16l8-3.2V19z' fill='%232ad4e0'/%3E%3Crect x='10' y='14.1' width='7.2' height='3.8' rx='.5' fill='%23e6f8fc'/%3E%3Cellipse cx='22' cy='16' rx='5' ry='3' fill='%2314d4c4'/%3E%3Ccircle cx='22' cy='16' r='1.4' fill='%23ffe36b'/%3E%3Cpath d='M22 11l1.6 2.8H20.4zM26.2 18.4l-2.8 1.6.4-3.2zM17.8 18.4l2.8 1.6-.4-3.2z' fill='%23ff5a9a'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>武装Δ</b>
+        <span>RTD</span>
+      </div>
+      <div class="status">
+        <div class="scores" aria-live="polite">
+          <div class="score" id="score-box">
+            <em>分数</em>
+            <b id="score">0</b>
+            <span id="score-add" class="score-add" hidden>+0</span>
+          </div>
+          <div class="score best">
+            <em>最高</em>
+            <b id="best">0</b>
+          </div>
+        </div>
+        <div class="row">
+          <span id="stage-label">赤湾</span>
+          <span id="tag-label">武装Δ</span>
+          <span id="force-label" class="form front">前核</span>
+          <div class="fill" id="dose-wrap" title="Δ核">
+            <em>Δ</em>
+            <div class="fill-track dose" aria-hidden="true"><i id="dose-bar"></i></div>
+          </div>
+          <div class="fill" id="chg-wrap" title="蓄力">
+            <em>蓄</em>
+            <div class="fill-track" aria-hidden="true"><i id="chg-bar"></i></div>
+          </div>
+          <span id="combo-label" class="combo" hidden>连击</span>
+          <span class="pips" id="pips" aria-label="剩余生命"></span>
+        </div>
+      </div>
+      <div class="tools">
+        <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
+        <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <canvas id="c" tabindex="0" role="application" aria-label="武装Δ游戏区，横向卷轴，空格或 Z 蓄力波炮，X 发射力核"></canvas>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden"></div>
+      <div id="pad" class="pad">
+        <button type="button" id="btn-force" aria-label="力核">核</button>
+      </div>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">RTD</p>
+          <h1 id="ov-title">武装Δ</h1>
+          <p class="lead" id="ov-lead">Δ核吸收。空格蓄力放波炮，满核再放变成Δ炮。X 把力核打出去吸弹，再飞过去对接。短关之后打武核。别当成武装、武装2、武装三或武装狮——这是Δ核吸收，不是力爪格挡，不是满波打核，不是力荚比特，不是扇弹激光。</p>
+          <p class="ops" id="ov-ops">←↑↓→ / WASD 飞 · 空格 / Z 射击（按住蓄力）· X 力核 · R 重开 · M 静音</p>
+          <div class="ov-actions" id="ov-start">
+            <button type="button" id="btn-raid">武装Δ</button>
+            <button type="button" id="btn-storm">武核</button>
+          </div>
+          <div class="ov-actions gone" id="ov-end">
+            <button type="button" id="ov-retry">再来</button>
+            <button type="button" id="ov-modes">换模式</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">空格 / Z 蓄力波炮 · 满Δ核放Δ炮 · X 力核出击吸弹再对接</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>

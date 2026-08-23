@@ -5336,5 +5336,65 @@
     "dir": "g/wonder-boy3/",
     "kind": "remake",
     "url": "./g/wonder-boy3/"
+  },
+  {
+    "n": 465,
+    "id": "castlevania3",
+    "title": "魔城3",
+    "subtitle": "CV3",
+    "blurb": "横版魔城3，把亡灵从厅里斩穿。",
+    "hue": 272,
+    "tag": "复刻",
+    "dir": "g/castlevania3/",
+    "kind": "remake",
+    "url": "./g/castlevania3/"
+  },
+  {
+    "n": 466,
+    "id": "after-burner2",
+    "title": "超燃2",
+    "subtitle": "AB2",
+    "blurb": "横版超燃2，把敌机从航线轰穿。",
+    "hue": 14,
+    "tag": "复刻",
+    "dir": "g/after-burner2/",
+    "kind": "remake",
+    "url": "./g/after-burner2/"
+  },
+  {
+    "n": 467,
+    "id": "alien-soldier",
+    "title": "异兵",
+    "subtitle": "ALNS",
+    "blurb": "横版异兵，把异形从航线打穿。",
+    "hue": 128,
+    "tag": "复刻",
+    "dir": "g/alien-soldier/",
+    "kind": "remake",
+    "url": "./g/alien-soldier/"
+  },
+  {
+    "n": 468,
+    "id": "r-type-delta",
+    "title": "武装Δ",
+    "subtitle": "RTD",
+    "blurb": "横版武装Δ，把生体从航线轰穿。",
+    "hue": 188,
+    "tag": "复刻",
+    "dir": "g/r-type-delta/",
+    "kind": "remake",
+    "url": "./g/r-type-delta/"
+  },
+  {
+    "n": 469,
+    "id": "metalslug4",
+    "title": "金弹4",
+    "subtitle": "MSL4",
+    "blurb": "横版金弹4，把敌军从航线打穿。",
+    "hue": 42,
+    "tag": "复刻",
+    "dir": "g/metalslug4/",
+    "kind": "remake",
+    "url": "./g/metalslug4/"
   }
 ]

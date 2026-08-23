@@ -5475,7 +5475,7 @@
     "blurb": "横版魔城3，把亡灵从厅里斩穿。",
     "hue": 272,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/castlevania3/",
     "kind": "remake"
   },
@@ -5487,7 +5487,7 @@
     "blurb": "横版超燃2，把敌机从航线轰穿。",
     "hue": 14,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/after-burner2/",
     "kind": "remake"
   },
@@ -5499,7 +5499,7 @@
     "blurb": "横版异兵，把异形从航线打穿。",
     "hue": 128,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/alien-soldier/",
     "kind": "remake"
   },
@@ -5511,7 +5511,7 @@
     "blurb": "横版武装Δ，把生体从航线轰穿。",
     "hue": 188,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/r-type-delta/",
     "kind": "remake"
   },
@@ -5523,8 +5523,68 @@
     "blurb": "横版金弹4，把敌军从航线打穿。",
     "hue": 42,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/metalslug4/",
+    "kind": "remake"
+  },
+  {
+    "n": 470,
+    "id": "darius-gaiden",
+    "title": "大流外",
+    "subtitle": "DRG",
+    "blurb": "横版大流外，把巨鱼从海里打穿。",
+    "hue": 196,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/darius-gaiden/",
+    "kind": "remake"
+  },
+  {
+    "n": 471,
+    "id": "contra4",
+    "title": "魂斗4",
+    "subtitle": "CTR4",
+    "blurb": "横版魂斗4，把机枪从巷里打穿。",
+    "hue": 8,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/contra4/",
+    "kind": "remake"
+  },
+  {
+    "n": 472,
+    "id": "fatal-fury2",
+    "title": "饿狼2",
+    "subtitle": "FF2",
+    "blurb": "对战饿狼2，把对手从架上打穿。",
+    "hue": 14,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/fatal-fury2/",
+    "kind": "remake"
+  },
+  {
+    "n": 473,
+    "id": "space-harrier2",
+    "title": "幻域2",
+    "subtitle": "SH2",
+    "blurb": "进屏幻域2，把柱怪从云里打爆。",
+    "hue": 300,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/space-harrier2/",
+    "kind": "remake"
+  },
+  {
+    "n": 474,
+    "id": "bubble-symphony",
+    "title": "泡乐",
+    "subtitle": "BBS",
+    "blurb": "纵版泡乐，把泡泡从房里打穿。",
+    "hue": 200,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/bubble-symphony/",
     "kind": "remake"
   }
 ]
