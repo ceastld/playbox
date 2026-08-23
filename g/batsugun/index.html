@@ -44,6 +44,12 @@
         </div>
       </div>
       <div class="tools">
+        <label class="speed-ctl" title="速度 慢 / 中 / 快 / 极快">
+          <span>速度</span>
+          <input type="range" id="speed" min="1" max="4" step="1" value="3" aria-label="速度" />
+          <b id="speed-lab">快</b>
+        </label>
+        <button type="button" id="btn-auto" title="A" aria-label="自动" aria-pressed="false">自动</button>
         <button type="button" id="btn-bomb" title="Shift / Z" aria-label="爆弹">爆</button>
         <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
         <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
@@ -62,7 +68,7 @@
           <p class="kicker" id="ov-kicker">BATS</p>
           <h1 id="ov-title">战枪</h1>
           <p class="lead" id="ov-lead">火力越打越宽。满级放出战枪扇刃。短关之后是机甲。</p>
-          <p class="ops" id="ov-ops">←↑↓→ / WASD 移动 · 空格射击 · Shift / Z 爆弹 · R 重开 · M 静音</p>
+          <p class="ops" id="ov-ops">←↑↓→ / WSD 移动 · 空格射击 · Shift / Z 爆弹 · A 自动 · R 重开 · M 静音</p>
           <div class="ov-actions" id="ov-start">
             <button type="button" id="btn-rush">突贯</button>
             <button type="button" id="btn-sea">弹海</button>
@@ -75,7 +81,7 @@
       </div>
     </div>
 
-    <footer class="hint" id="hint">空格连射 · Shift 战枪爆 · 吃 枪 升火力</footer>
+    <footer class="hint" id="hint">空格连射 · Shift 战枪爆 · 吃 枪 升火力 · A 自动</footer>
   </div>
   <script src="js/game.js"></script>
 </body>
