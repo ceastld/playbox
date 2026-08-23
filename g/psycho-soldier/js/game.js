@@ -30,7 +30,10 @@
   const DIE_T = 0.86;
   const BEST_KEY = 'playbox-psycho-soldier-best';
   const MUTE_KEY = 'playbox-psycho-soldier-mute';
-  const OPS = '方向键 / WASD 走 · ↑ 跳 · 空格放念弹 · Shift/Z 蓄力 · R 重开 · M 静音';
+  const AUTO_SPEED_KEY = 'playbox-psycho-soldier-auto-speed';
+  const SPEED_LABELS = ['', '慢', '中', '快', '极快'];
+  const AUTO_SCALE = [1, 0.52, 0.78, 1, 3.4];
+  const OPS = '方向键 / D 走 · ↑/W 跳 · 空格放念弹 · Shift/Z 蓄力 · A 自动 · R 重开 · M 静音';
 
   const MAG = [255, 46, 200];
   const CYN = [0, 240, 255];
@@ -192,6 +195,8 @@
     if (CHARGE_MAX <= CHARGE_MIN) throw new Error('charge');
     if (SHOT_SPD < 280) throw new Error('shot slow');
     if (BEST_KEY !== 'playbox-psycho-soldier-best') throw new Error('best key');
+    if (AUTO_SPEED_KEY !== 'playbox-psycho-soldier-auto-speed') throw new Error('auto speed key');
+    if (SPEED_LABELS[3] !== '快') throw new Error('speed labels');
     if (STAGES[0].w >= STAGES[1].w || STAGES[1].w >= STAGES[2].w) throw new Error('wider later');
     if (STAGES[0].hp >= STAGES[1].hp || STAGES[1].hp >= STAGES[2].hp) throw new Error('boss hp');
     if (STAGES[0].boss !== '巡卫机' || STAGES[1].boss !== '钻岩机' || STAGES[2].boss !== '巨神机') {
@@ -284,6 +289,9 @@
   const modeTide = document.getElementById('mode-tide');
   const btnMute = document.getElementById('btn-mute');
   const btnRetry = document.getElementById('btn-retry');
+  const btnAuto = document.getElementById('btn-auto');
+  const speedEl = document.getElementById('speed');
+  const speedLab = document.getElementById('speed-lab');
   const scoreEl = document.getElementById('score');
   const bestEl = document.getElementById('best');
   const scoreBox = document.getElementById('score-box');
@@ -319,6 +327,15 @@
 
   const keys = { l: false, r: false, u: false, d: false, fire: false, charge: false };
   const demo = { l: false, r: true, u: false, d: false, fire: false, charge: false };
+  const autoIn = { l: false, r: false, u: false, d: false, fire: false, charge: false };
+  let autoOn = false;
+  let autoSpeed = 3;
+  let autoOvWait = 0;
+  let autoStuck = 0;
+  let autoLastX = 0;
+  let autoLastY = 0;
+  let autoWalkDir = 1;
+  let autoBackT = 0;
   const pips = [];
   const particles = [];
   const sparks = [];
@@ -383,19 +400,27 @@
   function maxHp() {
     return isTide() ? HP_TIDE : HP_CUT;
   }
+  function autoPlaying() {
+    return autoOn && G.mode === 'play';
+  }
   function inL() {
+    if (autoPlaying()) return autoIn.l;
     return G.mode === 'title' ? demo.l : keys.l;
   }
   function inR() {
+    if (autoPlaying()) return autoIn.r;
     return G.mode === 'title' ? demo.r : keys.r;
   }
   function inU() {
+    if (autoPlaying()) return autoIn.u;
     return G.mode === 'title' ? demo.u : keys.u;
   }
   function fireHeld() {
+    if (autoPlaying()) return autoIn.fire;
     return G.mode === 'title' ? demo.fire : keys.fire;
   }
   function chargeHeld() {
+    if (autoPlaying()) return autoIn.charge;
     return G.mode === 'title' ? demo.charge : keys.charge;
   }
 
@@ -578,6 +603,19 @@
       G.best = 0;
     }
     if (bestEl) bestEl.textContent = String(G.best);
+  }
+
+  function loadAutoSpeed() {
+    try {
+      const n = parseInt(localStorage.getItem(AUTO_SPEED_KEY) || '3', 10);
+      if (!isFinite(n) || n < 1 || n > 4) return 3;
+      return n;
+    } catch (err) {
+      return 3;
+    }
+  }
+  function saveAutoSpeed(n) {
+    try { localStorage.setItem(AUTO_SPEED_KEY, String(n)); } catch (err) { /* ignore */ }
   }
 
   function saveBest() {
@@ -1339,6 +1377,346 @@
     }
   }
 
+  function snapFloor(y) {
+    if (y < (HY + MY) * 0.5) return HY;
+    if (y < (MY + GY) * 0.5) return MY;
+    return GY;
+  }
+
+  function platCovering(x, floorY) {
+    let i, p;
+    for (i = 0; i < G.plats.length; i++) {
+      p = G.plats[i];
+      if (Math.abs(p.y - floorY) > 10) continue;
+      if (x >= p.x + 3 && x <= p.x + p.w - 3) return p;
+    }
+    return null;
+  }
+
+  function platAboveNear(x, floorY) {
+    const upY = floorY <= HY + 8 ? null : (floorY <= MY + 8 ? HY : MY);
+    if (!upY) return null;
+    let i, p, best = null, bestD = 1e9, d, mid;
+    for (i = 0; i < G.plats.length; i++) {
+      p = G.plats[i];
+      if (Math.abs(p.y - upY) > 10) continue;
+      mid = p.x + p.w * 0.5;
+      d = Math.abs(mid - x);
+      if (p.x > x + 160 || p.x + p.w < x - 50) continue;
+      if (d < bestD) {
+        bestD = d;
+        best = p;
+      }
+    }
+    return best;
+  }
+
+  function clearAutoKeys() {
+    autoIn.l = false;
+    autoIn.r = false;
+    autoIn.u = false;
+    autoIn.d = false;
+    autoIn.fire = false;
+    autoIn.charge = false;
+  }
+
+  function autoSteer(tx) {
+    autoIn.l = false;
+    autoIn.r = false;
+    const dx = tx - G.player.x;
+    if (dx > 10) {
+      autoIn.r = true;
+      autoWalkDir = 1;
+    } else if (dx < -10) {
+      autoIn.l = true;
+      autoWalkDir = -1;
+    }
+  }
+
+  function autoShotThreat() {
+    const p = G.player;
+    let i, s, t, ny;
+    for (i = 0; i < G.shots.length; i++) {
+      s = G.shots[i];
+      if (s.from === 'p' || s.dead) continue;
+      ny = s.y - (p.y - 14);
+      if (Math.abs(ny) > 30) continue;
+      if (s.vx === 0) {
+        if (Math.abs(s.x - p.x) < 42 && Math.abs(ny) < 36) return s;
+        continue;
+      }
+      t = (p.x - s.x) / s.vx;
+      if (t < 0 || t > 0.5) continue;
+      if (Math.abs((s.y + s.vy * t) - (p.y - 14)) < 26) return s;
+    }
+    return null;
+  }
+
+  function autoFrontThreat(p) {
+    let n = 0;
+    let tanks = 0;
+    let close = null;
+    let closeD = 1e9;
+    let i, e, dx, dy, d;
+    for (i = 0; i < G.ents.length; i++) {
+      e = G.ents[i];
+      if (e.dead) continue;
+      dx = e.x - p.x;
+      dy = e.y - p.y;
+      d = hypot(dx, dy);
+      if (d < closeD && d < 280) {
+        closeD = d;
+        close = e;
+      }
+      if (!onScreen(e.x, e.y, 30)) continue;
+      if (dx * (dx >= 0 ? 1 : -1) > 240) continue;
+      if (Math.abs(dy) < 42 && dx > -40 && dx < 250) {
+        n += 1;
+        if (e.max > 1) tanks += 1;
+      }
+    }
+    return { n: n, tanks: tanks, close: close, closeD: closeD };
+  }
+
+  function autoPick() {
+    const p = G.player;
+    let best = null;
+    let bestS = -1e9;
+    function consider(x, y, score, kind) {
+      if (score > bestS) {
+        bestS = score;
+        best = { x: x, y: y, kind: kind };
+      }
+    }
+    let i, e, d, pri, dx;
+    for (i = 0; i < G.pickups.length; i++) {
+      const u = G.pickups[i];
+      if (u.taken) continue;
+      d = hypot(u.x - p.x, u.y - (p.y - 14));
+      pri = 520 - d * 0.45;
+      if (u.kind === 'heart') pri += G.hp <= 2 ? 860 : (G.hp < maxHp() ? 240 : -80);
+      if (u.kind === 'psi') pri += 320;
+      if (u.kind === 'star') pri += d < 90 ? 80 : -20;
+      if (u.x < p.x - 140 && !(u.kind === 'heart' && G.hp <= 2)) pri -= 240;
+      consider(u.x, u.y + 18, pri, 'loot');
+    }
+    for (i = 0; i < G.ents.length; i++) {
+      e = G.ents[i];
+      if (e.dead) continue;
+      dx = e.x - p.x;
+      if (dx < -160) continue;
+      if (!onScreen(e.x, e.y, 80)) continue;
+      d = hypot(dx, e.y - p.y);
+      pri = 660 - d * 0.48;
+      if (dx > 0) pri += 90;
+      if (e.max > 1) pri += 70;
+      if (e.kind === 'drone' && Math.abs(e.y - p.y) > 36) pri += 40;
+      consider(e.x, e.y, pri, 'fight');
+    }
+    if (G.boss && G.boss.active && !G.boss.dead) {
+      consider(G.boss.x - 120, G.boss.y, 1400, 'boss');
+    }
+    if (!(G.boss && G.boss.active && !G.boss.dead)) {
+      consider(G.levelW - 70, GY, 500, 'go');
+    }
+    if (!best) consider(Math.min(G.levelW - 40, p.x + 200), GY, 50, 'go');
+    return best;
+  }
+
+  function autoThink() {
+    clearAutoKeys();
+    if (!autoOn || G.mode !== 'play') return;
+    const p = G.player;
+    if (!p || G.deadT > 0 || G.lock > 0) return;
+
+    const moved = hypot(p.x - autoLastX, p.y - autoLastY);
+    if (moved < 2.2 && p.grounded) autoStuck += STEP;
+    else if (moved > 8) autoStuck = 0;
+    autoLastX = p.x;
+    autoLastY = p.y;
+    if (autoBackT > 0) autoBackT -= STEP;
+
+    const goal = autoPick();
+    const floorY = snapFloor(p.y);
+    const tfloor = snapFloor(goal.y);
+    let seekX = goal.x;
+    let wantJump = false;
+    const threat = autoFrontThreat(p);
+    const close = threat.close;
+    const bossOn = !!(G.boss && G.boss.active && !G.boss.dead);
+    const shot = autoShotThreat();
+    let steered = false;
+
+    if (shot && G.invuln <= 0) {
+      wantJump = true;
+      autoSteer(p.x + (shot.x >= p.x ? -56 : 56));
+      steered = true;
+    }
+
+    if (!steered && close && Math.abs(close.x - p.x) < 48 && Math.abs(close.y - p.y) < 34) {
+      autoSteer(p.x + (close.x >= p.x ? -72 : 72));
+      if (close.kind === 'beetle' || close.kind === 'mech') wantJump = true;
+      steered = true;
+    }
+
+    if (!steered && bossOn && Math.abs(G.boss.x - p.x) < 78) {
+      autoSteer(p.x + (G.boss.x >= p.x ? -100 : 100));
+      if (G.boss.kind === '钻岩机' && G.boss.state === 'dive') wantJump = true;
+      steered = true;
+    }
+
+    if (goal.kind === 'fight') {
+      seekX = goal.x + (goal.x >= p.x ? -92 : 92);
+    } else if (goal.kind === 'boss') {
+      seekX = goal.x;
+    } else if (goal.kind === 'loot') {
+      seekX = goal.x;
+    }
+
+    if (autoBackT > 0) seekX = p.x - 80;
+
+    if (!steered) autoSteer(seekX);
+
+    if (tfloor < floorY - 10) {
+      const above = platAboveNear(p.x, floorY) || platCovering(p.x + 36, floorY <= MY + 8 ? HY : MY);
+      if (above) {
+        wantJump = true;
+        if (!steered) autoSteer(above.x + above.w * 0.42);
+      } else {
+        wantJump = true;
+      }
+    }
+
+    const dir = autoIn.r ? 1 : (autoIn.l ? -1 : autoWalkDir);
+    if (p.grounded && pitAhead(p.x, p.y, dir)) wantJump = true;
+    if (p.grounded && pitAhead(p.x, p.y, dir) && !standAt(p.x + dir * 56, p.y)) {
+      const mid = platCovering(p.x + dir * 70, MY) || platAboveNear(p.x + dir * 20, GY);
+      if (mid && !steered) autoSteer(mid.x + mid.w * 0.4);
+    }
+
+    if ((goal.kind === 'fight' || goal.kind === 'boss') && Math.abs(p.x - seekX) < 22 && p.grounded && !shot) {
+      autoStuck = 0;
+    }
+    if (autoStuck > 0.48) wantJump = true;
+    if (autoStuck > 1.6) {
+      autoBackT = 0.32;
+      autoStuck = 0;
+      autoWalkDir = 1;
+    }
+
+    let aim = close;
+    if (bossOn) aim = G.boss;
+    if (aim) {
+      const adx = aim.x - p.x;
+      if (!autoIn.l && !autoIn.r) p.face = adx >= 0 ? 1 : -1;
+      else if (Math.abs(adx) > 18) p.face = adx >= 0 ? 1 : -1;
+    }
+
+    const lined = aim && Math.abs(aim.y - p.y) < 46;
+    const blastWorth = bossOn || threat.tanks > 0 || threat.n >= 2 || (close && close.max > 1);
+    let wantCharge = false;
+    if (G.chargeFull) {
+      wantCharge = !(lined || bossOn || threat.n > 0);
+    } else if (blastWorth && lined) {
+      wantCharge = G.chargeT < CHARGE_MAX;
+    } else if (G.chargeT > 0.04 && blastWorth) {
+      wantCharge = G.chargeT < CHARGE_MAX;
+    } else if (G.chargeT >= CHARGE_MIN && (lined || threat.n > 0 || bossOn)) {
+      wantCharge = false;
+    }
+
+    if (wantCharge && lined && !shot && p.grounded) {
+      autoIn.l = false;
+      autoIn.r = false;
+      autoStuck = 0;
+      if (aim) p.face = aim.x >= p.x ? 1 : -1;
+    }
+
+    if (wantJump) {
+      autoIn.u = true;
+      if (!autoIn.l && !autoIn.r) {
+        if (autoWalkDir >= 0) autoIn.r = true;
+        else autoIn.l = true;
+      }
+    }
+
+    autoIn.charge = wantCharge;
+    autoIn.fire = !wantCharge;
+  }
+
+  function tickAutoFlow(dt) {
+    if (!autoOn) return;
+    if (G.mode === 'title') {
+      autoOvWait += dt;
+      if (autoOvWait >= (autoSpeed >= 3 ? 0.25 : 0.5)) {
+        autoOvWait = 0;
+        startGame(G.kind || 'cut');
+      }
+      return;
+    }
+    if (G.mode === 'lose' || G.mode === 'win') {
+      autoOvWait += dt;
+      if (autoOvWait >= (autoSpeed >= 3 ? 0.7 : 1.15)) {
+        autoOvWait = 0;
+        startGame(G.kind || 'cut');
+      }
+    }
+  }
+
+  function syncAutoUi() {
+    if (!btnAuto) return;
+    btnAuto.classList.toggle('on', autoOn);
+    btnAuto.setAttribute('aria-pressed', autoOn ? 'true' : 'false');
+    btnAuto.textContent = autoOn ? '停下' : '自动';
+    btnAuto.setAttribute('aria-label', autoOn ? '停止自动' : '自动');
+  }
+
+  function syncSpeedUi() {
+    if (speedEl) speedEl.value = String(autoSpeed);
+    if (speedLab) speedLab.textContent = SPEED_LABELS[autoSpeed];
+    if (speedEl) {
+      speedEl.title = SPEED_LABELS[autoSpeed];
+      speedEl.setAttribute('aria-valuetext', SPEED_LABELS[autoSpeed]);
+    }
+  }
+
+  function autoScale() {
+    if (!autoOn || G.mode !== 'play') return 1;
+    return AUTO_SCALE[autoSpeed] || 1;
+  }
+
+  function setAutoSpeed(n) {
+    n = parseInt(n, 10);
+    if (!isFinite(n) || n < 1 || n > 4) n = 3;
+    autoSpeed = n;
+    saveAutoSpeed(autoSpeed);
+    syncSpeedUi();
+  }
+
+  function toggleAuto() {
+    autoOn = !autoOn;
+    autoOvWait = 0;
+    autoStuck = 0;
+    autoBackT = 0;
+    clearAutoKeys();
+    keys.l = false;
+    keys.r = false;
+    keys.u = false;
+    keys.d = false;
+    keys.fire = false;
+    keys.charge = false;
+    syncAutoUi();
+    if (autoOn) {
+      audio.ensure();
+      if (G.mode === 'title') startGame(G.kind || 'cut');
+    }
+    syncHud();
+  }
+
+  function isAutoKey(e) {
+    return e.code === 'KeyA' || e.key === 'a' || e.key === 'A';
+  }
+
   function updatePlayer(dt) {
     const p = G.player;
     if (G.deadT > 0) {
@@ -1856,10 +2234,12 @@
   function update(dt) {
     G.clock += dt;
     G.t += dt;
-    if (G.stop > 0) {
+    if (autoOn) tickAutoFlow(dt);
+    if (G.stop > 0 && !(autoOn && autoSpeed >= 4 && G.mode === 'play')) {
       G.stop -= dt;
       return;
     }
+    if (autoOn && autoSpeed >= 4) G.stop = 0;
     if (G.clearT > 0) {
       G.clearT -= dt;
       updateCam(dt);
@@ -1871,7 +2251,8 @@
       updateFx(dt);
       return;
     }
-    if (G.mode === 'title') demoThink();
+    if (G.mode === 'title' && !autoOn) demoThink();
+    if (autoOn && G.mode === 'play' && G.deadT <= 0) autoThink();
     updatePlayer(dt);
     let i;
     for (i = 0; i < G.ents.length; i++) updateEnt(G.ents[i], dt);
@@ -2463,17 +2844,31 @@
   function onKey(e, down) {
     const k = e.key;
     const code = e.code;
+    if (isAutoKey(e)) {
+      if (down && !e.repeat) {
+        audio.ensure();
+        toggleAuto();
+      }
+      e.preventDefault();
+      return;
+    }
+    if (e.target === speedEl) return;
+
     const isMove = k === 'ArrowLeft' || k === 'ArrowRight' || k === 'ArrowUp' || k === 'ArrowDown'
-      || k === 'a' || k === 'A' || k === 'd' || k === 'D' || k === 'w' || k === 'W' || k === 's' || k === 'S';
+      || k === 'd' || k === 'D' || k === 'w' || k === 'W' || k === 's' || k === 'S';
     const space = k === ' ' || k === 'Spacebar' || code === 'Space';
     const charge = k === 'Shift' || code === 'ShiftLeft' || code === 'ShiftRight' || k === 'z' || k === 'Z';
 
-    if (k === 'ArrowLeft' || k === 'a' || k === 'A' || k === 'Left') keys.l = down;
-    if (k === 'ArrowRight' || k === 'd' || k === 'D' || k === 'Right') keys.r = down;
-    if (k === 'ArrowUp' || k === 'w' || k === 'W' || k === 'Up') keys.u = down;
-    if (k === 'ArrowDown' || k === 's' || k === 'S' || k === 'Down') keys.d = down;
-    if (space) keys.fire = down;
-    if (charge) keys.charge = down;
+    if (!autoOn) {
+      if (k === 'ArrowLeft' || k === 'Left') keys.l = down;
+      if (k === 'ArrowRight' || k === 'd' || k === 'D' || k === 'Right') keys.r = down;
+      if (k === 'ArrowUp' || k === 'w' || k === 'W' || k === 'Up') keys.u = down;
+      if (k === 'ArrowDown' || k === 's' || k === 'S' || k === 'Down') keys.d = down;
+      if (space) keys.fire = down;
+      if (charge) keys.charge = down;
+    } else if (down && (isMove || space || charge)) {
+      e.preventDefault();
+    }
 
     if (down && (isMove || space || charge || k === 'Enter')) e.preventDefault();
     if (!down) return;
@@ -2487,6 +2882,7 @@
       restart();
       return;
     }
+    if (autoOn) return;
     if (k === '1' && G.mode === 'title') {
       startGame('cut');
       return;
@@ -2509,6 +2905,7 @@
       if (!el) return;
       const down = function (e) {
         e.preventDefault();
+        if (autoOn) return;
         audio.ensure();
         el.classList.add('held');
         on();
@@ -2535,7 +2932,7 @@
     canvas.addEventListener('pointerdown', function (e) {
       audio.ensure();
       e.preventDefault();
-      if (overlayOpen()) return;
+      if (overlayOpen() || autoOn) return;
       keys.fire = true;
     });
     canvas.addEventListener('pointerup', function () { keys.fire = false; });
@@ -2557,13 +2954,17 @@
     let dt = t - last;
     last = t;
     if (dt > 0.05) dt = 0.05;
-    acc += dt;
+    const turbo = autoOn && autoSpeed >= 4 && G.mode === 'play';
+    if (turbo) G.stop = 0;
+    acc += dt * autoScale();
     let n = 0;
-    while (acc >= STEP && n < 5) {
+    const maxSteps = turbo ? 16 : 5;
+    while (acc >= STEP && n < maxSteps) {
       update(STEP);
       acc -= STEP;
       n += 1;
     }
+    if (acc > STEP * 4) acc = 0;
     draw();
   }
 
@@ -2575,6 +2976,9 @@
 
   loadBest();
   initMute();
+  autoSpeed = loadAutoSpeed();
+  syncSpeedUi();
+  syncAutoUi();
   goTitle();
   resize();
   bindPointer();
@@ -2623,6 +3027,16 @@
       audio.ensure();
       audio.setMuted(!audio.muted);
     });
+  }
+  if (btnAuto) {
+    btnAuto.addEventListener('click', function () {
+      audio.ensure();
+      toggleAuto();
+    });
+  }
+  if (speedEl) {
+    speedEl.addEventListener('input', function () { setAutoSpeed(parseInt(speedEl.value, 10)); });
+    speedEl.addEventListener('change', function () { setAutoSpeed(parseInt(speedEl.value, 10)); });
   }
 
   window.addEventListener('keydown', function (e) { onKey(e, true); });
