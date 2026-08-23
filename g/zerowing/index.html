@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#04151c" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>零翼 · ZERO</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2304151c'/%3E%3Cpath d='M2 24c6-3 10-1 14 1 4-2 8-4 14-1v6H2z' fill='%23073a48'/%3E%3Cpath d='M4 16l14-5v10z' fill='%232ec8e8'/%3E%3Crect x='14' y='13.2' width='8' height='5.6' rx='.6' fill='%23e8fbff'/%3E%3Cpath d='M22 10c3-1 6 0 8 2-3 1-6 1-8 0z' fill='%232ef0c8'/%3E%3Cpath d='M22 22c3 1 6 1 8-2-3-1-6-1-8 0z' fill='%232ef0c8'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>零翼</b>
+        <span>ZERO</span>
+      </div>
+      <div class="status">
+        <div class="scores" aria-live="polite">
+          <div class="score" id="score-box">
+            <em>分数</em>
+            <b id="score">0</b>
+            <span id="score-add" class="score-add" hidden>+0</span>
+          </div>
+          <div class="score best">
+            <em>最高</em>
+            <b id="best">0</b>
+          </div>
+        </div>
+        <div class="row">
+          <span id="stage-label">碧海</span>
+          <span id="tag-label">零翼</span>
+          <span id="opt-label" class="opt-badge off">无翼</span>
+          <span id="combo-label" class="combo" hidden>连击</span>
+          <span class="pips" id="pips" aria-label="剩余生命"></span>
+        </div>
+      </div>
+      <div class="tools">
+        <button type="button" id="btn-opt" title="Shift / Z" aria-label="甩翼">翼</button>
+        <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
+        <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <canvas id="c" tabindex="0" role="application" aria-label="零翼游戏区，横向卷轴，空格射击，Shift 把翼甩出去砸穿"></canvas>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden"></div>
+      <div id="pad" class="pad">
+        <button type="button" id="btn-pad" aria-label="甩翼">翼</button>
+      </div>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">ZERO</p>
+          <h1 id="ov-title">零翼</h1>
+          <p class="lead" id="ov-lead">捡翼。空格连射，Shift 把翼甩出去砸穿再飞回来。撞机掉命。先打海卫，再打核心。</p>
+          <p class="ops" id="ov-ops">←↑↓→ / WASD 飞 · 空格射击 · Shift / Z 甩翼 · R 重开 · M 静音</p>
+          <div class="ov-actions" id="ov-start">
+            <button type="button" id="btn-zero">零翼</button>
+            <button type="button" id="btn-tide">核海</button>
+          </div>
+          <div class="ov-actions gone" id="ov-end">
+            <button type="button" id="ov-retry">再飞</button>
+            <button type="button" id="ov-modes">换模式</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">捡翼 · Shift 甩出去砸穿 · 空格连射</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>

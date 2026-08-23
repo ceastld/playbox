@@ -4124,5 +4124,65 @@
     "dir": "g/nexa/",
     "url": "./g/nexa/",
     "kind": "remake"
+  },
+  {
+    "n": 362,
+    "id": "outzone",
+    "title": "外域",
+    "subtitle": "OZON",
+    "blurb": "纵版外域，把机甲从谷里打穿。",
+    "hue": 88,
+    "tag": "复刻",
+    "dir": "g/outzone/",
+    "url": "./g/outzone/",
+    "kind": "remake"
+  },
+  {
+    "n": 365,
+    "id": "zerowing",
+    "title": "零翼",
+    "subtitle": "ZERO",
+    "blurb": "横版零翼，把弹幕从海里打穿。",
+    "hue": 192,
+    "tag": "复刻",
+    "dir": "g/zerowing/",
+    "url": "./g/zerowing/",
+    "kind": "remake"
+  },
+  {
+    "n": 366,
+    "id": "hellfire",
+    "title": "地狱火",
+    "subtitle": "HELL",
+    "blurb": "横版火海，把弹幕从核里打穿。",
+    "hue": 10,
+    "tag": "复刻",
+    "dir": "g/hellfire/",
+    "url": "./g/hellfire/",
+    "kind": "remake"
+  },
+  {
+    "n": 367,
+    "id": "sonic-boom",
+    "title": "音爆",
+    "subtitle": "SBOO",
+    "blurb": "纵版音爆，把机群从云里打散。",
+    "hue": 200,
+    "tag": "复刻",
+    "dir": "g/sonic-boom/",
+    "url": "./g/sonic-boom/",
+    "kind": "remake"
+  },
+  {
+    "n": 368,
+    "id": "vipers",
+    "title": "毒牙",
+    "subtitle": "VPR",
+    "blurb": "纵版毒牙，把弹幕从谷里打穿。",
+    "hue": 128,
+    "tag": "复刻",
+    "dir": "g/vipers/",
+    "url": "./g/vipers/",
+    "kind": "remake"
   }
 ]

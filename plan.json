@@ -4239,7 +4239,7 @@
     "blurb": "纵版外域，把机甲从谷里打穿。",
     "hue": 88,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/outzone/",
     "kind": "remake"
   },
@@ -4275,7 +4275,7 @@
     "blurb": "横版零翼，把弹幕从海里打穿。",
     "hue": 192,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/zerowing/",
     "kind": "remake"
   },
@@ -4287,7 +4287,7 @@
     "blurb": "横版火海，把弹幕从核里打穿。",
     "hue": 10,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/hellfire/",
     "kind": "remake"
   },
@@ -4299,7 +4299,7 @@
     "blurb": "纵版音爆，把机群从云里打散。",
     "hue": 200,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/sonic-boom/",
     "kind": "remake"
   },
@@ -4311,8 +4311,68 @@
     "blurb": "纵版毒牙，把弹幕从谷里打穿。",
     "hue": 128,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/vipers/",
+    "kind": "remake"
+  },
+  {
+    "n": 369,
+    "id": "flash-gal",
+    "title": "闪击",
+    "subtitle": "FGLX",
+    "blurb": "纵版闪击，把机群从云里打穿。",
+    "hue": 48,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/flash-gal/",
+    "kind": "remake"
+  },
+  {
+    "n": 370,
+    "id": "gunforce",
+    "title": "枪力",
+    "subtitle": "GFRC",
+    "blurb": "横版枪力，把装甲从巷里打穿。",
+    "hue": 22,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/gunforce/",
+    "kind": "remake"
+  },
+  {
+    "n": 371,
+    "id": "prehistoric-isle",
+    "title": "史前",
+    "subtitle": "PREH",
+    "blurb": "纵版史前，把恐龙从岛上打穿。",
+    "hue": 86,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/prehistoric-isle/",
+    "kind": "remake"
+  },
+  {
+    "n": 372,
+    "id": "nastro",
+    "title": "星轨",
+    "subtitle": "NAST",
+    "blurb": "横版星轨，把核心从轨道打穿。",
+    "hue": 232,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/nastro/",
+    "kind": "remake"
+  },
+  {
+    "n": 373,
+    "id": "galactic",
+    "title": "银河",
+    "subtitle": "GLXY",
+    "blurb": "纵版银河，把弹幕从核里打散。",
+    "hue": 258,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/galactic/",
     "kind": "remake"
   }
 ]

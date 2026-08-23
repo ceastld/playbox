@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" fill="#041208"/>
+  <rect x="5" y="5" width="54" height="54" rx="9" fill="#081410" stroke="#3dff7a" stroke-width="1.3"/>
+  <path d="M8 18c8-6 12 2 20-3 8-5 10 3 18-1 6-3 9 2 10 1" fill="none" stroke="#1a6a3a" stroke-width="2.4"/>
+  <path d="M8 26c7-4 14 1 20-2 8-4 12 2 18 0 6-2 9 2 10 0" fill="none" stroke="#3dff7a" stroke-width=".7" opacity=".4"/>
+  <path d="M22 8 Q32 18 28 30 T22 52" fill="none" stroke="#4ee8b0" stroke-width="5" opacity=".22"/>
+  <path d="M22 8 Q32 18 28 30 T22 52" fill="none" stroke="#9cff4a" stroke-width="1.6" opacity=".55"/>
+  <path d="M8 50 L16 36 L24 50 Z" fill="#0e2818"/>
+  <path d="M12 50 L16 40 L20 50 Z" fill="#3dff7a" opacity=".4"/>
+  <path d="M40 50 L48 34 L56 50 Z" fill="#0e2818"/>
+  <path d="M44 50 L48 38 L52 50 Z" fill="#9cff4a" opacity=".35"/>
+  <g fill="#ff3d8a">
+    <circle cx="14" cy="16" r="1.05"/>
+    <circle cx="26" cy="12" r="0.9"/>
+    <circle cx="40" cy="14" r="1.1"/>
+    <circle cx="50" cy="11" r="0.85"/>
+  </g>
+  <path d="M32 12l3.6 9 10.4 1.6-7.6 6.2 2.4 10-8.8-6.2-8.8 6.2 2.4-10-7.6-6.2 10.4-1.6z" fill="#3dff7a"/>
+  <path d="M32 16l2 6.4 6.6.4-5.2 4.2 1.8 6.4L32 29.6l-5.2 3.8 1.8-6.4-5.2-4.2 6.6-.4z" fill="#9cff4a"/>
+  <path d="M24 28h16" stroke="#4ee8b0" stroke-width="1.4" stroke-linecap="round"/>
+  <path d="M28 38l4 10 4-10" fill="#4ee8b0"/>
+  <rect x="30.6" y="22" width="2.8" height="14" fill="#e8fff0"/>
+  <circle cx="18" cy="50" r="3.4" fill="#9cff4a"/>
+  <text x="18" y="51.6" text-anchor="middle" font-size="4" font-family="sans-serif" font-weight="700" fill="#041208">毒</text>
+</svg>
