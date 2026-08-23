@@ -54,6 +54,12 @@
           <button type="button" id="mode-rush" aria-pressed="true">突进</button>
           <button type="button" id="mode-barrage" aria-pressed="false">弹幕</button>
         </div>
+        <label class="speed-ctl" title="速度 慢 / 中 / 快 / 极快">
+          <span>速度</span>
+          <input type="range" id="speed" min="1" max="4" step="1" value="3" aria-label="速度" />
+          <b id="speed-lab">快</b>
+        </label>
+        <button type="button" id="btn-auto" title="A" aria-label="自动" aria-pressed="false">自动</button>
         <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
         <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
       </div>
@@ -78,7 +84,7 @@
           <p class="kicker" id="ov-kicker">SCTR</p>
           <h1 id="ov-title">超魂</h1>
           <p class="lead" id="ov-lead">侧向跑跳，八向开火。捡散弹 / 激光。<br />中弹扣体，撞压机、刺带或坠井即死。</p>
-          <p class="ops" id="ov-ops">WASD / 方向键 走跳 · 空格开火 · R 重开 · M 静音</p>
+          <p class="ops" id="ov-ops">← → / D 走跳 · 空格开火 · A 自动 · R 重开 · M 静音</p>
           <div class="ov-actions" id="ov-start">
             <button type="button" id="btn-rush">突进</button>
             <button type="button" id="btn-barrage">弹幕</button>
@@ -91,7 +97,7 @@
       </div>
     </div>
 
-    <footer class="hint" id="hint">走跳 · 空格八向开火 · 捡 S/L · 压机即死</footer>
+    <footer class="hint" id="hint">走跳 · 空格八向开火 · 捡 S/L · A 自动 · 压机即死</footer>
   </div>
   <script src="js/game.js"></script>
 </body>
