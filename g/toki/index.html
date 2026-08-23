@@ -50,6 +50,12 @@
           <button type="button" id="mode-save" aria-pressed="true">救美</button>
           <button type="button" id="mode-tide" aria-pressed="false">兽潮</button>
         </div>
+        <label class="speed-ctl" title="速度 慢 / 中 / 快 / 极快">
+          <span>速度</span>
+          <input type="range" id="speed" min="1" max="4" step="1" value="3" aria-label="速度" />
+          <b id="speed-lab">快</b>
+        </label>
+        <button type="button" id="btn-auto" title="A" aria-label="自动" aria-pressed="false">自动</button>
         <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
         <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
       </div>
@@ -73,7 +79,7 @@
           <p class="kicker" id="ov-kicker">TOKI</p>
           <h1 id="ov-title">猿人</h1>
           <p class="lead" id="ov-lead">被咒成猿，吐火开路。水潭里游，坑要跳过。<br />挨打掉体，体空丢命。尽头把人救出来。</p>
-          <p class="ops" id="ov-ops">方向键 / WASD 走跳 · 空格吐火 · R 重开 · M 静音</p>
+          <p class="ops" id="ov-ops">方向键 / D 走跳 · 空格吐火 · A 自动 · R 重开 · M 静音</p>
           <div class="ov-actions" id="ov-start">
             <button type="button" id="btn-save">救美</button>
             <button type="button" id="btn-tide">兽潮</button>
@@ -86,7 +92,7 @@
       </div>
     </div>
 
-    <footer class="hint" id="hint">走跳 · 空格吐火 · 水里游 · 挨打掉体</footer>
+    <footer class="hint" id="hint">走跳 · 空格吐火 · 水里游 · A 自动</footer>
   </div>
   <script src="js/game.js"></script>
 </body>
