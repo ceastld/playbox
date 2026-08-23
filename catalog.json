@@ -5024,5 +5024,17 @@
     "dir": "g/virtua-racing/",
     "url": "./g/virtua-racing/",
     "kind": "remake"
+  },
+  {
+    "n": 439,
+    "id": "contra2",
+    "title": "魂斗2",
+    "subtitle": "CTR2",
+    "blurb": "横版魂斗2，把机枪从巷里打穿。",
+    "hue": 18,
+    "tag": "复刻",
+    "dir": "g/contra2/",
+    "url": "./g/contra2/",
+    "kind": "remake"
   }
 ]

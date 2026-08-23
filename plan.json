@@ -5163,7 +5163,7 @@
     "blurb": "横版魂斗2，把机枪从巷里打穿。",
     "hue": 18,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/contra2/",
     "kind": "remake"
   },
@@ -5213,6 +5213,18 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/golden-axe2/",
+    "kind": "remake"
+  },
+  {
+    "n": 444,
+    "id": "bubble-bobble",
+    "title": "泡龙2",
+    "subtitle": "BBBL",
+    "blurb": "纵版泡龙2，把泡泡从房里打穿。",
+    "hue": 186,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/bubble-bobble/",
     "kind": "remake"
   }
 ]
