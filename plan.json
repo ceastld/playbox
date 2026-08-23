@@ -3915,7 +3915,7 @@
     "blurb": "砖墙弹珠，把砖块打成火花。",
     "hue": 28,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/gunbarich/",
     "kind": "remake"
   },
@@ -3951,7 +3951,7 @@
     "blurb": "恶搞横弹，把企鹅弹幕打散。",
     "hue": 318,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/parodius/",
     "kind": "remake"
   },
@@ -3963,7 +3963,7 @@
     "blurb": "横版变身，把生金从海里打穿。",
     "hue": 168,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/bio-metal/",
     "kind": "remake"
   },
@@ -3975,7 +3975,7 @@
     "blurb": "纵版喷火，把龙息打进岩核。",
     "hue": 12,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/dragon-spirit/",
     "kind": "remake"
   },
@@ -3989,6 +3989,54 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/image-fight/",
+    "kind": "remake"
+  },
+  {
+    "n": 342,
+    "id": "super-star",
+    "title": "超武",
+    "subtitle": "SSOL",
+    "blurb": "纵版超武，把弹幕从星核打穿。",
+    "hue": 198,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/super-star/",
+    "kind": "remake"
+  },
+  {
+    "n": 343,
+    "id": "terra-crest",
+    "title": "征陆",
+    "subtitle": "TCRS",
+    "blurb": "纵版陆战，把堡垒从地上打塌。",
+    "hue": 32,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/terra-crest/",
+    "kind": "remake"
+  },
+  {
+    "n": 344,
+    "id": "cybattler",
+    "title": "机战",
+    "subtitle": "CYBT",
+    "blurb": "机甲对轰，把装甲打成火花。",
+    "hue": 188,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/cybattler/",
+    "kind": "remake"
+  },
+  {
+    "n": 345,
+    "id": "macross",
+    "title": "超时空",
+    "subtitle": "MCRS",
+    "blurb": "变形空战，把舰桥从轨道打穿。",
+    "hue": 208,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/macross/",
     "kind": "remake"
   }
 ]
