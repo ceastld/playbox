@@ -4059,7 +4059,7 @@
     "blurb": "直升扫射，把弹幕从谷里打穿。",
     "hue": 142,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/gyrodine/",
     "kind": "remake"
   },
@@ -4083,7 +4083,7 @@
     "blurb": "纵版爆弹，把机群从云里打散。",
     "hue": 16,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/blast-off/",
     "kind": "remake"
   },
@@ -4095,7 +4095,7 @@
     "blurb": "纵版魔弹，把弹幕从核里打穿。",
     "hue": 8,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/daioh/",
     "kind": "remake"
   },
@@ -4109,6 +4109,42 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/twinkle-star/",
+    "kind": "remake"
+  },
+  {
+    "n": 352,
+    "id": "vfive",
+    "title": "五号",
+    "subtitle": "VFIV",
+    "blurb": "纵版机炮，把弹幕从核里打穿。",
+    "hue": 204,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/vfive/",
+    "kind": "remake"
+  },
+  {
+    "n": 353,
+    "id": "gunhed",
+    "title": "钢魂",
+    "subtitle": "GHED",
+    "blurb": "横版机甲，把装甲从巷里打穿。",
+    "hue": 178,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/gunhed/",
+    "kind": "remake"
+  },
+  {
+    "n": 354,
+    "id": "dragoon",
+    "title": "龙骑",
+    "subtitle": "DRGN",
+    "blurb": "纵版喷火，把龙骑打进岩核。",
+    "hue": 6,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/dragoon/",
     "kind": "remake"
   }
 ]

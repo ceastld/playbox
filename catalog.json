@@ -3920,5 +3920,41 @@
     "dir": "g/star-fox/",
     "url": "./g/star-fox/",
     "kind": "remake"
+  },
+  {
+    "n": 347,
+    "id": "gyrodine",
+    "title": "旋空",
+    "subtitle": "GYRO",
+    "blurb": "直升扫射，把弹幕从谷里打穿。",
+    "hue": 142,
+    "tag": "复刻",
+    "dir": "g/gyrodine/",
+    "url": "./g/gyrodine/",
+    "kind": "remake"
+  },
+  {
+    "n": 349,
+    "id": "blast-off",
+    "title": "爆射",
+    "subtitle": "BLST",
+    "blurb": "纵版爆弹，把机群从云里打散。",
+    "hue": 16,
+    "tag": "复刻",
+    "dir": "g/blast-off/",
+    "url": "./g/blast-off/",
+    "kind": "remake"
+  },
+  {
+    "n": 350,
+    "id": "daioh",
+    "title": "大王",
+    "subtitle": "DAIO",
+    "blurb": "纵版魔弹，把弹幕从核里打穿。",
+    "hue": 8,
+    "tag": "复刻",
+    "dir": "g/daioh/",
+    "url": "./g/daioh/",
+    "kind": "remake"
   }
 ]
