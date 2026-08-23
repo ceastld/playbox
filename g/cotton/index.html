@@ -44,6 +44,12 @@
         </div>
       </div>
       <div class="tools">
+        <label class="speed-ctl" title="速度 慢 / 中 / 快 / 极快">
+          <span>速度</span>
+          <input type="range" id="speed" min="1" max="4" step="1" value="3" aria-label="速度" />
+          <b id="speed-lab">快</b>
+        </label>
+        <button type="button" id="btn-auto" title="A" aria-label="自动" aria-pressed="false">自动</button>
         <button type="button" id="btn-bomb" title="Shift / Z" aria-label="爆弹">爆</button>
         <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
         <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
@@ -62,7 +68,7 @@
           <p class="kicker" id="ov-kicker">COTT</p>
           <h1 id="ov-title">魔棉</h1>
           <p class="lead" id="ov-lead">骑扫帚从左往右扫夜。空格连射并蓄咒，满了放出大魔星。Shift 丢丝爆。撞上就掉命。过关才见 Boss。</p>
-          <p class="ops" id="ov-ops">方向 / WASD 飞 · 空格射击蓄咒 · Shift / Z 爆弹 · R 重开 · M 静音</p>
+          <p class="ops" id="ov-ops">方向 / WSD 飞 · 空格射击蓄咒 · Shift / Z 爆弹 · A 自动 · R 重开 · M 静音</p>
           <div class="ov-actions" id="ov-start">
             <button type="button" id="btn-ride">骑扫</button>
             <button type="button" id="btn-rain">魔雨</button>
@@ -75,7 +81,7 @@
       </div>
     </div>
 
-    <footer class="hint" id="hint">空格连射蓄咒 · Shift 爆弹 · 捡糖升星 · 撞上掉命</footer>
+    <footer class="hint" id="hint">空格连射蓄咒 · Shift 爆弹 · 捡糖升星 · A 自动</footer>
   </div>
   <script src="js/game.js"></script>
 </body>

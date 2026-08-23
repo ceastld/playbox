@@ -13,7 +13,10 @@
   const WPN_MAX = 3;
   const BEST_KEY = 'playbox-cotton-best';
   const MUTE_KEY = 'playbox-cotton-mute';
-  const OPS = '方向 / WASD 飞 · 空格射击蓄咒 · Shift / Z 爆弹 · R 重开 · M 静音';
+  const AUTO_SPEED_KEY = 'playbox-cotton-auto-speed';
+  const SPEED_LABELS = ['', '慢', '中', '快', '极快'];
+  const AUTO_SCALE = [1, 0.48, 0.72, 1, 2.55];
+  const OPS = '方向 / WSD 飞 · 空格射击蓄咒 · Shift / Z 爆弹 · A 自动 · R 重开 · M 静音';
   const REDUCE = typeof window !== 'undefined' && window.matchMedia
     ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
     : false;
@@ -122,6 +125,9 @@
   const btnOvModes = document.getElementById('ov-modes');
   const btnMute = document.getElementById('btn-mute');
   const btnRetry = document.getElementById('btn-retry');
+  const btnAuto = document.getElementById('btn-auto');
+  const speedEl = document.getElementById('speed');
+  const speedLab = document.getElementById('speed-lab');
   const btnBomb = document.getElementById('btn-bomb');
   const btnPad = document.getElementById('btn-pad');
   const scoreEl = document.getElementById('score');
@@ -211,6 +217,12 @@
   };
 
   let inputSrc = 'key';
+  let autoOn = false;
+  let autoSpeed = 3;
+  let autoTx = 90;
+  let autoTy = VH * 0.5;
+  let autoStickS = -1e9;
+  let autoOvWait = 0;
 
   function clamp(v, a, b) {
     return v < a ? a : v > b ? b : v;
@@ -456,6 +468,22 @@
     if (bestEl) bestEl.textContent = String(G.best);
   }
 
+  function loadAutoSpeed() {
+    try {
+      const n = parseInt(localStorage.getItem(AUTO_SPEED_KEY) || '3', 10);
+      if (!isFinite(n) || n < 1 || n > 4) return 3;
+      return n;
+    } catch (err) {
+      return 3;
+    }
+  }
+
+  function saveAutoSpeed(n) {
+    try {
+      localStorage.setItem(AUTO_SPEED_KEY, String(n));
+    } catch (err) { /* ignore */ }
+  }
+
   function flashScore(n) {
     if (!scoreBox) return;
     scoreBox.classList.remove('flash');
@@ -553,11 +581,13 @@
     if (chgBar) chgBar.style.transform = 'scaleX(' + clamp(G.charge, 0, 1) + ')';
     if (chgWrap) chgWrap.classList.toggle('full', G.charge >= 0.92);
     if (hintEl) {
-      hintEl.classList.toggle('hot', G.bossIn);
-      hintEl.classList.toggle('warn', G.lives <= 1 && G.mode === 'play');
-      if (G.mode === 'title') hintEl.textContent = '空格连射蓄咒 · Shift 爆弹 · 捡糖升星 · 撞上掉命';
+      hintEl.classList.toggle('hot', autoOn || G.bossIn);
+      hintEl.classList.toggle('warn', !autoOn && G.lives <= 1 && G.mode === 'play');
+      if (autoOn && (G.mode === 'play' || G.mode === 'title')) hintEl.textContent = '托管中 · A 停下';
+      else if (autoOn && (G.mode === 'lose' || G.mode === 'win')) hintEl.textContent = '托管中 · R 重开接着打';
+      else if (G.mode === 'title') hintEl.textContent = '空格连射蓄咒 · Shift 爆弹 · 捡糖升星 · A 自动';
       else if (G.bossIn) hintEl.textContent = st.boss + ' · 蓄满咒放魔星 · 爆弹清弹';
-      else hintEl.textContent = st.name + ' · 空格蓄咒 · Shift 爆弹';
+      else hintEl.textContent = st.name + ' · 空格蓄咒 · Shift 爆弹 · A 自动';
     }
     if (comboEl && (G.mode !== 'play' || G.combo < 2)) comboEl.hidden = true;
     syncPips();
@@ -591,6 +621,78 @@
 
   function overlayOpen() {
     return !!(overlay && !overlay.classList.contains('hidden'));
+  }
+
+  function autoClearInput() {
+    keys.l = false;
+    keys.r = false;
+    keys.u = false;
+    keys.d = false;
+    pointer.down = false;
+    G.fireHold = false;
+  }
+
+  function syncAutoUi() {
+    if (!btnAuto) return;
+    btnAuto.classList.toggle('on', autoOn);
+    btnAuto.setAttribute('aria-pressed', autoOn ? 'true' : 'false');
+    btnAuto.textContent = autoOn ? '停下' : '自动';
+    btnAuto.setAttribute('aria-label', autoOn ? '停止自动' : '自动');
+  }
+
+  function syncSpeedUi() {
+    if (!speedEl) return;
+    speedEl.value = String(autoSpeed);
+    if (speedLab) speedLab.textContent = SPEED_LABELS[autoSpeed];
+    speedEl.title = SPEED_LABELS[autoSpeed];
+    speedEl.setAttribute('aria-valuetext', SPEED_LABELS[autoSpeed]);
+  }
+
+  function setAutoSpeed(n) {
+    n = parseInt(n, 10);
+    if (!isFinite(n) || n < 1 || n > 4) n = 3;
+    autoSpeed = n;
+    saveAutoSpeed(autoSpeed);
+    syncSpeedUi();
+  }
+
+  function toggleAuto() {
+    autoOn = !autoOn;
+    autoOvWait = 0;
+    autoStickS = -1e9;
+    autoClearInput();
+    autoTx = G.px;
+    autoTy = G.py;
+    syncAutoUi();
+    if (autoOn) {
+      audio.ensure();
+      if (G.mode === 'title') startGame('ride');
+    }
+    syncHud();
+  }
+
+  function autoScale() {
+    if (!autoOn || G.mode !== 'play') return 1;
+    return AUTO_SCALE[autoSpeed] || 1;
+  }
+
+  function tickAutoFlow(dt) {
+    if (!autoOn) return;
+    if (G.mode === 'title') {
+      autoOvWait += dt;
+      if (autoOvWait >= (autoSpeed >= 3 ? 0.22 : 0.48)) {
+        autoOvWait = 0;
+        startGame('ride');
+      }
+      return;
+    }
+    if (G.mode === 'lose' || G.mode === 'win') {
+      autoOvWait += dt;
+      if (autoOvWait >= (autoSpeed >= 3 ? 0.65 : 1.1)) {
+        autoOvWait = 0;
+        startGame(G.kind || 'ride');
+      }
+    }
   }
 
   function hitStop(sec) {
@@ -1144,6 +1246,10 @@
     G.comboT = 0;
     G.mult = 1;
     G.charge = 0;
+    autoTx = G.px;
+    autoTy = G.py;
+    autoStickS = -1e9;
+    if (autoOn) G.fireHold = true;
     syncHud();
   }
 
@@ -1284,14 +1390,251 @@
     }
   }
 
+  function autoDanger(x, y, horizon) {
+    let d = 0;
+    const hitR = 7;
+    for (let i = 0; i < G.eShots.length; i++) {
+      const s = G.eShots[i];
+      const relx = s.x - x;
+      const rely = s.y - y;
+      const vv = s.vx * s.vx + s.vy * s.vy;
+      let t = 0;
+      if (vv > 1) t = clamp(-(relx * s.vx + rely * s.vy) / vv, 0, horizon);
+      const dist = hypot(relx + s.vx * t, rely + s.vy * t);
+      const rad = hitR + s.r * 0.55;
+      if (t <= horizon && dist < rad + 36) {
+        const soon = (horizon - t) / Math.max(0.08, horizon);
+        d += Math.max(0.5, rad + 14 - dist) * soon * 28;
+        if (dist < rad) d += 280 * soon;
+      }
+    }
+    for (let i = 0; i < G.ents.length; i++) {
+      const e = G.ents[i];
+      if (e.dead || e.ground) continue;
+      let evx = e.vx || 0;
+      let evy = e.vy || 0;
+      if (e.type === 'bat' && e.dive) evy = clamp(y - e.y, -90, 90) * 1.4;
+      if (e.type === 'sprite') evy += (y - e.y) * 0.09;
+      const relx = e.x - x;
+      const rely = e.y - y;
+      const vv = evx * evx + evy * evy;
+      let t = 0;
+      if (vv > 1) t = clamp(-(relx * evx + rely * evy) / vv, 0, horizon);
+      const dist = hypot(relx + evx * t, rely + evy * t);
+      const hw = (e.w || 16) * (e.type === 'boss' ? 0.42 : 0.5);
+      const hh = (e.h || 12) * (e.type === 'boss' ? 0.42 : 0.5);
+      const body = 8 + Math.max(hw, hh) * 0.55;
+      if (dist < body + 30) {
+        const soon = (horizon - t) / Math.max(0.08, horizon);
+        const w = e.type === 'boss' ? 12 : e.dive ? 34 : 20;
+        d += Math.max(0.4, body + 14 - dist) * soon * w;
+        if (dist < body) d += 240 * soon;
+      }
+      if (hypot(e.x - x, e.y - y) < body + 8) d += 110;
+    }
+    return d;
+  }
+
+  function autoThink() {
+    if (!autoOn) return;
+    if (G.mode !== 'play' || G.deadT > 0) {
+      G.fireHold = false;
+      return;
+    }
+
+    const rain = isRain();
+    const horizon = rain ? 0.62 : 0.5;
+    const px = G.px;
+    const py = G.py;
+    let aimX = 520;
+    let aimY = null;
+    let aimW = -1e9;
+    let cluster = 0;
+    let nearbyShots = 0;
+    let laneShots = 0;
+    let boss = null;
+    let pick = null;
+    let pickW = -1e9;
+
+    for (let i = 0; i < G.ents.length; i++) {
+      const e = G.ents[i];
+      if (e.dead) continue;
+      if (e.x < px - 30 || e.x > VW + 40) continue;
+      let w = 36 + (e.hp || 1) * 8;
+      if (e.type === 'boss') w = 280 + e.hp * 0.35;
+      else if (e.type === 'cart') w = 240;
+      else if (e.type === 'wool') w = 90;
+      else if (e.type === 'imp' || e.type === 'pumpkin') w = 72;
+      else if (e.type === 'toad') w = 80;
+      else if (e.dive) w = 70;
+      else if (e.ground) w = 24;
+      w -= Math.abs(e.y - py) * 0.18;
+      w -= Math.max(0, e.x - px) * 0.06;
+      w -= Math.max(0, px - e.x) * 0.45;
+      if (e.x > px + 24 && e.x < px + 280) w += 28;
+      if (e.type === 'boss') boss = e;
+      if (w > aimW) {
+        aimW = w;
+        aimX = e.x;
+        aimY = e.y;
+      }
+    }
+    if (aimY != null) {
+      for (let i = 0; i < G.ents.length; i++) {
+        const e = G.ents[i];
+        if (e.dead || e.ground) continue;
+        if (Math.abs(e.y - aimY) < 22 && e.x > px) cluster += 1;
+      }
+    }
+
+    for (let i = 0; i < G.eShots.length; i++) {
+      const s = G.eShots[i];
+      const dist = hypot(s.x - px, s.y - py);
+      if (dist < 160) nearbyShots += 1;
+      if (Math.abs(s.y - py) < 12 && s.x > px && s.x < px + 280) laneShots += 1;
+    }
+
+    for (let i = 0; i < G.pows.length; i++) {
+      const p = G.pows[i];
+      if (p.dead) continue;
+      let w = 96 - hypot(p.x - px, p.y - py) * 0.32;
+      if (p.kind === 'candy') w += G.wpnLv < WPN_MAX ? 120 : 22;
+      else w += G.bombs <= 0 ? 118 : G.bombs <= 1 ? 64 : G.bombs < BOMB_CAP ? 26 : 10;
+      if (p.x < 140) w += 48;
+      if (p.x > px - 10) w += 22;
+      if (w > pickW) {
+        pickW = w;
+        pick = p;
+      }
+    }
+
+    const hereDang = autoDanger(px, py, horizon);
+    const panic = hereDang > 92 || (G.lives <= 1 && hereDang > 58);
+    const crowded = nearbyShots >= (rain ? 6 : 8);
+    const grabPick = pick && (
+      G.invuln > 0.12
+      || autoDanger(pick.x, pick.y, 0.28) < 78
+      || hypot(pick.x - px, pick.y - py) < 130
+      || (pick.kind === 'candy' && G.wpnLv < WPN_MAX && hereDang < 140)
+    );
+
+    let desiredX = 108;
+    let desiredY = VH * 0.5;
+    if (aimY != null) {
+      desiredY = clamp(aimY, 40, 410);
+      desiredX = clamp(aimX - 220, 70, G.bossIn ? 180 : 210);
+    }
+    if (boss) {
+      desiredX = clamp(boss.x - 280, 70, 160);
+      desiredY = clamp(boss.y, 50, 400);
+    }
+    if (hereDang > 50) desiredX = Math.min(desiredX, 96);
+    if (panic) {
+      desiredX = clamp(px - 28, 40, 120);
+      desiredY = clamp(py + (py > VH * 0.5 ? -48 : 48), 36, 414);
+    }
+    if (laneShots >= 1) {
+      desiredY = clamp(py + (py > VH * 0.5 ? -64 : 64), 36, 414);
+      desiredX = clamp(px - 18, 40, 200);
+    }
+    if (grabPick && pick && (!panic || G.invuln > 0.12 || hereDang < 140 || hypot(pick.x - px, pick.y - py) < 80)) {
+      desiredX = clamp(pick.x, 40, G.bossIn ? 280 : 360);
+      desiredY = clamp(pick.y, 36, 414);
+    }
+
+    const xMin = 28;
+    const xMax = G.bossIn ? 400 : 360;
+    const yMin = 28;
+    const yMax = 420;
+    let bestX = clamp(autoTx, xMin, xMax);
+    let bestY = clamp(autoTy, yMin, yMax);
+    let bestS = -1e15;
+
+    function consider(x, y) {
+      x = clamp(x, xMin, xMax);
+      y = clamp(y, yMin, yMax);
+      let dangW = rain ? 7.4 : 6.1;
+      if (G.invuln > 0.2) dangW *= 0.22;
+      else if (grabPick && pick) dangW *= 0.5;
+      let s = -autoDanger(x, y, horizon) * dangW;
+      s -= Math.abs(x - desiredX) * (boss || cluster >= 3 ? 0.72 : 0.48);
+      s -= Math.abs(y - desiredY) * (aimY != null ? 1.15 : 0.7);
+      s -= Math.abs(x - px) * 0.38;
+      s -= hypot(x - px, y - py) * 0.08;
+      if (x > 240) s -= (x - 240) * 0.22;
+      if (x < 36) s -= 10;
+      if (aimY != null && Math.abs(y - aimY) < 10) s += 26;
+      if (grabPick && pick) s -= hypot(x - pick.x, y - pick.y) * 1.35;
+      if (s > bestS) {
+        bestS = s;
+        bestX = x;
+        bestY = y;
+      }
+    }
+
+    consider(px, py);
+    consider(autoTx, autoTy);
+    consider(desiredX, desiredY);
+    for (let ix = 0; ix < 7; ix++) {
+      const x = 40 + ix * ((xMax - 50) / 6);
+      for (let iy = 0; iy < 9; iy++) {
+        consider(x, 36 + iy * ((yMax - 50) / 8));
+      }
+    }
+    if (aimY != null) {
+      consider(desiredX, aimY);
+      consider(px, aimY);
+      consider(desiredX, py);
+      consider(desiredX, aimY - 46);
+      consider(desiredX, aimY + 46);
+      consider(clamp(aimX - 180, xMin, xMax), aimY);
+    }
+    if (grabPick && pick) consider(pick.x, pick.y);
+    consider(px - 56, py);
+    consider(px + 40, py);
+    consider(px, py - 70);
+    consider(px, py + 70);
+    consider(px - 28, py - 42);
+    consider(px - 28, py + 42);
+    consider(px + 24, py - 36);
+    consider(px + 24, py + 36);
+    consider(desiredX, clamp(desiredY - 40, yMin, yMax));
+    consider(desiredX, clamp(desiredY + 40, yMin, yMax));
+
+    let switchGap = hereDang > 48 ? 6 : 22;
+    if (Math.abs(desiredY - py) > 36 || (grabPick && pick)) switchGap = Math.min(switchGap, 4);
+    if (bestS > autoStickS + switchGap || hereDang > 55 || hypot(autoTx - px, autoTy - py) < 5) {
+      autoTx = bestX;
+      autoTy = bestY;
+      autoStickS = bestS;
+    }
+
+    G.fireHold = true;
+
+    if (G.bombs > 0 && G.bombT <= 0 && G.invuln < 0.12) {
+      if (panic || crowded || (boss && nearbyShots >= 6 && hereDang > 70) || hereDang > 130) {
+        tryBomb();
+      }
+    }
+  }
+
   function updateMove(dt) {
     if (G.deadT > 0) return;
     const spd = plySpd();
-    let dx = 0;
-    let dy = 0;
-    if (inputSrc === 'ptr' && (pointer.down || pointer.hover)) {
-      dx = pointer.x - G.px;
-      dy = pointer.y - G.py;
+    if (autoOn) {
+      const ax = autoTx - G.px;
+      const ay = autoTy - G.py;
+      const d = hypot(ax, ay);
+      const boost = autoSpeed >= 4 ? 1.22 : autoSpeed >= 3 ? 1.06 : autoSpeed <= 1 ? 0.86 : 0.96;
+      if (d > 1.2) {
+        const step = Math.min(d, spd * dt * boost);
+        G.px += ax / d * step;
+        G.py += ay / d * step;
+        G.lean = lerp(G.lean, clamp(ay / 80, -1, 1), 0.2);
+      } else G.lean = lerp(G.lean, 0, 0.15);
+    } else if (inputSrc === 'ptr' && (pointer.down || pointer.hover)) {
+      const dx = pointer.x - G.px;
+      const dy = pointer.y - G.py;
       const d = hypot(dx, dy);
       if (d > 4) {
         const step = Math.min(d, spd * dt * 1.15);
@@ -1558,6 +1901,8 @@
   }
 
   function update(dt) {
+    tickAutoFlow(dt);
+    if (autoOn && autoSpeed >= 4 && G.mode === 'play') G.stop = 0;
     updateFx(dt);
     if (G.mode !== 'play') {
       G.t += dt;
@@ -1590,6 +1935,7 @@
       if (G.nextT <= 0) nextStage();
     }
     if (!G.bossIn) G.stageT += dt;
+    if (autoOn) autoThink();
     updateMove(dt);
     if (G.fireHold && G.deadT <= 0) {
       G.charge = Math.min(1, G.charge + dt * ((isRain() ? 0.46 : 0.38) + (G.combo >= 8 ? 0.08 : 0)));
@@ -2386,6 +2732,11 @@
     G.dropI = 0;
     G.why = '';
     G.bossIn = false;
+    autoTx = G.px;
+    autoTy = G.py;
+    autoStickS = -1e9;
+    autoOvWait = 0;
+    if (autoOn) G.fireHold = true;
     if (scoreEl) scoreEl.textContent = '0';
     clearField();
     seedDecor();
@@ -2409,6 +2760,9 @@
     G.bossIn = false;
     G.px = 90;
     G.py = VH * 0.5;
+    autoTx = G.px;
+    autoTy = G.py;
+    autoOvWait = 0;
     clearField();
     seedDecor();
     G.ents.push(makeBoss('king', '南瓜王', 148));
@@ -2448,33 +2802,41 @@
   function onKey(e, down) {
     const k = e.key;
     const code = e.code;
+    if (k === 'a' || k === 'A' || code === 'KeyA') {
+      if (down) {
+        e.preventDefault();
+        if (!e.repeat) toggleAuto();
+      }
+      return;
+    }
+    if (e.target === speedEl) return;
     const isBomb = k === 'Shift' || code === 'ShiftLeft' || code === 'ShiftRight' || k === 'z' || k === 'Z';
     const isMove = k === 'ArrowLeft' || k === 'ArrowRight' || k === 'ArrowUp' || k === 'ArrowDown'
-      || k === 'a' || k === 'A' || k === 'd' || k === 'D' || k === 'w' || k === 'W' || k === 's' || k === 'S'
+      || k === 'd' || k === 'D' || k === 'w' || k === 'W' || k === 's' || k === 'S'
       || k === 'Left' || k === 'Right' || k === 'Up' || k === 'Down';
     const space = k === ' ' || k === 'Spacebar' || code === 'Space';
 
-    if (k === 'ArrowLeft' || k === 'a' || k === 'A' || k === 'Left') {
-      keys.l = down;
+    if (k === 'ArrowLeft' || k === 'Left') {
+      keys.l = down && !autoOn;
       if (down) inputSrc = 'key';
     }
     if (k === 'ArrowRight' || k === 'd' || k === 'D' || k === 'Right') {
-      keys.r = down;
+      keys.r = down && !autoOn;
       if (down) inputSrc = 'key';
     }
     if (k === 'ArrowUp' || k === 'w' || k === 'W' || k === 'Up') {
-      keys.u = down;
+      keys.u = down && !autoOn;
       if (down) inputSrc = 'key';
     }
     if (k === 'ArrowDown' || k === 's' || k === 'S' || k === 'Down') {
-      keys.d = down;
+      keys.d = down && !autoOn;
       if (down) inputSrc = 'key';
     }
 
     if (down && (isMove || space || isBomb || k === 'Enter')) e.preventDefault();
 
     if (!down) {
-      if (space) G.fireHold = false;
+      if (space && !autoOn) G.fireHold = false;
       return;
     }
     if (k === 'm' || k === 'M') {
@@ -2484,6 +2846,9 @@
     }
     if (k === 'r' || k === 'R') {
       restart();
+      return;
+    }
+    if (autoOn && (isMove || space || isBomb || k === 'd' || k === 'D' || k === 'w' || k === 'W' || k === 's' || k === 'S')) {
       return;
     }
     if (k === '1') {
@@ -2501,10 +2866,10 @@
     if (space || k === 'Enter') {
       if (overlayOpen()) {
         primaryAction();
-        if (space && G.mode === 'play') G.fireHold = true;
+        if (space && G.mode === 'play' && !autoOn) G.fireHold = true;
         return;
       }
-      if (G.mode === 'play') {
+      if (G.mode === 'play' && !autoOn) {
         G.fireHold = true;
         fire();
       }
@@ -2515,6 +2880,7 @@
     if (!canvas) return;
     canvas.addEventListener('pointerdown', function (e) {
       audio.ensure();
+      if (autoOn) return;
       e.preventDefault();
       pointer.down = true;
       pointer.hover = true;
@@ -2530,6 +2896,7 @@
       }
     });
     canvas.addEventListener('pointermove', function (e) {
+      if (autoOn) return;
       const w = pointerWorld(e);
       pointer.x = w.x;
       pointer.y = w.y;
@@ -2540,13 +2907,14 @@
       if (pointer.id != null && e.pointerId !== pointer.id && pointer.down) return;
       pointer.down = false;
       pointer.id = null;
+      if (autoOn) return;
       G.fireHold = false;
     }
     canvas.addEventListener('pointerup', up);
     canvas.addEventListener('pointercancel', up);
     canvas.addEventListener('pointerleave', function () {
       pointer.hover = false;
-      if (!pointer.down) G.fireHold = false;
+      if (!pointer.down && !autoOn) G.fireHold = false;
     });
     canvas.addEventListener('contextmenu', function (e) { e.preventDefault(); });
     canvas.addEventListener('touchstart', function (e) { e.preventDefault(); }, { passive: false });
@@ -2565,13 +2933,17 @@
     let dt = t - last;
     last = t;
     if (dt > 0.05) dt = 0.05;
-    acc += dt;
+    const turbo = autoOn && autoSpeed >= 4 && G.mode === 'play';
+    if (turbo) G.stop = 0;
+    acc += dt * autoScale();
     let n = 0;
-    while (acc >= STEP && n < 5) {
+    const maxSteps = turbo ? 16 : 5;
+    while (acc >= STEP && n < maxSteps) {
       update(STEP);
       acc -= STEP;
       n += 1;
     }
+    if (acc > STEP * 4) acc = 0;
     draw();
   }
 
@@ -2583,6 +2955,9 @@
 
   loadBest();
   initMute();
+  autoSpeed = loadAutoSpeed();
+  syncSpeedUi();
+  syncAutoUi();
   goTitle();
   resize();
   bindPointer();
@@ -2621,6 +2996,15 @@
       audio.setMuted(!audio.muted);
     });
   }
+  if (btnAuto) btnAuto.addEventListener('click', function () { toggleAuto(); });
+  if (speedEl) {
+    speedEl.addEventListener('input', function () {
+      setAutoSpeed(parseInt(speedEl.value, 10) || 3);
+    });
+    speedEl.addEventListener('change', function () {
+      setAutoSpeed(parseInt(speedEl.value, 10) || 3);
+    });
+  }
 
   window.addEventListener('keydown', function (e) { onKey(e, true); });
   window.addEventListener('keyup', function (e) { onKey(e, false); });
@@ -2632,7 +3016,7 @@
       keys.r = false;
       keys.u = false;
       keys.d = false;
-      G.fireHold = false;
+      if (!autoOn) G.fireHold = false;
     }
   });
 
