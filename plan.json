@@ -4503,7 +4503,7 @@
     "blurb": "横版潜猎，把舰核从海里打穿。",
     "hue": 188,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/in-the-hunt/",
     "kind": "remake"
   },
@@ -4601,6 +4601,18 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/jackal/",
+    "kind": "remake"
+  },
+  {
+    "n": 393,
+    "id": "life-force",
+    "title": "命力",
+    "subtitle": "LFCE",
+    "blurb": "横版命力，把核心从核里打穿。",
+    "hue": 154,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/life-force/",
     "kind": "remake"
   }
 ]

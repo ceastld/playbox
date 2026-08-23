@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#031018" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>潜猎 · HUNT</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23031018'/%3E%3Cpath d='M0 11h32' stroke='%2312d8ea' stroke-width='.8' opacity='.7'/%3E%3Cpath d='M0 11c4 2 8-1 12 1s8-2 12 0 8 1 8 1' fill='none' stroke='%23b8f4ff' stroke-width='.6'/%3E%3Cellipse cx='16' cy='19' rx='9' ry='4.2' fill='%23ffe36b'/%3E%3Cpath d='M10 17.4h8.5v3.2H10z' fill='%2312d8ea'/%3E%3Ccircle cx='14' cy='19' r='1.1' fill='%23031018'/%3E%3Cpath d='M25 19l4-1.2v2.4z' fill='%23ffe36b'/%3E%3Cpath d='M7 12l1.4 5' stroke='%2312d8ea' stroke-width='.8'/%3E%3Ccircle cx='22' cy='8' r='1.4' fill='%23ff3db8'/%3E%3Cpath d='M16 15v-4' stroke='%23ffe36b' stroke-width='.8'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>潜猎</b>
+        <span>HUNT</span>
+      </div>
+      <div class="status">
+        <div class="scores" aria-live="polite">
+          <div class="score" id="score-box">
+            <em>分数</em>
+            <b id="score">0</b>
+            <span id="score-add" class="score-add" hidden>+0</span>
+          </div>
+          <div class="score best">
+            <em>最高</em>
+            <b id="best">0</b>
+          </div>
+        </div>
+        <div class="row">
+          <span id="stage-label">第 1 关</span>
+          <span id="tag-label">潜猎</span>
+          <span id="wpn-label" class="wpn">弹</span>
+          <span id="torp-label" class="torps">雷</span>
+          <span id="depth-label" class="depth">潜</span>
+          <span id="combo-label" class="combo" hidden>连击</span>
+          <span class="pips" id="pips" aria-label="剩余生命"></span>
+        </div>
+      </div>
+      <div class="tools">
+        <button type="button" id="btn-torp" title="Shift / Z" aria-label="鱼雷">雷</button>
+        <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
+        <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <canvas id="c" tabindex="0" role="application" aria-label="潜猎游戏区，横版潜舰，空格向前向上开火，Shift 放鱼雷"></canvas>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden"></div>
+      <div id="pad" class="pad">
+        <button type="button" id="btn-pad" aria-label="鱼雷">雷</button>
+      </div>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">HUNT</p>
+          <h1 id="ov-title">潜猎</h1>
+          <p class="lead" id="ov-lead">横版潜舰。空格向前兼向上打，Shift 放鱼雷。水面打机舰，水下猎潜。撞体、触弹、触礁都扣一命。别当成潜航、沙罗、泽泽或武装——这是潜猎，不是声呐躲环，不是蛇核，不是触手，不是力场球。</p>
+          <p class="ops" id="ov-ops">方向 / WASD 飞 · 空格射击 · Shift / Z 鱼雷 · R 重开 · M 静音</p>
+          <div class="ov-actions" id="ov-start">
+            <button type="button" id="btn-hunt">潜猎</button>
+            <button type="button" id="btn-core">深核</button>
+          </div>
+          <div class="ov-actions gone" id="ov-end">
+            <button type="button" id="ov-retry">再潜</button>
+            <button type="button" id="ov-modes">换模式</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">空格向前/向上打 · Shift 鱼雷 · 撞体扣命 · R 重开</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>

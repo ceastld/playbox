@@ -4412,5 +4412,17 @@
     "dir": "g/time-pilot/",
     "url": "./g/time-pilot/",
     "kind": "remake"
+  },
+  {
+    "n": 384,
+    "id": "in-the-hunt",
+    "title": "潜猎",
+    "subtitle": "HUNT",
+    "blurb": "横版潜猎，把舰核从海里打穿。",
+    "hue": 188,
+    "tag": "复刻",
+    "dir": "g/in-the-hunt/",
+    "url": "./g/in-the-hunt/",
+    "kind": "remake"
   }
 ]
