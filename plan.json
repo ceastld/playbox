@@ -3759,7 +3759,7 @@
     "blurb": "纵版荆弹，把要塞打穿。",
     "hue": 96,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/ibara/",
     "kind": "remake"
   },
@@ -3785,6 +3785,18 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/armed-police/",
+    "kind": "remake"
+  },
+  {
+    "n": 325,
+    "id": "pink-sweets",
+    "title": "粉甜",
+    "subtitle": "PINK",
+    "blurb": "纵版糖弹，把甜点要塞打穿。",
+    "hue": 328,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/pink-sweets/",
     "kind": "remake"
   }
 ]

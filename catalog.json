@@ -3596,5 +3596,17 @@
     "dir": "g/giga-wing/",
     "url": "./g/giga-wing/",
     "kind": "remake"
+  },
+  {
+    "n": 322,
+    "id": "ibara",
+    "title": "茨",
+    "subtitle": "IBAR",
+    "blurb": "纵版荆弹，把要塞打穿。",
+    "hue": 96,
+    "tag": "复刻",
+    "dir": "g/ibara/",
+    "url": "./g/ibara/",
+    "kind": "remake"
   }
 ]
