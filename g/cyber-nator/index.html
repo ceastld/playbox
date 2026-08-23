@@ -51,6 +51,12 @@
           <button type="button" id="mode-raid" aria-pressed="true">扫荡</button>
           <button type="button" id="mode-storm" aria-pressed="false">火网</button>
         </div>
+        <label class="speed-ctl" title="速度 慢 / 中 / 快 / 极快">
+          <span>速度</span>
+          <input type="range" id="speed" min="1" max="4" step="1" value="3" aria-label="速度" />
+          <b id="speed-lab">快</b>
+        </label>
+        <button type="button" id="btn-auto" title="A" aria-label="自动" aria-pressed="false">自动</button>
         <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
         <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
       </div>
@@ -75,7 +81,7 @@
           <p class="kicker" id="ov-kicker">CYBR</p>
           <h1 id="ov-title">机甲</h1>
           <p class="lead" id="ov-lead">驾驶步行装甲。短跳过坑，转炮打空中的武装直升机和地面坦克。装甲打空丢一条命。</p>
-          <p class="ops" id="ov-ops">WASD / 方向 走 · 上跳 · 空格射击 · 鼠标转炮 · R 重开 · M 静音</p>
+          <p class="ops" id="ov-ops">方向 / D 走 · 上跳 · 空格射击 · 鼠标 / IJKL 转炮 · A 自动 · R 重开 · M 静音</p>
           <div class="ov-actions" id="ov-start">
             <button type="button" id="btn-raid">扫荡</button>
             <button type="button" id="btn-storm">火网</button>
@@ -88,7 +94,7 @@
       </div>
     </div>
 
-    <footer class="hint" id="hint">短跳 · 转炮打空打地 · 装甲打空丢命</footer>
+    <footer class="hint" id="hint">短跳 · 转炮打空打地 · A 自动</footer>
   </div>
   <script src="js/game.js"></script>
 </body>

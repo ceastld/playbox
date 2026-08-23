@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <title>probe</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand"><b>机甲</b><span>CYBR</span></div>
+      <div class="status">
+        <div class="scores">
+          <div class="score" id="score-box"><em>分数</em><b id="score">0</b><span id="score-add" class="score-add" hidden>+0</span></div>
+          <div class="score best"><em>最高</em><b id="best">0</b></div>
+          <div class="score hp" id="hp-box"><em>装甲</em><b id="hp">6</b><span class="hp-track"><i id="hp-fill"></i></span></div>
+          <div class="score combo" id="combo-box"><em>连击</em><b id="combo">×1</b></div>
+        </div>
+        <div class="row">
+          <span id="stage-label">废港</span>
+          <span id="tag-label">扫荡</span>
+          <span id="gun-label" class="gun">机炮</span>
+          <span class="pips" id="pips"></span>
+        </div>
+      </div>
+      <div class="tools">
+        <div class="modes">
+          <button type="button" id="mode-raid" aria-pressed="true">扫荡</button>
+          <button type="button" id="mode-storm" aria-pressed="false">火网</button>
+        </div>
+        <label class="speed-ctl">
+          <span>速度</span>
+          <input type="range" id="speed" min="1" max="4" step="1" value="3" />
+          <b id="speed-lab">快</b>
+        </label>
+        <button type="button" id="btn-auto" title="A" aria-label="自动" aria-pressed="false">自动</button>
+        <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
+        <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
+      </div>
+    </header>
+    <div class="stage" id="stage">
+      <div class="board-wrap"><canvas id="c" tabindex="0"></canvas></div>
+      <div id="toast" class="toast hidden"></div>
+      <div id="chain-pop" class="chain-pop hidden">×2</div>
+      <div id="pad" class="pad">
+        <button type="button" id="btn-jump">跳</button>
+        <button type="button" id="btn-left">左</button>
+        <button type="button" id="btn-fire">射</button>
+        <button type="button" id="btn-right">右</button>
+        <button type="button" id="btn-duck">下</button>
+      </div>
+      <div id="overlay" class="overlay">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">CYBR</p>
+          <h1 id="ov-title">机甲</h1>
+          <p class="lead" id="ov-lead"></p>
+          <p class="ops" id="ov-ops"></p>
+          <div class="ov-actions" id="ov-start">
+            <button type="button" id="btn-raid">扫荡</button>
+            <button type="button" id="btn-storm">火网</button>
+          </div>
+          <div class="ov-actions gone" id="ov-end">
+            <button type="button" id="ov-again">再来</button>
+            <button type="button" id="ov-menu">换模式</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <footer class="hint" id="hint"></footer>
+  </div>
+  <pre id="out">waiting</pre>
+  <script src="js/game.js"></script>
+  <script>
+    (function () {
+      var out = document.getElementById('out');
+      var speed = document.getElementById('speed');
+      speed.value = '4';
+      speed.dispatchEvent(new Event('input', { bubbles: true }));
+      document.getElementById('btn-auto').click();
+      var t0 = performance.now();
+      function snap() {
+        var ov = document.getElementById('overlay');
+        return {
+          auto: document.getElementById('btn-auto').textContent,
+          pressed: document.getElementById('btn-auto').getAttribute('aria-pressed'),
+          speed: document.getElementById('speed-lab').textContent,
+          score: document.getElementById('score').textContent,
+          hp: document.getElementById('hp').textContent,
+          overlay: ov.className,
+          title: document.getElementById('ov-title').textContent,
+          hint: document.getElementById('hint').textContent,
+          ms: Math.round(performance.now() - t0)
+        };
+      }
+      setTimeout(function () {
+        var a = snap();
+        document.getElementById('btn-auto').click();
+        var b = snap();
+        out.textContent = JSON.stringify({ on: a, off: b });
+        document.title = 'PROBE ' + a.score + ' ' + a.auto + ' ' + a.speed;
+      }, 4500);
+    })();
+  </script>
+</body>
+</html>
