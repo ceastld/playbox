@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#05030c" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>飞盘 · WJAM</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2305030c'/%3E%3Crect x='7' y='3.2' width='18' height='25.6' rx='2.2' fill='%2312080e' stroke='%23ff6a22' stroke-width='1.2'/%3E%3Cpath d='M8 16h16' stroke='%23ffe36b' stroke-width='.7' opacity='.7'/%3E%3Crect x='7' y='3.2' width='18' height='3.4' fill='%23ff6a22' opacity='.35'/%3E%3Crect x='11.2' y='3.2' width='9.6' height='3.4' fill='%23ffe36b' opacity='.7'/%3E%3Crect x='7' y='25.4' width='18' height='3.4' fill='%23ff3db8' opacity='.28'/%3E%3Crect x='11.2' y='25.4' width='9.6' height='3.4' fill='%23ff3db8' opacity='.7'/%3E%3Ccircle cx='16' cy='21.4' r='2.5' fill='%23ff6a22'/%3E%3Ccircle cx='16' cy='10.4' r='2.5' fill='%23ff3db8'/%3E%3Cellipse cx='16' cy='16' rx='2.6' ry='1.05' fill='%23ffe36b'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>飞盘</b>
+        <span>WJAM</span>
+      </div>
+      <div class="status">
+        <div class="scores" aria-live="polite">
+          <div class="score you" id="score-b-box">
+            <em id="lab-b">你</em>
+            <b id="score-b">0</b>
+          </div>
+          <div class="score them" id="score-t-box">
+            <em id="lab-t">对方</em>
+            <b id="score-t">0</b>
+          </div>
+          <div class="score best">
+            <em>胜</em>
+            <b id="best">0</b>
+          </div>
+        </div>
+        <div class="row">
+          <span id="mode-label">飞盘</span>
+          <span id="tag-label">WJAM</span>
+          <span id="super-label">超 ○○○</span>
+          <span id="combo-label" class="combo" hidden>×1</span>
+        </div>
+      </div>
+      <div class="tools">
+        <label class="speed-ctl" title="速度 慢 / 中 / 快 / 极快">
+          <span>速度</span>
+          <input type="range" id="speed" min="1" max="4" step="1" value="3" aria-label="速度" />
+          <b id="speed-lab">快</b>
+        </label>
+        <button type="button" id="btn-auto" title="自动" aria-label="自动" aria-pressed="false">自动</button>
+        <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
+        <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <canvas id="c" tabindex="0" role="application" aria-label="飞盘球场，接住飞盘甩进对面球门"></canvas>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden"></div>
+      <div class="pad" id="pad" aria-hidden="true">
+        <button type="button" id="btn-up" data-dir="u">上</button>
+        <button type="button" id="btn-left" data-dir="l">左</button>
+        <button type="button" id="btn-down" data-dir="d">下</button>
+        <button type="button" id="btn-right" data-dir="r">右</button>
+        <button type="button" id="btn-super">超</button>
+        <button type="button" id="btn-throw">甩</button>
+      </div>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">WJAM</p>
+          <h1 id="ov-title">飞盘</h1>
+          <p class="lead" id="ov-lead">接住飞盘，甩进对面球门。<br />中门五分，边门三分。先到十二。</p>
+          <p class="ops" id="ov-ops">方向 / WASD 跑位 · 空格甩盘 · Shift / Z 超射 · R 重开 · M 静音</p>
+          <div class="ov-actions" id="ov-start">
+            <button type="button" id="btn-match">飞盘</button>
+            <button type="button" id="btn-rush">疾盘</button>
+          </div>
+          <div class="ov-actions gone" id="ov-end">
+            <button type="button" id="btn-again">再来</button>
+            <button type="button" id="btn-menu">换模式</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">接住再甩 · 中门五分 · 超射弯刀 · R 重开 · M 静音</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>

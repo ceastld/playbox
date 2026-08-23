@@ -4664,5 +4664,65 @@
     "dir": "g/art-of-fighting/",
     "url": "./g/art-of-fighting/",
     "kind": "remake"
+  },
+  {
+    "n": 409,
+    "id": "cosmo-gang",
+    "title": "星帮",
+    "subtitle": "CGNG",
+    "blurb": "纵版星帮，把机群从云里打穿。",
+    "hue": 268,
+    "tag": "复刻",
+    "dir": "g/cosmo-gang/",
+    "url": "./g/cosmo-gang/",
+    "kind": "remake"
+  },
+  {
+    "n": 410,
+    "id": "sky-kid",
+    "title": "空孩",
+    "subtitle": "SKID",
+    "blurb": "横版空孩，把旗帜从云里夺回。",
+    "hue": 196,
+    "tag": "复刻",
+    "dir": "g/sky-kid/",
+    "url": "./g/sky-kid/",
+    "kind": "remake"
+  },
+  {
+    "n": 411,
+    "id": "galaga88",
+    "title": "加加",
+    "subtitle": "GL88",
+    "blurb": "纵版加加，把编队从空里打散。",
+    "hue": 48,
+    "tag": "复刻",
+    "dir": "g/galaga88/",
+    "url": "./g/galaga88/",
+    "kind": "remake"
+  },
+  {
+    "n": 412,
+    "id": "toobin",
+    "title": "漂流",
+    "subtitle": "TOBN",
+    "blurb": "河道漂流，把障碍从水里打穿。",
+    "hue": 188,
+    "tag": "复刻",
+    "dir": "g/toobin/",
+    "url": "./g/toobin/",
+    "kind": "remake"
+  },
+  {
+    "n": 413,
+    "id": "windjammers",
+    "title": "飞盘",
+    "subtitle": "WJAM",
+    "blurb": "对打飞盘，把对手从场上打穿。",
+    "hue": 22,
+    "tag": "复刻",
+    "dir": "g/windjammers/",
+    "url": "./g/windjammers/",
+    "kind": "remake"
   }
 ]
