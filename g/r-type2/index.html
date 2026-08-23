@@ -43,6 +43,12 @@
         </div>
       </div>
       <div class="tools">
+        <label class="speed-ctl" title="速度 慢 / 中 / 快 / 极快">
+          <span>速度</span>
+          <input type="range" id="speed" min="1" max="4" step="1" value="3" aria-label="速度" />
+          <b id="speed-lab">快</b>
+        </label>
+        <button type="button" id="btn-auto" title="A" aria-label="自动" aria-pressed="false">自动</button>
         <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
         <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
       </div>
@@ -57,7 +63,7 @@
           <p class="kicker" id="ov-kicker">RT2</p>
           <h1 id="ov-title">武装2</h1>
           <p class="lead" id="ov-lead">力核前后对接。空格蓄力放波炮，满波把力核打出去，再飞过去对接。短关之后打要塞。</p>
-          <p class="ops" id="ov-ops">←↑↓→ / WASD 移动 · 空格射击（按住蓄力）· R 重开 · M 静音</p>
+          <p class="ops" id="ov-ops">←↑↓→ / WSD 移动 · 空格射击（按住蓄力）· A 自动 · R 重开 · M 静音</p>
           <div class="ov-actions" id="ov-start">
             <button type="button" id="btn-raid">突入</button>
             <button type="button" id="btn-storm">密械</button>
@@ -70,7 +76,7 @@
       </div>
     </div>
 
-    <footer class="hint" id="hint">前核探射反弹 · 后核向后打 · 满波把力核打出去再对接</footer>
+    <footer class="hint" id="hint">前核探射反弹 · 后核向后打 · 满波把力核打出去再对接 · A 自动</footer>
   </div>
   <script src="js/game.js"></script>
 </body>
