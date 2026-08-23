@@ -4304,5 +4304,65 @@
     "dir": "g/soukyugurentai/",
     "url": "./g/soukyugurentai/",
     "kind": "remake"
+  },
+  {
+    "n": 379,
+    "id": "thunder-force-iii",
+    "title": "雷力",
+    "subtitle": "TF03",
+    "blurb": "横版雷力，把核心从轨上打穿。",
+    "hue": 204,
+    "tag": "复刻",
+    "dir": "g/thunder-force-iii/",
+    "url": "./g/thunder-force-iii/",
+    "kind": "remake"
+  },
+  {
+    "n": 380,
+    "id": "gungage",
+    "title": "枪纪",
+    "subtitle": "GGAG",
+    "blurb": "纵版枪纪，把机群从云里打穿。",
+    "hue": 32,
+    "tag": "复刻",
+    "dir": "g/gungage/",
+    "url": "./g/gungage/",
+    "kind": "remake"
+  },
+  {
+    "n": 381,
+    "id": "night-striker",
+    "title": "夜袭",
+    "subtitle": "NSTR",
+    "blurb": "进屏夜袭，把巷核从夜里打穿。",
+    "hue": 268,
+    "tag": "复刻",
+    "dir": "g/night-striker/",
+    "url": "./g/night-striker/",
+    "kind": "remake"
+  },
+  {
+    "n": 382,
+    "id": "last-blade",
+    "title": "末刃",
+    "subtitle": "LBLD",
+    "blurb": "对战末刃，把对手从架上斩穿。",
+    "hue": 8,
+    "tag": "复刻",
+    "dir": "g/last-blade/",
+    "url": "./g/last-blade/",
+    "kind": "remake"
+  },
+  {
+    "n": 383,
+    "id": "thunder-cross",
+    "title": "雷交",
+    "subtitle": "TCRO",
+    "blurb": "纵版雷交，把弹幕从核里打散。",
+    "hue": 52,
+    "tag": "复刻",
+    "dir": "g/thunder-cross/",
+    "url": "./g/thunder-cross/",
+    "kind": "remake"
   }
 ]

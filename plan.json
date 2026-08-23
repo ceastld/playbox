@@ -4443,7 +4443,7 @@
     "blurb": "横版雷力，把核心从轨上打穿。",
     "hue": 204,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/thunder-force-iii/",
     "kind": "remake"
   },
@@ -4455,7 +4455,7 @@
     "blurb": "纵版枪纪，把机群从云里打穿。",
     "hue": 32,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/gungage/",
     "kind": "remake"
   },
@@ -4467,7 +4467,7 @@
     "blurb": "进屏夜袭，把巷核从夜里打穿。",
     "hue": 268,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/night-striker/",
     "kind": "remake"
   },
@@ -4479,7 +4479,7 @@
     "blurb": "对战末刃，把对手从架上斩穿。",
     "hue": 8,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/last-blade/",
     "kind": "remake"
   },
@@ -4491,8 +4491,68 @@
     "blurb": "纵版雷交，把弹幕从核里打散。",
     "hue": 52,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/thunder-cross/",
+    "kind": "remake"
+  },
+  {
+    "n": 384,
+    "id": "in-the-hunt",
+    "title": "潜猎",
+    "subtitle": "HUNT",
+    "blurb": "横版潜猎，把舰核从海里打穿。",
+    "hue": 188,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/in-the-hunt/",
+    "kind": "remake"
+  },
+  {
+    "n": 385,
+    "id": "ajax",
+    "title": "阿贾",
+    "subtitle": "AJAX",
+    "blurb": "纵版阿贾，把机群从云里打穿。",
+    "hue": 24,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/ajax/",
+    "kind": "remake"
+  },
+  {
+    "n": 386,
+    "id": "thunder-fox",
+    "title": "雷狐",
+    "subtitle": "TFOX",
+    "blurb": "横版雷狐，把巷核从夜里打穿。",
+    "hue": 18,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/thunder-fox/",
+    "kind": "remake"
+  },
+  {
+    "n": 387,
+    "id": "mercs",
+    "title": "佣兵",
+    "subtitle": "MRCS",
+    "blurb": "纵版佣兵，把据点从林里打穿。",
+    "hue": 42,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/mercs/",
+    "kind": "remake"
+  },
+  {
+    "n": 388,
+    "id": "time-pilot",
+    "title": "时飞",
+    "subtitle": "TPLT",
+    "blurb": "环飞时飞，把机群从时里打散。",
+    "hue": 210,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/time-pilot/",
     "kind": "remake"
   }
 ]
