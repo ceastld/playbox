@@ -17,7 +17,12 @@
   const COMBO_WIN = 1.48;
   const BEST_KEY = 'playbox-tempest-best';
   const MUTE_KEY = 'playbox-tempest-mute';
-  const OPS = '← → / WASD 绕沿 · 空格开火 · Shift / Z 超闪 · R 重开 · M 静音';
+  const AUTO_SPEED_KEY = 'playbox-tempest-auto-speed';
+  const SPEED_LABELS = ['', '慢', '中', '快', '极快'];
+  const AUTO_SCALE = [1, 1, 2, 4, 10];
+  const AUTO_START_WAIT = [0, 0.55, 0.38, 0.2, 0.06];
+  const AUTO_RETRY_WAIT = [0, 1.2, 0.9, 0.65, 0.32];
+  const OPS = '← → / WASD 绕沿 · 空格开火 · Shift / Z 超闪 · A 自动 · R 重开 · M 静音';
   const REDUCE = typeof window !== 'undefined' && window.matchMedia
     ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
     : false;
@@ -58,6 +63,9 @@
   const btnMute = document.getElementById('btn-mute');
   const btnRetry = document.getElementById('btn-retry');
   const btnZap = document.getElementById('btn-zap');
+  const btnAuto = document.getElementById('btn-auto');
+  const speedEl = document.getElementById('speed');
+  const speedLab = document.getElementById('speed-lab');
   const scoreEl = document.getElementById('score');
   const bestEl = document.getElementById('best');
   const scoreBox = document.getElementById('score-box');
@@ -85,6 +93,11 @@
 
   const keys = { l: false, r: false };
   const pointer = { down: false, hover: false, x: CX, y: CY + 220, id: null };
+  let autoOn = false;
+  let autoSpeed = 3;
+  let autoOvWait = 0;
+  let autoTarget = 0;
+  let autoOrbitDir = 1;
   const pips = [];
   const particles = [];
   const sparks = [];
@@ -441,6 +454,22 @@
     }
   };
 
+  function loadAutoSpeed() {
+    try {
+      const n = parseInt(localStorage.getItem(AUTO_SPEED_KEY) || '3', 10);
+      if (!isFinite(n) || n < 1 || n > 4) return 3;
+      return n;
+    } catch (err) {
+      return 3;
+    }
+  }
+
+  function saveAutoSpeed(n) {
+    try {
+      localStorage.setItem(AUTO_SPEED_KEY, String(n));
+    } catch (err) { /* ignore */ }
+  }
+
   function loadBest() {
     try {
       const n = parseInt(localStorage.getItem(BEST_KEY) || '0', 10);
@@ -574,7 +603,10 @@
         comboEl.hidden = true;
       }
     }
-    if (G.mode === 'title') setHint(OPS, '');
+    if (autoOn && G.mode === 'play') setHint('托管中 · A 停下', 'hot');
+    else if (autoOn && G.mode === 'title') setHint('托管中 · 即将开局 · A 停下', 'hot');
+    else if (autoOn && (G.mode === 'lose' || G.mode === 'win')) setHint('托管中 · 即将再来 · A 停下', 'hot');
+    else if (G.mode === 'title') setHint(OPS, '');
     else if (G.mode === 'lose') setHint('R 重开 · 撞上或钉穿扣命', 'warn');
     else if (G.mode === 'win') setHint('钉心粉碎 · R 再来', 'hot');
     else if (G.phase === 'dive') setHint('扎进钉管 · 开火削钉 · 躲开钉尖', 'hot');
@@ -696,6 +728,8 @@
 
   function hitStop(t) {
     if (G.mode !== 'play') return;
+    if (autoOn && autoSpeed >= 4) return;
+    if (autoOn && autoSpeed >= 3) t *= 0.22;
     G.stop = Math.max(G.stop, REDUCE ? t * 0.28 : t);
   }
 
@@ -1048,6 +1082,7 @@
     G.mode = 'lose';
     G.why = why;
     G.fireHold = false;
+    autoOvWait = 0;
     audio.lose();
     saveBest();
     const web = webOf();
@@ -1058,6 +1093,7 @@
   function winRun() {
     G.mode = 'win';
     G.fireHold = false;
+    autoOvWait = 0;
     const bonus = isCore() ? 12000 : 8000;
     addScore(bonus);
     audio.win();
@@ -1213,6 +1249,8 @@
     audio.start();
     resetRun(kind);
     G.mode = 'play';
+    autoOvWait = 0;
+    autoTarget = G.pos;
     hideOverlay();
     toast((isCore() ? '核管' : '风暴') + ' · ' + webOf().name, false, true);
     syncHud();
@@ -1241,6 +1279,7 @@
     G.warpT = 0;
     G.bossHp = 0;
     refreshWebColor();
+    autoOvWait = 0;
     showOverlay('title', '风暴', '骑在管沿向内开火。清关后扎进钉管。最后是钉心。');
     syncHud();
   }
@@ -1418,6 +1457,7 @@
   }
 
   function updatePlayer(dt) {
+    if (autoOn && G.mode === 'play') return;
     const n = laneCount();
     const angSpd = isCore() ? 5.2 : 4.7;
     const laneSpd = angSpd * n / TAU;
@@ -1454,6 +1494,252 @@
     if (Math.abs(d) <= step) G.pos = wrap(target);
     else G.pos = wrap(G.pos + (d < 0 ? -step : step));
     if (best > 0.1 && Math.abs(wrapDelta(G.pos, target)) < 0.4) fire();
+  }
+
+  function enemyAimLane(e) {
+    if (e.type === 'fuse') {
+      const a = wrap(e.rail);
+      const b = wrap(e.rail - 1);
+      return laneDist(G.pos, a) <= laneDist(G.pos, b) ? a : b;
+    }
+    if (e.state === 'flip') return wrap(Math.round(e.pos));
+    return wrap(e.lane);
+  }
+
+  function shotsOnLane(lane) {
+    const L = wrap(lane);
+    for (let i = 0; i < G.shots.length; i++) {
+      if (G.shots[i].lane === L) return true;
+    }
+    return false;
+  }
+
+  function laneThreat(lane) {
+    let t = 0;
+    const L = wrap(lane);
+    const canCover = G.invuln > 0.08 || G.fireCd <= 0.02 || shotsOnLane(L);
+    if (G.pulseOn > 0) {
+      for (let i = 0; i < G.pulseLanes.length; i++) {
+        if (L === G.pulseLanes[i]) {
+          t += G.pulseOn < 0.42 ? 140 : (G.pulseOn < 0.62 ? 48 : 10);
+        }
+      }
+    }
+    if (G.phase === 'dive') {
+      const h = spikeOn(L);
+      if (h > 0.06) {
+        const gap = G.diveDepth - h;
+        if (gap < 0.14 && gap > -0.12) t += 220;
+        else if (gap < 0.28 && gap > -0.12) t += 55;
+      }
+    } else if (spikeOn(L) >= 0.9) {
+      t += 90;
+    }
+    for (let i = 0; i < G.enemies.length; i++) {
+      const e = G.enemies[i];
+      if (!e.alive) continue;
+      const el = enemyAimLane(e);
+      const dist = laneDist(L, el);
+      if (e.state === 'flip' || (e.type === 'fuse' && e.depth >= 0.94)) {
+        if (dist < 0.48) t += canCover ? 6 : 170;
+        else if (dist < 1.15) t += 16;
+      } else if (e.type === 'dart') {
+        if (dist < 0.75) t += canCover ? e.depth * 18 : e.depth * 78;
+      } else if (e.depth > 0.82 && dist < 0.62) {
+        t += canCover ? 4 : (e.depth - 0.82) * 90;
+      }
+    }
+    return t;
+  }
+
+  function laneValue(lane) {
+    let v = 0;
+    const L = wrap(lane);
+    for (let i = 0; i < G.enemies.length; i++) {
+      const e = G.enemies[i];
+      if (!e.alive) continue;
+      if (e.type === 'fuse') {
+        if (L === wrap(e.rail) || L === wrap(e.rail - 1)) v += 75 + e.depth * 190;
+        continue;
+      }
+      const dist = laneDist(L, enemyAimLane(e));
+      if (dist >= 0.58) continue;
+      let w = 32 + e.depth * 165;
+      if (e.type === 'tank') w += 45;
+      if (e.type === 'dart') w += 75;
+      if (e.state === 'flip') w += 120;
+      if (e.type === 'spiker' && e.state === 'plant') w += 22;
+      v += w;
+    }
+    if (G.phase === 'dive') {
+      const h = spikeOn(L);
+      if (h > 0.08 && h < G.diveDepth - 0.05) v += 95 + h * 75;
+    }
+    if (G.phase === 'boss' && G.bossHp > 0) {
+      v += spikeOn(L) < 0.1 ? 55 : 14;
+    }
+    return v;
+  }
+
+  function scoreAutoLane(lane) {
+    const d = wrapDelta(G.pos, wrap(lane));
+    let s = laneValue(lane) - laneThreat(lane) * 10;
+    s -= Math.abs(d) * 6;
+    if (d * autoOrbitDir > 0) s += 10;
+    return s;
+  }
+
+  function pickAutoLane() {
+    const n = laneCount();
+    let best = wrap(Math.round(autoTarget));
+    let bestS = -1e9;
+    for (let i = 0; i < n; i++) {
+      const s = scoreAutoLane(i);
+      if (s > bestS) {
+        bestS = s;
+        best = i;
+      }
+    }
+    const cur = wrap(Math.round(autoTarget));
+    const curS = scoreAutoLane(cur);
+    if (curS > bestS - 48 && laneThreat(cur) < 90) best = cur;
+    autoTarget = best;
+    return best;
+  }
+
+  function autoLaneCanHit(lane) {
+    const s = { lane: wrap(lane), depth: 0 };
+    for (let i = 0; i < G.enemies.length; i++) {
+      const e = G.enemies[i];
+      if (!e.alive) continue;
+      s.depth = e.depth;
+      if (shotHits(s, e)) return true;
+    }
+    const sp = spikeOn(s.lane);
+    if (sp > 0.06) {
+      if (G.phase === 'dive') return sp < G.diveDepth - 0.02;
+      return true;
+    }
+    if (G.phase === 'boss' && G.bossHp > 0) return true;
+    return false;
+  }
+
+  function autoShouldZap() {
+    if (G.mode !== 'play' || !G.zap || G.deadT > 0) return false;
+    if (G.phase === 'dive' || G.phase === 'warp') return false;
+    if (G.ready > 0.12) return false;
+    let rim = 0;
+    let close = 0;
+    let live = 0;
+    let nearMe = 0;
+    const pl = G.pos;
+    for (let i = 0; i < G.enemies.length; i++) {
+      const e = G.enemies[i];
+      if (!e.alive) continue;
+      live += 1;
+      if (e.depth > 0.7) close += 1;
+      if (e.type === 'dart' && e.depth > 0.55) close += 1;
+      const el = enemyAimLane(e);
+      if (e.state === 'flip' || (e.type === 'fuse' && e.depth >= 0.94)) {
+        rim += 1;
+        if (laneDist(pl, el) < 1.25) nearMe += 1;
+      }
+      if (e.depth >= 0.88 && laneDist(pl, el) < 0.72) return true;
+    }
+    if (nearMe >= 1 && rim >= 2) return true;
+    if (close >= 4) return true;
+    if (rim >= 3) return true;
+    if (G.lives <= 1 && (nearMe >= 1 || close >= 2)) return true;
+    if (G.phase === 'boss' && (live >= 5 || close >= 3)) return true;
+    return false;
+  }
+
+  function autoSteer(dt) {
+    const tgt = pickAutoLane();
+    const d = wrapDelta(G.pos, tgt);
+    if (Math.abs(d) > 0.18) autoOrbitDir = d >= 0 ? 1 : -1;
+    const n = laneCount();
+    const angSpd = isCore() ? 5.6 : 5.2;
+    const step = angSpd * n / TAU * dt;
+    if (Math.abs(d) <= Math.max(step, 0.06)) G.pos = wrap(tgt);
+    else G.pos = wrap(G.pos + (d < 0 ? -step : step));
+  }
+
+  function autoThink(dt) {
+    if (!autoOn || G.mode !== 'play' || G.deadT > 0) return;
+    autoSteer(dt);
+    if (autoShouldZap()) doZap();
+    if (G.phase === 'warp') return;
+    if (autoLaneCanHit(playerLane())) fire();
+  }
+
+  function tickAutoFlow(dt) {
+    if (!autoOn) return;
+    if (G.mode === 'title') {
+      autoOvWait += dt;
+      if (autoOvWait >= (AUTO_START_WAIT[autoSpeed] || 0.2)) {
+        autoOvWait = 0;
+        startGame('storm');
+      }
+      return;
+    }
+    if (G.mode === 'lose' || G.mode === 'win') {
+      autoOvWait += dt;
+      if (autoOvWait >= (AUTO_RETRY_WAIT[autoSpeed] || 0.7)) {
+        autoOvWait = 0;
+        startGame(G.kind || 'storm');
+      }
+    }
+  }
+
+  function clearPlayInput() {
+    keys.l = false;
+    keys.r = false;
+    G.fireHold = false;
+    pointer.down = false;
+  }
+
+  function syncAutoUi() {
+    if (!btnAuto) return;
+    btnAuto.classList.toggle('on', autoOn);
+    btnAuto.setAttribute('aria-pressed', autoOn ? 'true' : 'false');
+    btnAuto.textContent = autoOn ? '停下' : '自动';
+    btnAuto.setAttribute('aria-label', autoOn ? '停止自动' : '自动');
+  }
+
+  function syncSpeedUi() {
+    if (!speedEl || !speedLab) return;
+    speedEl.value = String(autoSpeed);
+    speedLab.textContent = SPEED_LABELS[autoSpeed];
+    speedEl.title = SPEED_LABELS[autoSpeed];
+    speedEl.setAttribute('aria-valuetext', SPEED_LABELS[autoSpeed]);
+  }
+
+  function autoScale() {
+    if (!autoOn || G.mode !== 'play') return 1;
+    return AUTO_SCALE[autoSpeed] || 1;
+  }
+
+  function setAutoSpeed(n) {
+    n = parseInt(n, 10);
+    if (!isFinite(n) || n < 1 || n > 4) n = 3;
+    autoSpeed = n;
+    saveAutoSpeed(autoSpeed);
+    syncSpeedUi();
+  }
+
+  function toggleAuto() {
+    autoOn = !autoOn;
+    autoOvWait = 0;
+    syncAutoUi();
+    if (autoOn) {
+      clearPlayInput();
+      audio.ensure();
+      if (G.mode === 'title') startGame('storm');
+    } else {
+      G.fireHold = false;
+    }
+    syncHud();
   }
 
   function tickBoss(dt) {
@@ -1526,8 +1812,9 @@
       if (G.comboT <= 0) breakCombo();
     }
 
-    updatePlayer(dt);
-    const holding = G.mode === 'play' && G.fireHold && !overlayOpen();
+    if (autoOn && G.mode === 'play') autoThink(dt);
+    else updatePlayer(dt);
+    const holding = G.mode === 'play' && G.fireHold && !overlayOpen() && !autoOn;
     if (holding) fire();
 
     if (G.phase === 'warp') {
@@ -1621,11 +1908,15 @@
   function update(dt) {
     G.t += dt;
     G.clock += dt;
+    tickAutoFlow(dt);
 
     if (G.stop > 0) {
-      G.stop -= dt;
-      updateFx(dt * 0.4);
-      return;
+      if (!(autoOn && autoSpeed >= 4 && G.mode === 'play')) {
+        G.stop -= dt;
+        updateFx(dt * 0.4);
+        return;
+      }
+      G.stop = 0;
     }
 
     if (G.mode === 'title') {
@@ -2188,7 +2479,7 @@
   }
 
   function isMoveLeft(code) {
-    return code === 'ArrowLeft' || code === 'ArrowUp' || code === 'KeyA' || code === 'KeyW';
+    return code === 'ArrowLeft' || code === 'ArrowUp' || code === 'KeyW';
   }
   function isMoveRight(code) {
     return code === 'ArrowRight' || code === 'ArrowDown' || code === 'KeyD' || code === 'KeyS';
@@ -2196,23 +2487,40 @@
 
   function onKey(e, down) {
     const c = e.code;
+    const k = e.key;
+    if (c === 'KeyA' || k === 'a' || k === 'A') {
+      e.preventDefault();
+      if (down && !e.repeat) toggleAuto();
+      return;
+    }
     if (isMoveLeft(c)) {
+      e.preventDefault();
+      if (autoOn || overlayOpen()) {
+        if (!down) keys.l = false;
+        return;
+      }
       keys.l = down;
       if (down) inputSrc = 'key';
-      e.preventDefault();
       return;
     }
     if (isMoveRight(c)) {
+      e.preventDefault();
+      if (autoOn || overlayOpen()) {
+        if (!down) keys.r = false;
+        return;
+      }
       keys.r = down;
       if (down) inputSrc = 'key';
-      e.preventDefault();
       return;
     }
     if (c === 'Space') {
       e.preventDefault();
+      if (autoOn || (overlayOpen() && (G.mode === 'title' || G.mode === 'lose' || G.mode === 'win'))) {
+        if (!down) G.fireHold = false;
+        return;
+      }
       if (down) {
         audio.ensure();
-        if (overlayOpen() && (G.mode === 'title' || G.mode === 'lose' || G.mode === 'win')) return;
         G.fireHold = true;
         fire();
       } else {
@@ -2234,12 +2542,14 @@
     }
     if (c === 'KeyZ' || c === 'ShiftLeft' || c === 'ShiftRight') {
       e.preventDefault();
+      if (autoOn) return;
       audio.ensure();
       doZap();
       return;
     }
     if (c === 'Enter' || c === 'Digit1' || c === 'Numpad1') {
       e.preventDefault();
+      if (autoOn) return;
       audio.ensure();
       if (G.mode === 'title') startGame('storm');
       else if (G.mode === 'lose' || G.mode === 'win') startGame(G.kind);
@@ -2247,6 +2557,7 @@
     }
     if (c === 'Digit2' || c === 'Numpad2') {
       e.preventDefault();
+      if (autoOn) return;
       audio.ensure();
       if (G.mode === 'title') startGame('core');
       else if (G.mode === 'win' && !isCore()) startGame('core');
@@ -2260,6 +2571,7 @@
     canvas.addEventListener('pointerdown', function (e) {
       audio.ensure();
       e.preventDefault();
+      if (autoOn) return;
       const v = eventToVirt(e);
       pointer.down = true;
       pointer.hover = true;
@@ -2308,13 +2620,17 @@
     let dt = t - last;
     last = t;
     if (dt > 0.05) dt = 0.05;
-    acc += dt;
+    if (autoOn && autoSpeed >= 4 && G.mode === 'play') G.stop = 0;
+    const aScale = autoScale();
+    acc += dt * aScale;
     let n = 0;
-    while (acc >= STEP && n < 5) {
+    const maxSteps = autoOn ? (aScale >= 8 ? 48 : aScale >= 4 ? 24 : 12) : 5;
+    while (acc >= STEP && n < maxSteps) {
       update(STEP);
       acc -= STEP;
       n += 1;
     }
+    if (acc >= STEP) acc = 0;
     draw();
   }
 
@@ -2327,6 +2643,9 @@
   seedStars();
   loadBest();
   initMute();
+  autoSpeed = loadAutoSpeed();
+  syncSpeedUi();
+  syncAutoUi();
   goTitle();
   resize();
   bindPointer();
@@ -2356,6 +2675,11 @@
     });
   }
   if (btnRetry) btnRetry.addEventListener('click', restart);
+  if (btnAuto) btnAuto.addEventListener('click', function () { toggleAuto(); });
+  if (speedEl) {
+    speedEl.addEventListener('input', function () { setAutoSpeed(parseInt(speedEl.value, 10)); });
+    speedEl.addEventListener('change', function () { setAutoSpeed(parseInt(speedEl.value, 10)); });
+  }
   if (btnMute) {
     btnMute.addEventListener('click', function () {
       audio.ensure();
@@ -2364,6 +2688,7 @@
   }
   if (btnZap) {
     btnZap.addEventListener('click', function () {
+      if (autoOn) return;
       audio.ensure();
       doZap();
     });

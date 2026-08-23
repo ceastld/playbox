@@ -39,6 +39,12 @@
         </div>
       </div>
       <div class="tools">
+        <label class="speed-ctl" title="速度 慢 / 中 / 快 / 极快">
+          <span>速度</span>
+          <input type="range" id="speed" min="1" max="4" step="1" value="3" aria-label="速度" />
+          <b id="speed-lab">快</b>
+        </label>
+        <button type="button" id="btn-auto" title="A" aria-label="自动" aria-pressed="false">自动</button>
         <button type="button" id="btn-zap" title="Z / Shift" aria-label="超闪" disabled>闪</button>
         <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
         <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
@@ -54,7 +60,7 @@
           <p class="kicker" id="ov-kicker">TMPS</p>
           <h1 id="ov-title">风暴</h1>
           <p class="lead" id="ov-lead">骑在管沿向内开火。清关后扎进钉管。最后是钉心。</p>
-          <p class="ops" id="ov-ops">← → / WASD 绕沿 · 空格开火 · Shift / Z 超闪 · R 重开 · M 静音</p>
+          <p class="ops" id="ov-ops">← → / WASD 绕沿 · 空格开火 · Shift / Z 超闪 · A 自动 · R 重开 · M 静音</p>
           <div class="ov-actions" id="ov-start">
             <button type="button" id="btn-storm">风暴</button>
             <button type="button" id="btn-core">核管</button>
@@ -67,7 +73,7 @@
       </div>
     </div>
 
-    <footer class="hint" id="hint">← → 绕沿 · 空格向内开火 · Shift/Z 超闪 · 清关扎钉</footer>
+    <footer class="hint" id="hint">← → 绕沿 · 空格向内开火 · Shift/Z 超闪 · A 自动 · 清关扎钉</footer>
   </div>
   <script src="js/game.js"></script>
 </body>
