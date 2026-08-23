@@ -1,6 +1,6 @@
 'use strict';
 
-/* 红侠 — Viewtiful Joe arcade lite. VFX brawler. No CDN. Distinct from 街霸 / 神龟 / 制裁. */
+/* 红侠 — Viewtiful Joe arcade lite. VFX brawler. Optional autoplay. No CDN. Distinct from 街霸 / 神龟 / 制裁. */
 
 (function () {
   var VW = 640;
@@ -31,7 +31,10 @@
   var ZOOM_DMG = 1.8;
   var BEST_KEY = 'playbox-viewtiful-best';
   var MUTE_KEY = 'playbox-viewtiful-mute';
-  var OPS = '方向 / WASD 走 · 上跳 · 空格出拳 · 下/X 踢 · V 慢镜 · C 拉近 · R 重开 · M 静音';
+  var AUTO_SPEED_KEY = 'playbox-viewtiful-auto-speed';
+  var SPEED_LABELS = ['', '慢', '中', '快', '极快'];
+  var AUTO_SCALE = [1, 0.52, 0.78, 1, 3.4];
+  var OPS = '方向 / D 走 · 上跳 · 空格出拳 · 下/X 踢 · V 慢镜 · C 拉近 · A 自动 · R 重开 · M 静音';
 
   var MAG = [255, 61, 184];
   var CYN = [0, 240, 255];
@@ -163,6 +166,10 @@
     if (comboMul(3) !== 2) throw new Error('combo 3');
     if (comboMul(9) !== 5) throw new Error('combo 9');
     if (BEST_KEY !== 'playbox-viewtiful-best') throw new Error('best key');
+    if (AUTO_SPEED_KEY !== 'playbox-viewtiful-auto-speed') throw new Error('auto key');
+    if (AUTO_SCALE[3] !== 1 || AUTO_SCALE[4] <= AUTO_SCALE[3]) throw new Error('auto scale');
+    if (AUTO_SCALE[1] >= AUTO_SCALE[2] || AUTO_SCALE[2] >= AUTO_SCALE[3]) throw new Error('auto scale order');
+    if (SPEED_LABELS[3] !== '快' || SPEED_LABELS[4] !== '极快') throw new Error('speed labels');
     if (kindHp('extra', 0) !== 3) throw new Error('extra hp');
     if (kindHp('devil', 1) <= kindHp('extra', 1)) throw new Error('boss hp');
     if (waveCount(1) < 4 || waveCount(20) > 14) throw new Error('wave cap');
@@ -204,6 +211,9 @@
   var modeCut = document.getElementById('mode-cut');
   var btnMute = document.getElementById('btn-mute');
   var btnRetry = document.getElementById('btn-retry');
+  var btnAuto = document.getElementById('btn-auto');
+  var speedEl = document.getElementById('speed');
+  var speedLab = document.getElementById('speed-lab');
   var scoreEl = document.getElementById('score');
   var bestEl = document.getElementById('best');
   var scoreBox = document.getElementById('score-box');
@@ -236,6 +246,14 @@
 
   var keys = { l: false, r: false, jump: false, atk: false, kick: false, slow: false, zoom: false };
   var demo = { l: false, r: true, jump: false, slow: false };
+  var autoIn = { l: false, r: false, jump: false, slow: false, zoom: false };
+  var autoOn = false;
+  var autoSpeed = 3;
+  var autoOvWait = 0;
+  var autoStuck = 0;
+  var autoLastX = 0;
+  var autoWalkDir = 1;
+  var autoBackT = 0;
   var pips = [];
   var particles = [];
   var sparks = [];
@@ -316,9 +334,21 @@
   function overlayOpen() {
     return !!(overlay && !overlay.classList.contains('hidden'));
   }
-  function inL() { return G.mode === 'title' ? demo.l : keys.l; }
-  function inR() { return G.mode === 'title' ? demo.r : keys.r; }
-  function inJump() { return G.mode === 'title' ? demo.jump : keys.jump; }
+  function autoPlaying() {
+    return autoOn && G.mode === 'play';
+  }
+  function inL() {
+    if (autoPlaying()) return autoIn.l;
+    return G.mode === 'title' ? demo.l : keys.l;
+  }
+  function inR() {
+    if (autoPlaying()) return autoIn.r;
+    return G.mode === 'title' ? demo.r : keys.r;
+  }
+  function inJump() {
+    if (autoPlaying()) return autoIn.jump;
+    return G.mode === 'title' ? demo.jump : keys.jump;
+  }
   function sx(x) { return ox + (x - G.camX) * scale; }
   function sy(y) { return oy + (y - G.camY) * scale; }
 
@@ -516,6 +546,18 @@
     }
     if (bestEl) bestEl.textContent = String(G.best);
   }
+  function loadAutoSpeed() {
+    try {
+      var n = parseInt(localStorage.getItem(AUTO_SPEED_KEY) || '3', 10);
+      if (!isFinite(n) || n < 1 || n > 4) return 3;
+      return n;
+    } catch (err) {
+      return 3;
+    }
+  }
+  function saveAutoSpeed(n) {
+    try { localStorage.setItem(AUTO_SPEED_KEY, String(n)); } catch (err) { /* ignore */ }
+  }
   function saveBest() {
     if (G.score <= G.best) return;
     G.best = G.score;
@@ -679,6 +721,7 @@
 
   function hitStop(sec) {
     if (REDUCE || G.mode === 'title') return;
+    if (autoOn && autoSpeed >= 4) return;
     G.stop = Math.max(G.stop, sec);
   }
   function kickCam(mag, cls) {
@@ -963,7 +1006,7 @@
     loadStage(1, true);
     G.invuln = 99;
     showOverlay('title', '红侠', '走跳拳踢。按 V 开慢镜，拳更重、子弹爬行可打回；按 C 拉近出大招。体力打空扣一命。片场三关见头目。');
-    setHint('走跳拳踢 · V 慢镜打回子弹 · C 拉近大招 · 片场见头目', '');
+    setHint('走跳拳踢 · V 慢镜打回子弹 · C 拉近大招 · A 自动 · 片场见头目', '');
     syncHud();
   }
 
@@ -1376,6 +1419,304 @@
     }
   }
 
+  function clearAutoKeys() {
+    autoIn.l = false;
+    autoIn.r = false;
+    autoIn.jump = false;
+    autoIn.slow = false;
+    autoIn.zoom = false;
+  }
+  function autoSteer(tx) {
+    autoIn.l = false;
+    autoIn.r = false;
+    if (!G.player) return;
+    var dx = tx - G.player.x;
+    if (dx > 8) {
+      autoIn.r = true;
+      autoWalkDir = 1;
+    } else if (dx < -8) {
+      autoIn.l = true;
+      autoWalkDir = -1;
+    }
+  }
+  function autoShotThreat() {
+    var p = G.player;
+    var i, b, t, dy;
+    if (!p) return null;
+    for (i = 0; i < G.bullets.length; i++) {
+      b = G.bullets[i];
+      if (b.dead) continue;
+      dy = Math.abs(b.y - (p.y - 16));
+      if (b.vx === 0) {
+        if (Math.abs(b.x - p.x) < 42 && dy < 28) return b;
+        continue;
+      }
+      t = (p.x - b.x) / b.vx;
+      if (t < -0.04 || t > 0.72) {
+        if (Math.abs(b.x - p.x) < 36 && dy < 26) return b;
+        continue;
+      }
+      if (dy < 36 || (t < 0.38 && dy < 52)) return b;
+    }
+    return null;
+  }
+  function autoWaveThreat() {
+    var p = G.player;
+    var i, w, t;
+    if (!p) return null;
+    for (i = 0; i < G.waves.length; i++) {
+      w = G.waves[i];
+      if (w.hit) continue;
+      if (w.vx === 0) {
+        if (Math.abs(w.x - p.x) < 22) return w;
+        continue;
+      }
+      t = (p.x - w.x) / w.vx;
+      if (t >= 0 && t < 0.4 && Math.abs(w.x - p.x) < 96) return w;
+      if (Math.abs(w.x - p.x) < 22) return w;
+    }
+    return null;
+  }
+  function autoPick() {
+    var p = G.player;
+    var best = null;
+    var bestS = -1e9;
+    var i, e, c, r, d, pri, dx;
+    function consider(x, y, score, kind) {
+      if (score > bestS) {
+        bestS = score;
+        best = { x: x, y: y, kind: kind };
+      }
+    }
+    if (!p) return { x: 200, y: GY, kind: 'go' };
+    for (i = 0; i < G.reels.length; i++) {
+      r = G.reels[i];
+      if (r.taken) continue;
+      d = Math.abs(r.x - p.x);
+      pri = G.hp <= 8 ? 940 : (G.vfx < 30 ? 360 : 180);
+      pri -= d * 0.45;
+      consider(r.x, GY, pri, 'reel');
+    }
+    for (i = 0; i < G.ents.length; i++) {
+      e = G.ents[i];
+      if (e.dead) continue;
+      dx = e.x - p.x;
+      d = Math.abs(dx);
+      pri = (isBoss(e.kind) ? 980 : 720) - d * 0.55;
+      if (dx > 0) pri += 55;
+      if (isFly(e.kind)) pri -= 30;
+      consider(e.x, e.y, pri, 'fight');
+    }
+    for (i = 0; i < G.crates.length; i++) {
+      c = G.crates[i];
+      if (c.dead) continue;
+      d = Math.abs(c.x - p.x);
+      if (d > 140) continue;
+      consider(c.x, GY, 300 - d * 0.4, 'crate');
+    }
+    if (!best) consider(Math.min(G.levelW - 40, p.x + 220), GY, 50, 'go');
+    return best;
+  }
+  function autoThink() {
+    var p, shot, wave, goal, e, dx, adx, reach, hold, wantJump, wantAtk, wantKick;
+    var i, close, closeD, d, flyish, atkKind;
+    clearAutoKeys();
+    if (!autoOn || G.mode !== 'play') return;
+    p = G.player;
+    if (!p || G.deadT > 0) return;
+
+    d = Math.abs(p.x - autoLastX);
+    if (d < 1.4 && p.grounded && G.atkT <= 0) autoStuck += STEP;
+    else autoStuck = Math.max(0, autoStuck - STEP * 2);
+    autoLastX = p.x;
+    if (autoBackT > 0) autoBackT -= STEP;
+
+    goal = autoPick();
+    shot = autoShotThreat();
+    wave = autoWaveThreat();
+    reach = vfxReach(32);
+    hold = false;
+    wantJump = false;
+    wantAtk = false;
+    wantKick = false;
+
+    close = null;
+    closeD = 1e9;
+    for (i = 0; i < G.ents.length; i++) {
+      e = G.ents[i];
+      if (e.dead) continue;
+      dx = e.x - p.x;
+      adx = Math.abs(dx);
+      if (adx > reach + 56) continue;
+      if (isFly(e.kind) && adx > reach + 28) continue;
+      d = adx + Math.abs(e.y - p.y) * 0.35;
+      if (d < closeD) {
+        closeD = d;
+        close = e;
+      }
+    }
+
+    if (shot && G.invuln <= 0) {
+      autoIn.slow = G.vfx > 6;
+      dx = shot.x - p.x;
+      adx = Math.abs(dx);
+      if (dx > 4) p.face = 1;
+      else if (dx < -4) p.face = -1;
+      if (adx <= reach + 16) {
+        wantAtk = true;
+        hold = adx <= reach + 4;
+        if (!hold) autoSteer(shot.x);
+      } else {
+        autoSteer(shot.x);
+      }
+      if (shot.y < p.y - 40 && p.grounded) wantJump = true;
+      if (!autoIn.slow && shot.y > p.y - 36 && adx < 80) wantJump = true;
+    }
+
+    if (wave && G.invuln <= 0 && p.grounded) wantJump = true;
+
+    if (close && !shot) {
+      dx = close.x - p.x;
+      adx = Math.abs(dx);
+      flyish = isFly(close.kind) || close.y < p.y - 36;
+      if (dx > 4) p.face = 1;
+      else if (dx < -4) p.face = -1;
+      if (adx <= reach + 6 && (!flyish || !p.grounded || Math.abs((p.y - 14) - (close.y - close.h * 0.5)) < 46)) {
+        wantAtk = true;
+        if (close.kind === 'knight' || isBoss(close.kind) || G.chainN % 3 === 0) wantKick = true;
+        if (adx < 8) {
+          autoSteer(p.x + (dx > 0 ? -22 : 22));
+        } else if (adx > reach - 2) {
+          autoSteer(close.x);
+        } else {
+          hold = true;
+        }
+        if (flyish && p.grounded && adx < reach + 18) wantJump = true;
+      } else {
+        autoSteer(close.x);
+        if (flyish && p.grounded && adx < 90) wantJump = true;
+      }
+      if (close.atkT > 0 && adx < 34 && p.grounded && !isFly(close.kind)) {
+        if (close.kind === 'hammer' || close.kind === 'director') wantJump = true;
+      }
+      if (close.kind === 'devil' && close.dashT > 0 && adx < 70) wantJump = true;
+    }
+
+    if (goal.kind === 'crate' && Math.abs(goal.x - p.x) < 36) wantAtk = true;
+
+    if (!shot && !hold && !autoIn.l && !autoIn.r) {
+      if (autoBackT > 0) autoSteer(p.x - autoWalkDir * 70);
+      else autoSteer(goal.x);
+    }
+
+    if (autoStuck > 0.45) wantJump = true;
+    if (autoStuck > 1.05) {
+      hold = false;
+      autoSteer(p.x + autoWalkDir * 120);
+      wantAtk = true;
+    }
+    if (autoStuck > 1.7) {
+      autoBackT = 0.28;
+      autoStuck = 0.15;
+      autoWalkDir *= -1;
+    }
+
+    if (hold) {
+      autoIn.l = false;
+      autoIn.r = false;
+    }
+
+    if (wantJump && (p.grounded || p.vy > 40)) autoIn.jump = true;
+
+    if (close && Math.abs(close.x - p.x) < 70 && G.vfx > 24) {
+      autoIn.zoom = true;
+      if (G.vfx > 52 && (G.combo >= 2 || isBoss(close.kind))) autoIn.slow = true;
+    }
+    if (G.vfx < 14) {
+      if (!shot) autoIn.slow = false;
+      autoIn.zoom = false;
+    }
+
+    if (wantAtk && G.atkT <= 0.08) {
+      atkKind = wantKick ? 'kick' : 'punch';
+      if (G.chainN > 0 && G.chainN % 3 === 0) atkKind = 'kick';
+      doAtk(atkKind);
+    }
+  }
+
+  function tickAutoFlow(dt) {
+    if (!autoOn) return;
+    if (G.mode === 'title') {
+      autoOvWait += dt;
+      if (autoOvWait >= (autoSpeed >= 3 ? 0.25 : 0.5)) {
+        autoOvWait = 0;
+        startGame(G.kind || 'shoot');
+      }
+      return;
+    }
+    if (G.mode === 'lose' || G.mode === 'win') {
+      autoOvWait += dt;
+      if (autoOvWait >= (autoSpeed >= 3 ? 0.7 : 1.15)) {
+        autoOvWait = 0;
+        startGame(G.kind || 'shoot');
+      }
+    }
+  }
+
+  function syncAutoUi() {
+    if (!btnAuto) return;
+    btnAuto.classList.toggle('on', autoOn);
+    btnAuto.setAttribute('aria-pressed', autoOn ? 'true' : 'false');
+    btnAuto.textContent = autoOn ? '停下' : '自动';
+    btnAuto.setAttribute('aria-label', autoOn ? '停止自动' : '自动');
+  }
+
+  function syncSpeedUi() {
+    if (speedEl) speedEl.value = String(autoSpeed);
+    if (speedLab) speedLab.textContent = SPEED_LABELS[autoSpeed];
+    if (speedEl) {
+      speedEl.title = SPEED_LABELS[autoSpeed];
+      speedEl.setAttribute('aria-valuetext', SPEED_LABELS[autoSpeed]);
+    }
+  }
+
+  function autoScale() {
+    if (!autoOn || G.mode !== 'play') return 1;
+    return AUTO_SCALE[autoSpeed] || 1;
+  }
+
+  function setAutoSpeed(n) {
+    n = parseInt(n, 10);
+    if (!isFinite(n) || n < 1 || n > 4) n = 3;
+    autoSpeed = n;
+    saveAutoSpeed(autoSpeed);
+    syncSpeedUi();
+  }
+
+  function toggleAuto() {
+    autoOn = !autoOn;
+    autoOvWait = 0;
+    autoStuck = 0;
+    autoBackT = 0;
+    clearAutoKeys();
+    keys.l = false;
+    keys.r = false;
+    keys.jump = false;
+    keys.atk = false;
+    keys.kick = false;
+    keys.slow = false;
+    keys.zoom = false;
+    syncAutoUi();
+    if (autoOn) {
+      audio.ensure();
+      if (G.mode === 'title') startGame(G.kind || 'shoot');
+    }
+  }
+
+  function isAutoKey(e) {
+    return e.code === 'KeyA' || e.key === 'a' || e.key === 'A';
+  }
+
   function fireBullet(x, y, vx, vy, dmg) {
     G.bullets.push({
       x: x, y: y, vx: vx, vy: vy || 0, dmg: dmg || 2, life: 1.6, dead: false
@@ -1395,6 +1736,9 @@
     } else if (!playing()) {
       wantS = false;
       wantZ = false;
+    } else if (autoPlaying()) {
+      wantS = autoIn.slow && (G.slowOn ? G.vfx > 0 : G.vfx > VFX_MIN);
+      wantZ = autoIn.zoom && (G.zoomOn ? G.vfx > 0 : G.vfx > VFX_MIN);
     } else {
       wantS = keys.slow && (G.slowOn ? G.vfx > 0 : G.vfx > VFX_MIN);
       wantZ = keys.zoom && (G.zoomOn ? G.vfx > 0 : G.vfx > VFX_MIN);
@@ -1945,12 +2289,15 @@
   function update(dt) {
     var i, pdt, wdt;
     G.clock += dt;
+    if (autoOn) tickAutoFlow(dt);
     updateVfx(dt);
-    if (G.stop > 0) {
+    if (G.stop > 0 && !(autoOn && autoSpeed >= 4 && G.mode === 'play')) {
       G.stop -= dt;
       updateFx(dt * 0.35);
       return;
     }
+    if (autoOn && autoSpeed >= 4) G.stop = 0;
+    if (autoOn && G.mode === 'play' && G.deadT <= 0) autoThink();
     wdt = G.slowOn ? dt * SLOW_SCALE : dt;
     pdt = G.slowOn ? dt * SLOW_PLAYER : dt;
     G.t += wdt;
@@ -2724,21 +3071,36 @@
   function onKey(e, down) {
     var k = e.key;
     var code = e.code;
-    var isMove = k === 'ArrowLeft' || k === 'ArrowRight' || k === 'ArrowUp' || k === 'ArrowDown'
-      || k === 'a' || k === 'A' || k === 'd' || k === 'D' || k === 'w' || k === 'W' || k === 's' || k === 'S';
-    var space = k === ' ' || k === 'Spacebar' || code === 'Space';
-    var jump = k === 'ArrowUp' || k === 'w' || k === 'W' || k === 'Up';
-    var kick = k === 'ArrowDown' || k === 's' || k === 'S' || k === 'x' || k === 'X' || k === 'k' || k === 'K';
-    var slow = k === 'v' || k === 'V';
-    var zoom = k === 'c' || k === 'C';
+    var isMove, space, jump, kick, slow, zoom;
+    if (isAutoKey(e)) {
+      if (down && !e.repeat) {
+        audio.ensure();
+        toggleAuto();
+      }
+      e.preventDefault();
+      return;
+    }
+    if (e.target === speedEl) return;
 
-    if (k === 'ArrowLeft' || k === 'a' || k === 'A' || k === 'Left') keys.l = down;
-    if (k === 'ArrowRight' || k === 'd' || k === 'D' || k === 'Right') keys.r = down;
-    if (jump) keys.jump = down;
-    if (space) keys.atk = down;
-    if (kick) keys.kick = down;
-    if (slow) keys.slow = down;
-    if (zoom) keys.zoom = down;
+    isMove = k === 'ArrowLeft' || k === 'ArrowRight' || k === 'ArrowUp' || k === 'ArrowDown'
+      || k === 'd' || k === 'D' || k === 'w' || k === 'W' || k === 's' || k === 'S';
+    space = k === ' ' || k === 'Spacebar' || code === 'Space';
+    jump = k === 'ArrowUp' || k === 'w' || k === 'W' || k === 'Up';
+    kick = k === 'ArrowDown' || k === 's' || k === 'S' || k === 'x' || k === 'X' || k === 'k' || k === 'K';
+    slow = k === 'v' || k === 'V';
+    zoom = k === 'c' || k === 'C';
+
+    if (!autoOn) {
+      if (k === 'ArrowLeft' || k === 'Left') keys.l = down;
+      if (k === 'ArrowRight' || k === 'd' || k === 'D' || k === 'Right') keys.r = down;
+      if (jump) keys.jump = down;
+      if (space) keys.atk = down;
+      if (kick) keys.kick = down;
+      if (slow) keys.slow = down;
+      if (zoom) keys.zoom = down;
+    } else if (down && (isMove || space || kick || slow || zoom)) {
+      e.preventDefault();
+    }
 
     if (down && (isMove || space || k === 'Enter' || slow || zoom || kick)) e.preventDefault();
     if (!down) return;
@@ -2758,6 +3120,7 @@
       if (k === '1' && G.mode === 'title') startGame('shoot');
       return;
     }
+    if (autoOn) return;
     if (space) {
       if (playing() || G.mode === 'title') doAtk('punch');
     }
@@ -2771,6 +3134,7 @@
       if (!el) return;
       var down = function (e) {
         e.preventDefault();
+        if (autoOn) return;
         audio.ensure();
         el.classList.add('held');
         on();
@@ -2807,7 +3171,7 @@
     canvas.addEventListener('pointerdown', function (e) {
       audio.ensure();
       e.preventDefault();
-      if (overlayOpen()) return;
+      if (overlayOpen() || autoOn) return;
       if (playing()) doAtk('punch');
     });
     canvas.addEventListener('contextmenu', function (e) { e.preventDefault(); });
@@ -2826,13 +3190,17 @@
     var dt = t - last;
     last = t;
     if (dt > 0.05) dt = 0.05;
-    acc += dt;
+    var turbo = autoOn && autoSpeed >= 4 && G.mode === 'play';
+    if (turbo) G.stop = 0;
+    acc += dt * autoScale();
     var n = 0;
-    while (acc >= STEP && n < 5) {
+    var maxSteps = turbo ? 16 : 5;
+    while (acc >= STEP && n < maxSteps) {
       update(STEP);
       acc -= STEP;
       n += 1;
     }
+    if (acc > STEP * 4) acc = 0;
     draw();
   }
 
@@ -2844,6 +3212,9 @@
 
   loadBest();
   initMute();
+  autoSpeed = loadAutoSpeed();
+  syncSpeedUi();
+  syncAutoUi();
   goTitle();
   resize();
   bindPointer();
@@ -2892,6 +3263,16 @@
       audio.ensure();
       audio.setMuted(!audio.muted);
     });
+  }
+  if (btnAuto) {
+    btnAuto.addEventListener('click', function () {
+      audio.ensure();
+      toggleAuto();
+    });
+  }
+  if (speedEl) {
+    speedEl.addEventListener('input', function () { setAutoSpeed(parseInt(speedEl.value, 10)); });
+    speedEl.addEventListener('change', function () { setAutoSpeed(parseInt(speedEl.value, 10)); });
   }
 
   window.addEventListener('keydown', function (e) { onKey(e, true); });

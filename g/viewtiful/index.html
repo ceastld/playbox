@@ -54,6 +54,12 @@
           <button type="button" id="mode-shoot" aria-pressed="true">开拍</button>
           <button type="button" id="mode-cut" aria-pressed="false">快剪</button>
         </div>
+        <label class="speed-ctl" title="速度 慢 / 中 / 快 / 极快">
+          <span>速度</span>
+          <input type="range" id="speed" min="1" max="4" step="1" value="3" aria-label="速度" />
+          <b id="speed-lab">快</b>
+        </label>
+        <button type="button" id="btn-auto" title="A" aria-label="自动" aria-pressed="false">自动</button>
         <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
         <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
       </div>
@@ -83,7 +89,7 @@
           <p class="kicker" id="ov-kicker">VIEW</p>
           <h1 id="ov-title">红侠</h1>
           <p class="lead" id="ov-lead">走跳拳踢。按 V 开慢镜，拳更重、子弹爬行可打回；按 C 拉近出大招。体力打空扣一命。片场三关见头目。</p>
-          <p class="ops" id="ov-ops">方向 / WASD 走 · 上跳 · 空格出拳 · 下/X 踢 · V 慢镜 · C 拉近 · R 重开 · M 静音</p>
+          <p class="ops" id="ov-ops">方向 / D 走 · 上跳 · 空格出拳 · 下/X 踢 · V 慢镜 · C 拉近 · A 自动 · R 重开 · M 静音</p>
           <div class="ov-actions" id="ov-start">
             <button type="button" id="btn-shoot">开拍</button>
             <button type="button" id="btn-cut">快剪</button>
@@ -96,7 +102,7 @@
       </div>
     </div>
 
-    <footer class="hint" id="hint">走跳拳踢 · V 慢镜打回子弹 · C 拉近大招 · 片场见头目</footer>
+    <footer class="hint" id="hint">走跳拳踢 · V 慢镜打回子弹 · C 拉近大招 · A 自动 · 片场见头目</footer>
   </div>
   <script src="js/game.js"></script>
 </body>
