@@ -4244,5 +4244,65 @@
     "dir": "g/galactic/",
     "url": "./g/galactic/",
     "kind": "remake"
+  },
+  {
+    "n": 374,
+    "id": "raystorm",
+    "title": "光暴",
+    "subtitle": "RSTM",
+    "blurb": "纵版光暴，把锁链从核里打穿。",
+    "hue": 196,
+    "tag": "复刻",
+    "dir": "g/raystorm/",
+    "url": "./g/raystorm/",
+    "kind": "remake"
+  },
+  {
+    "n": 375,
+    "id": "dragon-blaze",
+    "title": "龙炎",
+    "subtitle": "DBLZ",
+    "blurb": "纵版龙炎，把火龙从云里打穿。",
+    "hue": 14,
+    "tag": "复刻",
+    "dir": "g/dragon-blaze/",
+    "url": "./g/dragon-blaze/",
+    "kind": "remake"
+  },
+  {
+    "n": 376,
+    "id": "xexex",
+    "title": "泽泽",
+    "subtitle": "XEXE",
+    "blurb": "横版泽泽，把触手从核里打穿。",
+    "hue": 168,
+    "tag": "复刻",
+    "dir": "g/xexex/",
+    "url": "./g/xexex/",
+    "kind": "remake"
+  },
+  {
+    "n": 377,
+    "id": "layered",
+    "title": "层击",
+    "subtitle": "LAYR",
+    "blurb": "纵版层击，把层核从空里打穿。",
+    "hue": 274,
+    "tag": "复刻",
+    "dir": "g/layered/",
+    "url": "./g/layered/",
+    "kind": "remake"
+  },
+  {
+    "n": 378,
+    "id": "soukyugurentai",
+    "title": "苍穹",
+    "subtitle": "SKYG",
+    "blurb": "纵版苍穹，把编队从穹里打散。",
+    "hue": 212,
+    "tag": "复刻",
+    "dir": "g/soukyugurentai/",
+    "url": "./g/soukyugurentai/",
+    "kind": "remake"
   }
 ]

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#0a0612" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>层击 · LAYR</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230a0612'/%3E%3Cpath d='M6 24h20' stroke='%23a24dff' stroke-width='.6' opacity='.5'/%3E%3Crect x='8' y='20' width='5' height='4' fill='%2314081e' stroke='%237a3cff' stroke-width='.5'/%3E%3Crect x='19' y='21' width='5' height='3.4' fill='%2314081e' stroke='%237a3cff' stroke-width='.5'/%3E%3Cpath d='M16 8l2.4 7.2 4 .4-3.4 2.8.4 4.2L16 20.4l-3.4 2.2.4-4.2-3.4-2.8 4-.4z' fill='%23d4b8ff'/%3E%3Cpath d='M14.2 8.4h3.6L16 4z' fill='%23ffe36b'/%3E%3Crect x='13' y='12' width='6' height='6' fill='none' stroke='%23ffe36b' stroke-width='.8'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>层击</b>
+        <span>LAYR</span>
+      </div>
+      <div class="status">
+        <div class="scores" aria-live="polite">
+          <div class="score" id="score-box">
+            <em>分数</em>
+            <b id="score">0</b>
+            <span id="score-add" class="score-add" hidden>+0</span>
+          </div>
+          <div class="score best">
+            <em>最高</em>
+            <b id="best">0</b>
+          </div>
+        </div>
+        <div class="row">
+          <span id="stage-label">雾廊</span>
+          <span id="tag-label">层击</span>
+          <div class="fill" id="lock-wrap" title="锁定">
+            <em>锁</em>
+            <div class="fill-track" aria-hidden="true"><i id="lock-bar"></i></div>
+          </div>
+          <span id="bomb-label" class="bombs">爆 ×3</span>
+          <span id="combo-label" class="combo" hidden>连击</span>
+          <span class="pips" id="pips" aria-label="剩余生命"></span>
+        </div>
+      </div>
+      <div class="tools">
+        <button type="button" id="btn-bomb" title="Shift / Z" aria-label="爆弹">爆</button>
+        <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
+        <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <canvas id="c" tabindex="0" role="application" aria-label="层击游戏区，八向飞行，按住空格点射并叠锁，松开放锁定激光，Shift 爆弹"></canvas>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden"></div>
+      <div id="pad" class="pad">
+        <button type="button" id="btn-pad" aria-label="爆弹">爆</button>
+      </div>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">LAYR</p>
+          <h1 id="ov-title">层击</h1>
+          <p class="lead" id="ov-lead">上层点射，准星叠锁下层。按住叠锁，松开放束。撞机掉命。短关之后是层主。</p>
+          <p class="ops" id="ov-ops">←↑↓→ / WASD 飞 · 空格射击（松开放锁）· Shift / Z 爆弹 · R 重开 · M 静音</p>
+          <div class="ov-actions" id="ov-start">
+            <button type="button" id="btn-lay">层击</button>
+            <button type="button" id="btn-core">层核</button>
+          </div>
+          <div class="ov-actions gone" id="ov-end">
+            <button type="button" id="ov-retry">再来</button>
+            <button type="button" id="ov-modes">换模式</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">按住叠锁 · 松开放束 · Shift 爆弹</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>
