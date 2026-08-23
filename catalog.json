@@ -3704,5 +3704,53 @@
     "dir": "g/sengoku-ace/",
     "url": "./g/sengoku-ace/",
     "kind": "remake"
+  },
+  {
+    "n": 329,
+    "id": "shikigami",
+    "title": "式神",
+    "subtitle": "SHIK",
+    "blurb": "横版魔弹，把式神锁进弹幕里。",
+    "hue": 312,
+    "tag": "复刻",
+    "dir": "g/shikigami/",
+    "url": "./g/shikigami/",
+    "kind": "remake"
+  },
+  {
+    "n": 330,
+    "id": "metal-black",
+    "title": "黑金",
+    "subtitle": "MBLK",
+    "blurb": "横版超武，把黑核从海里打穿。",
+    "hue": 210,
+    "tag": "复刻",
+    "dir": "g/metal-black/",
+    "url": "./g/metal-black/",
+    "kind": "remake"
+  },
+  {
+    "n": 332,
+    "id": "pulstar",
+    "title": "星脉",
+    "subtitle": "PULS",
+    "blurb": "横版星战，把脉冲打进舰核。",
+    "hue": 195,
+    "tag": "复刻",
+    "dir": "g/pulstar/",
+    "url": "./g/pulstar/",
+    "kind": "remake"
+  },
+  {
+    "n": 333,
+    "id": "last-resort",
+    "title": "末堡",
+    "subtitle": "LRES",
+    "blurb": "末世护航，把堡垒从轨道打塌。",
+    "hue": 25,
+    "tag": "复刻",
+    "dir": "g/last-resort/",
+    "url": "./g/last-resort/",
+    "kind": "remake"
   }
 ]

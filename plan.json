@@ -3843,7 +3843,7 @@
     "blurb": "横版魔弹，把式神锁进弹幕里。",
     "hue": 312,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/shikigami/",
     "kind": "remake"
   },
@@ -3855,7 +3855,7 @@
     "blurb": "横版超武，把黑核从海里打穿。",
     "hue": 210,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/metal-black/",
     "kind": "remake"
   },
@@ -3879,7 +3879,7 @@
     "blurb": "横版星战，把脉冲打进舰核。",
     "hue": 195,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/pulstar/",
     "kind": "remake"
   },
@@ -3891,8 +3891,56 @@
     "blurb": "末世护航，把堡垒从轨道打塌。",
     "hue": 25,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/last-resort/",
+    "kind": "remake"
+  },
+  {
+    "n": 334,
+    "id": "gunnail",
+    "title": "钉枪",
+    "subtitle": "GNAI",
+    "blurb": "纵版钉射，把弹幕钉进舰核。",
+    "hue": 14,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/gunnail/",
+    "kind": "remake"
+  },
+  {
+    "n": 335,
+    "id": "gunbarich",
+    "title": "砖弹",
+    "subtitle": "GBAR",
+    "blurb": "砖墙弹珠，把砖块打成火花。",
+    "hue": 28,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/gunbarich/",
+    "kind": "remake"
+  },
+  {
+    "n": 336,
+    "id": "striker-1945",
+    "title": "打击",
+    "subtitle": "ST45",
+    "blurb": "纵版空战，把机群从云里打穿。",
+    "hue": 200,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/striker-1945/",
+    "kind": "remake"
+  },
+  {
+    "n": 337,
+    "id": "sonic-wings",
+    "title": "空牙",
+    "subtitle": "SWNG",
+    "blurb": "双人空战，把弹幕从牙缝打出。",
+    "hue": 48,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/sonic-wings/",
     "kind": "remake"
   }
 ]

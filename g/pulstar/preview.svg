@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" fill="#031418"/>
+  <rect x="5" y="5" width="54" height="54" rx="9" fill="#041c20" stroke="#00e8d4" stroke-width="1.3"/>
+  <circle cx="46" cy="18" r="10" fill="#00e8d4" opacity=".18"/>
+  <circle cx="46" cy="18" r="6" fill="none" stroke="#3dffc4" stroke-width="1.1" opacity=".7"/>
+  <circle cx="46" cy="18" r="3" fill="#ffe36b" opacity=".55"/>
+  <path d="M8 16c8 4 14 2 22 6" fill="none" stroke="#3dffc4" stroke-width=".7" opacity=".35"/>
+  <path d="M10 48c10-6 18-2 28-8" fill="none" stroke="#00e8d4" stroke-width=".7" opacity=".28"/>
+  <g fill="#ff3db8">
+    <circle cx="34" cy="20" r="1.1"/>
+    <circle cx="42" cy="28" r="1"/>
+    <circle cx="50" cy="36" r="1.1"/>
+    <circle cx="38" cy="40" r="0.9"/>
+  </g>
+  <ellipse cx="48" cy="34" rx="6" ry="4.2" fill="#ff3db8" opacity=".85"/>
+  <ellipse cx="48" cy="34" rx="2.4" ry="1.7" fill="#ffe36b"/>
+  <path d="M7 32l14-5.2v10.4z" fill="#00e8d4"/>
+  <path d="M14 28.4h10v7.2H14z" fill="#e4fffb"/>
+  <path d="M24 32l10-3.6 2.4 3.6-2.4 3.6z" fill="#3dffc4"/>
+  <path d="M7 29.4v5.2l-5 1.2 5-3.8z" fill="#5cf5e8"/>
+  <circle cx="22" cy="48" r="3.5" fill="#3dffc4"/>
+  <text x="22" y="49.6" text-anchor="middle" font-size="4" font-family="sans-serif" font-weight="700" fill="#041c20">脉</text>
+</svg>
