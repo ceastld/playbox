@@ -3644,5 +3644,65 @@
     "dir": "g/armed-police/",
     "url": "./g/armed-police/",
     "kind": "remake"
+  },
+  {
+    "n": 321,
+    "id": "dangun-feveron",
+    "title": "热铳",
+    "subtitle": "FEVE",
+    "blurb": "近身热弹，把舞厅核心打穿。",
+    "hue": 12,
+    "tag": "复刻",
+    "dir": "g/dangun-feveron/",
+    "url": "./g/dangun-feveron/",
+    "kind": "remake"
+  },
+  {
+    "n": 325,
+    "id": "pink-sweets",
+    "title": "粉甜",
+    "subtitle": "PINK",
+    "blurb": "纵版糖弹，把甜点要塞打穿。",
+    "hue": 328,
+    "tag": "复刻",
+    "dir": "g/pink-sweets/",
+    "url": "./g/pink-sweets/",
+    "kind": "remake"
+  },
+  {
+    "n": 326,
+    "id": "outrun2",
+    "title": "疾风2",
+    "subtitle": "OR2",
+    "blurb": "甩尾超车，把海岸线甩开。",
+    "hue": 18,
+    "tag": "复刻",
+    "dir": "g/outrun2/",
+    "url": "./g/outrun2/",
+    "kind": "remake"
+  },
+  {
+    "n": 327,
+    "id": "deathsmiles",
+    "title": "死笑",
+    "subtitle": "DSML",
+    "blurb": "纵版魔弹，把亡灵弹幕打散。",
+    "hue": 286,
+    "tag": "复刻",
+    "dir": "g/deathsmiles/",
+    "url": "./g/deathsmiles/",
+    "kind": "remake"
+  },
+  {
+    "n": 328,
+    "id": "sengoku-ace",
+    "title": "战国",
+    "subtitle": "SNGK",
+    "blurb": "纵版空战，把弹幕从云里打穿。",
+    "hue": 42,
+    "tag": "复刻",
+    "dir": "g/sengoku-ace/",
+    "url": "./g/sengoku-ace/",
+    "kind": "remake"
   }
 ]

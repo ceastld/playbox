@@ -3747,7 +3747,7 @@
     "blurb": "近身热弹，把舞厅核心打穿。",
     "hue": 12,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/dangun-feveron/",
     "kind": "remake"
   },
@@ -3795,7 +3795,7 @@
     "blurb": "纵版糖弹，把甜点要塞打穿。",
     "hue": 328,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/pink-sweets/",
     "kind": "remake"
   },
@@ -3807,7 +3807,7 @@
     "blurb": "甩尾超车，把海岸线甩开。",
     "hue": 18,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/outrun2/",
     "kind": "remake"
   },
@@ -3819,7 +3819,7 @@
     "blurb": "纵版魔弹，把亡灵弹幕打散。",
     "hue": 286,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/deathsmiles/",
     "kind": "remake"
   },
@@ -3831,8 +3831,68 @@
     "blurb": "纵版空战，把弹幕从云里打穿。",
     "hue": 42,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/sengoku-ace/",
+    "kind": "remake"
+  },
+  {
+    "n": 329,
+    "id": "shikigami",
+    "title": "式神",
+    "subtitle": "SHIK",
+    "blurb": "横版魔弹，把式神锁进弹幕里。",
+    "hue": 312,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/shikigami/",
+    "kind": "remake"
+  },
+  {
+    "n": 330,
+    "id": "metal-black",
+    "title": "黑金",
+    "subtitle": "MBLK",
+    "blurb": "横版超武，把黑核从海里打穿。",
+    "hue": 210,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/metal-black/",
+    "kind": "remake"
+  },
+  {
+    "n": 331,
+    "id": "samurai-aki",
+    "title": "侍秋",
+    "subtitle": "SAKI",
+    "blurb": "一刀斩落，把秋叶打成火花。",
+    "hue": 8,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/samurai-aki/",
+    "kind": "remake"
+  },
+  {
+    "n": 332,
+    "id": "pulstar",
+    "title": "星脉",
+    "subtitle": "PULS",
+    "blurb": "横版星战，把脉冲打进舰核。",
+    "hue": 195,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/pulstar/",
+    "kind": "remake"
+  },
+  {
+    "n": 333,
+    "id": "last-resort",
+    "title": "末堡",
+    "subtitle": "LRES",
+    "blurb": "末世护航，把堡垒从轨道打塌。",
+    "hue": 25,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/last-resort/",
     "kind": "remake"
   }
 ]

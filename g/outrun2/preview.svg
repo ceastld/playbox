@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" fill="#12080c"/>
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1c0814"/>
+      <stop offset="0.4" stop-color="#c43828"/>
+      <stop offset="0.68" stop-color="#ff5a18"/>
+      <stop offset="1" stop-color="#ffc078"/>
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="56" height="56" rx="10" fill="url(#sky)"/>
+  <circle cx="48" cy="14" r="5.2" fill="#ffe36b"/>
+  <path d="M4 28 L18 20 L28 26 L40 16 L52 24 L60 18 V32 H4Z" fill="#7ec8e0" opacity=".5"/>
+  <path d="M4 31 L22 24 L32 30 L44 20 L60 27 V38 H4Z" fill="#241018"/>
+  <path d="M8 62 L26 33 L38 33 L56 62Z" fill="#2a2030"/>
+  <path d="M12 62 L27 35 L37 35 L52 62Z" fill="#181018"/>
+  <path d="M18 62 L29 40 L35 40 L46 62Z" fill="#ff5a18" opacity=".4"/>
+  <path d="M4 38 H24 L8 62 H4Z" fill="#1a7aa8"/>
+  <path d="M40 38 H60 L56 62 H40Z" fill="#c88838"/>
+  <rect x="22.4" y="44" width="19.2" height="10.2" rx="1.8" fill="#ffc230"/>
+  <rect x="24.2" y="41.4" width="15.6" height="4.4" rx="1.1" fill="#7ad8e8" opacity=".72"/>
+  <rect x="24.8" y="43" width="5" height="2.2" rx=".3" fill="#1a1018" opacity=".55"/>
+  <rect x="34.4" y="43" width="4.8" height="2.2" rx=".3" fill="#1a1018" opacity=".55"/>
+  <circle cx="27.2" cy="41.2" r="1.6" fill="#fff4ea"/>
+  <circle cx="36.8" cy="41.2" r="1.5" fill="#ffd0c8"/>
+  <rect x="26" y="47.6" width="3.4" height="2" rx=".35" fill="#00f0ff"/>
+  <rect x="34.8" y="47.6" width="3.4" height="2" rx=".35" fill="#ff2d78"/>
+  <rect x="24.8" y="53.2" width="4.6" height="2.2" rx=".4" fill="#1a1220"/>
+  <rect x="34.8" y="53.2" width="4.6" height="2.2" rx=".4" fill="#1a1220"/>
+  <path d="M16 52 L6 62" stroke="#ffc230" stroke-width=".7" opacity=".7"/>
+  <path d="M48 52 L58 62" stroke="#ff5a18" stroke-width=".7" opacity=".55"/>
+  <circle cx="11" cy="10" r="1.2" fill="#c8e8ff"/>
+  <circle cx="19" cy="8" r="1" fill="#ffe36b"/>
+  <rect x="50" y="8" width="2.2" height="6" fill="#3a9a62"/>
+</svg>
