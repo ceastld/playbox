@@ -4215,7 +4215,7 @@
     "blurb": "纵版空霸，把弹幕从云里打穿。",
     "hue": 198,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/sky-ace/",
     "kind": "remake"
   },
@@ -4251,7 +4251,7 @@
     "blurb": "刀光连斩，把弹幕劈成火花。",
     "hue": 352,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/blade-storm/",
     "kind": "remake"
   },
@@ -4263,7 +4263,7 @@
     "blurb": "横版星核，把核心从轨道打穿。",
     "hue": 226,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/nexa/",
     "kind": "remake"
   },
@@ -4277,6 +4277,42 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/zerowing/",
+    "kind": "remake"
+  },
+  {
+    "n": 366,
+    "id": "hellfire",
+    "title": "地狱火",
+    "subtitle": "HELL",
+    "blurb": "横版火海，把弹幕从核里打穿。",
+    "hue": 10,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/hellfire/",
+    "kind": "remake"
+  },
+  {
+    "n": 367,
+    "id": "sonic-boom",
+    "title": "音爆",
+    "subtitle": "SBOO",
+    "blurb": "纵版音爆，把机群从云里打散。",
+    "hue": 200,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/sonic-boom/",
+    "kind": "remake"
+  },
+  {
+    "n": 368,
+    "id": "vipers",
+    "title": "毒牙",
+    "subtitle": "VPR",
+    "blurb": "纵版毒牙，把弹幕从谷里打穿。",
+    "hue": 128,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/vipers/",
     "kind": "remake"
   }
 ]
