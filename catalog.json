@@ -4724,5 +4724,65 @@
     "dir": "g/windjammers/",
     "url": "./g/windjammers/",
     "kind": "remake"
+  },
+  {
+    "n": 414,
+    "id": "after-burner",
+    "title": "超燃",
+    "subtitle": "ABRN",
+    "blurb": "进屏超燃，把机群从云里打穿。",
+    "hue": 14,
+    "tag": "复刻",
+    "dir": "g/after-burner/",
+    "url": "./g/after-burner/",
+    "kind": "remake"
+  },
+  {
+    "n": 415,
+    "id": "tempest",
+    "title": "风暴",
+    "subtitle": "TMPS",
+    "blurb": "管状风暴，把弹幕从核里打散。",
+    "hue": 286,
+    "tag": "复刻",
+    "dir": "g/tempest/",
+    "url": "./g/tempest/",
+    "kind": "remake"
+  },
+  {
+    "n": 416,
+    "id": "space-invaders",
+    "title": "侵者",
+    "subtitle": "INVD",
+    "blurb": "纵版侵者，把编队从空里打散。",
+    "hue": 118,
+    "tag": "复刻",
+    "dir": "g/space-invaders/",
+    "url": "./g/space-invaders/",
+    "kind": "remake"
+  },
+  {
+    "n": 417,
+    "id": "missile-command",
+    "title": "导弹",
+    "subtitle": "MSLC",
+    "blurb": "防空导弹，把弹雨从空里打穿。",
+    "hue": 32,
+    "tag": "复刻",
+    "dir": "g/missile-command/",
+    "url": "./g/missile-command/",
+    "kind": "remake"
+  },
+  {
+    "n": 418,
+    "id": "stargate",
+    "title": "星门",
+    "subtitle": "SGTW",
+    "blurb": "横版星门，把人从空里救下。",
+    "hue": 208,
+    "tag": "复刻",
+    "dir": "g/stargate/",
+    "url": "./g/stargate/",
+    "kind": "remake"
   }
 ]

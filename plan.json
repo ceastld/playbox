@@ -4863,7 +4863,7 @@
     "blurb": "进屏超燃，把机群从云里打穿。",
     "hue": 14,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/after-burner/",
     "kind": "remake"
   },
@@ -4875,7 +4875,7 @@
     "blurb": "管状风暴，把弹幕从核里打散。",
     "hue": 286,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/tempest/",
     "kind": "remake"
   },
@@ -4887,7 +4887,7 @@
     "blurb": "纵版侵者，把编队从空里打散。",
     "hue": 118,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/space-invaders/",
     "kind": "remake"
   },
@@ -4899,7 +4899,7 @@
     "blurb": "防空导弹，把弹雨从空里打穿。",
     "hue": 32,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/missile-command/",
     "kind": "remake"
   },
@@ -4911,8 +4911,68 @@
     "blurb": "横版星门，把人从空里救下。",
     "hue": 208,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/stargate/",
+    "kind": "remake"
+  },
+  {
+    "n": 419,
+    "id": "galaxian",
+    "title": "加星",
+    "subtitle": "GLXN",
+    "blurb": "纵版加星，把编队从空里打散。",
+    "hue": 56,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/galaxian/",
+    "kind": "remake"
+  },
+  {
+    "n": 420,
+    "id": "xevious",
+    "title": "泽空",
+    "subtitle": "XEVS",
+    "blurb": "纵版泽空，把地面从云里轰穿。",
+    "hue": 96,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/xevious/",
+    "kind": "remake"
+  },
+  {
+    "n": 421,
+    "id": "n1941",
+    "title": "四一",
+    "subtitle": "N141",
+    "blurb": "纵版四一，把机群从海上打穿。",
+    "hue": 24,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/n1941/",
+    "kind": "remake"
+  },
+  {
+    "n": 422,
+    "id": "raiden2",
+    "title": "雷二",
+    "subtitle": "RDN2",
+    "blurb": "纵版雷二，把弹幕从核里打散。",
+    "hue": 172,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/raiden2/",
+    "kind": "remake"
+  },
+  {
+    "n": 423,
+    "id": "thunder-force4",
+    "title": "雷四",
+    "subtitle": "TF04",
+    "blurb": "横版雷四，把机群从星里打穿。",
+    "hue": 148,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/thunder-force4/",
     "kind": "remake"
   }
 ]
