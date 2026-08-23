@@ -3987,7 +3987,7 @@
     "blurb": "横版幻战，把残像从轨道打穿。",
     "hue": 262,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/image-fight/",
     "kind": "remake"
   },
@@ -4037,6 +4037,18 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/macross/",
+    "kind": "remake"
+  },
+  {
+    "n": 346,
+    "id": "star-fox",
+    "title": "星狐",
+    "subtitle": "SFOX",
+    "blurb": "轨道突袭，把机群从星核打穿。",
+    "hue": 22,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/star-fox/",
     "kind": "remake"
   }
 ]

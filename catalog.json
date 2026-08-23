@@ -3848,5 +3848,17 @@
     "dir": "g/dragon-spirit/",
     "url": "./g/dragon-spirit/",
     "kind": "remake"
+  },
+  {
+    "n": 341,
+    "id": "image-fight",
+    "title": "幻击",
+    "subtitle": "IMFG",
+    "blurb": "横版幻战，把残像从轨道打穿。",
+    "hue": 262,
+    "tag": "复刻",
+    "dir": "g/image-fight/",
+    "url": "./g/image-fight/",
+    "kind": "remake"
   }
 ]
