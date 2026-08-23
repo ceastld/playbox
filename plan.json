@@ -4983,7 +4983,7 @@
     "blurb": "纵版蜂狂，把弹幕从核里打散。",
     "hue": 38,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/do-don-pachi/",
     "kind": "remake"
   },
@@ -5007,7 +5007,7 @@
     "blurb": "进屏星战，把炮塔从沟里打穿。",
     "hue": 42,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/star-wars/",
     "kind": "remake"
   },
@@ -5019,7 +5019,7 @@
     "blurb": "纵版四四，把机群从海上打穿。",
     "hue": 8,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/n1944/",
     "kind": "remake"
   },
@@ -5031,8 +5031,56 @@
     "blurb": "进屏超悬，把弯道从风里甩开。",
     "hue": 330,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/super-hang-on/",
+    "kind": "remake"
+  },
+  {
+    "n": 429,
+    "id": "gradius2",
+    "title": "巡二",
+    "subtitle": "GRD2",
+    "blurb": "横版巡二，把核心从空里打穿。",
+    "hue": 198,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/gradius2/",
+    "kind": "remake"
+  },
+  {
+    "n": 430,
+    "id": "r-type-leo",
+    "title": "武装狮",
+    "subtitle": "RTLE",
+    "blurb": "横版武装狮，把机群从核里打穿。",
+    "hue": 52,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/r-type-leo/",
+    "kind": "remake"
+  },
+  {
+    "n": 431,
+    "id": "ghouls-n-ghosts",
+    "title": "鬼铠",
+    "subtitle": "GNGH",
+    "blurb": "横版鬼铠，把亡灵从坟里斩穿。",
+    "hue": 12,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/ghouls-n-ghosts/",
+    "kind": "remake"
+  },
+  {
+    "n": 432,
+    "id": "outrunners",
+    "title": "双驶",
+    "subtitle": "ORUN",
+    "blurb": "进屏双驶，把对手从弯里甩开。",
+    "hue": 16,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/outrunners/",
     "kind": "remake"
   }
 ]

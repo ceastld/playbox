@@ -4844,5 +4844,53 @@
     "dir": "g/thunder-force4/",
     "url": "./g/thunder-force4/",
     "kind": "remake"
+  },
+  {
+    "n": 424,
+    "id": "do-don-pachi",
+    "title": "蜂狂",
+    "subtitle": "DDON",
+    "blurb": "纵版蜂狂，把弹幕从核里打散。",
+    "hue": 38,
+    "tag": "复刻",
+    "dir": "g/do-don-pachi/",
+    "url": "./g/do-don-pachi/",
+    "kind": "remake"
+  },
+  {
+    "n": 426,
+    "id": "star-wars",
+    "title": "星战",
+    "subtitle": "STAR",
+    "blurb": "进屏星战，把炮塔从沟里打穿。",
+    "hue": 42,
+    "tag": "复刻",
+    "dir": "g/star-wars/",
+    "url": "./g/star-wars/",
+    "kind": "remake"
+  },
+  {
+    "n": 427,
+    "id": "n1944",
+    "title": "四四",
+    "subtitle": "N144",
+    "blurb": "纵版四四，把机群从海上打穿。",
+    "hue": 8,
+    "tag": "复刻",
+    "dir": "g/n1944/",
+    "url": "./g/n1944/",
+    "kind": "remake"
+  },
+  {
+    "n": 428,
+    "id": "super-hang-on",
+    "title": "超悬",
+    "subtitle": "SHON",
+    "blurb": "进屏超悬，把弯道从风里甩开。",
+    "hue": 330,
+    "tag": "复刻",
+    "dir": "g/super-hang-on/",
+    "url": "./g/super-hang-on/",
+    "kind": "remake"
   }
 ]
