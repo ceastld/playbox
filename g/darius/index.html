@@ -44,6 +44,12 @@
         </div>
       </div>
       <div class="tools">
+        <label class="speed-ctl" title="速度 慢 / 中 / 快 / 极快">
+          <span>速度</span>
+          <input type="range" id="speed" min="1" max="4" step="1" value="3" aria-label="速度" />
+          <b id="speed-lab">快</b>
+        </label>
+        <button type="button" id="btn-auto" title="A" aria-label="自动" aria-pressed="false">自动</button>
         <button type="button" id="btn-bomb" title="Shift / Z" aria-label="爆弹">爆</button>
         <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
         <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
@@ -62,7 +68,7 @@
           <p class="kicker" id="ov-kicker">DARS</p>
           <h1 id="ov-title">大流</h1>
           <p class="lead" id="ov-lead">横向卷轴。银鹰打巨型鱼舰，专打发光弱点。区末飞进上/下航门选路。甲空或撞击扣一命。</p>
-          <p class="ops" id="ov-ops">方向 / WASD 移动 · 空格开火 · Shift / Z 爆弹 · R 重开 · M 静音</p>
+          <p class="ops" id="ov-ops">方向 / WSD 移动 · 空格开火 · Shift / Z 爆弹 · A 自动 · R 重开 · M 静音</p>
           <div class="ov-actions" id="ov-start">
             <button type="button" id="btn-raid">远征</button>
             <button type="button" id="btn-red">红海</button>
@@ -75,7 +81,7 @@
       </div>
     </div>
 
-    <footer class="hint" id="hint">方向移动 · 空格开火 · Shift 爆弹 · 打鱼舰弱点 · 区末选航路</footer>
+    <footer class="hint" id="hint">方向移动 · 空格开火 · Shift 爆弹 · A 自动 · 打鱼舰弱点 · 区末选航路</footer>
   </div>
   <script src="js/game.js"></script>
 </body>
