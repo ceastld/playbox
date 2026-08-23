@@ -16,7 +16,10 @@
   const TAU = Math.PI * 2;
   const BEST_KEY = 'playbox-chase-hq-best';
   const MUTE_KEY = 'playbox-chase-hq-mute';
-  const OPS = '← → / A D 转向 · ↑ W 油门 · ↓ S 刹车 · 空格涡轮 · R 重开 · M 静音';
+  const AUTO_SPEED_KEY = 'playbox-chase-hq-auto-speed';
+  const SPEED_LABELS = ['', '慢', '中', '快', '极快'];
+  const AUTO_SCALE = [1, 0.48, 0.72, 1, 2.6];
+  const OPS = '← → / D 转向 · ↑ W 油门 · ↓ S 刹车 · 空格涡轮 · A 自动 · R 重开 · M 静音';
   const REDUCE = typeof window !== 'undefined' && window.matchMedia
     ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
     : false;
@@ -54,6 +57,9 @@
   const btnMute = document.getElementById('btn-mute');
   const btnRetry = document.getElementById('btn-retry');
   const btnTurbo = document.getElementById('btn-turbo');
+  const btnAuto = document.getElementById('btn-auto');
+  const speedEl = document.getElementById('speed');
+  const speedLab = document.getElementById('speed-lab');
   const scoreEl = document.getElementById('score');
   const bestEl = document.getElementById('best');
   const timeEl = document.getElementById('time');
@@ -158,6 +164,13 @@
   };
 
   let inputSrc = 'key';
+  let autoOn = false;
+  let autoSpeed = 3;
+  let autoOvWait = 0;
+  let autoSteer = 0;
+  let autoGas = true;
+  let autoBrake = false;
+  let autoTurbo = false;
 
   function clamp(v, a, b) {
     return v < a ? a : v > b ? b : v;
@@ -793,6 +806,19 @@
     hintEl.classList.toggle('warn', cls === 'warn');
   }
 
+  function loadAutoSpeed() {
+    try {
+      const n = parseInt(localStorage.getItem(AUTO_SPEED_KEY) || '3', 10);
+      if (!isFinite(n) || n < 1 || n > 4) return 3;
+      return n;
+    } catch (err) {
+      return 3;
+    }
+  }
+  function saveAutoSpeed(n) {
+    try { localStorage.setItem(AUTO_SPEED_KEY, String(n)); } catch (err) { /* ignore */ }
+  }
+
   function loadBest() {
     try {
       const raw = localStorage.getItem(BEST_KEY);
@@ -861,6 +887,7 @@
     if (G.mode === 'title') setHint(OPS, '');
     else if (G.mode === 'win') setHint('R 再追 · 四辆全逮', 'hot');
     else if (G.mode === 'lose') setHint('R 重开 · 撞车只会减速，超时目标就跑了', 'warn');
+    else if (autoOn) setHint('托管中 · A 停下', 'hot');
     else if (G.catching) setHint('目标熄火 · 贴上去逮捕', 'hot');
     else if (G.time < 10) setHint('时间将尽 · 涡轮撞停', 'warn');
     else if (target.near) setHint('目标在前 · 空格涡轮 · 对准车尾撞', 'hot');
@@ -1200,19 +1227,96 @@
     }
   }
 
+  function thinkAuto() {
+    autoSteer = 0;
+    autoGas = true;
+    autoBrake = false;
+    autoTurbo = false;
+    if (G.mode !== 'play' || G.ending) return;
+
+    const pz = G.z + PLAYER_Z;
+    const gap = target.z - pz;
+    const spd01 = clamp(G.spd / maxSpd(), 0, 1);
+    const seg = findSeg(pz);
+    const look = findSeg(pz + Math.max(720, G.spd * 0.32));
+    const curveMix = seg.curve * 0.7 + look.curve * 0.3;
+    const onRoad = Math.abs(G.x) < 0.98;
+
+    let want = clamp(target.offset, -0.86, 0.86);
+    if (gap > 7000) want = clamp(want * 0.35, -0.45, 0.45);
+    if (G.catching || target.stopping) want = clamp(target.offset, -0.72, 0.72);
+
+    let threat = 0;
+    let dodgeWant = want;
+    for (let i = 0; i < cars.length; i++) {
+      const c = cars[i];
+      const dz = c.z - pz;
+      if (dz < -50 || dz > 1500) continue;
+      const dx = c.offset - G.x;
+      if (Math.abs(dx) > 0.56) continue;
+      if (!(Math.abs(dx) < 0.44 && dz < 1150)) continue;
+      const urg = clamp(1.12 - dz / 920, 0, 1) * (1 - Math.abs(dx) / 0.56);
+      if (urg < threat) continue;
+      let side = dx >= 0 ? -1 : 1;
+      const leftRoom = G.x + 0.88;
+      const rightRoom = 0.88 - G.x;
+      if (Math.abs(c.offset - want) > 0.28) side = want >= G.x ? 1 : -1;
+      if (side < 0 && leftRoom < 0.2) side = 1;
+      else if (side > 0 && rightRoom < 0.2) side = -1;
+      dodgeWant = clamp(G.x + side * (0.22 + urg * 0.5), -0.9, 0.9);
+      threat = urg;
+    }
+    if (threat > 0.18) want = dodgeWant;
+    want = clamp(want, -0.82, 0.82);
+
+    if (Math.abs(G.x) > 0.88) {
+      want = clamp(G.x * 0.18, -0.5, 0.5);
+      autoSteer = clamp(-G.x * 3.4, -1, 1);
+    } else {
+      let err = want - G.x;
+      if (Math.abs(err) < 0.03 && threat < 0.22) err = 0;
+      const curveSteer = clamp(curveMix * centrif() * spd01, -0.82, 0.82);
+      autoSteer = clamp(err * 4.1 + curveSteer, -1, 1);
+    }
+
+    const aligned = Math.abs(target.offset - G.x) < 0.36;
+    const tank = G.turbo;
+    const timeLow = G.time < 12;
+    const ramNow = gap > -40 && gap < 560 && aligned;
+    const catchUp = (G.catching || target.stopping) && gap > 240;
+    if (onRoad && G.crashT <= 0 && tank > 0.07) {
+      if (timeLow && tank > 0.1) autoTurbo = true;
+      else if (catchUp) autoTurbo = true;
+      else if (ramNow && tank > 0.08) autoTurbo = true;
+      else if (gap > 2600 && tank > 0.2) autoTurbo = true;
+      else if (gap > 700 && aligned && tank > 0.32) autoTurbo = true;
+      else if (target.near && aligned && tank > 0.24) autoTurbo = true;
+    }
+    if (threat > 0.58 && gap > 380) autoTurbo = false;
+    if (G.crashT > 0.18) {
+      autoSteer *= 0.45;
+      autoTurbo = false;
+    }
+  }
+
   function update(dt) {
     G.t += dt;
     G.clock += dt;
+    tickAutoFlow(dt);
     const playing = G.mode === 'play' && !G.ending;
     const demo = G.mode === 'title';
+    if (autoOn && playing) thinkAuto();
     const spd01 = clamp(G.spd / maxSpd(), 0, 1);
     audio.tickEngine(spd01, (playing || demo) && G.spd > 40);
     audio.tickSiren((playing || demo) && (G.turboOn || target.near || G.catching));
 
     if (G.stop > 0) {
-      G.stop -= dt;
-      updateJuice(dt * 0.32);
-      return;
+      if (autoOn && autoSpeed >= 4 && playing) G.stop = 0;
+      else {
+        G.stop -= dt;
+        updateJuice(dt * 0.32);
+        return;
+      }
     }
 
     updateJuice(dt);
@@ -1233,11 +1337,15 @@
 
     let steer = 0;
     if (!demo) {
-      if (keys.l) steer -= 1;
-      if (keys.r) steer += 1;
-      if (inputSrc === 'ptr' && pointer.down) {
-        const tx = (pointer.x - CX) / (CX * 0.68);
-        steer = clamp(tx * 1.4, -1, 1);
+      if (autoOn) {
+        steer = autoSteer;
+      } else {
+        if (keys.l) steer -= 1;
+        if (keys.r) steer += 1;
+        if (inputSrc === 'ptr' && pointer.down) {
+          const tx = (pointer.x - CX) / (CX * 0.68);
+          steer = clamp(tx * 1.4, -1, 1);
+        }
       }
       if (G.crashT > 0) steer *= 0.32;
     }
@@ -1251,8 +1359,10 @@
     G.steerVis = lerp(G.steerVis, steer, 1 - Math.pow(0.0007, dt));
     G.curveMem = lerp(G.curveMem, seg.curve * spd01, 1 - Math.pow(0.04, dt));
 
-    const gas = keys.u || (pointer.down && inputSrc === 'ptr');
-    const wantTurbo = (keys.t || (pointer.down && pointer.y < VH * 0.38)) && G.turbo > 0.06 && G.crashT <= 0 && !demo;
+    const gas = autoOn ? autoGas : (keys.u || (pointer.down && inputSrc === 'ptr'));
+    const wantTurbo = (autoOn
+      ? autoTurbo
+      : (keys.t || (pointer.down && pointer.y < VH * 0.38))) && G.turbo > 0.06 && G.crashT <= 0 && !demo;
     if (wantTurbo && !G.turboOn) audio.turbo();
     G.turboOn = !!wantTurbo;
     if (G.turboOn) G.turbo = Math.max(0, G.turbo - dt * 0.52);
@@ -1263,7 +1373,7 @@
     if (!demo) {
       if (G.crashT > 0) {
         G.spd += accel() * 0.22 * dt;
-      } else if (keys.d) {
+      } else if (autoOn ? autoBrake : keys.d) {
         G.spd += brake() * dt;
       } else if (gas || G.turboOn) {
         G.spd += accel() * dt;
@@ -2007,6 +2117,80 @@
     return (e.clientY - rect.top - oy) / scale;
   }
 
+  function autoClearInput() {
+    keys.l = false;
+    keys.r = false;
+    keys.u = false;
+    keys.d = false;
+    keys.t = false;
+    pointer.down = false;
+    pointer.id = null;
+    autoSteer = 0;
+    autoGas = true;
+    autoBrake = false;
+    autoTurbo = false;
+  }
+
+  function syncAutoUi() {
+    if (!btnAuto) return;
+    btnAuto.classList.toggle('on', autoOn);
+    btnAuto.setAttribute('aria-pressed', autoOn ? 'true' : 'false');
+    btnAuto.textContent = autoOn ? '停下' : '自动';
+    btnAuto.setAttribute('aria-label', autoOn ? '停止自动' : '自动');
+  }
+
+  function syncSpeedUi() {
+    if (!speedEl) return;
+    speedEl.value = String(autoSpeed);
+    if (speedLab) speedLab.textContent = SPEED_LABELS[autoSpeed];
+    speedEl.title = SPEED_LABELS[autoSpeed];
+    speedEl.setAttribute('aria-valuetext', SPEED_LABELS[autoSpeed]);
+  }
+
+  function toggleAuto() {
+    autoOn = !autoOn;
+    autoOvWait = 0;
+    autoClearInput();
+    syncAutoUi();
+    if (autoOn) {
+      audio.ensure();
+      if (G.mode === 'title') startGame('chase');
+    }
+    hud();
+  }
+
+  function setAutoSpeed(n) {
+    n = n | 0;
+    if (n < 1 || n > 4 || !isFinite(n)) n = 3;
+    autoSpeed = n;
+    saveAutoSpeed(autoSpeed);
+    syncSpeedUi();
+  }
+
+  function autoScale() {
+    if (!autoOn || G.mode !== 'play') return 1;
+    return AUTO_SCALE[autoSpeed] || 1;
+  }
+
+  function tickAutoFlow(dt) {
+    if (!autoOn) return;
+    if (G.mode === 'title') {
+      autoOvWait += dt;
+      if (autoOvWait >= (autoSpeed >= 3 ? 0.25 : 0.5)) {
+        autoOvWait = 0;
+        startGame('chase');
+      }
+      return;
+    }
+    if (G.mode === 'lose' || G.mode === 'win') {
+      autoOvWait += dt;
+      if (autoOvWait >= (autoSpeed >= 3 ? 0.7 : 1.15)) {
+        autoOvWait = 0;
+        startGame(G.kind || 'chase');
+      }
+    }
+  }
+
   function restart() {
     audio.ensure();
     if (G.mode === 'title') startGame('chase');
@@ -2021,29 +2205,28 @@
 
   function onKey(e, down) {
     const k = e.key;
-    if (k === 'ArrowLeft' || k === 'Left' || k === 'a' || k === 'A') {
-      keys.l = down;
-      if (down) inputSrc = 'key';
+    const code = e.code || '';
+    if (k === 'a' || k === 'A' || code === 'KeyA') {
+      if (down) {
+        e.preventDefault();
+        if (!e.repeat) toggleAuto();
+      }
+      return;
     }
-    if (k === 'ArrowRight' || k === 'Right' || k === 'd' || k === 'D') {
-      keys.r = down;
+    if (e.target === speedEl) return;
+    const left = k === 'ArrowLeft' || k === 'Left';
+    const right = k === 'ArrowRight' || k === 'Right' || k === 'd' || k === 'D';
+    const up = k === 'ArrowUp' || k === 'Up' || k === 'w' || k === 'W';
+    const dn = k === 'ArrowDown' || k === 'Down' || k === 's' || k === 'S';
+    const space = k === ' ' || k === 'Spacebar' || code === 'Space';
+    if (down && (left || right || up || dn || space || k === 'Enter')) e.preventDefault();
+    if (left) { keys.l = down && !autoOn; if (down) inputSrc = 'key'; }
+    if (right) { keys.r = down && !autoOn; if (down) inputSrc = 'key'; }
+    if (up) { keys.u = down && !autoOn; if (down) inputSrc = 'key'; }
+    if (dn) { keys.d = down && !autoOn; if (down) inputSrc = 'key'; }
+    if (space) {
+      keys.t = down && !autoOn && G.mode === 'play' && !overlayOpen();
       if (down) inputSrc = 'key';
-    }
-    if (k === 'ArrowUp' || k === 'Up' || k === 'w' || k === 'W') {
-      keys.u = down;
-      if (down) inputSrc = 'key';
-    }
-    if (k === 'ArrowDown' || k === 'Down' || k === 's' || k === 'S') {
-      keys.d = down;
-      if (down) inputSrc = 'key';
-    }
-    if (k === ' ' || k === 'Spacebar' || e.code === 'Space') {
-      if (G.mode === 'play' && !overlayOpen()) keys.t = down;
-      else if (!down) keys.t = false;
-      if (down) inputSrc = 'key';
-    }
-    if (down && (k === 'ArrowLeft' || k === 'ArrowRight' || k === 'ArrowUp' || k === 'ArrowDown' || k === ' ' || k === 'Enter')) {
-      e.preventDefault();
     }
     if (!down) return;
     if (k === 'm' || k === 'M') {
@@ -2055,6 +2238,9 @@
       restart();
       return;
     }
+    if (autoOn && (left || right || up || dn || space || k === 'd' || k === 'D' || k === 'w' || k === 'W' || k === 's' || k === 'S')) {
+      return;
+    }
     if (k === '1') {
       startGame('chase');
       return;
@@ -2063,10 +2249,7 @@
       startGame('night');
       return;
     }
-    if (k === 'Enter') {
-      if (overlayOpen()) primaryAction();
-    }
-    if (k === ' ' || k === 'Spacebar' || e.code === 'Space') {
+    if (k === 'Enter' || space) {
       if (overlayOpen()) primaryAction();
     }
   }
@@ -2075,6 +2258,7 @@
     if (!canvas) return;
     canvas.addEventListener('pointerdown', function (e) {
       audio.ensure();
+      if (autoOn) return;
       e.preventDefault();
       pointer.down = true;
       pointer.hover = true;
@@ -2087,6 +2271,7 @@
       }
     });
     canvas.addEventListener('pointermove', function (e) {
+      if (autoOn) return;
       pointer.x = clamp(pointerVirtX(e), 0, VW);
       pointer.y = pointerVirtY(e);
       if (!pointer.down && e.pointerType === 'mouse') pointer.hover = true;
@@ -2118,13 +2303,17 @@
     let dt = t - last;
     last = t;
     if (dt > 0.05) dt = 0.05;
-    acc += dt;
+    const turbo = autoOn && autoSpeed >= 4 && G.mode === 'play';
+    if (turbo) G.stop = 0;
+    acc += dt * autoScale();
     let n = 0;
-    while (acc >= STEP && n < 5) {
+    const maxSteps = turbo ? 16 : 5;
+    while (acc >= STEP && n < maxSteps) {
       update(STEP);
       acc -= STEP;
       n += 1;
     }
+    if (acc > STEP * 4) acc = 0;
     draw();
   }
 
@@ -2136,6 +2325,9 @@
 
   loadBest();
   initMute();
+  autoSpeed = loadAutoSpeed();
+  syncSpeedUi();
+  syncAutoUi();
   goTitle();
   resize();
   bindPointer();
@@ -2171,10 +2363,19 @@
       audio.setMuted(!audio.muted);
     });
   }
+  if (btnAuto) btnAuto.addEventListener('click', function () { toggleAuto(); });
+  if (speedEl) {
+    const onSpeed = function () {
+      setAutoSpeed(parseInt(speedEl.value, 10) || 3);
+    };
+    speedEl.addEventListener('input', onSpeed);
+    speedEl.addEventListener('change', onSpeed);
+  }
   if (btnTurbo) {
     btnTurbo.addEventListener('pointerdown', function (e) {
       e.preventDefault();
       audio.ensure();
+      if (autoOn) return;
       keys.t = true;
       inputSrc = 'key';
     });
@@ -2189,12 +2390,7 @@
   document.addEventListener('visibilitychange', function () {
     hidden = document.hidden;
     if (hidden) {
-      keys.l = false;
-      keys.r = false;
-      keys.u = false;
-      keys.d = false;
-      keys.t = false;
-      pointer.down = false;
+      autoClearInput();
     }
   });
 
