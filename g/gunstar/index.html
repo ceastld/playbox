@@ -54,6 +54,12 @@
           <button type="button" id="mode-raid" aria-pressed="true">突袭</button>
           <button type="button" id="mode-spray" aria-pressed="false">乱射</button>
         </div>
+        <label class="speed-ctl" title="速度 慢 / 中 / 快 / 极快">
+          <span>速度</span>
+          <input type="range" id="speed" min="1" max="4" step="1" value="3" aria-label="速度" />
+          <b id="speed-lab">快</b>
+        </label>
+        <button type="button" id="btn-auto" title="A" aria-label="自动" aria-pressed="false">自动</button>
         <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
         <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
       </div>
@@ -79,7 +85,7 @@
           <p class="kicker" id="ov-kicker">GUNS</p>
           <h1 id="ov-title">枪星</h1>
           <p class="lead" id="ov-lead">八向开火，换散弹 / 激光 / 火焰。近身斩击。<br />打空弱点击碎关底巨物。</p>
-          <p class="ops" id="ov-ops">WASD / 方向键 走跳 · 空格开火 · Shift/Z 斩 · Q 换枪 · R 重开 · M 静音</p>
+          <p class="ops" id="ov-ops">方向 / D 走跳 · 空格开火 · Shift/Z 斩 · Q 换枪 · A 自动 · R 重开 · M 静音</p>
           <div class="ov-actions" id="ov-start">
             <button type="button" id="btn-raid">突袭</button>
             <button type="button" id="btn-spray">乱射</button>
@@ -92,7 +98,7 @@
       </div>
     </div>
 
-    <footer class="hint" id="hint">八向开火 · Q 换枪 · Shift 近斩 · 打弱点</footer>
+    <footer class="hint" id="hint">八向开火 · Q 换枪 · Shift 近斩 · A 自动</footer>
   </div>
   <script src="js/game.js"></script>
 </body>

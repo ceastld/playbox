@@ -1,7 +1,7 @@
 'use strict';
 
 /* 枪星 — Gunstar Heroes remake. Side-scroll smash run-and-gun. No CDN.
-   Distinct from 魂斗 (one-hit / pickups), 合金 (tank / POW), 制裁 (street fists). */
+   Distinct from 魂斗 (one-hit / pickups), 合金 (tank / POW), 制裁 (street fists). Optional autoplay. */
 
 (function () {
   const VW = 640;
@@ -29,7 +29,10 @@
   const DIE_T = 0.82;
   const BEST_KEY = 'playbox-gunstar-best';
   const MUTE_KEY = 'playbox-gunstar-mute';
-  const OPS = 'WASD / 方向键 走跳 · 空格八向开火 · Shift/Z 斩 · Q 换枪 · R 重开 · M 静音';
+  const AUTO_SPEED_KEY = 'playbox-gunstar-auto-speed';
+  const SPEED_LABELS = ['', '慢', '中', '快', '极快'];
+  const AUTO_SCALE = [1, 0.52, 0.78, 1, 3.4];
+  const OPS = '方向 / D 走跳 · 空格八向开火 · Shift/Z 斩 · Q 换枪 · A 自动 · R 重开 · M 静音';
 
   const MAG = [255, 61, 184];
   const CYN = [0, 240, 255];
@@ -237,6 +240,7 @@
     if (WEP_ORDER.length !== 3) throw new Error('cycle 3');
     if (dirs8().length !== 8) throw new Error('8 dirs');
     if (BEST_KEY !== 'playbox-gunstar-best') throw new Error('best key');
+    if (AUTO_SPEED_KEY !== 'playbox-gunstar-auto-speed') throw new Error('auto speed key');
     if (STAGES[0].w >= STAGES[1].w || STAGES[1].w >= STAGES[2].w) throw new Error('wider later');
     if (STAGES[0].parts.length < 2 || STAGES[2].parts.length < 3) throw new Error('weak points');
     if (partHp(STAGES[2].parts[2], true) <= partHp(STAGES[0].parts[0], false)) throw new Error('boss hp');
@@ -273,6 +277,9 @@
   const modeSpray = document.getElementById('mode-spray');
   const btnMute = document.getElementById('btn-mute');
   const btnRetry = document.getElementById('btn-retry');
+  const btnAuto = document.getElementById('btn-auto');
+  const speedEl = document.getElementById('speed');
+  const speedLab = document.getElementById('speed-lab');
   const scoreEl = document.getElementById('score');
   const bestEl = document.getElementById('best');
   const scoreBox = document.getElementById('score-box');
@@ -307,6 +314,18 @@
 
   const keys = { l: false, r: false, u: false, d: false, fire: false, melee: false };
   const demo = { l: false, r: true, u: false, fire: true, melee: false, d: false };
+  const autoIn = { l: false, r: false, u: false, d: false, fire: false, melee: false };
+  let autoOn = false;
+  let autoSpeed = 3;
+  let autoOvWait = 0;
+  let autoStuck = 0;
+  let autoLastX = 0;
+  let autoLastY = 0;
+  let autoWalkDir = 1;
+  let autoBackT = 0;
+  let autoWepCd = 0;
+  let autoWepHold = 0;
+  let autoGoalX = 80;
   const pips = [];
   const particles = [];
   const sparks = [];
@@ -371,22 +390,31 @@
   function live() {
     return G.mode === 'play' || G.mode === 'title';
   }
+  function autoPlaying() {
+    return autoOn && G.mode === 'play';
+  }
   function inL() {
+    if (autoPlaying()) return autoIn.l;
     return G.mode === 'title' ? demo.l : keys.l;
   }
   function inR() {
+    if (autoPlaying()) return autoIn.r;
     return G.mode === 'title' ? demo.r : keys.r;
   }
   function inU() {
+    if (autoPlaying()) return autoIn.u;
     return G.mode === 'title' ? demo.u : keys.u;
   }
   function inD() {
+    if (autoPlaying()) return autoIn.d;
     return G.mode === 'title' ? demo.d : keys.d;
   }
   function fireHeld() {
+    if (autoPlaying()) return autoIn.fire;
     return G.mode === 'title' ? demo.fire : keys.fire;
   }
   function meleeHeld() {
+    if (autoPlaying()) return autoIn.melee;
     return G.mode === 'title' ? demo.melee : keys.melee;
   }
 
@@ -585,6 +613,19 @@
     if (bestEl) bestEl.textContent = String(G.best);
   }
 
+  function loadAutoSpeed() {
+    try {
+      const n = parseInt(localStorage.getItem(AUTO_SPEED_KEY) || '3', 10);
+      if (!isFinite(n) || n < 1 || n > 4) return 3;
+      return n;
+    } catch (err) {
+      return 3;
+    }
+  }
+  function saveAutoSpeed(n) {
+    try { localStorage.setItem(AUTO_SPEED_KEY, String(n)); } catch (err) { /* ignore */ }
+  }
+
   function saveBest() {
     if (G.score <= G.best) return;
     G.best = G.score;
@@ -710,12 +751,18 @@
       if (bossNameEl) bossNameEl.textContent = G.boss.name;
       if (bossBar) bossBar.style.transform = 'scaleX(' + clamp(bossHpFrac(), 0, 1) + ')';
     }
-    if (G.mode === 'title') setHint(OPS, '');
+    if (autoOn) {
+      if (G.mode === 'title') setHint('自动托管 · 即将开局 · A 停下', 'hot');
+      else if (G.mode === 'lose') setHint('自动仍开着 · 即将再开 · A 停下', 'warn');
+      else if (G.mode === 'win') setHint('自动仍开着 · 即将再开 · A 停下', 'hot');
+      else if (G.boss && G.boss.active && !G.boss.dead) setHint('托管中 · 打发光的核 · A 停下', 'hot');
+      else setHint('托管中 · 跑跳开火换枪 · A 停下', 'hot');
+    } else if (G.mode === 'title') setHint(OPS, '');
     else if (G.mode === 'lose') setHint('R 重开 · 体力打空丢命', 'warn');
     else if (G.mode === 'win') setHint('星门粉碎 · R 再来一局', 'hot');
     else if (G.lives === 1 && G.hp <= 4) setHint('残血 · 换枪打弱点 · 近斩破甲', 'warn');
     else if (G.boss && G.boss.active && !G.boss.dead) setHint('打发光的核 · 激光穿、火焰熔、近斩砸', 'hot');
-    else setHint('八向开火 · Q 换枪 · Shift 近斩 · 打弱点', '');
+    else setHint('八向开火 · Q 换枪 · Shift 近斩 · A 自动', '');
     syncPips();
     syncModes();
   }
@@ -1381,6 +1428,7 @@
 
   function goLose() {
     G.mode = 'lose';
+    autoOvWait = 0;
     audio.lose();
     const why = G.why === 'fall' ? '坠入裂隙了' : G.why === 'touch' ? '撞上了' : (G.why === 'life' ? '体力打空了' : '中弹了');
     showOverlay('lose', '被击碎了', why + '。连击 ×' + G.maxCombo + ' · ' + G.score + ' 分');
@@ -1391,6 +1439,7 @@
     const bonus = isSpray() ? 6000 : 8000;
     addScore(bonus);
     G.mode = 'win';
+    autoOvWait = 0;
     audio.win();
     kick(4, 'win-flash');
     screenFlash(GOLD, 0.4);
@@ -1418,6 +1467,13 @@
   function startGame(kind) {
     G.mode = 'play';
     G.kind = kind === 'spray' ? 'spray' : 'raid';
+    autoOvWait = 0;
+    autoStuck = 0;
+    autoBackT = 0;
+    autoWalkDir = 1;
+    autoWepCd = 0;
+    autoWepHold = 0;
+    clearAutoKeys();
     G.lives = LIVES;
     G.hp = HP_MAX;
     G.score = 0;
@@ -1441,6 +1497,7 @@
   function goTitle() {
     G.mode = 'title';
     G.kind = 'raid';
+    autoOvWait = 0;
     G.lives = LIVES;
     G.hp = HP_MAX;
     G.score = 0;
@@ -1464,6 +1521,380 @@
     audio.ensure();
     if (G.mode === 'title') startGame('raid');
     else if (G.mode === 'lose' || G.mode === 'win') startGame(G.kind);
+  }
+
+  function snapFloor(y) {
+    if (y < (HY + MY) * 0.5) return HY;
+    if (y < (MY + GY) * 0.5) return MY;
+    return GY;
+  }
+
+  function platCovering(x, floorY) {
+    let i, p;
+    for (i = 0; i < G.plats.length; i++) {
+      p = G.plats[i];
+      if (Math.abs(p.y - floorY) > 10) continue;
+      if (x >= p.x + 3 && x <= p.x + p.w - 3) return p;
+    }
+    return null;
+  }
+
+  function platAboveNear(x, floorY) {
+    const upY = floorY <= HY + 8 ? null : (floorY <= MY + 8 ? HY : MY);
+    if (!upY) return null;
+    let i, p, best = null, bestD = 1e9, d, mid;
+    for (i = 0; i < G.plats.length; i++) {
+      p = G.plats[i];
+      if (Math.abs(p.y - upY) > 10) continue;
+      mid = p.x + p.w * 0.5;
+      d = Math.abs(mid - x);
+      if (p.x > x + 160 || p.x + p.w < x - 50) continue;
+      if (d < bestD) {
+        bestD = d;
+        best = p;
+      }
+    }
+    return best;
+  }
+
+  function clearAutoKeys() {
+    autoIn.l = false;
+    autoIn.r = false;
+    autoIn.u = false;
+    autoIn.d = false;
+    autoIn.fire = false;
+    autoIn.melee = false;
+  }
+
+  function autoSteer(tx) {
+    autoIn.l = false;
+    autoIn.r = false;
+    const dx = tx - G.player.x;
+    if (dx > 10) {
+      autoIn.r = true;
+      autoWalkDir = 1;
+    } else if (dx < -10) {
+      autoIn.l = true;
+      autoWalkDir = -1;
+    }
+  }
+
+  function autoShotThreat() {
+    const p = G.player;
+    let i, s, t;
+    for (i = 0; i < G.shots.length; i++) {
+      s = G.shots[i];
+      if (s.from === 'p') continue;
+      if (Math.abs(s.y - (p.y - 14)) > 24) continue;
+      if (s.vx === 0) {
+        if (Math.abs(s.x - p.x) < 42) return s;
+        continue;
+      }
+      t = (p.x - s.x) / s.vx;
+      if (t < 0 || t > 0.5) continue;
+      if (Math.abs((s.x + s.vx * t) - p.x) < 22) return s;
+    }
+    return null;
+  }
+
+  function nearestOpenPart() {
+    const b = G.boss;
+    if (!b || !b.active || b.dead || !b.parts) return null;
+    const p = G.player;
+    let i, best = null, bestD = 1e9;
+    for (i = 0; i < b.parts.length; i++) {
+      const part = b.parts[i];
+      if (part.dead || !partOpen(part)) continue;
+      const pp = partPos(part);
+      const d = hypot(pp.x - p.x, pp.y - (p.y - 14));
+      if (d < bestD) {
+        bestD = d;
+        best = { part: part, x: pp.x, y: pp.y, d: d };
+      }
+    }
+    return best;
+  }
+
+  function autoPick() {
+    const p = G.player;
+    let best = null;
+    let bestS = -1e9;
+    function consider(x, y, score, kind) {
+      if (score > bestS) {
+        bestS = score;
+        best = { x: x, y: y, kind: kind };
+      }
+    }
+    let i, e, d, pri, dx;
+    for (i = 0; i < G.cores.length; i++) {
+      const u = G.cores[i];
+      if (u.taken) continue;
+      d = hypot(u.x - p.x, u.y - (p.y - 14));
+      pri = (G.hp <= 7 ? 1000 : 380) - d * 0.42;
+      if (u.x < p.x - 140) pri -= 220;
+      consider(u.x, u.y + 18, pri, 'core');
+    }
+    for (i = 0; i < G.gems.length; i++) {
+      const g = G.gems[i];
+      if (g.taken) continue;
+      d = hypot(g.x - p.x, g.y - (p.y - 12));
+      if (d > 200) continue;
+      consider(g.x, g.y + 10, 280 - d * 0.55, 'gem');
+    }
+    for (i = 0; i < G.ents.length; i++) {
+      e = G.ents[i];
+      if (e.dead) continue;
+      dx = e.x - p.x;
+      if (dx < -170) continue;
+      if (!onScreen(e.x, e.y, 70)) continue;
+      d = hypot(dx, e.y - p.y);
+      pri = 640 - d * 0.52;
+      if (dx > 0) pri += 90;
+      if (e.kind === 'plate') pri += 50;
+      if (e.kind === 'float') pri += 40;
+      if (e.kind === 'rush') pri += 30;
+      consider(e.x, e.y, pri, 'fight');
+    }
+    const part = nearestOpenPart();
+    if (part) {
+      const side = p.x < part.x ? -1 : 1;
+      consider(part.x + side * 96, part.y + 18, 1240, 'boss');
+    } else if (G.boss && G.boss.active && !G.boss.dead) {
+      consider(G.boss.x - 120, G.boss.y, 920, 'boss');
+    }
+    if (!(G.boss && G.boss.active && !G.boss.dead)) {
+      consider(G.levelW - 70, GY, 520, 'go');
+    }
+    if (!best) consider(Math.min(G.levelW - 40, p.x + 200), GY, 50, 'go');
+    return best;
+  }
+
+  function autoWantWep(close) {
+    if (G.boss && G.boss.active && !G.boss.dead) {
+      const part = nearestOpenPart();
+      if (part && part.d < 240) return 'laser';
+      return 'flame';
+    }
+    if (close) {
+      if (close.kind === 'plate') return 'flame';
+      if (close.kind === 'float') return 'laser';
+      if (close.kind === 'rush' || close.kind === 'hop') return 'spread';
+    }
+    let n = 0;
+    let i;
+    for (i = 0; i < G.ents.length; i++) {
+      if (G.ents[i].dead) continue;
+      if (Math.abs(G.ents[i].x - G.player.x) < 210) n += 1;
+    }
+    if (n >= 3) return 'spread';
+    return null;
+  }
+
+  function autoThink() {
+    clearAutoKeys();
+    if (!autoOn || G.mode !== 'play') return;
+    const p = G.player;
+    if (!p || G.deadT > 0 || G.lock > 0) return;
+
+    const moved = hypot(p.x - autoLastX, p.y - autoLastY);
+    if (moved < 2.2 && p.grounded) autoStuck += STEP;
+    else if (moved > 8) autoStuck = 0;
+    autoLastX = p.x;
+    autoLastY = p.y;
+    if (autoBackT > 0) autoBackT -= STEP;
+    if (autoWepCd > 0) autoWepCd -= STEP;
+    autoWepHold += STEP;
+
+    const goal = autoPick();
+    autoGoalX = goal.x;
+    const floorY = snapFloor(p.y);
+    const tfloor = snapFloor(goal.y);
+    let seekX = goal.x;
+    let wantJump = false;
+    let wantMelee = false;
+    let wantUpAim = false;
+    let wantDnAim = false;
+
+    let i, e, close = null, closeD = 1e9;
+    for (i = 0; i < G.ents.length; i++) {
+      e = G.ents[i];
+      if (e.dead) continue;
+      const d = hypot(e.x - p.x, e.y - p.y);
+      if (d < closeD && d < 300) {
+        closeD = d;
+        close = e;
+      }
+    }
+    const part = nearestOpenPart();
+
+    const want = autoWantWep(close);
+    if (want && want !== G.weapon && autoWepCd <= 0) {
+      setWep(want);
+      autoWepCd = 1.05;
+      autoWepHold = 0;
+    } else if (autoWepHold > 4.2 && autoWepCd <= 0) {
+      cycleWep(1);
+      autoWepCd = 1.25;
+      autoWepHold = 0;
+    }
+
+    const shot = autoShotThreat();
+    let steered = false;
+    if (shot && G.invuln <= 0) {
+      wantJump = true;
+      autoSteer(p.x + (shot.x >= p.x ? -54 : 54));
+      steered = true;
+    }
+
+    if (!steered && close && Math.abs(close.x - p.x) < 36 && Math.abs(close.y - p.y) < 30) {
+      wantMelee = close.kind === 'plate' || close.kind === 'rush' || closeD < 28;
+      if (close.kind === 'plate' || wantMelee) {
+        autoSteer(close.x);
+      } else {
+        autoSteer(p.x + (close.x >= p.x ? -44 : 44));
+      }
+      steered = true;
+    } else if (!steered && part && part.d < 44) {
+      wantMelee = true;
+      autoSteer(part.x);
+      steered = true;
+    }
+
+    let aimX = p.x + (autoWalkDir >= 0 ? 90 : -90);
+    let aimY = p.y - 16;
+    if (part) {
+      aimX = part.x;
+      aimY = part.y;
+    } else if (close) {
+      aimX = close.x;
+      aimY = close.y - close.h * 0.45;
+    }
+    const adx = aimX - p.x;
+    const ady = aimY - (p.y - 16);
+    if (ady < -26) wantUpAim = true;
+    else if (ady > 26) wantDnAim = true;
+
+    if (tfloor < floorY - 10) {
+      const above = platAboveNear(p.x, floorY) || platCovering(p.x + 36, floorY <= MY + 8 ? HY : MY);
+      if (above) {
+        wantJump = true;
+        seekX = above.x + above.w * 0.42;
+      } else {
+        wantJump = true;
+      }
+    }
+
+    if (autoBackT > 0) {
+      seekX = p.x - 72;
+    } else if (goal.kind === 'fight' && goal.x < p.x - 40 && closeD > 70) {
+      seekX = Math.min(G.levelW - 40, p.x + 180);
+    }
+
+    if (!steered) autoSteer(seekX);
+
+    const dir = autoIn.r ? 1 : (autoIn.l ? -1 : autoWalkDir);
+    if (p.grounded && pitAhead(p.x, p.y, dir)) wantJump = true;
+
+    if (autoStuck > 0.48) wantJump = true;
+    if (autoStuck > 1.7) {
+      autoBackT = 0.3;
+      autoStuck = 0;
+      autoWalkDir = 1;
+    }
+
+    if (wantJump) {
+      autoIn.u = true;
+      if (!autoIn.l && !autoIn.r) {
+        if (autoWalkDir >= 0) autoIn.r = true;
+        else autoIn.l = true;
+      }
+    } else if (wantUpAim) {
+      autoIn.u = true;
+    }
+    if (wantDnAim && !wantJump) autoIn.d = true;
+
+    if (!autoIn.l && !autoIn.r) {
+      if (adx > 10) p.face = 1;
+      else if (adx < -10) p.face = -1;
+    }
+
+    autoIn.fire = !wantMelee;
+    autoIn.melee = wantMelee;
+  }
+
+  function tickAutoFlow(dt) {
+    if (!autoOn) return;
+    if (G.mode === 'title') {
+      autoOvWait += dt;
+      if (autoOvWait >= (autoSpeed >= 3 ? 0.25 : 0.5)) {
+        autoOvWait = 0;
+        startGame(G.kind || 'raid');
+      }
+      return;
+    }
+    if (G.mode === 'lose' || G.mode === 'win') {
+      autoOvWait += dt;
+      if (autoOvWait >= (autoSpeed >= 3 ? 0.7 : 1.15)) {
+        autoOvWait = 0;
+        startGame(G.kind || 'raid');
+      }
+    }
+  }
+
+  function syncAutoUi() {
+    if (!btnAuto) return;
+    btnAuto.classList.toggle('on', autoOn);
+    btnAuto.setAttribute('aria-pressed', autoOn ? 'true' : 'false');
+    btnAuto.textContent = autoOn ? '停下' : '自动';
+    btnAuto.setAttribute('aria-label', autoOn ? '停止自动' : '自动');
+  }
+
+  function syncSpeedUi() {
+    if (speedEl) speedEl.value = String(autoSpeed);
+    if (speedLab) speedLab.textContent = SPEED_LABELS[autoSpeed];
+    if (speedEl) {
+      speedEl.title = SPEED_LABELS[autoSpeed];
+      speedEl.setAttribute('aria-valuetext', SPEED_LABELS[autoSpeed]);
+    }
+  }
+
+  function autoScale() {
+    if (!autoOn || G.mode !== 'play') return 1;
+    return AUTO_SCALE[autoSpeed] || 1;
+  }
+
+  function setAutoSpeed(n) {
+    n = parseInt(n, 10);
+    if (!isFinite(n) || n < 1 || n > 4) n = 3;
+    autoSpeed = n;
+    saveAutoSpeed(autoSpeed);
+    syncSpeedUi();
+  }
+
+  function toggleAuto() {
+    autoOn = !autoOn;
+    autoOvWait = 0;
+    autoStuck = 0;
+    autoBackT = 0;
+    autoWepCd = 0;
+    autoWepHold = 0;
+    clearAutoKeys();
+    keys.l = false;
+    keys.r = false;
+    keys.u = false;
+    keys.d = false;
+    keys.fire = false;
+    keys.melee = false;
+    syncAutoUi();
+    if (autoOn) {
+      audio.ensure();
+      if (G.mode === 'title') startGame(G.kind || 'raid');
+    }
+    syncHud();
+  }
+
+  function isAutoKey(e) {
+    return e.code === 'KeyA' || e.key === 'a' || e.key === 'A';
   }
 
   function demoThink() {
@@ -2028,6 +2459,7 @@
   function update(dt) {
     G.t += dt;
     G.clock += dt;
+    if (autoOn) tickAutoFlow(dt);
     if (G.flash > 0) G.flash = Math.max(0, G.flash - dt * 2.4);
     if (G.shake > 0) G.shake = Math.max(0, G.shake - dt * 18);
     G.punch = lerp(G.punch, 1, 1 - Math.pow(0.0008, dt));
@@ -2035,12 +2467,14 @@
 
     updateFx(dt);
 
-    if (G.stop > 0) {
+    if (G.stop > 0 && !(autoOn && autoSpeed >= 4 && G.mode === 'play')) {
       G.stop -= dt;
       return;
     }
+    if (autoOn && autoSpeed >= 4) G.stop = 0;
 
     if (G.mode === 'title') demoThink();
+    if (autoOn && G.mode === 'play' && G.deadT <= 0) autoThink();
 
     if (G.comboT > 0) {
       G.comboT -= dt;
@@ -2552,19 +2986,33 @@
   function onKey(e, down) {
     const k = e.key;
     const code = e.code;
+    if (isAutoKey(e)) {
+      if (down && !e.repeat) {
+        audio.ensure();
+        toggleAuto();
+      }
+      e.preventDefault();
+      return;
+    }
+    if (e.target === speedEl) return;
+
     const isMove = k === 'ArrowLeft' || k === 'ArrowRight' || k === 'ArrowUp' || k === 'ArrowDown'
-      || k === 'a' || k === 'A' || k === 'd' || k === 'D' || k === 'w' || k === 'W' || k === 's' || k === 'S';
+      || k === 'd' || k === 'D' || k === 'w' || k === 'W' || k === 's' || k === 'S';
     const space = k === ' ' || k === 'Spacebar' || code === 'Space';
     const shift = k === 'Shift' || code === 'ShiftLeft' || code === 'ShiftRight';
     const meleeKey = shift || k === 'z' || k === 'Z';
     const tab = k === 'Tab' || code === 'Tab';
 
-    if (k === 'ArrowLeft' || k === 'a' || k === 'A' || k === 'Left') keys.l = down;
-    if (k === 'ArrowRight' || k === 'd' || k === 'D' || k === 'Right') keys.r = down;
-    if (k === 'ArrowUp' || k === 'w' || k === 'W' || k === 'Up') keys.u = down;
-    if (k === 'ArrowDown' || k === 's' || k === 'S' || k === 'Down') keys.d = down;
-    if (space) keys.fire = down;
-    if (meleeKey) keys.melee = down;
+    if (!autoOn) {
+      if (k === 'ArrowLeft' || k === 'Left') keys.l = down;
+      if (k === 'ArrowRight' || k === 'd' || k === 'D' || k === 'Right') keys.r = down;
+      if (k === 'ArrowUp' || k === 'w' || k === 'W' || k === 'Up') keys.u = down;
+      if (k === 'ArrowDown' || k === 's' || k === 'S' || k === 'Down') keys.d = down;
+      if (space) keys.fire = down;
+      if (meleeKey) keys.melee = down;
+    } else if (down && (isMove || space || meleeKey)) {
+      e.preventDefault();
+    }
 
     if (down && (isMove || space || k === 'Enter' || tab || meleeKey || k === 'q' || k === 'Q' || k === 'c' || k === 'C')) {
       e.preventDefault();
@@ -2580,6 +3028,7 @@
       restart();
       return;
     }
+    if (autoOn) return;
     if (tab || k === 'q' || k === 'Q' || k === 'c' || k === 'C' || k === 'e' || k === 'E') {
       if (!overlayOpen()) cycleWep(1);
       return;
@@ -2612,6 +3061,7 @@
       if (!el) return;
       const down = function (e) {
         e.preventDefault();
+        if (autoOn) return;
         audio.ensure();
         el.classList.add('held');
         on();
@@ -2635,6 +3085,7 @@
     if (swap) {
       swap.addEventListener('pointerdown', function (e) {
         e.preventDefault();
+        if (autoOn) return;
         audio.ensure();
         cycleWep(1);
       });
@@ -2646,7 +3097,7 @@
     canvas.addEventListener('pointerdown', function (e) {
       audio.ensure();
       e.preventDefault();
-      if (overlayOpen()) return;
+      if (overlayOpen() || autoOn) return;
       keys.fire = true;
     });
     canvas.addEventListener('pointerup', function () { keys.fire = false; });
@@ -2668,13 +3119,24 @@
     let dt = t - last;
     last = t;
     if (dt > 0.05) dt = 0.05;
-    acc += dt;
+    const turbo = autoOn && autoSpeed >= 4 && G.mode === 'play';
+    if (G.stop > 0 && !turbo) {
+      G.stop -= dt;
+      updateFx(dt * 0.25);
+      if (autoOn && G.mode !== 'play') tickAutoFlow(dt);
+      draw();
+      return;
+    }
+    if (turbo) G.stop = 0;
+    acc += dt * autoScale();
     let n = 0;
-    while (acc >= STEP && n < 5) {
+    const maxSteps = turbo ? 16 : 5;
+    while (acc >= STEP && n < maxSteps) {
       update(STEP);
       acc -= STEP;
       n += 1;
     }
+    if (acc > STEP * 4) acc = 0;
     draw();
   }
 
@@ -2686,6 +3148,9 @@
 
   loadBest();
   initMute();
+  autoSpeed = loadAutoSpeed();
+  syncSpeedUi();
+  syncAutoUi();
   goTitle();
   resize();
   bindPointer();
@@ -2734,6 +3199,16 @@
       audio.ensure();
       audio.setMuted(!audio.muted);
     });
+  }
+  if (btnAuto) {
+    btnAuto.addEventListener('click', function () {
+      audio.ensure();
+      toggleAuto();
+    });
+  }
+  if (speedEl) {
+    speedEl.addEventListener('input', function () { setAutoSpeed(parseInt(speedEl.value, 10)); });
+    speedEl.addEventListener('change', function () { setAutoSpeed(parseInt(speedEl.value, 10)); });
   }
 
   window.addEventListener('keydown', function (e) { onKey(e, true); });
