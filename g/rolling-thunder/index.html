@@ -59,6 +59,12 @@
           <button type="button" id="mode-infil" aria-pressed="true">潜入</button>
           <button type="button" id="mode-hail" aria-pressed="false">乱枪</button>
         </div>
+        <label class="speed-ctl" title="速度 慢 / 中 / 快 / 极快">
+          <span>速度</span>
+          <input type="range" id="speed" min="1" max="4" step="1" value="3" aria-label="速度" />
+          <b id="speed-lab">快</b>
+        </label>
+        <button type="button" id="btn-auto" title="A" aria-label="自动" aria-pressed="false">自动</button>
         <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
         <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
       </div>
@@ -83,7 +89,7 @@
           <p class="kicker" id="ov-kicker">ROLL</p>
           <h1 id="ov-title">滚雷</h1>
           <p class="lead" id="ov-lead">侧向潜入货仓。钻门躲弹、装填。弹有限，打空就钻。货仓、廊道，顶层见面具。</p>
-          <p class="ops" id="ov-ops">方向 / WASD 走 · 上跳 · 下钻门 · 空格开枪 · R 重开 · M 静音</p>
+          <p class="ops" id="ov-ops">方向 / D 走 · 上跳 · 下钻门装填 · 空格开枪 · A 自动 · R 重开 · M 静音</p>
           <div class="ov-actions" id="ov-start">
             <button type="button" id="btn-infil">潜入</button>
             <button type="button" id="btn-hail">乱枪</button>
@@ -96,7 +102,7 @@
       </div>
     </div>
 
-    <footer class="hint" id="hint">走跳 · 空格开枪 · 下钻门装填 · 打空钻门</footer>
+    <footer class="hint" id="hint">走跳 · 空格开枪 · 下钻门装填 · A 自动</footer>
   </div>
   <script src="js/game.js"></script>
 </body>
