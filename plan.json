@@ -4923,7 +4923,7 @@
     "blurb": "纵版加星，把编队从空里打散。",
     "hue": 56,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/galaxian/",
     "kind": "remake"
   },
@@ -4935,7 +4935,7 @@
     "blurb": "纵版泽空，把地面从云里轰穿。",
     "hue": 96,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/xevious/",
     "kind": "remake"
   },
@@ -4947,7 +4947,7 @@
     "blurb": "纵版四一，把机群从海上打穿。",
     "hue": 24,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/n1941/",
     "kind": "remake"
   },
@@ -4959,7 +4959,7 @@
     "blurb": "纵版雷二，把弹幕从核里打散。",
     "hue": 172,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/raiden2/",
     "kind": "remake"
   },
@@ -4971,8 +4971,68 @@
     "blurb": "横版雷四，把机群从星里打穿。",
     "hue": 148,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/thunder-force4/",
+    "kind": "remake"
+  },
+  {
+    "n": 424,
+    "id": "do-don-pachi",
+    "title": "蜂狂",
+    "subtitle": "DDON",
+    "blurb": "纵版蜂狂，把弹幕从核里打散。",
+    "hue": 38,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/do-don-pachi/",
+    "kind": "remake"
+  },
+  {
+    "n": 425,
+    "id": "radiant-silvergun",
+    "title": "银枪",
+    "subtitle": "RSG",
+    "blurb": "纵版银枪，把三色从空里打穿。",
+    "hue": 214,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/radiant-silvergun/",
+    "kind": "remake"
+  },
+  {
+    "n": 426,
+    "id": "star-wars",
+    "title": "星战",
+    "subtitle": "STAR",
+    "blurb": "进屏星战，把炮塔从沟里打穿。",
+    "hue": 42,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/star-wars/",
+    "kind": "remake"
+  },
+  {
+    "n": 427,
+    "id": "n1944",
+    "title": "四四",
+    "subtitle": "N144",
+    "blurb": "纵版四四，把机群从海上打穿。",
+    "hue": 8,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/n1944/",
+    "kind": "remake"
+  },
+  {
+    "n": 428,
+    "id": "super-hang-on",
+    "title": "超悬",
+    "subtitle": "SHON",
+    "blurb": "进屏超悬，把弯道从风里甩开。",
+    "hue": 330,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/super-hang-on/",
     "kind": "remake"
   }
 ]

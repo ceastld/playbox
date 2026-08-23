@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#081404" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>泽空 · XEVS</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23081404'/%3E%3Cpath d='M6 26 L16 8 L26 26 Z' fill='%231a3a10'/%3E%3Cpath d='M16 4l2 8 3 1-5 4 2 8-5-4-5 4 2-8-5-4 3-1z' fill='none' stroke='%23b4ff3c' stroke-width='.7' opacity='.35'/%3E%3Cpath d='M16 6l1.4 9 4 .4-3.4 2.6 1.2 4.6L16 20l-3.2 2.6 1.2-4.6-3.4-2.6 4-.4z' fill='%23b4ff3c'/%3E%3Crect x='15.2' y='14' width='1.6' height='10' fill='%23ffe36b'/%3E%3Ccircle cx='16' cy='12' r='3.2' fill='none' stroke='%23ffe36b' stroke-width='1.1'/%3E%3Cpath d='M16 9v6 M13 12h6' stroke='%23ffe36b' stroke-width='.7'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>泽空</b>
+        <span>XEVS</span>
+      </div>
+      <div class="status">
+        <div class="scores" aria-live="polite">
+          <div class="score" id="score-box">
+            <em>分数</em>
+            <b id="score">0</b>
+            <span id="score-add" class="score-add" hidden>+0</span>
+          </div>
+          <div class="score best">
+            <em>最高</em>
+            <b id="best">0</b>
+          </div>
+        </div>
+        <div class="row">
+          <span id="stage-label">第 1 区</span>
+          <span id="tag-label">泽空</span>
+          <span id="wpn-label" class="wpn">隼</span>
+          <span id="lock-label" class="lock" hidden>锁</span>
+          <span id="combo-label" class="combo" hidden>连击</span>
+          <span class="pips" id="pips" aria-label="剩余生命"></span>
+        </div>
+      </div>
+      <div class="tools">
+        <button type="button" id="btn-bomb" title="Shift / Z" aria-label="投弹">弹</button>
+        <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
+        <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <canvas id="c" tabindex="0" role="application" aria-label="泽空游戏区，垂直卷轴，空格打空，Shift 投弹砸地，准星锁地核"></canvas>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden"></div>
+      <div id="pad" class="pad">
+        <button type="button" id="btn-pad" aria-label="投弹">弹</button>
+      </div>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">XEVS</p>
+          <h1 id="ov-title">泽空</h1>
+          <p class="lead" id="ov-lead">空弹打飞，地弹砸核。准星锁住才炸得准。飞过林泽荒原，再轰空核城。</p>
+          <p class="ops" id="ov-ops">方向 / WASD 飞 · 空格打空 · Shift / Z 投弹 · R 重开 · M 静音</p>
+          <div class="ov-actions" id="ov-start">
+            <button type="button" id="btn-marsh">泽空</button>
+            <button type="button" id="btn-core">空核</button>
+          </div>
+          <div class="ov-actions gone" id="ov-end">
+            <button type="button" id="ov-retry">再来</button>
+            <button type="button" id="ov-modes">换模式</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">空格打飞碟 · Shift 投弹砸地核 · 准星变金再丢</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>

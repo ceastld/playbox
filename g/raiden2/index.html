@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#021410" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>雷二 · RDN2</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23021410'/%3E%3Cpath d='M16 3l3 9h8l-6.5 4.8L23 26l-7-4-7 4 2.5-9.2L5 12h8z' fill='%232beed4'/%3E%3Cpath d='M10 14c4 6 8 8 12 2' fill='none' stroke='%23c45cff' stroke-width='2'/%3E%3Ccircle cx='16' cy='22' r='2.2' fill='%23ffe36b'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>雷二</b>
+        <span>RDN2</span>
+      </div>
+      <div class="status">
+        <div class="scores" aria-live="polite">
+          <div class="score" id="score-box">
+            <em>分数</em>
+            <b id="score">0</b>
+            <span id="score-add" class="score-add" hidden>+0</span>
+          </div>
+          <div class="score best">
+            <em>最高</em>
+            <b id="best">0</b>
+          </div>
+        </div>
+        <div class="row">
+          <span id="stage-label">第 1 关</span>
+          <span id="tag-label">雷二</span>
+          <span id="wpn-label" class="wpn">散</span>
+          <span id="bomb-label" class="bombs">簇 ×3</span>
+          <span id="combo-label" class="combo" hidden>连击</span>
+          <span class="pips" id="pips" aria-label="剩余生命"></span>
+        </div>
+      </div>
+      <div class="tools">
+        <button type="button" id="btn-bomb" title="Shift / Z" aria-label="簇弹">簇</button>
+        <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
+        <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <canvas id="c" tabindex="0" role="application" aria-label="雷二游戏区，八向移动开火，捡散弹或紫波，Shift 扔簇弹"></canvas>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden"></div>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">RDN2</p>
+          <h1 id="ov-title">雷二</h1>
+          <p class="lead" id="ov-lead">纵向卷轴。散弹铺面，紫波缠敌，Shift 扔簇弹连环炸开。撞机扣一命。三关之后是巨舰。</p>
+          <p class="ops" id="ov-ops">方向 / WASD 移动 · 空格开火 · Shift / Z 簇弹 · R 重开 · M 静音</p>
+          <div class="ov-actions">
+            <button type="button" id="btn-raid">雷二</button>
+            <button type="button" id="btn-core">雷核</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">方向移动 · 空格开火 · Shift 簇弹 · 捡 散/紫</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>
