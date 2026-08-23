@@ -24,7 +24,10 @@
   const P_HH = 14;
   const BEST_KEY = 'playbox-baraduke-best';
   const MUTE_KEY = 'playbox-baraduke-mute';
-  const OPS = '←↑↓→ / WASD 走飞 · 空格开火 · R 重开 · M 静音';
+  const AUTO_SPEED_KEY = 'playbox-baraduke-auto-speed';
+  const SPEED_LABELS = ['', '慢', '中', '快', '极快'];
+  const AUTO_SCALE = [1, 0.52, 0.78, 1, 3.4];
+  const OPS = '←↑↓→ / WSD 走飞 · 空格开火 · A 自动 · R 重开 · M 静音';
   const LEAD = '机甲走飞地底，打爆舱救出异形。撞敌扣命。短层过后是蛸王。';
 
   const MAG = [255, 61, 184];
@@ -117,6 +120,8 @@
     const w = wallAt(360, 0, false);
     if (w.l < 8 || w.r > VW - 8 || w.l >= w.r - 80) throw new Error('walls');
     if (kindScore('octy') !== 100) throw new Error('octy score');
+    if (AUTO_SPEED_KEY !== 'playbox-baraduke-auto-speed') throw new Error('auto speed key');
+    if (SPEED_LABELS[3] !== '快' || SPEED_LABELS[4] !== '极快') throw new Error('speed labels');
     return true;
   }
 
@@ -143,6 +148,9 @@
   const btnOvModes = document.getElementById('ov-modes');
   const btnMute = document.getElementById('btn-mute');
   const btnRetry = document.getElementById('btn-retry');
+  const btnAuto = document.getElementById('btn-auto');
+  const speedEl = document.getElementById('speed');
+  const speedLab = document.getElementById('speed-lab');
   const scoreEl = document.getElementById('score');
   const bestEl = document.getElementById('best');
   const cargoEl = document.getElementById('cargo');
@@ -175,6 +183,12 @@
 
   const keys = { l: false, r: false, u: false, d: false };
   const pointer = { down: false, hover: false, x: VW * 0.5, y: 520, id: null };
+  let autoOn = false;
+  let autoSpeed = 3;
+  let autoOvWait = 0;
+  let autoStuck = 0;
+  let autoLastX = VW * 0.5;
+  let autoLastY = GROUND;
   const particles = [];
   const sparks = [];
   const rings = [];
@@ -381,6 +395,20 @@
       try { localStorage.setItem(BEST_KEY, String(G.best)); } catch (err) { /* ignore */ }
       if (bestEl) bestEl.textContent = String(G.best);
     }
+  }
+
+  function loadAutoSpeed() {
+    try {
+      const n = parseInt(localStorage.getItem(AUTO_SPEED_KEY) || '3', 10);
+      if (!isFinite(n) || n < 1 || n > 4) return 3;
+      return n;
+    } catch (err) {
+      return 3;
+    }
+  }
+
+  function saveAutoSpeed(n) {
+    try { localStorage.setItem(AUTO_SPEED_KEY, String(n)); } catch (err) { /* ignore */ }
   }
 
   function overlayOpen() {
@@ -726,7 +754,8 @@
     seedFloor();
     fillAhead();
     showOverlay('title');
-    setHint('走飞机甲 · 打舱救人 · 撞敌扣命 · 短层后蛸王', '');
+    autoOvWait = 0;
+    setHint(autoOn ? '自动托管 · 即将开局 · A 停下' : '走飞机甲 · 打舱救人 · 撞敌扣命 · 短层后蛸王 · A 自动', autoOn ? 'hot' : '');
     syncHud();
   }
 
@@ -760,8 +789,10 @@
     fillAhead();
     hideOverlay();
     audio.start();
+    autoOvWait = 0;
+    autoStuck = 0;
     toast(G.dense ? '密穴' : '救舱', G.dense ? 'warn' : '');
-    setHint(OPS, '');
+    setHint(autoOn ? '托管中 · 飞打舱救人 · A 停下' : OPS, autoOn ? 'hot' : '');
     syncHud();
     if (scoreEl) scoreEl.textContent = '0';
   }
@@ -840,7 +871,7 @@
     if (keys.r) x += 1;
     if (keys.u) y -= 1;
     if (keys.d) y += 1;
-    if (pointer.down && pointer.hover && playing()) {
+    if (!autoOn && pointer.down && pointer.hover && playing()) {
       const dx = pointer.x - G.p.x;
       const dy = pointer.y - G.p.y;
       if (Math.abs(dx) > 10) x = dx > 0 ? 1 : -1;
@@ -1027,15 +1058,17 @@
     addScore(bonus, G.p.x, G.p.y - 36, GOLD, true);
     G.mode = 'win';
     audio.win();
+    autoOvWait = 0;
     showOverlay('win');
-    setHint((G.kind === 'den' ? '密穴凿穿' : '穴脉打通') + ' · R 再来一局', 'hot');
+    setHint(autoOn ? '自动仍开着 · 即将再飞 · A 停下' : ((G.kind === 'den' ? '密穴凿穿' : '穴脉打通') + ' · R 再来一局'), 'hot');
   }
 
   function loseGame() {
     G.mode = 'lose';
     audio.lose();
+    autoOvWait = 0;
     showOverlay('lose');
-    setHint('R 重开 · 撞敌、中弹或触刺扣命', 'warn');
+    setHint(autoOn ? '自动仍开着 · 即将再飞 · A 停下' : 'R 重开 · 撞敌、中弹或触刺扣命', autoOn ? 'hot' : 'warn');
   }
 
   function hurtBoss(b, dmg, x, y, eye) {
@@ -1089,6 +1122,251 @@
     keys.d = false;
     G.fireHold = true;
     void dt;
+  }
+
+  function autoClearInput() {
+    keys.l = false;
+    keys.r = false;
+    keys.u = false;
+    keys.d = false;
+    pointer.down = false;
+    G.fireHold = false;
+  }
+
+  function syncAutoUi() {
+    if (!btnAuto) return;
+    btnAuto.classList.toggle('on', autoOn);
+    btnAuto.setAttribute('aria-pressed', autoOn ? 'true' : 'false');
+    btnAuto.textContent = autoOn ? '停下' : '自动';
+    btnAuto.setAttribute('aria-label', autoOn ? '停止自动' : '自动');
+  }
+
+  function syncSpeedUi() {
+    if (!speedEl) return;
+    speedEl.value = String(autoSpeed);
+    if (speedLab) speedLab.textContent = SPEED_LABELS[autoSpeed];
+    speedEl.title = SPEED_LABELS[autoSpeed];
+    speedEl.setAttribute('aria-valuetext', SPEED_LABELS[autoSpeed]);
+  }
+
+  function autoScale() {
+    if (!autoOn || G.mode !== 'play') return 1;
+    return AUTO_SCALE[autoSpeed] || 1;
+  }
+
+  function setAutoSpeed(n) {
+    n = parseInt(n, 10);
+    if (!isFinite(n) || n < 1 || n > 4) n = 3;
+    autoSpeed = n;
+    saveAutoSpeed(autoSpeed);
+    syncSpeedUi();
+  }
+
+  function autoPlayHint() {
+    if (!autoOn) return;
+    if (G.mode === 'play') setHint('托管中 · 飞打舱救人 · A 停下', 'hot');
+    else if (G.mode === 'title') setHint('自动托管 · 即将开局 · A 停下', 'hot');
+    else setHint('自动仍开着 · 即将再飞 · A 停下', G.mode === 'win' ? 'hot' : 'warn');
+  }
+
+  function toggleAuto() {
+    autoOn = !autoOn;
+    autoOvWait = 0;
+    autoStuck = 0;
+    autoClearInput();
+    syncAutoUi();
+    if (autoOn) {
+      audio.ensure();
+      autoPlayHint();
+      if (G.mode === 'title') startRun('save');
+    } else if (G.mode === 'play') {
+      setHint(OPS, '');
+    } else if (G.mode === 'title') {
+      setHint('走飞机甲 · 打舱救人 · 撞敌扣命 · 短层后蛸王 · A 自动', '');
+    } else {
+      setHint(G.mode === 'win' ? ((G.kind === 'den' ? '密穴凿穿' : '穴脉打通') + ' · R 再来一局') : 'R 重开 · 撞敌、中弹或触刺扣命', G.mode === 'win' ? 'hot' : 'warn');
+    }
+  }
+
+  function tickAutoFlow(dt) {
+    if (!autoOn) return;
+    if (G.mode === 'title') {
+      autoOvWait += dt;
+      if (autoOvWait >= (autoSpeed >= 3 ? 0.25 : 0.5)) {
+        autoOvWait = 0;
+        startRun('save');
+      }
+      return;
+    }
+    if (G.mode === 'lose' || G.mode === 'win') {
+      autoOvWait += dt;
+      if (autoOvWait >= (autoSpeed >= 3 ? 0.7 : 1.15)) {
+        autoOvWait = 0;
+        startRun(G.kind || 'save');
+      }
+    }
+  }
+
+  function autoThink() {
+    autoClearInput();
+    if (!autoOn || G.mode !== 'play' || G.dead || !G.p) return;
+    const p = G.p;
+    const walls = wallAt(p.y, G.scroll, G.dense);
+    const marginL = walls.l + P_HW + 16;
+    const marginR = walls.r - P_HW - 16;
+
+    const moved = hypot(p.x - autoLastX, p.y - autoLastY);
+    if (moved < 5) autoStuck += STEP;
+    else autoStuck = 0;
+    autoLastX = p.x;
+    autoLastY = p.y;
+
+    let alien = null;
+    let alienD = 1e9;
+    for (let i = 0; i < G.aliens.length; i++) {
+      const al = G.aliens[i];
+      const d = hypot(al.x - p.x, al.y - p.y);
+      if (d < alienD) {
+        alienD = d;
+        alien = al;
+      }
+    }
+
+    let cap = null;
+    let capScore = 1e9;
+    for (let i = 0; i < G.caps.length; i++) {
+      const c = G.caps[i];
+      if (c.cracked || c.y < 28 || c.y > GROUND - 8) continue;
+      const above = c.y < p.y - 8;
+      const d = Math.abs(c.x - p.x) + Math.abs(c.y - (p.y - 90)) * 0.55 + (above ? 0 : 80);
+      if (d < capScore) {
+        capScore = d;
+        cap = c;
+      }
+    }
+
+    let prey = null;
+    let preyD = 1e9;
+    for (let i = 0; i < G.enemies.length; i++) {
+      const en = G.enemies[i];
+      if (!en.alive || en.y < 18 || en.y > VH - 24) continue;
+      const d = hypot(en.x - p.x, en.y - p.y) + (en.y < p.y ? 0 : 40);
+      if (d < preyD) {
+        preyD = d;
+        prey = en;
+      }
+    }
+
+    const boss = G.boss && G.boss.alive ? G.boss : null;
+    let tx = VW * 0.5 + Math.sin(G.clock * 0.42) * 64;
+    let ty = 430 + Math.sin(G.clock * 0.62) * 48;
+    let lined = false;
+
+    if (boss && boss.intro <= 0) {
+      tx = boss.x + Math.sin(G.clock * 2.15) * (boss.hp / boss.max < 0.66 ? 92 : 48);
+      ty = 400 + Math.sin(G.clock * 1.35) * 40;
+      lined = Math.abs(p.x - boss.x) < 16;
+    } else if (alien && alienD < 420) {
+      tx = alien.x;
+      ty = alien.y;
+    } else if (cap) {
+      tx = cap.x;
+      ty = clamp(cap.y + 86, 160, GROUND - 36);
+      if (cap.y >= p.y - 6) ty = Math.min(GROUND - 28, cap.y + 96);
+      lined = Math.abs(p.x - cap.x) < 12 && p.y > cap.y + 20;
+    } else if (prey && preyD < 380) {
+      tx = prey.x;
+      ty = prey.y < p.y - 24 ? clamp(prey.y + 78, 140, GROUND - 40) : Math.max(120, prey.y - 70);
+      lined = Math.abs(p.x - prey.x) < 12 && p.y > prey.y + 16;
+    }
+
+    let dodgeX = 0;
+    let dodgeY = 0;
+    let danger = false;
+    for (let i = 0; i < G.eShots.length; i++) {
+      const s = G.eShots[i];
+      const near = hypot(s.x - p.x, s.y - p.y);
+      if (near < 40) {
+        danger = true;
+        dodgeX += s.x >= p.x ? -2.4 : 2.4;
+        dodgeY += s.y >= p.y ? -1.2 : 1.2;
+      }
+      let tHit = 0.45;
+      if (Math.abs(s.vy) > 10) tHit = (p.y - s.y) / s.vy;
+      else if (Math.abs(s.vx) > 10) tHit = (p.x - s.x) / s.vx;
+      if (tHit > 0 && tHit < 0.58) {
+        const hx = s.x + s.vx * tHit;
+        const hy = s.y + s.vy * tHit;
+        if (Math.abs(hx - p.x) < 30 && Math.abs(hy - p.y) < 26) {
+          danger = true;
+          dodgeX += hx >= p.x ? -3 : 3;
+          if (Math.abs(s.vx) > Math.abs(s.vy)) dodgeY += s.vy > 0 ? -1 : 1;
+        }
+      }
+    }
+    for (let i = 0; i < G.enemies.length; i++) {
+      const en = G.enemies[i];
+      if (!en.alive) continue;
+      const d = hypot(en.x - p.x, en.y - p.y);
+      if (d < 48) {
+        danger = true;
+        dodgeX += en.x >= p.x ? -2.2 : 2.2;
+        dodgeY += en.y < p.y ? 1.4 : -1.4;
+      }
+    }
+    if (boss && hypot(boss.x - p.x, boss.y - p.y) < 78) {
+      danger = true;
+      dodgeX += boss.x >= p.x ? -2 : 2;
+      dodgeY += 2.4;
+    }
+    for (let i = 0; i < G.spikes.length; i++) {
+      const s = G.spikes[i];
+      if (hypot(s.x - p.x, s.y - p.y) < 44) {
+        danger = true;
+        dodgeX += s.side < 0 ? 3.2 : -3.2;
+      }
+    }
+
+    if (danger) {
+      if (Math.abs(dodgeX) > 0.15) tx = p.x + (dodgeX > 0 ? 88 : -88);
+      if (dodgeY < -0.35) ty = p.y - 96;
+      else if (dodgeY > 0.35) ty = p.y + 96;
+      lined = false;
+    }
+
+    if (autoStuck > 1.05) {
+      ty = Math.max(90, p.y - 110);
+      tx = p.x > VW * 0.5 ? marginL + 24 : marginR - 24;
+      lined = false;
+    }
+
+    let dropOff = false;
+    if (ty > p.y + 28 && p.grounded && p.y + P_HH < GROUND - 10) {
+      const plat = stillOnPlat(p);
+      if (plat && !plat.ground) {
+        const mid = plat.x + plat.w * 0.5;
+        tx = p.x < mid ? plat.x - 18 : plat.x + plat.w + 18;
+        dropOff = true;
+      }
+    }
+
+    tx = clamp(tx, marginL, marginR);
+    ty = clamp(ty, 68, GROUND - P_HH - 2);
+
+    const xDead = lined ? 16 : 9;
+    if (tx < p.x - xDead) keys.l = true;
+    else if (tx > p.x + xDead) keys.r = true;
+    if (dropOff) {
+      keys.d = true;
+    } else if (ty < p.y - 10) {
+      keys.u = true;
+    } else if (ty > p.y + 22) {
+      keys.d = true;
+    }
+    if (p.grounded && (cap || alien || prey || boss) && !keys.d) keys.u = true;
+    if (p.y > GROUND - 80 && !danger && (cap || prey || boss) && !keys.d) keys.u = true;
+
+    G.fireHold = true;
   }
 
   function updatePlayer(dt) {
@@ -1148,7 +1426,7 @@
     if (p.grounded) p.walk += dt * (Math.abs(p.vx) > 8 ? 10 : 4);
     if (p.flash > 0) p.flash -= dt;
     if (G.muzzle > 0) G.muzzle -= dt;
-    const fire = G.fireHold || (pointer.down && playing());
+    const fire = G.fireHold || (!autoOn && pointer.down && playing());
     if (fire) fireShot();
     if (G.fireCd > 0) G.fireCd -= dt;
   }
@@ -1419,10 +1697,14 @@
 
   function step(dt) {
     G.clock += dt;
+    if (autoOn) tickAutoFlow(dt);
     updateFx(dt);
     if (G.stop > 0) {
-      G.stop -= dt;
-      return;
+      if (autoOn && autoSpeed >= 4 && G.mode === 'play') G.stop = 0;
+      else {
+        G.stop -= dt;
+        return;
+      }
     }
     if (G.mode === 'title') {
       G.inv = 99;
@@ -1458,6 +1740,7 @@
       if (G.clearT <= 0) winGame();
       return;
     }
+    if (autoOn) autoThink();
     updatePlayer(dt);
     updateWorld(dt);
     updateEnemies(dt);
@@ -1917,20 +2200,49 @@
 
   function onKey(e, down) {
     const k = e.key;
-    if (k === ' ' || k === 'ArrowUp' || k === 'ArrowDown' || k === 'ArrowLeft' || k === 'ArrowRight') {
+    const code = e.code;
+    if (k === 'a' || k === 'A' || code === 'KeyA') {
       e.preventDefault();
+      if (down && !e.repeat) toggleAuto();
+      return;
     }
     if (down && (k === 'm' || k === 'M')) {
+      e.preventDefault();
       audio.ensure();
       audio.setMuted(!audio.muted);
       return;
     }
     if (down && (k === 'r' || k === 'R')) {
+      e.preventDefault();
       retry();
       return;
     }
-    if (down && overlayOpen()) {
-      if (G.mode === 'title' && (k === 'Enter' || k === ' ' || k === '1')) {
+    if (e.target === speedEl) return;
+    const isMove = k === 'ArrowLeft' || k === 'ArrowRight' || k === 'ArrowUp' || k === 'ArrowDown'
+      || k === 'd' || k === 'D' || k === 'w' || k === 'W' || k === 's' || k === 'S';
+    const space = k === ' ' || k === 'Spacebar' || code === 'Space';
+    if (k === ' ' || k === 'ArrowUp' || k === 'ArrowDown' || k === 'ArrowLeft' || k === 'ArrowRight') {
+      e.preventDefault();
+    }
+    if (!autoOn) {
+      if (k === 'ArrowLeft' || k === 'Left') keys.l = down;
+      if (k === 'ArrowRight' || k === 'd' || k === 'D' || k === 'Right') keys.r = down;
+      if (k === 'ArrowUp' || k === 'w' || k === 'W' || k === 'Up') keys.u = down;
+      if (k === 'ArrowDown' || k === 's' || k === 'S' || k === 'Down') keys.d = down;
+    } else if (!down) {
+      if (k === 'ArrowLeft' || k === 'Left') keys.l = false;
+      if (k === 'ArrowRight' || k === 'd' || k === 'D' || k === 'Right') keys.r = false;
+      if (k === 'ArrowUp' || k === 'w' || k === 'W' || k === 'Up') keys.u = false;
+      if (k === 'ArrowDown' || k === 's' || k === 'S' || k === 'Down') keys.d = false;
+    }
+    if (down && (isMove || space || k === 'Enter')) e.preventDefault();
+    if (!down) {
+      if (space && !autoOn) G.fireHold = false;
+      return;
+    }
+    if (autoOn) return;
+    if (overlayOpen()) {
+      if (G.mode === 'title' && (k === 'Enter' || space || k === '1')) {
         audio.ensure();
         startRun('save');
         return;
@@ -1940,17 +2252,13 @@
         startRun('den');
         return;
       }
-      if ((G.mode === 'win' || G.mode === 'lose') && (k === 'Enter' || k === ' ')) {
+      if ((G.mode === 'win' || G.mode === 'lose') && (k === 'Enter' || space)) {
         startRun(G.kind);
         return;
       }
       return;
     }
-    if (k === 'ArrowLeft' || k === 'a' || k === 'A') keys.l = down;
-    if (k === 'ArrowRight' || k === 'd' || k === 'D') keys.r = down;
-    if (k === 'ArrowUp' || k === 'w' || k === 'W') keys.u = down;
-    if (k === 'ArrowDown' || k === 's' || k === 'S') keys.d = down;
-    if (k === ' ') G.fireHold = down;
+    if (space) G.fireHold = true;
   }
 
   function bindPad(el, key) {
@@ -1962,6 +2270,7 @@
     };
     el.addEventListener('pointerdown', function (e) {
       e.preventDefault();
+      if (autoOn) return;
       el.setPointerCapture(e.pointerId);
       audio.ensure();
       set(true);
@@ -1998,11 +2307,17 @@
     let dt = (now - lastT) / 1000;
     lastT = now;
     if (dt > 0.05) dt = 0.05;
-    acc += dt;
-    while (acc >= STEP) {
+    const turbo = autoOn && autoSpeed >= 4 && G.mode === 'play';
+    if (turbo) G.stop = 0;
+    acc += dt * autoScale();
+    let n = 0;
+    const maxSteps = turbo ? 16 : 5;
+    while (acc >= STEP && n < maxSteps) {
       step(STEP);
       acc -= STEP;
+      n += 1;
     }
+    if (acc > STEP * 4) acc = 0;
     draw();
   }
 
@@ -2031,6 +2346,11 @@
   if (btnOvModes) btnOvModes.addEventListener('click', function () { audio.ensure(); startDemo(); });
   if (btnRetry) btnRetry.addEventListener('click', function () { retry(); });
   if (btnMute) btnMute.addEventListener('click', function () { audio.ensure(); audio.setMuted(!audio.muted); });
+  if (btnAuto) btnAuto.addEventListener('click', function () { audio.ensure(); toggleAuto(); });
+  if (speedEl) {
+    speedEl.addEventListener('input', function () { setAutoSpeed(parseInt(speedEl.value, 10)); });
+    speedEl.addEventListener('change', function () { setAutoSpeed(parseInt(speedEl.value, 10)); });
+  }
 
   window.addEventListener('keydown', function (e) { onKey(e, true); });
   window.addEventListener('keyup', function (e) { onKey(e, false); });
@@ -2040,6 +2360,7 @@
     if (G.mode === 'title') return;
     e.preventDefault();
     audio.ensure();
+    if (autoOn) return;
     canvas.setPointerCapture(e.pointerId);
     pointer.down = true;
     pointer.hover = true;
@@ -2081,6 +2402,9 @@
 
   loadBest();
   initMute();
+  autoSpeed = loadAutoSpeed();
+  syncSpeedUi();
+  syncAutoUi();
   initMotes();
   resize();
   startDemo();
