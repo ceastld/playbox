@@ -4515,7 +4515,7 @@
     "blurb": "纵版阿贾，把机群从云里打穿。",
     "hue": 24,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/ajax/",
     "kind": "remake"
   },
@@ -4527,7 +4527,7 @@
     "blurb": "横版雷狐，把巷核从夜里打穿。",
     "hue": 18,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/thunder-fox/",
     "kind": "remake"
   },
@@ -4539,7 +4539,7 @@
     "blurb": "纵版佣兵，把据点从林里打穿。",
     "hue": 42,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/mercs/",
     "kind": "remake"
   },
@@ -4551,8 +4551,56 @@
     "blurb": "环飞时飞，把机群从时里打散。",
     "hue": 210,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/time-pilot/",
+    "kind": "remake"
+  },
+  {
+    "n": 389,
+    "id": "flak-attack",
+    "title": "高炮",
+    "subtitle": "FLAK",
+    "blurb": "纵版高炮，把机群从云里打穿。",
+    "hue": 36,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/flak-attack/",
+    "kind": "remake"
+  },
+  {
+    "n": 390,
+    "id": "scramble",
+    "title": "攀升",
+    "subtitle": "SCRM",
+    "blurb": "横版攀升，把核从洞里打穿。",
+    "hue": 128,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/scramble/",
+    "kind": "remake"
+  },
+  {
+    "n": 391,
+    "id": "samurai-spirits",
+    "title": "侍魂",
+    "subtitle": "SSPR",
+    "blurb": "对战侍魂，把对手从架上斩穿。",
+    "hue": 6,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/samurai-spirits/",
+    "kind": "remake"
+  },
+  {
+    "n": 392,
+    "id": "jackal",
+    "title": "豺狼",
+    "subtitle": "JCKL",
+    "blurb": "纵版豺狼，把据点从林里打穿。",
+    "hue": 28,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/jackal/",
     "kind": "remake"
   }
 ]

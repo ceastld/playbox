@@ -4364,5 +4364,53 @@
     "dir": "g/thunder-cross/",
     "url": "./g/thunder-cross/",
     "kind": "remake"
+  },
+  {
+    "n": 385,
+    "id": "ajax",
+    "title": "阿贾",
+    "subtitle": "AJAX",
+    "blurb": "纵版阿贾，把机群从云里打穿。",
+    "hue": 24,
+    "tag": "复刻",
+    "dir": "g/ajax/",
+    "url": "./g/ajax/",
+    "kind": "remake"
+  },
+  {
+    "n": 386,
+    "id": "thunder-fox",
+    "title": "雷狐",
+    "subtitle": "TFOX",
+    "blurb": "横版雷狐，把巷核从夜里打穿。",
+    "hue": 18,
+    "tag": "复刻",
+    "dir": "g/thunder-fox/",
+    "url": "./g/thunder-fox/",
+    "kind": "remake"
+  },
+  {
+    "n": 387,
+    "id": "mercs",
+    "title": "佣兵",
+    "subtitle": "MRCS",
+    "blurb": "纵版佣兵，把据点从林里打穿。",
+    "hue": 42,
+    "tag": "复刻",
+    "dir": "g/mercs/",
+    "url": "./g/mercs/",
+    "kind": "remake"
+  },
+  {
+    "n": 388,
+    "id": "time-pilot",
+    "title": "时飞",
+    "subtitle": "TPLT",
+    "blurb": "环飞时飞，把机群从时里打散。",
+    "hue": 210,
+    "tag": "复刻",
+    "dir": "g/time-pilot/",
+    "url": "./g/time-pilot/",
+    "kind": "remake"
   }
 ]
