@@ -3608,5 +3608,29 @@
     "dir": "g/ibara/",
     "url": "./g/ibara/",
     "kind": "remake"
+  },
+  {
+    "n": 320,
+    "id": "battle-garegga",
+    "title": "黑翼",
+    "subtitle": "GARE",
+    "blurb": "纵版扫射，把黑翼编队打散。",
+    "hue": 220,
+    "tag": "复刻",
+    "dir": "g/battle-garegga/",
+    "url": "./g/battle-garegga/",
+    "kind": "remake"
+  },
+  {
+    "n": 323,
+    "id": "varth",
+    "title": "瓦特",
+    "subtitle": "VRTH",
+    "blurb": "纵版扫射，把机甲编队打散。",
+    "hue": 168,
+    "tag": "复刻",
+    "dir": "g/varth/",
+    "url": "./g/varth/",
+    "kind": "remake"
   }
 ]

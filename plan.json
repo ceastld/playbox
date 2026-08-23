@@ -3735,7 +3735,7 @@
     "blurb": "纵版扫射，把黑翼编队打散。",
     "hue": 220,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/battle-garegga/",
     "kind": "remake"
   },
@@ -3771,7 +3771,7 @@
     "blurb": "纵版扫射，把机甲编队打散。",
     "hue": 168,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/varth/",
     "kind": "remake"
   },
@@ -3797,6 +3797,30 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/pink-sweets/",
+    "kind": "remake"
+  },
+  {
+    "n": 326,
+    "id": "outrun2",
+    "title": "疾风2",
+    "subtitle": "OR2",
+    "blurb": "甩尾超车，把海岸线甩开。",
+    "hue": 18,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/outrun2/",
+    "kind": "remake"
+  },
+  {
+    "n": 327,
+    "id": "deathsmiles",
+    "title": "死笑",
+    "subtitle": "DSML",
+    "blurb": "纵版魔弹，把亡灵弹幕打散。",
+    "hue": 286,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/deathsmiles/",
     "kind": "remake"
   }
 ]
