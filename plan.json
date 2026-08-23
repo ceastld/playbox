@@ -3783,7 +3783,7 @@
     "blurb": "纵版摩托扫射，把空中编队打穿。",
     "hue": 36,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/armed-police/",
     "kind": "remake"
   },
@@ -3821,6 +3821,18 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/deathsmiles/",
+    "kind": "remake"
+  },
+  {
+    "n": 328,
+    "id": "sengoku-ace",
+    "title": "战国",
+    "subtitle": "SNGK",
+    "blurb": "纵版空战，把弹幕从云里打穿。",
+    "hue": 42,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/sengoku-ace/",
     "kind": "remake"
   }
 ]

@@ -3632,5 +3632,17 @@
     "dir": "g/varth/",
     "url": "./g/varth/",
     "kind": "remake"
+  },
+  {
+    "n": 324,
+    "id": "armed-police",
+    "title": "武警",
+    "subtitle": "BATR",
+    "blurb": "纵版摩托扫射，把空中编队打穿。",
+    "hue": 36,
+    "tag": "复刻",
+    "dir": "g/armed-police/",
+    "url": "./g/armed-police/",
+    "kind": "remake"
   }
 ]
