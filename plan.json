@@ -5103,7 +5103,7 @@
     "blurb": "横版雷突，把机群从星里打穿。",
     "hue": 164,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/thunder-force2/",
     "kind": "remake"
   },
@@ -5127,7 +5127,7 @@
     "blurb": "横版怒二，把暴徒从街上打穿。",
     "hue": 6,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/streets-of-rage2/",
     "kind": "remake"
   },
@@ -5139,7 +5139,7 @@
     "blurb": "横版仙童，把魔物从林里砸穿。",
     "hue": 78,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/wonder-boy/",
     "kind": "remake"
   },
@@ -5151,7 +5151,7 @@
     "blurb": "进屏虚赛，把对手从弯里甩开。",
     "hue": 188,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/virtua-racing/",
     "kind": "remake"
   },
@@ -5165,6 +5165,54 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/contra2/",
+    "kind": "remake"
+  },
+  {
+    "n": 440,
+    "id": "castlevania",
+    "title": "魔城",
+    "subtitle": "CVAN",
+    "blurb": "横版魔城，把亡灵从厅里斩穿。",
+    "hue": 272,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/castlevania/",
+    "kind": "remake"
+  },
+  {
+    "n": 441,
+    "id": "ninja-gaiden2",
+    "title": "忍影",
+    "subtitle": "NGD2",
+    "blurb": "横版忍影，把忍者从巷里斩穿。",
+    "hue": 14,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/ninja-gaiden2/",
+    "kind": "remake"
+  },
+  {
+    "n": 442,
+    "id": "ghosts-n-goblins",
+    "title": "魔铠",
+    "subtitle": "GNG2",
+    "blurb": "横版魔铠，把亡灵从坟里砸穿。",
+    "hue": 22,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/ghosts-n-goblins/",
+    "kind": "remake"
+  },
+  {
+    "n": 443,
+    "id": "golden-axe2",
+    "title": "斧二",
+    "subtitle": "GAX2",
+    "blurb": "横版斧二，把兽人从路上砍穿。",
+    "hue": 36,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/golden-axe2/",
     "kind": "remake"
   }
 ]

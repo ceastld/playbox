@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" fill="#06141a"/>
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#06141a"/>
+      <stop offset="0.38" stop-color="#0a3040"/>
+      <stop offset="0.62" stop-color="#00a8b8"/>
+      <stop offset="1" stop-color="#5affef"/>
+    </linearGradient>
+    <linearGradient id="flame" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffe36b"/>
+      <stop offset="0.45" stop-color="#00e4d0"/>
+      <stop offset="1" stop-color="#5affef" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="56" height="56" rx="10" fill="url(#sky)"/>
+  <polygon points="10,28 18,16 26,24 38,12 54,22 54,32 10,32" fill="#0e2834"/>
+  <polygon points="14,30 22,20 32,26 44,16 54,24 54,34 14,34" fill="#123040"/>
+  <polygon points="8,18 12,10 16,18" fill="#1a5a48"/>
+  <polygon points="48,16 53,6 58,16" fill="#164838"/>
+  <rect x="46" y="16" width="2" height="10" fill="#3a2a1c"/>
+  <rect x="10" y="18" width="2" height="8" fill="#3a2a1c"/>
+  <polygon points="22,22 24,14 26,22" fill="#8aa0a8"/>
+  <polygon points="38,20 40,10 42,20" fill="#8aa0a8"/>
+  <path d="M8 62 L26 34 L38 34 L56 62Z" fill="#0c2028"/>
+  <path d="M12 62 L27 36 L37 36 L52 62Z" fill="#08141c"/>
+  <path d="M18 62 L29 40 L35 40 L46 62Z" fill="#00e4d0" opacity=".32"/>
+  <path d="M4 38 H22 L10 62 H4Z" fill="#1a4a38"/>
+  <path d="M42 38 H60 L54 62 H42Z" fill="#2a3a58"/>
+  <path d="M16 48 L8 62" stroke="#5affef" stroke-width=".7" opacity=".5"/>
+  <path d="M48 48 L56 62" stroke="#00e4d0" stroke-width=".7" opacity=".55"/>
+  <ellipse cx="32" cy="55" rx="13" ry="3.2" fill="#04080c"/>
+  <path d="M28 56 l-3 8 3.4-1.2z" fill="url(#flame)"/>
+  <path d="M36 56 l3 8 -3.4-1.2z" fill="url(#flame)"/>
+  <rect x="20.4" y="48.2" width="5.6" height="5.2" rx=".6" fill="#101820"/>
+  <rect x="38" y="48.2" width="5.6" height="5.2" rx=".6" fill="#101820"/>
+  <path d="M22 50 L25 41 H39 L42 50 Z" fill="#00e4d0"/>
+  <path d="M25 41 L27 34 H37 L39 41 Z" fill="#e8fbff"/>
+  <rect x="26.2" y="35.6" width="11.6" height="2.6" rx=".2" fill="#ffe36b"/>
+  <rect x="27.4" y="43.2" width="9.2" height="3.6" rx=".3" fill="#0a2030"/>
+  <text x="32" y="46.4" text-anchor="middle" font-size="4.6" font-family="Segoe UI,sans-serif" font-weight="700" fill="#e8fbff">1</text>
+  <path d="M24 34 H40 L37.6 31.2 H26.4 Z" fill="#ffe36b"/>
+</svg>

@@ -4976,5 +4976,53 @@
     "dir": "g/shinobi2/",
     "url": "./g/shinobi2/",
     "kind": "remake"
+  },
+  {
+    "n": 434,
+    "id": "thunder-force2",
+    "title": "雷突",
+    "subtitle": "TF02",
+    "blurb": "横版雷突，把机群从星里打穿。",
+    "hue": 164,
+    "tag": "复刻",
+    "dir": "g/thunder-force2/",
+    "url": "./g/thunder-force2/",
+    "kind": "remake"
+  },
+  {
+    "n": 436,
+    "id": "streets-of-rage2",
+    "title": "怒二",
+    "subtitle": "SOR2",
+    "blurb": "横版怒二，把暴徒从街上打穿。",
+    "hue": 6,
+    "tag": "复刻",
+    "dir": "g/streets-of-rage2/",
+    "url": "./g/streets-of-rage2/",
+    "kind": "remake"
+  },
+  {
+    "n": 437,
+    "id": "wonder-boy",
+    "title": "仙童",
+    "subtitle": "WBOY",
+    "blurb": "横版仙童，把魔物从林里砸穿。",
+    "hue": 78,
+    "tag": "复刻",
+    "dir": "g/wonder-boy/",
+    "url": "./g/wonder-boy/",
+    "kind": "remake"
+  },
+  {
+    "n": 438,
+    "id": "virtua-racing",
+    "title": "虚赛",
+    "subtitle": "VRAC",
+    "blurb": "进屏虚赛，把对手从弯里甩开。",
+    "hue": 188,
+    "tag": "复刻",
+    "dir": "g/virtua-racing/",
+    "url": "./g/virtua-racing/",
+    "kind": "remake"
   }
 ]
