@@ -3788,5 +3788,17 @@
     "dir": "g/samurai-aki/",
     "url": "./g/samurai-aki/",
     "kind": "remake"
+  },
+  {
+    "n": 334,
+    "id": "gunnail",
+    "title": "钉枪",
+    "subtitle": "GNAI",
+    "blurb": "纵版钉射，把弹幕钉进舰核。",
+    "hue": 14,
+    "tag": "复刻",
+    "dir": "g/gunnail/",
+    "url": "./g/gunnail/",
+    "kind": "remake"
   }
 ]

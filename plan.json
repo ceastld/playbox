@@ -3903,7 +3903,7 @@
     "blurb": "纵版钉射，把弹幕钉进舰核。",
     "hue": 14,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/gunnail/",
     "kind": "remake"
   },
@@ -3977,6 +3977,18 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/dragon-spirit/",
+    "kind": "remake"
+  },
+  {
+    "n": 341,
+    "id": "image-fight",
+    "title": "幻击",
+    "subtitle": "IMFG",
+    "blurb": "横版幻战，把残像从轨道打穿。",
+    "hue": 262,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/image-fight/",
     "kind": "remake"
   }
 ]
