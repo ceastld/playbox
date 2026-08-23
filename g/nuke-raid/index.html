@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#160806" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>核袭 · NUKE</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23160806'/%3E%3Cellipse cx='16' cy='11' rx='9' ry='5' fill='%23ff6a28'/%3E%3Crect x='14.2' y='11' width='3.6' height='10' rx='1' fill='%23ffe070'/%3E%3Ccircle cx='16' cy='10' r='3.2' fill='%23c8ff3a'/%3E%3Cpath d='M16 20l4 8H12z' fill='%23ff4d14'/%3E%3Cpath d='M10 26h12l2 4H8z' fill='%23ffb428'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>核袭</b>
+        <span>NUKE</span>
+      </div>
+      <div class="status">
+        <div class="scores" aria-live="polite">
+          <div class="score" id="score-box">
+            <em>分数</em>
+            <b id="score">0</b>
+            <span id="score-add" class="score-add" hidden>+0</span>
+          </div>
+          <div class="score best">
+            <em>最高</em>
+            <b id="best">0</b>
+          </div>
+        </div>
+        <div class="row">
+          <span id="stage-label">第 1 关</span>
+          <span id="tag-label">核袭</span>
+          <div class="fill" id="heat-wrap" title="核压">
+            <em>压</em>
+            <div class="fill-track" aria-hidden="true"><i id="heat-bar"></i></div>
+          </div>
+          <span id="bomb-label" class="bombs">核 ×3</span>
+          <span id="combo-label" class="combo" hidden>连击</span>
+          <span class="pips" id="pips" aria-label="剩余生命"></span>
+        </div>
+      </div>
+      <div class="tools">
+        <button type="button" id="btn-bomb" title="Shift / Z" aria-label="核弹">核</button>
+        <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
+        <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <canvas id="c" tabindex="0" role="application" aria-label="核袭游戏区，纵向卷轴，空格射击，Shift 丢核弹砸堡"></canvas>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden"></div>
+      <div id="pad" class="pad">
+        <button type="button" id="btn-pad" aria-label="核弹">核</button>
+      </div>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">NUKE</p>
+          <h1 id="ov-title">核袭</h1>
+          <p class="lead" id="ov-lead">空射击坠机群，Shift 丢核弹砸地上的堡。菱锁定点，蘑菇云清半径。堡垒之后是堆芯。</p>
+          <p class="ops" id="ov-ops">←↑↓→ / WASD 飞 · 空格射击 · Shift / Z 核弹 · R 重开 · M 静音</p>
+          <div class="ov-actions" id="ov-start">
+            <button type="button" id="btn-raid">核袭</button>
+            <button type="button" id="btn-rain">核雨</button>
+          </div>
+          <div class="ov-actions gone" id="ov-end">
+            <button type="button" id="ov-retry">再来</button>
+            <button type="button" id="ov-modes">换模式</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">空格打空中 · Shift 丢核弹砸堡 · 核压满放出超核</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>

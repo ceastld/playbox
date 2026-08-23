@@ -4227,7 +4227,7 @@
     "blurb": "纵版核弹，把堡垒从地上打塌。",
     "hue": 18,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/nuke-raid/",
     "kind": "remake"
   },
@@ -4265,6 +4265,18 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/nexa/",
+    "kind": "remake"
+  },
+  {
+    "n": 365,
+    "id": "zerowing",
+    "title": "零翼",
+    "subtitle": "ZERO",
+    "blurb": "横版零翼，把弹幕从海里打穿。",
+    "hue": 192,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/zerowing/",
     "kind": "remake"
   }
 ]

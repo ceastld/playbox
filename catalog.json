@@ -4076,5 +4076,17 @@
     "dir": "g/liekong/",
     "url": "./g/liekong/",
     "kind": "remake"
+  },
+  {
+    "n": 361,
+    "id": "nuke-raid",
+    "title": "核袭",
+    "subtitle": "NUKE",
+    "blurb": "纵版核弹，把堡垒从地上打塌。",
+    "hue": 18,
+    "tag": "复刻",
+    "dir": "g/nuke-raid/",
+    "url": "./g/nuke-raid/",
+    "kind": "remake"
   }
 ]
