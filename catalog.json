@@ -4040,5 +4040,41 @@
     "dir": "g/plus-alpha/",
     "url": "./g/plus-alpha/",
     "kind": "remake"
+  },
+  {
+    "n": 357,
+    "id": "warblade",
+    "title": "战刃",
+    "subtitle": "WBLD",
+    "blurb": "一刀斩落，把星核劈成火花。",
+    "hue": 4,
+    "tag": "复刻",
+    "dir": "g/warblade/",
+    "url": "./g/warblade/",
+    "kind": "remake"
+  },
+  {
+    "n": 358,
+    "id": "stardust",
+    "title": "星尘",
+    "subtitle": "SDST",
+    "blurb": "纵版星尘，把弹幕打成碎光。",
+    "hue": 250,
+    "tag": "复刻",
+    "dir": "g/stardust/",
+    "url": "./g/stardust/",
+    "kind": "remake"
+  },
+  {
+    "n": 359,
+    "id": "liekong",
+    "title": "烈空",
+    "subtitle": "LIEK",
+    "blurb": "纵版烈焰，把机群从云里烧穿。",
+    "hue": 14,
+    "tag": "复刻",
+    "dir": "g/liekong/",
+    "url": "./g/liekong/",
+    "kind": "remake"
   }
 ]

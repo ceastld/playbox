@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#140806" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>烈空 · LIEK</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23140806'/%3E%3Cpath d='M16 3l4 9h9l-7 6 3 9-9-6-9 6 3-9-7-6h9z' fill='%23ff4a14'/%3E%3Cpath d='M16 8l2 5h6l-5 3.6 1.8 5.4L16 19l-4.8 3 1.8-5.4L8 13h6z' fill='%23ffd428'/%3E%3Cpath d='M16 12l1.4 3.4h3.6l-2.9 2.2 1.1 3.4L16 19.2l-3.2 1.8 1.1-3.4-2.9-2.2h3.6z' fill='%23fff2e4'/%3E%3Cpath d='M10 24h12l2 5H8z' fill='%23ff6a28'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>烈空</b>
+        <span>LIEK</span>
+      </div>
+      <div class="status">
+        <div class="scores" aria-live="polite">
+          <div class="score" id="score-box">
+            <em>分数</em>
+            <b id="score">0</b>
+            <span id="score-add" class="score-add" hidden>+0</span>
+          </div>
+          <div class="score best">
+            <em>最高</em>
+            <b id="best">0</b>
+          </div>
+        </div>
+        <div class="row">
+          <span id="stage-label">第 1 关</span>
+          <span id="tag-label">烈空</span>
+          <span id="pwr-label" class="pwr">铳 0</span>
+          <div class="fill" id="heat-wrap" title="炎条">
+            <em>炎</em>
+            <div class="fill-track" aria-hidden="true"><i id="heat-bar"></i></div>
+          </div>
+          <span id="bomb-label" class="bombs">桶 ×3</span>
+          <span id="combo-label" class="combo" hidden>连击</span>
+          <span class="pips" id="pips" aria-label="剩余生命"></span>
+        </div>
+      </div>
+      <div class="tools">
+        <button type="button" id="btn-bomb" title="Shift / Z" aria-label="炎桶">桶</button>
+        <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
+        <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <canvas id="c" tabindex="0" role="application" aria-label="烈空游戏区，纵向卷轴，空格射击积炎条，Shift 扔炎桶"></canvas>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden"></div>
+      <div id="pad" class="pad">
+        <button type="button" id="btn-pad" aria-label="炎桶">桶</button>
+      </div>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">LIEK</p>
+          <h1 id="ov-title">烈空</h1>
+          <p class="lead" id="ov-lead">击中积炎，满条放出烈柱烧穿云层。击坠留下燃痕连锁。短关之后是空核。</p>
+          <p class="ops" id="ov-ops">←↑↓→ / WASD 飞 · 空格射击 · Shift / Z 炎桶 · R 重开 · M 静音</p>
+          <div class="ov-actions" id="ov-start">
+            <button type="button" id="btn-sky">烈空</button>
+            <button type="button" id="btn-rain">炎雨</button>
+          </div>
+          <div class="ov-actions gone" id="ov-end">
+            <button type="button" id="ov-retry">再来</button>
+            <button type="button" id="ov-modes">换模式</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">击中积炎放烈柱 · Shift 炎桶 · 吃炎换武</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>

@@ -4179,7 +4179,7 @@
     "blurb": "一刀斩落，把星核劈成火花。",
     "hue": 4,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/warblade/",
     "kind": "remake"
   },
@@ -4191,7 +4191,7 @@
     "blurb": "纵版星尘，把弹幕打成碎光。",
     "hue": 250,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/stardust/",
     "kind": "remake"
   },
@@ -4203,7 +4203,7 @@
     "blurb": "纵版烈焰，把机群从云里烧穿。",
     "hue": 14,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/liekong/",
     "kind": "remake"
   },
@@ -4229,6 +4229,42 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/nuke-raid/",
+    "kind": "remake"
+  },
+  {
+    "n": 362,
+    "id": "outzone",
+    "title": "外域",
+    "subtitle": "OZON",
+    "blurb": "纵版外域，把机甲从谷里打穿。",
+    "hue": 88,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/outzone/",
+    "kind": "remake"
+  },
+  {
+    "n": 363,
+    "id": "blade-storm",
+    "title": "刃暴",
+    "subtitle": "BSTM",
+    "blurb": "刀光连斩，把弹幕劈成火花。",
+    "hue": 352,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/blade-storm/",
+    "kind": "remake"
+  },
+  {
+    "n": 364,
+    "id": "nexa",
+    "title": "星核",
+    "subtitle": "NEXA",
+    "blurb": "横版星核，把核心从轨道打穿。",
+    "hue": 226,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/nexa/",
     "kind": "remake"
   }
 ]
