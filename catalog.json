@@ -5396,5 +5396,17 @@
     "dir": "g/metalslug4/",
     "kind": "remake",
     "url": "./g/metalslug4/"
+  },
+  {
+    "n": 475,
+    "id": "tan-tang",
+    "title": "弹堂",
+    "subtitle": "TAN HALL",
+    "blurb": "看风，拉角蓄力，把对面从石殿上轰下去。",
+    "hue": 188,
+    "tag": "复刻",
+    "dir": "g/tan-tang/",
+    "url": "./g/tan-tang/",
+    "kind": "remake"
   }
 ]

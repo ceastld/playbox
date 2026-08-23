@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#0a0814" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>弹堂 · TAN HALL</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230a0814'/%3E%3Cpath d='M2 24 C8 14 14 18 16 12 C18 18 24 14 30 24 Z' fill='%231a1230' stroke='%2300e8ff' stroke-width='1.1'/%3E%3Ccircle cx='8' cy='16' r='2.2' fill='%2300e8ff'/%3E%3Ccircle cx='24' cy='16' r='2.2' fill='%23ff3db8'/%3E%3Cpath d='M9 15 Q16 6 23 15' fill='none' stroke='%23ffe36b' stroke-width='1.1'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>弹堂</b>
+        <span>TAN HALL</span>
+      </div>
+      <div class="status">
+        <div class="scores" aria-live="polite">
+          <div class="score" id="score-box">
+            <em>连胜</em>
+            <b id="score">0</b>
+            <span id="score-add" class="score-add" hidden>+0</span>
+          </div>
+          <div class="score best">
+            <em>最快</em>
+            <b id="best">—</b>
+          </div>
+        </div>
+        <div class="row">
+          <span id="stage-label">弹堂</span>
+          <span id="map-label">平原</span>
+          <span id="wind-label" class="wind">风 · 0</span>
+          <span id="ang-label">角 65°</span>
+          <span id="pow-label">力 12</span>
+          <span id="walk-label">步 96</span>
+          <span id="combo-label" class="combo" hidden>连堂</span>
+        </div>
+        <div class="hp-row" aria-hidden="false">
+          <div class="hp hp-p">
+            <i>岚丸</i>
+            <b id="hp-p-n">100</b>
+            <span class="hp-bar"><em id="hp-p"></em></span>
+          </div>
+          <div class="hp hp-f">
+            <i>烬丸</i>
+            <b id="hp-f-n">100</b>
+            <span class="hp-bar"><em id="hp-f"></em></span>
+          </div>
+        </div>
+      </div>
+      <div class="tools">
+        <div class="weps" id="weps" role="tablist" aria-label="武器">
+          <button type="button" data-w="0" class="on" title="1">普通</button>
+          <button type="button" data-w="1" title="2">高爆</button>
+          <button type="button" data-w="2" title="3">穿透</button>
+        </div>
+        <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
+        <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <canvas id="c" tabindex="0" role="application" aria-label="弹堂对决，走位拉角蓄力轰对面"></canvas>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden"></div>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">TAN HALL</p>
+          <h1 id="ov-title">弹堂</h1>
+          <p class="lead" id="ov-lead">看风，拉满或点射，把对面从石殿上轰下去。</p>
+          <p class="ops" id="ov-ops">← → 走 · ↑ ↓ 角 · 空格/Z 蓄力 · 1 弹堂 · 2 堂核 · R 重开 · M 静音</p>
+          <div class="maps" id="ov-maps">
+            <button type="button" data-map="plain" class="on" id="map-plain">平原</button>
+            <button type="button" data-map="canyon" id="map-canyon">峡谷</button>
+            <button type="button" data-map="twin" id="map-twin">双台</button>
+          </div>
+          <div class="ov-actions" id="ov-start">
+            <button type="button" id="btn-hall">弹堂</button>
+            <button type="button" id="btn-core">堂核</button>
+          </div>
+          <div class="ov-actions gone" id="ov-end">
+            <button type="button" id="ov-retry">再来</button>
+            <button type="button" id="ov-modes">换一局</button>
+          </div>
+        </div>
+      </div>
+      <div class="pad" id="pad" aria-label="触控键">
+        <button type="button" data-pad="l">左</button>
+        <button type="button" data-pad="r">右</button>
+        <button type="button" data-pad="u">仰</button>
+        <button type="button" data-pad="d">俯</button>
+        <button type="button" data-pad="fire" class="fire">蓄</button>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">走位 · 拉角 · 空格蓄力松手打 · 65° 最远 · 90° 落脚边 · 读风</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>
