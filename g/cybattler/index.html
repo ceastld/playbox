@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#04151a" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>机战 · CYBT</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2304151a'/%3E%3Crect x='2' y='2' width='28' height='28' rx='4' fill='%23081c24' stroke='%2300ddff' stroke-width='1.4'/%3E%3Cpath d='M10 22l3-8 3 8z' fill='%2300ddff'/%3E%3Crect x='11.4' y='16' width='3.2' height='4' fill='%23c8f8ff'/%3E%3Cpath d='M16 15h8' stroke='%23b8ff4a' stroke-width='1.8' stroke-linecap='round'/%3E%3Ccircle cx='16' cy='15' r='1.4' fill='%23ffe36b'/%3E%3Crect x='9.6' y='22' width='2.4' height='3.2' fill='%2300b8d4'/%3E%3Crect x='13.8' y='22' width='2.4' height='3.2' fill='%2300b8d4'/%3E%3Ccircle cx='24' cy='10' r='2.2' fill='%2300e8ff'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>机战</b>
+        <span>CYBT</span>
+      </div>
+      <div class="status">
+        <div class="scores" aria-live="polite">
+          <div class="score" id="score-box">
+            <em>分数</em>
+            <b id="score">0</b>
+            <span id="score-add" class="score-add" hidden>+0</span>
+          </div>
+          <div class="score best">
+            <em>最高</em>
+            <b id="best">0</b>
+          </div>
+          <div class="score combo" id="combo-box">
+            <em>连击</em>
+            <b id="combo">×1</b>
+          </div>
+        </div>
+        <div class="row">
+          <span id="stage-label">月港</span>
+          <span id="tag-label">机战</span>
+          <span id="dash-label" class="dash">冲</span>
+          <span class="pips" id="pips" aria-label="剩余性命"></span>
+        </div>
+      </div>
+      <div class="tools">
+        <div class="modes" role="radiogroup" aria-label="模式">
+          <button type="button" id="mode-raid" aria-pressed="true">机战</button>
+          <button type="button" id="mode-core" aria-pressed="false">核甲</button>
+        </div>
+        <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
+        <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <div class="board-wrap">
+        <canvas id="c" tabindex="0" role="application" aria-label="机战，八向驾驶机甲，空格射击，Shift 冲刺，近身光剑，撞机丢命"></canvas>
+      </div>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden"></div>
+      <div id="chain-pop" class="chain-pop hidden" aria-hidden="true">×2</div>
+      <div id="pad" class="pad">
+        <button type="button" id="btn-up" aria-label="上">上</button>
+        <button type="button" id="btn-left" aria-label="左">左</button>
+        <button type="button" id="btn-slash" aria-label="光剑">斩</button>
+        <button type="button" id="btn-right" aria-label="右">右</button>
+        <button type="button" id="btn-down" aria-label="下">下</button>
+        <button type="button" id="btn-fire" aria-label="开火">射</button>
+        <button type="button" id="btn-dash" aria-label="冲刺">冲</button>
+      </div>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">CYBT</p>
+          <h1 id="ov-title">机战</h1>
+          <p class="lead" id="ov-lead">驾驶机甲在环形场里八向开火。按住射击会侧移锁朝向，近身挥光剑，冲刺穿过弹幕。撞机丢一条命。清波之后是敌方机甲王。</p>
+          <p class="ops" id="ov-ops">方向 / WASD 走 · 空格射击 · Shift / Z 冲刺 · X 斩 · R 重开 · M 静音</p>
+          <div class="ov-actions" id="ov-start">
+            <button type="button" id="btn-raid">机战</button>
+            <button type="button" id="btn-core">核甲</button>
+          </div>
+          <div class="ov-actions gone" id="ov-end">
+            <button type="button" id="ov-again">再来</button>
+            <button type="button" id="ov-menu">换模式</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">按住射击侧移 · 近身斩双倍 · 冲刺穿弹 · 撞机丢命</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>

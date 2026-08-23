@@ -3999,7 +3999,7 @@
     "blurb": "纵版超武，把弹幕从星核打穿。",
     "hue": 198,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/super-star/",
     "kind": "remake"
   },
@@ -4011,7 +4011,7 @@
     "blurb": "纵版陆战，把堡垒从地上打塌。",
     "hue": 32,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/terra-crest/",
     "kind": "remake"
   },
@@ -4023,7 +4023,7 @@
     "blurb": "机甲对轰，把装甲打成火花。",
     "hue": 188,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/cybattler/",
     "kind": "remake"
   },
@@ -4035,7 +4035,7 @@
     "blurb": "变形空战，把舰桥从轨道打穿。",
     "hue": 208,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/macross/",
     "kind": "remake"
   },
@@ -4049,6 +4049,54 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/star-fox/",
+    "kind": "remake"
+  },
+  {
+    "n": 347,
+    "id": "gyrodine",
+    "title": "旋空",
+    "subtitle": "GYRO",
+    "blurb": "直升扫射，把弹幕从谷里打穿。",
+    "hue": 142,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/gyrodine/",
+    "kind": "remake"
+  },
+  {
+    "n": 348,
+    "id": "phelios",
+    "title": "月刃",
+    "subtitle": "PHEL",
+    "blurb": "天马斩月，把星核一刀劈开。",
+    "hue": 268,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/phelios/",
+    "kind": "remake"
+  },
+  {
+    "n": 349,
+    "id": "blast-off",
+    "title": "爆射",
+    "subtitle": "BLST",
+    "blurb": "纵版爆弹，把机群从云里打散。",
+    "hue": 16,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/blast-off/",
+    "kind": "remake"
+  },
+  {
+    "n": 350,
+    "id": "daioh",
+    "title": "大王",
+    "subtitle": "DAIO",
+    "blurb": "纵版魔弹，把弹幕从核里打穿。",
+    "hue": 8,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/daioh/",
     "kind": "remake"
   }
 ]
