@@ -4604,5 +4604,65 @@
     "dir": "g/rapier/",
     "url": "./g/rapier/",
     "kind": "remake"
+  },
+  {
+    "n": 404,
+    "id": "super-cobra",
+    "title": "超蛇",
+    "subtitle": "SCBR",
+    "blurb": "横版超蛇，把核从洞里打穿。",
+    "hue": 132,
+    "tag": "复刻",
+    "dir": "g/super-cobra/",
+    "url": "./g/super-cobra/",
+    "kind": "remake"
+  },
+  {
+    "n": 405,
+    "id": "defender",
+    "title": "防卫",
+    "subtitle": "DFND",
+    "blurb": "横版防卫，把人从空里救下。",
+    "hue": 198,
+    "tag": "复刻",
+    "dir": "g/defender/",
+    "url": "./g/defender/",
+    "kind": "remake"
+  },
+  {
+    "n": 406,
+    "id": "spy-hunter",
+    "title": "谍猎",
+    "subtitle": "SPYH",
+    "blurb": "纵版谍猎，把车从路上打穿。",
+    "hue": 44,
+    "tag": "复刻",
+    "dir": "g/spy-hunter/",
+    "url": "./g/spy-hunter/",
+    "kind": "remake"
+  },
+  {
+    "n": 407,
+    "id": "joust",
+    "title": "骑鸟",
+    "subtitle": "JOST",
+    "blurb": "对战骑鸟，把对手从台上撞下。",
+    "hue": 38,
+    "tag": "复刻",
+    "dir": "g/joust/",
+    "url": "./g/joust/",
+    "kind": "remake"
+  },
+  {
+    "n": 408,
+    "id": "art-of-fighting",
+    "title": "拳道",
+    "subtitle": "AOF",
+    "blurb": "对战拳道，把对手从架上打穿。",
+    "hue": 14,
+    "tag": "复刻",
+    "dir": "g/art-of-fighting/",
+    "url": "./g/art-of-fighting/",
+    "kind": "remake"
   }
 ]

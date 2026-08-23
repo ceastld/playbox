@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#07040a" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>骑鸟 · JOST</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2307040a'/%3E%3Crect x='2' y='26' width='28' height='4' fill='%23ff4a18'/%3E%3Crect x='5' y='8' width='10' height='2.2' fill='%23ffb84a'/%3E%3Crect x='17' y='15' width='10' height='2.2' fill='%23ffb84a'/%3E%3Cpath d='M10 20c3-1 5.2-4.2 6.4-7.4 1.1 2.2 2.4 4.4 5.6 5.4' stroke='%23ffe36b' stroke-width='1.5' fill='none'/%3E%3Cellipse cx='9' cy='21.4' rx='4.4' ry='2.7' fill='%23ff9a28'/%3E%3Ccircle cx='16.6' cy='12' r='1.6' fill='%2300f0ff'/%3E%3Cpath d='M16.6 12h7' stroke='%2300f0ff' stroke-width='1.2' stroke-linecap='round'/%3E%3Cellipse cx='24' cy='17.6' rx='3.6' ry='2.2' fill='%23ff3db8'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>骑鸟</b>
+        <span>JOST</span>
+      </div>
+      <div class="status">
+        <div class="scores" aria-live="polite">
+          <div class="score" id="score-box">
+            <em>分数</em>
+            <b id="score">0</b>
+            <span id="score-add" class="score-add" hidden>+0</span>
+          </div>
+          <div class="score">
+            <em>波</em>
+            <b id="wave">1</b>
+          </div>
+          <div class="score best">
+            <em>最高</em>
+            <b id="best">0</b>
+          </div>
+          <div class="score combo" id="combo-box">
+            <em>连撞</em>
+            <b id="combo">×1</b>
+          </div>
+        </div>
+        <div class="row">
+          <span id="mode-label">骑鸟</span>
+          <span id="tag-label">JOST</span>
+          <span class="pips" id="pips" aria-label="剩余性命"></span>
+        </div>
+      </div>
+      <div class="tools">
+        <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
+        <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <canvas id="c" tabindex="0" role="application" aria-label="骑鸟竞技场，扇翅飞行，从上方撞击对手"></canvas>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden"></div>
+      <div id="pad" class="pad">
+        <button type="button" id="btn-left" aria-label="向左">左</button>
+        <button type="button" id="btn-flap" aria-label="扇翅">扇</button>
+        <button type="button" id="btn-right" aria-label="向右">右</button>
+      </div>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">JOST</p>
+          <h1 id="ov-title">骑鸟</h1>
+          <p class="lead" id="ov-lead">空台上扇翅对撞。从更高处撞上去，对方炸成蛋。波次打完会出翼龙。</p>
+          <p class="ops" id="ov-ops">← → / A D 移动 · 空格扇翅 · 空台更密 · R 重开 · M 静音</p>
+          <div class="ov-actions" id="ov-start">
+            <button type="button" id="btn-ride">骑鸟</button>
+            <button type="button" id="btn-dense">空台</button>
+          </div>
+          <div class="ov-actions gone" id="ov-end">
+            <button type="button" id="ov-retry">再骑</button>
+            <button type="button" id="ov-menu">换台</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">从上面撞才算赢 · 同高弹开 · 更低你就完蛋 · 波后再打翼龙</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>

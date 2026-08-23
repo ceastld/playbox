@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#021218" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>防卫 · DFND</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23021218'/%3E%3Crect x='2' y='3' width='28' height='5' rx='.5' fill='%23071c28' stroke='%2300d4ff' stroke-width='.6'/%3E%3Crect x='11' y='3.6' width='8' height='3.8' fill='none' stroke='%23ffe36b' stroke-width='.5'/%3E%3Ccircle cx='8' cy='5.5' r='.7' fill='%2300d4ff'/%3E%3Ccircle cx='22' cy='5.5' r='.6' fill='%23ff3db8'/%3E%3Cpath d='M2 24 L7 18 L12 22 L17 14 L22 20 L27 13 L30 19 L30 30 L2 30Z' fill='%23071c28' stroke='%2300d4ff' stroke-width='.8'/%3E%3Cpath d='M10 16l10-1.6v3.2z' fill='%2300d4ff'/%3E%3Crect x='18' y='21' width='1.2' height='3' fill='%23ffe36b'/%3E%3Ccircle cx='18.6' cy='20.4' r='.7' fill='%23ffe36b'/%3E%3Cpath d='M24 11h4v1.2h-1.6V16H24z' fill='%23ff3db8'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>防卫</b>
+        <span>DFND</span>
+      </div>
+      <div class="status">
+        <div class="scores" aria-live="polite">
+          <div class="score" id="score-box">
+            <em>分数</em>
+            <b id="score">0</b>
+            <span id="score-add" class="score-add" hidden>+0</span>
+          </div>
+          <div class="score best">
+            <em>最高</em>
+            <b id="best">0</b>
+          </div>
+        </div>
+        <div class="row">
+          <span id="stage-label">第 1 波</span>
+          <span id="tag-label">防卫</span>
+          <span id="phase-label">巡空</span>
+          <span id="human-label">人 10</span>
+          <span id="combo-label" class="combo" hidden>连击</span>
+          <span class="pips" id="pips" aria-label="剩余生命"></span>
+        </div>
+      </div>
+      <div class="tools">
+        <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
+        <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <canvas id="c" tabindex="0" role="application" aria-label="防卫游戏区，左右环绕飞行，空格开火，Shift 翻头，救人"></canvas>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden"></div>
+      <div id="pads" class="pads" aria-hidden="true">
+        <div class="stick" id="stick" aria-label="飞行摇杆">
+          <i class="knob" id="knob"></i>
+        </div>
+        <button type="button" class="pad rev" id="pad-rev" aria-label="翻头">翻</button>
+        <button type="button" class="pad fire" id="pad-fire" aria-label="开火">火</button>
+      </div>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">DFND</p>
+          <h1 id="ov-title">防卫</h1>
+          <p class="lead" id="ov-lead">左右环绕飞，翻头开火救人。清完一波会涌虫潮。撞机扣命。</p>
+          <p class="ops" id="ov-ops">←↑↓→ / WASD 飞 · 空格开火 · Shift / Z 翻头 · R 重开 · M 静音</p>
+          <div class="ov-actions" id="ov-start">
+            <button type="button" id="btn-guard">防卫</button>
+            <button type="button" id="btn-nuke">核袭夜</button>
+          </div>
+          <div class="ov-actions gone" id="ov-end">
+            <button type="button" id="ov-retry">再守</button>
+            <button type="button" id="ov-modes">换模式</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">←↑↓→ 飞 · 空格开火 · Shift 翻头 · 救人后贴地放下</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>

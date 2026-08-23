@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#120e08" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>谍猎 · SPYH</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23120e08'/%3E%3Crect x='9' y='2' width='14' height='28' fill='%23201810'/%3E%3Crect x='15.2' y='2' width='1.6' height='28' fill='%23ffe36b' opacity='.7'/%3E%3Crect x='12' y='14' width='8' height='13' rx='1.2' fill='%23f4ead2'/%3E%3Crect x='13' y='16' width='6' height='4' rx='.4' fill='%2300f0ff'/%3E%3Crect x='13.1' y='14.3' width='1.6' height='1.1' fill='%23ffe36b'/%3E%3Crect x='17.3' y='14.3' width='1.6' height='1.1' fill='%23ffe36b'/%3E%3Crect x='13.2' y='25.4' width='1.6' height='1.2' fill='%23ff3d8a'/%3E%3Crect x='17.2' y='25.4' width='1.6' height='1.2' fill='%23ff3d8a'/%3E%3Cellipse cx='16' cy='28.6' rx='3.4' ry='1.1' fill='%236a2a80' opacity='.85'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>谍猎</b>
+        <span>SPYH</span>
+      </div>
+      <div class="status">
+        <div class="scores" aria-live="polite">
+          <div class="score" id="score-box">
+            <em>分数</em>
+            <b id="score">0</b>
+            <span id="score-add" class="score-add" hidden>+0</span>
+          </div>
+          <div class="score best">
+            <em>最高</em>
+            <b id="best">0</b>
+          </div>
+          <div class="score combo" id="combo-box">
+            <em>连击</em>
+            <b id="combo">×1</b>
+          </div>
+        </div>
+        <div class="row">
+          <span id="stage-label">国道</span>
+          <span id="tag-label">谍猎</span>
+          <span id="gun-label" class="gun">机枪</span>
+          <span id="oil-label" class="oil">油 3</span>
+          <span id="rocket-label" class="rock" hidden>弹 0</span>
+          <div class="fill boss" id="boss-wrap" hidden title="头目">
+            <em id="boss-name">装甲猎</em>
+            <div class="fill-track" aria-hidden="true"><i id="boss-bar"></i></div>
+          </div>
+          <span class="pips" id="pips" aria-label="剩余性命"></span>
+        </div>
+      </div>
+      <div class="tools">
+        <div class="modes" role="radiogroup" aria-label="模式">
+          <button type="button" id="mode-hunt" aria-pressed="true">谍猎</button>
+          <button type="button" id="mode-night" aria-pressed="false">夜路</button>
+        </div>
+        <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
+        <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <div class="board-wrap">
+        <canvas id="c" tabindex="0" role="application" aria-label="谍猎，纵版公路，射击、泼油、补给车"></canvas>
+      </div>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden"></div>
+      <div id="chain-pop" class="chain-pop hidden" aria-hidden="true">×2</div>
+      <div id="pad" class="pad">
+        <button type="button" id="btn-up" aria-label="加速">上</button>
+        <button type="button" id="btn-left" aria-label="左">左</button>
+        <button type="button" id="btn-fire" aria-label="开火">射</button>
+        <button type="button" id="btn-right" aria-label="右">右</button>
+        <button type="button" id="btn-down" aria-label="刹车">下</button>
+        <button type="button" id="btn-oil" aria-label="泼油">油</button>
+      </div>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">SPYH</p>
+          <h1 id="ov-title">谍猎</h1>
+          <p class="lead" id="ov-lead">纵版公路。机枪扫车，泼油甩敌，贴上补给车换武装。撞车丢命。</p>
+          <p class="ops" id="ov-ops">← → / WASD 开 · 空格开火 · Shift / Z 泼油 · R 重开 · M 静音</p>
+          <div class="ov-actions" id="ov-start">
+            <button type="button" id="btn-hunt">谍猎</button>
+            <button type="button" id="btn-night">夜路</button>
+          </div>
+          <div class="ov-actions gone" id="ov-end">
+            <button type="button" id="ov-again">再来</button>
+            <button type="button" id="ov-menu">换模式</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">← → 变道 · ↑ 加速 · 空格扫射 · Shift 泼油 · 贴上黄车补给</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>
