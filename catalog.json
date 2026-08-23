@@ -3476,5 +3476,65 @@
     "dir": "g/batsugun/",
     "url": "./g/batsugun/",
     "kind": "remake"
+  },
+  {
+    "n": 310,
+    "id": "dogyuun",
+    "title": "土枪",
+    "subtitle": "DOGY",
+    "blurb": "双机扫射，把地面装甲打穿。",
+    "hue": 34,
+    "tag": "复刻",
+    "dir": "g/dogyuun/",
+    "url": "./g/dogyuun/",
+    "kind": "remake"
+  },
+  {
+    "n": 311,
+    "id": "truxton",
+    "title": "达鲁",
+    "subtitle": "TRUX",
+    "blurb": "纵版扫射，把魔神编队打散。",
+    "hue": 272,
+    "tag": "复刻",
+    "dir": "g/truxton/",
+    "url": "./g/truxton/",
+    "kind": "remake"
+  },
+  {
+    "n": 312,
+    "id": "progear",
+    "title": "齿轮",
+    "subtitle": "PROG",
+    "blurb": "横扫齿轮要塞，把弹幕打穿。",
+    "hue": 44,
+    "tag": "复刻",
+    "dir": "g/progear/",
+    "url": "./g/progear/",
+    "kind": "remake"
+  },
+  {
+    "n": 313,
+    "id": "esprade",
+    "title": "超光",
+    "subtitle": "ESPR",
+    "blurb": "近身擦弹，把光核打爆。",
+    "hue": 300,
+    "tag": "复刻",
+    "dir": "g/esprade/",
+    "url": "./g/esprade/",
+    "kind": "remake"
+  },
+  {
+    "n": 314,
+    "id": "guwange",
+    "title": "弓眼",
+    "subtitle": "GUWA",
+    "blurb": "纵版射魂，把怨灵弹幕打散。",
+    "hue": 332,
+    "tag": "复刻",
+    "dir": "g/guwange/",
+    "url": "./g/guwange/",
+    "kind": "remake"
   }
 ]

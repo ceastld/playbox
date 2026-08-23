@@ -3615,7 +3615,7 @@
     "blurb": "双机扫射，把地面装甲打穿。",
     "hue": 34,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/dogyuun/",
     "kind": "remake"
   },
@@ -3627,7 +3627,7 @@
     "blurb": "纵版扫射，把魔神编队打散。",
     "hue": 272,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/truxton/",
     "kind": "remake"
   },
@@ -3639,7 +3639,7 @@
     "blurb": "横扫齿轮要塞，把弹幕打穿。",
     "hue": 44,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/progear/",
     "kind": "remake"
   },
@@ -3651,7 +3651,7 @@
     "blurb": "近身擦弹，把光核打爆。",
     "hue": 300,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/esprade/",
     "kind": "remake"
   },
@@ -3663,8 +3663,68 @@
     "blurb": "纵版射魂，把怨灵弹幕打散。",
     "hue": 332,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/guwange/",
+    "kind": "remake"
+  },
+  {
+    "n": 315,
+    "id": "ketsui",
+    "title": "决战",
+    "subtitle": "KETU",
+    "blurb": "弹幕对撞，把要塞核心打穿。",
+    "hue": 8,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/ketsui/",
+    "kind": "remake"
+  },
+  {
+    "n": 316,
+    "id": "mushihimesama",
+    "title": "虫姬",
+    "subtitle": "MUSHI",
+    "blurb": "纵版扫虫，把虫海弹幕打散。",
+    "hue": 118,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/mushihimesama/",
+    "kind": "remake"
+  },
+  {
+    "n": 317,
+    "id": "dimahoo",
+    "title": "魔炮",
+    "subtitle": "DIMA",
+    "blurb": "横扫魔弹，把元素核心打爆。",
+    "hue": 24,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/dimahoo/",
+    "kind": "remake"
+  },
+  {
+    "n": 318,
+    "id": "mars-matrix",
+    "title": "火阵",
+    "subtitle": "MARS",
+    "blurb": "反射弹幕，把火核打穿。",
+    "hue": 14,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/mars-matrix/",
+    "kind": "remake"
+  },
+  {
+    "n": 319,
+    "id": "giga-wing",
+    "title": "巨翼",
+    "subtitle": "GIGA",
+    "blurb": "反射弹幕，把巨型机打散。",
+    "hue": 206,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/giga-wing/",
     "kind": "remake"
   }
 ]
