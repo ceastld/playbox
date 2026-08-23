@@ -4952,5 +4952,17 @@
     "dir": "g/daytona/",
     "url": "./g/daytona/",
     "kind": "remake"
+  },
+  {
+    "n": 432,
+    "id": "outrunners",
+    "title": "双驶",
+    "subtitle": "ORUN",
+    "blurb": "进屏双驶，把对手从弯里甩开。",
+    "hue": 16,
+    "tag": "复刻",
+    "dir": "g/outrunners/",
+    "url": "./g/outrunners/",
+    "kind": "remake"
   }
 ]

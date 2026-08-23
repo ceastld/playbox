@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" fill="#140806"/>
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1a0808"/>
+      <stop offset="0.4" stop-color="#6a2018"/>
+      <stop offset="0.62" stop-color="#ff5a28"/>
+      <stop offset="1" stop-color="#ffb070"/>
+    </linearGradient>
+    <linearGradient id="flame" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffe36b"/>
+      <stop offset="0.45" stop-color="#ff5a28"/>
+      <stop offset="1" stop-color="#00e8ff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect x="3" y="4" width="28" height="56" rx="4" fill="url(#sky)"/>
+  <rect x="33" y="4" width="28" height="56" rx="4" fill="#0c1018"/>
+  <path d="M3 22 L12 16 L22 21 L31 15 V28 H3Z" fill="#2a1010" opacity=".9"/>
+  <path d="M33 22 L42 16 L52 21 L61 15 V28 H33Z" fill="#101428"/>
+  <path d="M6 60 L14 30 L20 30 L28 60Z" fill="#221010"/>
+  <path d="M36 60 L44 30 L50 30 L58 60Z" fill="#12182a"/>
+  <path d="M10 60 L15 34 L19 34 L24 60Z" fill="#ff5a28" opacity=".42"/>
+  <path d="M40 60 L45 34 L49 34 L54 60Z" fill="#00e8ff" opacity=".38"/>
+  <rect x="31" y="4" width="2" height="56" fill="#ffe36b"/>
+  <ellipse cx="17" cy="52" rx="8" ry="2.4" fill="#121016"/>
+  <path d="M14 50 L15.6 40 L18.4 40 L20 50 Z" fill="#ff5a28"/>
+  <rect x="15.2" y="46" width="3.6" height="2" rx=".3" fill="#ffe36b"/>
+  <path d="M15.4 50 l-1.4 6 2-.8z" fill="url(#flame)"/>
+  <path d="M18.6 50 l1.4 6 -2-.8z" fill="url(#flame)"/>
+  <ellipse cx="47" cy="52" rx="8" ry="2.4" fill="#10141c"/>
+  <path d="M44 50 L45.6 40 L48.4 40 L50 50 Z" fill="#00e8ff"/>
+  <rect x="45.2" y="46" width="3.6" height="2" rx=".3" fill="#ffe36b"/>
+  <circle cx="17" cy="38.6" r="1.8" fill="#fff4ea"/>
+  <circle cx="47" cy="38.6" r="1.8" fill="#e8fbff"/>
+</svg>
