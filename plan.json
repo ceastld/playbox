@@ -4563,7 +4563,7 @@
     "blurb": "纵版高炮，把机群从云里打穿。",
     "hue": 36,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/flak-attack/",
     "kind": "remake"
   },
@@ -4575,7 +4575,7 @@
     "blurb": "横版攀升，把核从洞里打穿。",
     "hue": 128,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/scramble/",
     "kind": "remake"
   },
@@ -4587,7 +4587,7 @@
     "blurb": "对战侍魂，把对手从架上斩穿。",
     "hue": 6,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/samurai-spirits/",
     "kind": "remake"
   },
@@ -4599,7 +4599,7 @@
     "blurb": "纵版豺狼，把据点从林里打穿。",
     "hue": 28,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/jackal/",
     "kind": "remake"
   },
@@ -4611,8 +4611,68 @@
     "blurb": "横版命力，把核心从核里打穿。",
     "hue": 154,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/life-force/",
+    "kind": "remake"
+  },
+  {
+    "n": 394,
+    "id": "nemesis",
+    "title": "复仇",
+    "subtitle": "NEMS",
+    "blurb": "横版复仇，把核心从核里打穿。",
+    "hue": 142,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/nemesis/",
+    "kind": "remake"
+  },
+  {
+    "n": 395,
+    "id": "jigoku-meguri",
+    "title": "狱巡",
+    "subtitle": "JGMG",
+    "blurb": "纵版狱巡，把弹幕从狱里打散。",
+    "hue": 8,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/jigoku-meguri/",
+    "kind": "remake"
+  },
+  {
+    "n": 396,
+    "id": "rush-n-attack",
+    "title": "突袭",
+    "subtitle": "RUSH",
+    "blurb": "横版突袭，把据点从夜里打穿。",
+    "hue": 118,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/rush-n-attack/",
+    "kind": "remake"
+  },
+  {
+    "n": 397,
+    "id": "iron-tank",
+    "title": "铁坦",
+    "subtitle": "ITNK",
+    "blurb": "纵版铁坦，把阵地从林里打穿。",
+    "hue": 34,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/iron-tank/",
+    "kind": "remake"
+  },
+  {
+    "n": 398,
+    "id": "fatal-fury",
+    "title": "饿狼",
+    "subtitle": "FFUR",
+    "blurb": "对战饿狼，把对手从架上打穿。",
+    "hue": 16,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/fatal-fury/",
     "kind": "remake"
   }
 ]
