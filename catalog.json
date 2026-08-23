@@ -4184,5 +4184,65 @@
     "dir": "g/vipers/",
     "url": "./g/vipers/",
     "kind": "remake"
+  },
+  {
+    "n": 369,
+    "id": "flash-gal",
+    "title": "闪击",
+    "subtitle": "FGLX",
+    "blurb": "纵版闪击，把机群从云里打穿。",
+    "hue": 48,
+    "tag": "复刻",
+    "dir": "g/flash-gal/",
+    "url": "./g/flash-gal/",
+    "kind": "remake"
+  },
+  {
+    "n": 370,
+    "id": "gunforce",
+    "title": "枪力",
+    "subtitle": "GFRC",
+    "blurb": "横版枪力，把装甲从巷里打穿。",
+    "hue": 22,
+    "tag": "复刻",
+    "dir": "g/gunforce/",
+    "url": "./g/gunforce/",
+    "kind": "remake"
+  },
+  {
+    "n": 371,
+    "id": "prehistoric-isle",
+    "title": "史前",
+    "subtitle": "PREH",
+    "blurb": "纵版史前，把恐龙从岛上打穿。",
+    "hue": 86,
+    "tag": "复刻",
+    "dir": "g/prehistoric-isle/",
+    "url": "./g/prehistoric-isle/",
+    "kind": "remake"
+  },
+  {
+    "n": 372,
+    "id": "nastro",
+    "title": "星轨",
+    "subtitle": "NAST",
+    "blurb": "横版星轨，把核心从轨道打穿。",
+    "hue": 232,
+    "tag": "复刻",
+    "dir": "g/nastro/",
+    "url": "./g/nastro/",
+    "kind": "remake"
+  },
+  {
+    "n": 373,
+    "id": "galactic",
+    "title": "银河",
+    "subtitle": "GLXY",
+    "blurb": "纵版银河，把弹幕从核里打散。",
+    "hue": 258,
+    "tag": "复刻",
+    "dir": "g/galactic/",
+    "url": "./g/galactic/",
+    "kind": "remake"
   }
 ]

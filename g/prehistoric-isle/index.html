@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#081204" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>史前 · PREH</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23081204'/%3E%3Cpath d='M4 22c6-4 10 1 14-2 5-3 8 2 12 0' fill='none' stroke='%237ad420' stroke-width='1.2' opacity='.7'/%3E%3Cpath d='M6 8l8 2-2 3M26 7l-7 3 3 2' fill='%23c6ff32' opacity='.85'/%3E%3Cpath d='M16 8l2.2 7 7 .8-5.6 4.2 2 6.6L16 23l-5.6 3.6 2-6.6L6.8 15.8l7-.8z' fill='%23c6ff32'/%3E%3Crect x='15.2' y='12' width='1.6' height='12' fill='%23ffe36b'/%3E%3Cellipse cx='16' cy='11' rx='2.4' ry='1.1' fill='%23e8ff7a'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>史前</b>
+        <span>PREH</span>
+      </div>
+      <div class="status">
+        <div class="scores" aria-live="polite">
+          <div class="score" id="score-box">
+            <em>分数</em>
+            <b id="score">0</b>
+            <span id="score-add" class="score-add" hidden>+0</span>
+          </div>
+          <div class="score best">
+            <em>最高</em>
+            <b id="best">0</b>
+          </div>
+        </div>
+        <div class="row">
+          <span id="stage-label">第 1 关</span>
+          <span id="tag-label">史前</span>
+          <span id="wpn-label" class="wpn">双管</span>
+          <span id="bomb-label" class="bombs">爆 ×3</span>
+          <span id="combo-label" class="combo" hidden>连击</span>
+          <span class="pips" id="pips" aria-label="剩余生命"></span>
+        </div>
+      </div>
+      <div class="tools">
+        <button type="button" id="btn-bomb" title="Shift / Z" aria-label="炸弹">爆</button>
+        <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
+        <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <canvas id="c" tabindex="0" role="application" aria-label="史前游戏区，八向飞战机，空格开火，Shift 扔炸弹，撞体扣命"></canvas>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden"></div>
+      <div id="pad" class="pad">
+        <button type="button" id="btn-pad" aria-label="炸弹">爆</button>
+      </div>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">PREH</p>
+          <h1 id="ov-title">史前</h1>
+          <p class="lead" id="ov-lead">战机北上。机枪扫翼龙，炸弹砸地兽。吃弹加宽，撞体扣命。三关之后是泰坦龙。</p>
+          <p class="ops" id="ov-ops">方向 / WASD 飞 · 空格开火 · Shift / Z 炸弹 · R 重开 · M 静音</p>
+          <div class="ov-actions" id="ov-start">
+            <button type="button" id="btn-isle">史前</button>
+            <button type="button" id="btn-fire">炎岛</button>
+          </div>
+          <div class="ov-actions gone" id="ov-end">
+            <button type="button" id="ov-retry">再来</button>
+            <button type="button" id="ov-modes">换模式</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">方向飞 · 空格开火 · Shift 炸弹 · 吃弹加宽</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>
