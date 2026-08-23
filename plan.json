@@ -5115,7 +5115,7 @@
     "blurb": "横版忍二，把忍者从巷里斩穿。",
     "hue": 44,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/shinobi2/",
     "kind": "remake"
   },
@@ -5153,6 +5153,18 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/virtua-racing/",
+    "kind": "remake"
+  },
+  {
+    "n": 439,
+    "id": "contra2",
+    "title": "魂斗2",
+    "subtitle": "CTR2",
+    "blurb": "横版魂斗2，把机枪从巷里打穿。",
+    "hue": 18,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/contra2/",
     "kind": "remake"
   }
 ]

@@ -4964,5 +4964,17 @@
     "dir": "g/outrunners/",
     "url": "./g/outrunners/",
     "kind": "remake"
+  },
+  {
+    "n": 435,
+    "id": "shinobi2",
+    "title": "忍二",
+    "subtitle": "SHN2",
+    "blurb": "横版忍二，把忍者从巷里斩穿。",
+    "hue": 44,
+    "tag": "复刻",
+    "dir": "g/shinobi2/",
+    "url": "./g/shinobi2/",
+    "kind": "remake"
   }
 ]
