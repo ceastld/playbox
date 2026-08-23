@@ -4995,7 +4995,7 @@
     "blurb": "纵版银枪，把三色从空里打穿。",
     "hue": 214,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/radiant-silvergun/",
     "kind": "remake"
   },
@@ -5081,6 +5081,18 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/outrunners/",
+    "kind": "remake"
+  },
+  {
+    "n": 433,
+    "id": "daytona",
+    "title": "沙圈",
+    "subtitle": "DAYT",
+    "blurb": "进屏沙圈，把对手从弯里甩开。",
+    "hue": 28,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/daytona/",
     "kind": "remake"
   }
 ]

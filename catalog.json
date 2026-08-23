@@ -4892,5 +4892,17 @@
     "dir": "g/super-hang-on/",
     "url": "./g/super-hang-on/",
     "kind": "remake"
+  },
+  {
+    "n": 425,
+    "id": "radiant-silvergun",
+    "title": "银枪",
+    "subtitle": "RSG",
+    "blurb": "纵版银枪，把三色从空里打穿。",
+    "hue": 214,
+    "tag": "复刻",
+    "dir": "g/radiant-silvergun/",
+    "url": "./g/radiant-silvergun/",
+    "kind": "remake"
   }
 ]
