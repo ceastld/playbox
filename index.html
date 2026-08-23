@@ -22,9 +22,10 @@
     <section class="hero">
       <p class="kicker">pick a room</p>
       <h1>百戏</h1>
-      <p class="lead">先玩精选。想逛的话再按类型筛，别对着一百张卡发呆。</p>
+      <p class="lead">先玩精选。复刻按射击、横版、清版这些小类挤在一起，点进去还能接着玩同类。</p>
     </section>
     <nav id="filters" class="filters" aria-label="分类"></nav>
+    <nav id="subs" class="filters subs hidden" aria-label="小类"></nav>
     <p class="shelf-head" id="shelf-head"></p>
     <section id="grid" class="grid" aria-live="polite"></section>
     <p id="empty" class="empty hidden">没有叫这个的戏</p>
@@ -38,6 +39,7 @@
       </div>
       <a id="open-tab" href="#" target="_blank" rel="noreferrer">新标签打开</a>
     </div>
+    <nav id="more" class="more hidden" aria-label="类似游戏"></nav>
     <iframe id="frame" title="game" allow="autoplay"></iframe>
   </section>
   <script src="app.js"></script>

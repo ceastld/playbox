@@ -116,3 +116,24 @@ iframe { flex: 1; width: 100%; border: 0; background: #000; }
 @media (max-width: 720px) {
   .filters, .shelf-head { padding-left: 16px; padding-right: 16px; }
 }
+
+.filters.subs { padding-top: 6px; }
+.filters.subs .chip { font-size: 11px; padding: 4px 10px; letter-spacing: .1em; }
+.grid.shelved { display: block; padding-top: 8px; }
+.shelf-label { max-width: 1320px; margin: 18px auto 8px; padding: 0 2px;
+  color: #c9c6e8; font-size: 13px; letter-spacing: .2em; font-weight: 700; }
+.shelf-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 12px; }
+.more { display: flex; align-items: center; gap: 8px; padding: 7px 12px;
+  border-bottom: 1px solid rgba(255,255,255,.08); background: rgba(7,6,15,.92);
+  overflow-x: auto; flex-shrink: 0; }
+.more-lab { color: var(--dim); font-size: 11px; letter-spacing: .16em; white-space: nowrap; }
+.more-chip, .more-nav { appearance: none; color: #fff; background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.14); border-radius: 999px; padding: 4px 10px;
+  font: inherit; font-size: 12px; letter-spacing: .08em; cursor: pointer; white-space: nowrap; }
+.more-chip:hover, .more-nav:hover { border-color: rgba(0,240,255,.45); background: rgba(0,240,255,.1); }
+.more-nav { border-color: rgba(255,61,184,.35); }
+@media (max-width: 720px) {
+  .shelf-row { grid-template-columns: 1fr; gap: 10px; }
+  .more { padding-left: 10px; padding-right: 10px; }
+}

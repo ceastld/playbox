@@ -10,26 +10,68 @@
   const empty = document.getElementById("empty");
   const q = document.getElementById("q");
   const filtersEl = document.getElementById("filters");
+  const subsEl = document.getElementById("subs");
   const shelfHead = document.getElementById("shelf-head");
+  const moreEl = document.getElementById("more");
 
   let games = [];
   let filter = "picks";
   const PICKS = ["twenty48", "mirror-step", "echo-ping", "melt-core", "tide-trace", "ghost-jump", "beat-blade", "pebble-skip", "fold-crane", "dice-lock", "night-gate", "fuse-cut", "yarn-ball"];
   const FAMILIES = [
     { id: "picks", title: "精选", hint: "从这儿开始，这几款最好上手" },
-    { id: "remake", title: "复刻", hint: "经典重做，手感对齐原版", kind: "remake" },
+    { id: "remake", title: "复刻", hint: "同类挤在一起，再按小类翻", kind: "remake" },
     { id: "pulse", title: "节奏", tags: "拍铃听律音笛谱" },
     { id: "water", title: "水面", tags: "接波漂涉潜滑雾气斟帆露" },
     { id: "mind", title: "巧思", tags: "记径迷屑找躲隐巧察印钥门月影时骰" },
     { id: "move", title: "动作", tags: "跳踏剪切撕凿速射转投推弹" },
     { id: "grow", title: "养成", tags: "苔藤养圈栖引爬牧" },
-    { id: "all", title: "全部", hint: "一百间都在这儿" }
+    { id: "all", title: "全部", hint: "按类型成组，同类挨着" }
   ];
   function familyOf(g) {
     if (g.kind === "remake" || g.pack === "classic") return "remake";
     const tag = g.tag || "";
     for (const f of FAMILIES) { if (f.tags && f.tags.includes(tag)) return f.id; }
     return "all";
+  }
+
+  const PACK_OF = {"twenty48":"board","snake":"board","minesweeper":"board","tetris":"board","five48":"board","snake-gate":"board","brick-out":"board","hex-mines":"board","tetra-40":"board","soko-box":"board","wall-pong":"board","rev-disc":"board","fruit-cut":"board","stack-crash":"board","pin-ball":"board","star-raid":"shoot","chain-boom":"board","frog-hop":"shoot","horde-bite":"shoot","gem-three":"board","air-puck":"board","beat-tap":"board","bubble-shot":"shoot","rock-spin":"shoot","dunk-rim":"board","centi-crawl":"shoot","miss-cmd":"shoot","qix-cut":"board","dot-munch":"shoot","kaboom-catch":"board","kong-climb":"side","joust-kick":"shoot","ski-slide":"shoot","tempest-tube":"shoot","pipe-flow":"board","bomb-maze":"side","moon-run":"shoot","lode-dig":"side","cube-hop":"board","ice-peak":"board","river-raid":"shoot","tapper-pour":"board","scram-run":"shoot","berzerk-run":"side","time-loop":"shoot","defend-line":"shoot","lift-gun":"side","burger-stack":"board","paper-toss":"board","gaunt-hall":"side","out-run":"race","xenon-run":"shoot","pole-dash":"race","sky-1942":"shoot","crystal-run":"side","track-dash":"shoot","zax-iso":"shoot","punch-bag":"fight","space-rush":"shoot","ikari-run":"side","after-burn":"shoot","marble-mad":"board","r-type-run":"shoot","hang-on":"race","gradius-run":"shoot","shinobi-run":"side","spy-hunt":"race","contra-run":"side","wonder-isle":"side","dual-cut":"brawl","beast-run":"side","rage-street":"brawl","castle-whip":"side","mega-run":"side","axe-war":"brawl","ghost-run":"side","slug-run":"side","rain-isle":"side","gal-raid":"shoot","kung-leap":"brawl","bubble-twin":"shoot","invader":"shoot","twin-bee":"shoot","duck-hunt":"shoot","street-fist":"fight","xevi-run":"shoot","phoenix":"shoot","puzzle-pop":"board","fantasy-sky":"shoot","wolf-gun":"shoot","green-raid":"side","star-force":"shoot","alex-leap":"side","pac-land":"side","sea-1943":"shoot","pooyan":"shoot","mr-do":"board","pengo-push":"board","balloon-kid":"shoot","ninja-gaid":"side","bomb-jack":"board","circus-jump":"board","rally-x":"shoot","jungle-king":"side","kangaroo":"side","gyruss":"shoot","robotron":"shoot","chackn-pop":"shoot","sinistar":"shoot","juno-first":"shoot","mappy":"side","wizard-wor":"side","elevator-act":"side","carnival":"shoot","congo-bongo":"shoot","gorf":"shoot","food-fight":"board","qbert":"board","zookeeper":"shoot","crazy-climb":"side","alibaba":"side","bosconian":"shoot","ikaruga":"shoot","super-sprint":"race","skate-720":"race","millipede":"shoot","asteroids":"shoot","battlezone":"shoot","tron-cycle":"shoot","outrun":"race","star-castle":"shoot","warlords":"shoot","lunar-land":"board","major-havoc":"shoot","cloak-dagger":"side","gaplus":"shoot","star-trench":"shoot","gravitar":"shoot","space-fury":"shoot","omega-race":"race","red-baron":"shoot","black-widow":"shoot","star-fire":"shoot","xenophobe":"side","blasteroids":"shoot","vanguard":"shoot","astro-blaster":"shoot","rampage":"brawl","raiden":"shoot","gun-smoke":"shoot","rygar":"side","choplifter":"shoot","flying-shark":"shoot","tmnt":"brawl","twin-cobra":"shoot","ice-climber":"side","venture":"side","x-men":"brawl","cadillacs":"brawl","blazing-star":"shoot","punisher":"brawl","captain-commando":"brawl","knights-round":"brawl","p-47":"shoot","willow":"shoot","simpsons":"brawl","sunset-riders":"brawl","strider":"side","section-z":"shoot","magic-sword":"shoot","ghosts-goblins":"side","aliens":"shoot","cabal":"shoot","capcom-1941":"shoot","snow-bros":"board","pang":"board","forgotten-worlds":"shoot","excitebike":"race","bionic":"side","splatterhouse":"side","ninja-spirit":"side","toki":"side","kiwi":"side","cyber-nator":"shoot","netherworld":"shoot","twin-hawk":"shoot","rolling-thunder":"side","gunstar":"side","silkworm":"shoot","axelay":"shoot","darius":"shoot","viewtiful":"brawl","super-contra":"side","chase-hq":"race","space-harrier":"shoot","psycho-soldier":"shoot","salamander2":"shoot","zaxxon":"shoot","gauntlet":"side","donpachi":"shoot","gunbird":"shoot","power-drift":"race","aleste":"shoot","cotton":"shoot","baraduke":"shoot","r-type2":"shoot","batsugun":"shoot","dogyuun":"shoot","truxton":"shoot","progear":"shoot","esprade":"shoot","guwange":"shoot","ketsui":"shoot","mushihimesama":"shoot","dimahoo":"shoot","mars-matrix":"shoot","giga-wing":"shoot","ibara":"shoot","battle-garegga":"shoot","varth":"shoot","armed-police":"shoot","dangun-feveron":"shoot","pink-sweets":"shoot","outrun2":"race","deathsmiles":"shoot","sengoku-ace":"shoot","shikigami":"shoot","metal-black":"shoot","pulstar":"shoot","last-resort":"shoot","striker-1945":"shoot","sonic-wings":"shoot","samurai-aki":"shoot","gunnail":"shoot","gunbarich":"shoot","parodius":"shoot","bio-metal":"shoot","dragon-spirit":"shoot","image-fight":"shoot","super-star":"shoot","terra-crest":"shoot","cybattler":"shoot","macross":"shoot","star-fox":"shoot","gyrodine":"shoot","blast-off":"shoot","daioh":"shoot","phelios":"shoot","twinkle-star":"fight","vfive":"shoot","gunhed":"shoot","dragoon":"shoot","p47":"shoot","plus-alpha":"shoot","warblade":"shoot","stardust":"shoot","liekong":"shoot","nuke-raid":"shoot","sky-ace":"shoot","blade-storm":"shoot","nexa":"shoot","outzone":"shoot","zerowing":"shoot","hellfire":"shoot","sonic-boom":"shoot","vipers":"shoot","flash-gal":"shoot","gunforce":"side","prehistoric-isle":"shoot","nastro":"shoot","galactic":"shoot","raystorm":"shoot","dragon-blaze":"shoot","xexex":"shoot","layered":"shoot","soukyugurentai":"shoot","thunder-force-iii":"shoot","gungage":"shoot","night-striker":"shoot","last-blade":"fight","thunder-cross":"shoot","ajax":"shoot","thunder-fox":"side","mercs":"shoot","time-pilot":"shoot","in-the-hunt":"shoot","flak-attack":"shoot","scramble":"shoot","samurai-spirits":"fight","jackal":"shoot","life-force":"shoot","nemesis":"shoot","jigoku-meguri":"shoot","rush-n-attack":"side","iron-tank":"shoot","fatal-fury":"fight","king-of-fighters":"fight","terra-force":"shoot","devastators":"shoot","n1942":"shoot","rapier":"shoot","super-cobra":"shoot","defender":"shoot","spy-hunter":"shoot","joust":"fight","art-of-fighting":"fight","cosmo-gang":"shoot","sky-kid":"shoot","galaga88":"shoot","toobin":"board","windjammers":"board","after-burner":"shoot","tempest":"shoot","space-invaders":"shoot","missile-command":"shoot","stargate":"shoot","galaxian":"shoot","xevious":"shoot","n1941":"shoot","raiden2":"shoot","thunder-force4":"shoot","do-don-pachi":"shoot","star-wars":"shoot","n1944":"shoot","super-hang-on":"race","radiant-silvergun":"shoot","gradius2":"shoot","r-type-leo":"shoot","ghouls-n-ghosts":"side","daytona":"race","outrunners":"race","shinobi2":"side","thunder-force2":"shoot","streets-of-rage2":"brawl","wonder-boy":"side","virtua-racing":"race","contra2":"side","castlevania":"side","ninja-gaiden2":"side","ghosts-n-goblins":"side","golden-axe2":"brawl","bubble-bobble":"shoot","shinobi3":"side","streets-of-rage3":"brawl","contra3":"side","r-type3":"shoot","darius2":"shoot","gradius3":"shoot","double-dragon2":"brawl","kung-fu2":"brawl","metalslug2":"side","final-fight2":"brawl","metalslug3":"side","streets-of-rage4":"brawl","castlevania2":"side","shinobi4":"side","alex-kidd":"side","thunder-force3":"shoot","ninja-gaiden3":"side","golden-axe3":"brawl","double-dragon3":"brawl","wonder-boy3":"side"};
+  const SERIES_ALIAS = {"r-type-run":"r-type","r-type-leo":"r-type","r-type2":"r-type","r-type3":"r-type","r-type-delta":"r-type","gradius-run":"gradius","gradius2":"gradius","gradius3":"gradius","life-force":"gradius","nemesis":"gradius","thunder-force-iii":"thunder-force","thunder-force2":"thunder-force","thunder-force3":"thunder-force","thunder-force4":"thunder-force","after-burn":"after-burner","after-burner2":"after-burner","out-run":"outrun","outrun2":"outrun","outrunners":"outrun","ninja-gaid":"ninja-gaiden","ninja-gaiden2":"ninja-gaiden","ninja-gaiden3":"ninja-gaiden","shinobi-run":"shinobi","shinobi2":"shinobi","shinobi3":"shinobi","shinobi4":"shinobi","ghost-run":"ghosts","ghosts-goblins":"ghosts","ghosts-n-goblins":"ghosts","ghouls-n-ghosts":"ghosts","wonder-isle":"wonder-boy","wonder-boy3":"wonder-boy","alex-leap":"alex-kidd","contra-run":"contra","super-contra":"contra","contra2":"contra","contra3":"contra","slug-run":"metalslug","metalslug2":"metalslug","metalslug3":"metalslug","metalslug4":"metalslug","rage-street":"streets-of-rage","streets-of-rage2":"streets-of-rage","streets-of-rage3":"streets-of-rage","streets-of-rage4":"streets-of-rage","dual-cut":"double-dragon","double-dragon2":"double-dragon","double-dragon3":"double-dragon","kung-leap":"kung-fu","kung-fu2":"kung-fu","castle-whip":"castlevania","castlevania2":"castlevania","castlevania3":"castlevania","axe-war":"golden-axe","golden-axe2":"golden-axe","golden-axe3":"golden-axe","bubble-twin":"bubble-bobble","bubble-bobble":"bubble-bobble","sky-1942":"194x","n1941":"194x","n1942":"194x","n1944":"194x","capcom-1941":"194x","sea-1943":"194x","striker-1945":"194x","raiden":"raiden","raiden2":"raiden","donpachi":"donpachi","do-don-pachi":"donpachi","hang-on":"hang-on","super-hang-on":"hang-on","invader":"space-invaders","space-invaders":"space-invaders","miss-cmd":"missile-command","missile-command":"missile-command","gal-raid":"galaxian","galaxian":"galaxian","galaga88":"galaxian","gaplus":"galaxian","xevi-run":"xevious","xevious":"xevious","darius":"darius","darius2":"darius","final-fight2":"final-fight","outrun":"outrun"};
+
+  const PACKS = [
+    { id: "shoot", title: "射击", hint: "弹幕、纵版、横弹" },
+    { id: "side", title: "横版", hint: "跑跳斩、魂斗金弹" },
+    { id: "brawl", title: "清版", hint: "街上连打" },
+    { id: "fight", title: "对战", hint: "出招对打" },
+    { id: "race", title: "竞速", hint: "甩尾过弯" },
+    { id: "board", title: "巧盘", hint: "消、合、推、翻" }
+  ];
+  let sub = "all";
+
+  function packOf(g) {
+    if (PACK_OF[g.id]) return PACK_OF[g.id];
+    return familyOf(g);
+  }
+
+  function seriesKey(g) {
+    const id = g.id || "";
+    if (SERIES_ALIAS[id]) return SERIES_ALIAS[id];
+    return id.replace(/-iii$/, "").replace(/-ii$/, "").replace(/\d+$/, "").replace(/-$/, "") || id;
+  }
+
+  function bySeries(a, b) {
+    const sa = seriesKey(a), sb = seriesKey(b);
+    if (sa !== sb) return sa < sb ? -1 : 1;
+    const na = (a.id.match(/(\d+)$/) || ["","0"])[1].padStart(3, "0");
+    const nb = (b.id.match(/(\d+)$/) || ["","0"])[1].padStart(3, "0");
+    if (na !== nb) return na < nb ? -1 : 1;
+    return (a.title || "").localeCompare(b.title || "", "zh");
+  }
+
+  function packTitle(id) {
+    const p = PACKS.find((x) => x.id === id);
+    if (p) return p.title;
+    const f = FAMILIES.find((x) => x.id === id);
+    return f ? f.title : "其他";
   }
 
   function hash32(s) {
@@ -453,7 +495,7 @@
   }
 
   function hay(g) {
-    return [g.title, g.subtitle, g.tag, g.blurb].join(" ").toLowerCase();
+    return [g.title, g.subtitle, g.tag, g.blurb, packTitle(packOf(g))].join(" ").toLowerCase();
   }
 
   function paintFilters() {
@@ -467,6 +509,7 @@
         btn.textContent = f.title;
         btn.addEventListener("click", () => {
           filter = f.id;
+          sub = "all";
           render();
         });
         filtersEl.appendChild(btn);
@@ -474,6 +517,31 @@
     }
     filtersEl.querySelectorAll(".chip").forEach((btn) => {
       btn.setAttribute("aria-pressed", btn.dataset.id === filter ? "true" : "false");
+    });
+    if (!subsEl) return;
+    const showSubs = filter === "remake" || filter === "all";
+    subsEl.classList.toggle("hidden", !showSubs);
+    if (!showSubs) return;
+    if (!subsEl.childElementCount) {
+      const all = document.createElement("button");
+      all.type = "button";
+      all.className = "chip";
+      all.dataset.id = "all";
+      all.textContent = "小类";
+      all.addEventListener("click", () => { sub = "all"; render(); });
+      subsEl.appendChild(all);
+      PACKS.forEach((p) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "chip";
+        btn.dataset.id = p.id;
+        btn.textContent = p.title;
+        btn.addEventListener("click", () => { sub = p.id; filter = "remake"; render(); });
+        subsEl.appendChild(btn);
+      });
+    }
+    subsEl.querySelectorAll(".chip").forEach((btn) => {
+      btn.setAttribute("aria-pressed", btn.dataset.id === sub ? "true" : "false");
     });
   }
 
@@ -483,9 +551,23 @@
       const byId = new Map(games.map((g) => [g.id, g]));
       return PICKS.map((id) => byId.get(id)).filter(Boolean);
     }
-    if (filter === "remake") return games.filter((g) => familyOf(g) === "remake");
-    if (filter === "all") return games.slice();
-    return games.filter((g) => familyOf(g) === filter);
+    if (filter === "remake") {
+      let list = games.filter((g) => familyOf(g) === "remake");
+      if (sub !== "all") list = list.filter((g) => packOf(g) === sub);
+      return list.slice().sort(bySeries);
+    }
+    if (filter === "all") return games.slice().sort((a, b) => {
+      const pa = packOf(a), pb = packOf(b);
+      if (pa !== pb) {
+        const ia = PACKS.findIndex((p) => p.id === pa);
+        const ib = PACKS.findIndex((p) => p.id === pb);
+        const oa = ia < 0 ? 90 : ia, ob = ib < 0 ? 90 : ib;
+        if (oa !== ob) return oa - ob;
+        return pa < pb ? -1 : 1;
+      }
+      return bySeries(a, b);
+    });
+    return games.filter((g) => familyOf(g) === filter).slice().sort(bySeries);
   }
 
   function render() {
@@ -497,7 +579,10 @@
     const fam = FAMILIES.find((f) => f.id === filter) || FAMILIES[0];
     if (shelfHead) {
       if (needle) shelfHead.textContent = list.length ? ("\u641c\u5230 " + list.length + " \u6b3e") : "\u6ca1\u6709\u53eb\u8fd9\u4e2a\u7684\u620f";
-      else if (fam.hint) shelfHead.textContent = fam.title + " \u00b7 " + fam.hint;
+      else if (filter === "remake" && sub !== "all") {
+        const p = PACKS.find((x) => x.id === sub);
+        shelfHead.textContent = (p ? p.title : "") + " \u00b7 " + (p && p.hint ? p.hint + " \u00b7 " : "") + list.length + " \u6b3e";
+      } else if (fam.hint) shelfHead.textContent = fam.title + " \u00b7 " + fam.hint;
       else shelfHead.textContent = fam.title + " \u00b7 " + list.length + " \u6b3e";
     }
     if (!games.length && !needle) {
@@ -505,7 +590,32 @@
       grid.textContent = "\u8fd8\u6ca1\u6709\u8fc7\u5173\u7684\u6e38\u620f\u3002\u7b2c\u4e00\u6279\u5199\u5b8c\u4f1a\u6302\u5230\u8fd9\u91cc\u3002";
       return;
     }
-    list.forEach((g, i) => grid.appendChild(card(g, i)));
+    const shelve = !needle && (filter === "remake" || filter === "all") && sub === "all";
+    grid.classList.toggle("shelved", shelve);
+    if (shelve) {
+      const groups = [];
+      let cur = null;
+      list.forEach((g) => {
+        const pid = packOf(g);
+        if (!cur || cur.id !== pid) {
+          cur = { id: pid, title: packTitle(pid), items: [] };
+          groups.push(cur);
+        }
+        cur.items.push(g);
+      });
+      groups.forEach((grp) => {
+        const lab = document.createElement("p");
+        lab.className = "shelf-label";
+        lab.textContent = grp.title + " · " + grp.items.length;
+        grid.appendChild(lab);
+        const row = document.createElement("div");
+        row.className = "shelf-row";
+        grp.items.forEach((g, i) => row.appendChild(card(g, i)));
+        grid.appendChild(row);
+      });
+    } else {
+      list.forEach((g, i) => grid.appendChild(card(g, i)));
+    }
     let msg = "";
     if (!list.length) {
       if (needle) msg = "\u6ca1\u6709\u53eb\u8fd9\u4e2a\u7684\u620f";
@@ -522,12 +632,62 @@
     return "./g/" + g.id + "/";
   }
 
+  function kinOf(g) {
+    const sid = seriesKey(g);
+    const same = games.filter((x) => x.id !== g.id && seriesKey(x) === sid).sort(bySeries);
+    const rest = games.filter((x) => x.id !== g.id && packOf(x) === packOf(g) && seriesKey(x) !== sid).sort(bySeries);
+    return same.concat(rest);
+  }
+
+  function paintMore(g) {
+    if (!moreEl) return;
+    moreEl.innerHTML = "";
+    const kin = kinOf(g);
+    if (!kin.length) {
+      moreEl.classList.add("hidden");
+      return;
+    }
+    moreEl.classList.remove("hidden");
+    const lab = document.createElement("span");
+    lab.className = "more-lab";
+    lab.textContent = "类似 · " + packTitle(packOf(g));
+    moreEl.appendChild(lab);
+    const ring = games.filter((x) => packOf(x) === packOf(g)).sort(bySeries);
+    const ix = ring.findIndex((x) => x.id === g.id);
+    if (ring.length > 1 && ix >= 0) {
+      const prev = document.createElement("button");
+      prev.type = "button";
+      prev.className = "more-nav";
+      prev.textContent = "上一款";
+      prev.addEventListener("click", () => openGame(ring[(ix - 1 + ring.length) % ring.length]));
+      moreEl.appendChild(prev);
+    }
+    kin.slice(0, 8).forEach((x) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "more-chip";
+      btn.textContent = x.title;
+      btn.title = x.blurb || x.subtitle || "";
+      btn.addEventListener("click", () => openGame(x));
+      moreEl.appendChild(btn);
+    });
+    if (ring.length > 1 && ix >= 0) {
+      const next = document.createElement("button");
+      next.type = "button";
+      next.className = "more-nav";
+      next.textContent = "下一款";
+      next.addEventListener("click", () => openGame(ring[(ix + 1) % ring.length]));
+      moreEl.appendChild(next);
+    }
+  }
+
   function openGame(g) {
     playTitle.textContent = g.title;
     playSub.textContent = g.subtitle || "";
     const src = hrefOf(g);
     openTab.href = src;
     frame.src = src;
+    paintMore(g);
     lobby.classList.add("hidden");
     play.classList.remove("hidden");
     history.replaceState({ play: g.id }, "", "#/" + g.id);
@@ -535,6 +695,7 @@
 
   function closeGame() {
     frame.src = "about:blank";
+    if (moreEl) moreEl.innerHTML = "";
     play.classList.add("hidden");
     lobby.classList.remove("hidden");
     history.replaceState({}, "", "./");
