@@ -31,6 +31,9 @@
   var TAU = Math.PI * 2;
   var BEST_KEY = 'playbox-kiwi-best';
   var MUTE_KEY = 'playbox-kiwi-mute';
+  var AUTO_SPEED_KEY = 'playbox-kiwi-auto-speed';
+  var SPEED_LABELS = ['', '慢', '中', '快', '极快'];
+  var AUTO_SCALE = [1, 0.52, 0.78, 1, 3.4];
 
   var LIME = [212, 255, 50];
   var KIWI = [180, 224, 24];
@@ -248,6 +251,538 @@
     return false;
   }
 
+  function loadAutoSpeed() {
+    try {
+      var n = parseInt(localStorage.getItem(AUTO_SPEED_KEY) || '3', 10);
+      if (!isFinite(n) || n < 1 || n > 4) return 3;
+      return n;
+    } catch (e) {
+      return 3;
+    }
+  }
+  function saveAutoSpeed(n) {
+    try { localStorage.setItem(AUTO_SPEED_KEY, String(n)); } catch (e) { /* ignore */ }
+  }
+
+  function autoPlatAt(st, x, fromFeet, maxDrop) {
+    var i, p, best = null;
+    if (maxDrop == null) maxDrop = 70;
+    for (i = 0; i < st.plats.length; i++) {
+      p = st.plats[i];
+      if (x < p.x - 3 || x > p.x + p.w + 3) continue;
+      if (p.y < fromFeet - 8) continue;
+      if (p.y > fromFeet + maxDrop) continue;
+      if (!best || p.y < best.y) best = p;
+    }
+    return best;
+  }
+
+  function autoLandAt(st, x, y) {
+    return autoPlatAt(st, x, y + FOOT - 2, 36);
+  }
+
+  function autoOverWater(st, x, y) {
+    var land;
+    if (!st.waterY) return false;
+    land = autoPlatAt(st, x, y + FOOT - 4, Math.max(24, st.waterY - (y + FOOT) + 12));
+    if (land && land.y < st.waterY - 2) return false;
+    return y + FOOT > st.waterY - 48;
+  }
+
+  function autoWaterBetween(st, x0, x1) {
+    var a, b, x, land;
+    if (!st.waterY) return false;
+    a = Math.min(x0, x1);
+    b = Math.max(x0, x1);
+    for (x = a; x <= b; x += 14) {
+      land = autoPlatAt(st, x, 8, st.waterY - 6);
+      if (!land || land.y >= st.waterY - 2) return true;
+    }
+    return false;
+  }
+
+  function autoGapAhead(st, x, y, dir, look) {
+    var nx = x + dir * look;
+    var feet = y + FOOT;
+    if (nx < 10 || nx > st.worldW - 10) return true;
+    if (autoPlatAt(st, nx, feet - 4, 78)) return false;
+    if (st.waterY > 0 && feet > st.waterY - 90) return true;
+    return true;
+  }
+
+  function autoRideKind(p) {
+    return p && p.ride ? p.ride.kind : '';
+  }
+
+  function autoWaterSafe(p) {
+    var k = autoRideKind(p);
+    return k === 'hover' || k === 'blimp';
+  }
+
+  function autoNextStep(st, p, goal) {
+    var feet = p.y + FOOT;
+    var jh = jumpH();
+    var i, pl, best = null, score, bestS = 1e9, mid, dx;
+    if (!goal) return null;
+    for (i = 0; i < st.plats.length; i++) {
+      pl = st.plats[i];
+      if (pl.y >= feet - 8) continue;
+      if (pl.y < goal.y - 14) continue;
+      if (feet - pl.y > jh + 14) continue;
+      if (p.grounded && Math.abs(pl.y - feet) < 6) continue;
+      mid = pl.x + pl.w * 0.5;
+      dx = Math.abs(p.x - mid);
+      if (dx > 210 && (p.x < pl.x - 40 || p.x > pl.x + pl.w + 40)) continue;
+      score = Math.abs(mid - goal.x) * 0.35 + (feet - pl.y) * 0.18 + dx * 0.28;
+      score += Math.abs(pl.y - (goal.y + FOOT)) * 0.12;
+      if (score < bestS) {
+        bestS = score;
+        best = pl;
+      }
+    }
+    return best;
+  }
+
+  function autoShotTgt(st, p) {
+    var i, e, c, dx, dy, best = null, bestD = 1e9, d;
+    if (st.whale && st.whale.state === 'leap') {
+      dx = st.whale.x - p.x;
+      dy = st.whale.y - p.y;
+      if (Math.abs(dy) < 30 && Math.abs(dx) < 250) {
+        return { x: st.whale.x, y: st.whale.y, kind: 'whale' };
+      }
+    }
+    for (i = 0; i < st.cages.length; i++) {
+      c = st.cages[i];
+      if (c.open) continue;
+      dx = c.x - p.x;
+      dy = (c.y - 10) - p.y;
+      if (Math.abs(dy) < 22 && Math.abs(dx) > 8 && Math.abs(dx) < 260) {
+        d = Math.abs(dx);
+        if (d < bestD) {
+          bestD = d;
+          best = { x: c.x, y: c.y - 10, kind: 'cage' };
+        }
+      }
+    }
+    for (i = 0; i < st.foes.length; i++) {
+      e = st.foes[i];
+      if (e.dead) continue;
+      dx = e.x - p.x;
+      dy = e.y - p.y;
+      if (Math.abs(dy) < 18 && Math.abs(dx) > 6 && Math.abs(dx) < 240) {
+        d = Math.abs(dx) * (e.kind === 'bird' ? 0.85 : 1);
+        if (d < bestD) {
+          bestD = d;
+          best = { x: e.x, y: e.y, kind: 'foe' };
+        }
+      }
+    }
+    return best;
+  }
+
+  function autoPickGoal(st) {
+    var p = st.player;
+    var i, c, b, cr, best = null, bestS = 1e9, s, closed, ride;
+    var bestB = null, bestBd = 1e9, bestC = null, bestCd = 1e9;
+    closed = [];
+    for (i = 0; i < st.cages.length; i++) {
+      c = st.cages[i];
+      if (!c.open) closed.push(c);
+    }
+    if (closed.length) {
+      for (i = 0; i < closed.length; i++) {
+        c = closed[i];
+        s = Math.abs(c.x - p.x) + Math.abs(c.y - p.y) * 0.7;
+        if (st.waterY && !autoWaterSafe(p) && autoWaterBetween(st, p.x, c.x)) s += 80;
+        if (s < bestS) {
+          bestS = s;
+          best = { x: c.x, y: c.y, kind: 'cage', ref: c };
+        }
+      }
+    } else if (st.exit) {
+      best = { x: st.exit.x + st.exit.w * 0.5, y: st.exit.y + st.exit.h, kind: 'exit' };
+    }
+    if (!best) {
+      best = { x: Math.min(st.worldW - 40, p.x + 90), y: p.y, kind: 'go' };
+    }
+    ride = autoRideKind(p);
+    if (ride) return best;
+
+    if (best.kind === 'cage' && best.y < p.y - 72) {
+      for (i = 0; i < st.balloons.length; i++) {
+        b = st.balloons[i];
+        if (b.popped || b.ridden) continue;
+        s = Math.abs(b.x - p.x) * 0.75 + Math.abs(b.y - p.y) * 0.45;
+        if (b.y > p.y + 36) s += 180;
+        if ((b.x - p.x) * (best.x - p.x) < 0) s += 70;
+        if (s < bestBd) {
+          bestBd = s;
+          bestB = b;
+        }
+      }
+      for (i = 0; i < st.crafts.length; i++) {
+        cr = st.crafts[i];
+        if (cr.ridden) continue;
+        s = Math.abs(cr.x - p.x) + Math.abs(cr.y - p.y) * 0.35;
+        if (cr.kind === 'blimp' && best.y < p.y - 90) s -= 140;
+        if (s < bestCd) {
+          bestCd = s;
+          bestC = cr;
+        }
+      }
+      if (!autoNextStep(st, p, best)) {
+        if (bestB && (bestBd < 520 || best.y < p.y - 100)) {
+          return { x: bestB.x, y: bestB.y, kind: 'balloon', ref: bestB, via: best };
+        }
+        if (bestC && bestC.kind === 'blimp') {
+          return { x: bestC.x, y: bestC.y, kind: 'craft', ref: bestC, via: best };
+        }
+      } else if (bestB && best.y < p.y - jumpH() - 8 && bestBd < 200) {
+        return { x: bestB.x, y: bestB.y, kind: 'balloon', ref: bestB, via: best };
+      }
+    }
+
+    if (!autoWaterSafe(p) && st.waterY && autoWaterBetween(st, p.x, best.x)) {
+      var gap = 0, x, a, bb;
+      a = Math.min(p.x, best.x);
+      bb = Math.max(p.x, best.x);
+      for (x = a; x <= bb; x += 12) {
+        if (!autoPlatAt(st, x, 8, st.waterY - 6)) gap += 12;
+      }
+      if (gap > 92) {
+        for (i = 0; i < st.crafts.length; i++) {
+          cr = st.crafts[i];
+          if (cr.ridden || cr.kind !== 'hover') continue;
+          return { x: cr.x, y: cr.y, kind: 'craft', ref: cr, via: best };
+        }
+      }
+    }
+    return best;
+  }
+
+  function autoDecide(st) {
+    var p = st.player;
+    var out = {
+      l: false, r: false, hop: false, hopHeld: false, shot: false, down: false,
+      walkDir: st.walkDir || 1,
+      stuck: st.stuck || 0,
+      backT: st.backT || 0
+    };
+    var goal, seekX, dir, shot, step, land, ride, dx, i, e, closeFoe;
+    var hop = false, down = false, wantShot = false;
+    if (!p || p.dead) return out;
+
+    goal = autoPickGoal(st);
+    seekX = goal.x;
+    ride = autoRideKind(p);
+
+    if (ride === 'balloon' || ride === 'blimp') {
+      if (goal.via) seekX = goal.via.x;
+      else if (goal.kind === 'balloon' || goal.kind === 'craft') {
+        goal = autoPickGoal({
+          player: { x: p.x, y: p.y, ride: null, grounded: false },
+          plats: st.plats, cages: st.cages, balloons: [], crafts: [],
+          foes: st.foes, fruits: st.fruits, exit: st.exit, whale: st.whale,
+          waterY: st.waterY, worldW: st.worldW, worldH: st.worldH
+        }) || goal;
+        seekX = goal.x;
+      }
+    }
+
+    if (out.backT > 0) seekX = p.x - out.walkDir * 56;
+
+    if (ride) {
+      dx = seekX - p.x;
+      if (dx > 10) { out.r = true; out.walkDir = 1; }
+      else if (dx < -10) { out.l = true; out.walkDir = -1; }
+      else if (dx > 3) { out.r = true; out.walkDir = 1; }
+      else if (dx < -3) { out.l = true; out.walkDir = -1; }
+
+      land = autoLandAt(st, p.x, p.y);
+      if (ride === 'balloon') {
+        if (p.ride && p.ride.rideT > 4.15 && land) hop = true;
+        if (p.y < 40 && land) hop = true;
+        if (Math.abs(p.x - seekX) < 40 && p.y <= goal.y + 16 && p.y > goal.y - 70) hop = true;
+        if (land && Math.abs(p.x - seekX) < 28 && Math.abs((p.y + FOOT) - land.y) < 28) hop = true;
+        if (!land && st.waterY && p.y + FOOT > st.waterY - 40 && !autoWaterSafe(p)) hop = false;
+      } else if (ride === 'hover') {
+        if (!autoWaterBetween(st, p.x, seekX) && !autoOverWater(st, p.x, p.y) && land) hop = true;
+      } else if (ride === 'blimp') {
+        if (Math.abs(p.x - seekX) < 30 && p.y < goal.y + 28) hop = true;
+        if (p.y < 42 && land) hop = true;
+      }
+      shot = autoShotTgt(st, p);
+      if (shot) {
+        wantShot = true;
+        if (shot.x >= p.x && !out.l) { out.r = true; out.l = false; out.walkDir = 1; }
+        else if (shot.x < p.x && !out.r) { out.l = true; out.r = false; out.walkDir = -1; }
+      }
+      out.hop = hop;
+      out.hopHeld = false;
+      out.shot = wantShot;
+      if (out.l && out.r) { out.r = false; }
+      return out;
+    }
+
+    if (goal.y < p.y - 16) {
+      step = autoNextStep(st, p, goal.kind === 'balloon' || goal.kind === 'craft' ? goal : (goal.via || goal));
+      if (step && goal.kind !== 'balloon' && goal.kind !== 'craft') {
+        if (p.x < step.x + 8) seekX = step.x + 18;
+        else if (p.x > step.x + step.w - 8) seekX = step.x + step.w - 18;
+        else seekX = clamp(goal.x, step.x + 10, step.x + step.w - 10);
+        if (p.x >= step.x - 8 && p.x <= step.x + step.w + 8 && p.grounded) hop = true;
+      } else if (goal.kind === 'balloon' || goal.kind === 'craft') {
+        seekX = goal.x;
+        if (Math.abs(p.x - goal.x) < 24 && p.y > goal.y - 6 && p.grounded) hop = true;
+        if (!p.grounded && Math.abs(p.x - goal.x) < 40) {
+          if (p.vy > 10 && p.airJumps < 1) hop = true;
+        }
+      }
+    } else if (goal.y > p.y + 30 && p.grounded) {
+      land = autoPlatAt(st, p.x, p.y + FOOT + 8, 180);
+      if (land && (!st.waterY || land.y < st.waterY - 4)) down = true;
+    }
+
+    if (goal.kind === 'balloon' || goal.kind === 'craft') seekX = goal.x;
+
+    dx = seekX - p.x;
+    if (dx > 10) { out.r = true; out.l = false; out.walkDir = 1; }
+    else if (dx < -10) { out.l = true; out.r = false; out.walkDir = -1; }
+    else if (dx > 4) { out.r = true; out.walkDir = 1; }
+    else if (dx < -4) { out.l = true; out.walkDir = -1; }
+
+    dir = out.r ? 1 : out.l ? -1 : out.walkDir;
+    if (p.grounded && (autoGapAhead(st, p.x, p.y, dir, 22) || autoGapAhead(st, p.x, p.y, dir, 40))) hop = true;
+    if (!p.grounded && p.vy > 50 && p.airJumps < 1 && !autoPlatAt(st, p.x, p.y + FOOT - 2, 90)) hop = true;
+    if (st.waterY && !autoWaterSafe(p) && p.y + FOOT > st.waterY - 36 && p.grounded) hop = true;
+
+    closeFoe = null;
+    for (i = 0; i < st.foes.length; i++) {
+      e = st.foes[i];
+      if (e.dead) continue;
+      if (Math.abs(e.y - p.y) < 16 && Math.abs(e.x - p.x) < 28) {
+        closeFoe = e;
+        break;
+      }
+    }
+    if (closeFoe && p.grounded) hop = true;
+    if (st.whale && st.whale.state === 'leap' && Math.abs(st.whale.x - p.x) < 36 && Math.abs(st.whale.y - p.y) < 24) hop = true;
+
+    if (out.stuck > 0.42 && p.grounded) hop = true;
+    if (out.stuck > 1.15) {
+      out.backT = 0.34;
+      out.stuck = 0;
+    }
+
+    shot = autoShotTgt(st, p);
+    if (shot) {
+      wantShot = true;
+      if ((shot.x >= p.x) !== (dir > 0) && Math.abs(shot.x - p.x) < 170) {
+        if (Math.abs(shot.x - p.x) < 46) {
+          out.l = false;
+          out.r = false;
+        }
+        if (shot.x >= p.x) { out.r = true; out.l = false; out.walkDir = 1; }
+        else { out.l = true; out.r = false; out.walkDir = -1; }
+      }
+    }
+
+    out.hop = hop;
+    out.hopHeld = !!(!p.ride && !p.grounded && p.vy < 0);
+    out.shot = wantShot;
+    out.down = down && !hop;
+    if (out.l && out.r) out.r = false;
+    return out;
+  }
+
+  function makeAutoCheckState(stage, px, py, extra) {
+    var s = STAGES[stage];
+    var i, st;
+    extra = extra || {};
+    st = {
+      player: {
+        x: px, y: py, vx: 0, vy: extra.vy || 0, face: 1,
+        grounded: extra.grounded != null ? extra.grounded : true,
+        plat: 0, ride: extra.ride || null, dead: false,
+        airJumps: extra.airJumps || 0, hopBuf: 0, shotCd: 0
+      },
+      plats: s.plats,
+      cages: [],
+      balloons: [],
+      crafts: [],
+      foes: [],
+      fruits: [],
+      exit: { x: s.exit.x, y: s.exit.y, w: s.exit.w, h: s.exit.h, open: !!extra.exitOpen },
+      whale: extra.whale || null,
+      waterY: s.water || 0,
+      worldW: s.w,
+      worldH: s.h,
+      shots: [],
+      walkDir: extra.walkDir || 1,
+      stuck: extra.stuck || 0,
+      backT: extra.backT || 0,
+      hopHeld: false
+    };
+    for (i = 0; i < s.cages.length; i++) {
+      st.cages.push({ x: s.cages[i].x, y: s.cages[i].y, open: !!(extra.open && extra.open[i]) });
+    }
+    for (i = 0; i < (s.balloons || []).length; i++) {
+      st.balloons.push({
+        kind: 'balloon', x: s.balloons[i].x, y: s.balloons[i].y,
+        popped: false, ridden: false, rideT: extra.rideT || 0
+      });
+    }
+    for (i = 0; i < (s.crafts || []).length; i++) {
+      st.crafts.push({
+        kind: s.crafts[i].kind, x: s.crafts[i].x, y: s.crafts[i].y, ridden: false
+      });
+    }
+    for (i = 0; i < (s.foes || []).length; i++) {
+      st.foes.push({ kind: s.foes[i].kind, x: s.foes[i].x, y: s.foes[i].y, dead: false });
+    }
+    return st;
+  }
+
+  function autoPlayCheck() {
+    var st, d, d2, i, j, walked, hops, shots, both;
+    st = makeAutoCheckState(0, 56, 348);
+    d = autoDecide(st);
+    if (d.l && d.r) throw new Error('AI spawn wiggle');
+    if (!d.r || d.l) throw new Error('AI should walk toward cages');
+    walked = 0;
+    both = 0;
+    for (i = 0; i < 6; i++) {
+      st.player.x = 56 + i * 12;
+      d2 = autoDecide(st);
+      if (d2.l && d2.r) both += 1;
+      if (d2.r && !d2.l) walked += 1;
+    }
+    if (both) throw new Error('AI target wiggle both');
+    if (walked < 5) throw new Error('AI should keep walking to cages');
+
+    st = makeAutoCheckState(0, 400, 348);
+    st.foes = [{ kind: 'bear', x: 470, y: 348, dead: false }];
+    d = autoDecide(st);
+    if (d.l && d.r) throw new Error('AI shoot wiggle');
+    if (!d.shot) throw new Error('AI should shoot nearby foe');
+
+    st = makeAutoCheckState(0, 220, 348);
+    st.cages[0].open = true;
+    d = autoDecide(st);
+    if (d.l && d.r) throw new Error('AI gap wiggle');
+    if (d.r && !d.hop) throw new Error('AI should jump the garden gap');
+
+    st = makeAutoCheckState(2, 140, 248, { open: [true, true, false] });
+    d = autoDecide(st);
+    if (d.l && d.r) throw new Error('AI balloon seek wiggle');
+    if (!d.r || d.l) throw new Error('AI should walk to a balloon');
+
+    st = makeAutoCheckState(2, 300, 194, { grounded: false });
+    st.player.ride = st.balloons[2];
+    st.balloons[2].ridden = true;
+    st.balloons[2].rideT = 0.4;
+    st.player.x = st.balloons[2].x;
+    st.player.y = st.balloons[2].y - 16;
+    st.cages[0].open = true;
+    st.cages[1].open = true;
+    d = autoDecide(st);
+    if (d.l && d.r) throw new Error('AI ride wiggle');
+    if (d.hop && Math.abs(st.player.x - st.cages[2].x) > 70) throw new Error('AI hop balloon too soon');
+    if (!d.r && st.player.x < st.cages[2].x - 12) throw new Error('AI should ride toward high cage');
+
+    st = makeAutoCheckState(0, 56, 348);
+    hops = 0;
+    shots = 0;
+    walked = 0;
+    both = 0;
+    for (i = 0; i < 18; i++) {
+      st.player.x = 56 + i * 10;
+      if (st.player.x > 145) st.cages[0].open = true;
+      d = autoDecide(st);
+      if (d.l && d.r) both += 1;
+      if (d.r) walked += 1;
+      if (d.hop) hops += 1;
+      if (d.shot) shots += 1;
+    }
+    if (both) throw new Error('AI garden wiggle both');
+    if (walked < 10) throw new Error('AI garden should walk, walks=' + walked);
+    if (hops < 1) throw new Error('AI garden should jump, hops=' + hops);
+    if (shots < 1) throw new Error('AI garden should shoot arrows, shots=' + shots);
+
+    st = makeAutoCheckState(0, 56, 348);
+    walked = 0;
+    hops = 0;
+    shots = 0;
+    both = 0;
+    var flips = 0;
+    var prevDir = 0;
+    var now;
+    var land;
+    var opened = 0;
+    for (i = 0; i < 90; i++) {
+      d = autoDecide(st);
+      if (d.l && d.r) both += 1;
+      now = d.r ? 1 : d.l ? -1 : 0;
+      if (now && prevDir && now !== prevDir) flips += 1;
+      if (now) prevDir = now;
+      if (d.r) {
+        st.player.x += 8;
+        walked += 1;
+      }
+      if (d.l) st.player.x -= 8;
+      if (d.shot) shots += 1;
+      if (d.hop) hops += 1;
+      if (d.hop && st.player.ride) {
+        st.player.ride.ridden = false;
+        st.player.ride = null;
+        st.player.grounded = false;
+        st.player.vy = -JUMP_V * 0.92;
+      } else if (d.hop && st.player.grounded) {
+        st.player.grounded = false;
+        st.player.vy = -JUMP_V;
+      }
+      if (st.player.ride) {
+        st.player.ride.rideT = (st.player.ride.rideT || 0) + STEP * 8;
+        st.player.ride.y -= RIDE_UP * STEP * 8;
+        st.player.x = st.player.ride.x;
+        st.player.y = st.player.ride.y - 16;
+        if (d.r) st.player.ride.x += 8;
+        if (d.l) st.player.ride.x -= 8;
+        st.player.x = st.player.ride.x;
+      } else if (!st.player.grounded) {
+        st.player.vy += GRAV * STEP * 8;
+        st.player.y += st.player.vy * STEP * 8;
+        land = autoPlatAt(st, st.player.x, st.player.y + FOOT - 4, 22);
+        if (land && st.player.vy >= 0) {
+          st.player.grounded = true;
+          st.player.vy = 0;
+          st.player.y = land.y - FOOT;
+        }
+      }
+      for (j = 0; j < st.cages.length; j++) {
+        if (!st.cages[j].open && Math.abs(st.player.x - st.cages[j].x) < 16 && Math.abs(st.player.y - (st.cages[j].y - 8)) < 18) {
+          st.cages[j].open = true;
+          opened += 1;
+        }
+      }
+      for (j = 0; j < st.balloons.length; j++) {
+        if (st.player.ride || st.balloons[j].popped || st.balloons[j].ridden) continue;
+        if (Math.abs(st.player.x - st.balloons[j].x) < 14 && st.player.y < st.balloons[j].y + 6 && st.player.y > st.balloons[j].y - 22) {
+          st.player.ride = st.balloons[j];
+          st.balloons[j].ridden = true;
+          st.player.grounded = false;
+        }
+      }
+    }
+    if (both) throw new Error('AI garden sim wiggle both');
+    if (flips > 10) throw new Error('AI garden sim wiggle flips=' + flips);
+    if (walked < 18) throw new Error('AI garden sim should walk, walks=' + walked);
+    if (hops < 1) throw new Error('AI garden sim should jump, hops=' + hops);
+    if (shots < 1) throw new Error('AI garden sim should shoot, shots=' + shots);
+    if (opened < 1) throw new Error('AI garden sim should open a cage');
+  }
+
   function selfCheck() {
     var i, j, s, jh, cages, balls, crafts, waterCraft;
     if (STAGES.length !== 5) throw new Error('5 zoo stages');
@@ -261,6 +796,11 @@
     if (comboMul(5) !== 5) throw new Error('combo cap 5');
     if (comboMul(9) !== 5) throw new Error('combo max');
     if (BEST_KEY !== 'playbox-kiwi-best') throw new Error('best key');
+    if (AUTO_SPEED_KEY !== 'playbox-kiwi-auto-speed') throw new Error('auto key');
+    if (AUTO_SCALE[3] !== 1 || AUTO_SCALE[4] <= AUTO_SCALE[3]) throw new Error('auto scale');
+    if (AUTO_SCALE[1] >= AUTO_SCALE[2] || AUTO_SCALE[2] >= AUTO_SCALE[3]) throw new Error('auto scale order');
+    if (SPEED_LABELS[3] !== '快' || SPEED_LABELS[4] !== '极快') throw new Error('speed labels');
+    if (loadAutoSpeed() < 1 || loadAutoSpeed() > 4) throw new Error('auto speed range');
     if (STAGES[0].name !== '鸟园') throw new Error('stage1 bird garden');
     if (STAGES[2].name !== '气球谷') throw new Error('balloon valley');
     if (STAGES[4].name !== '飞艇岛') throw new Error('airship isle');
@@ -299,6 +839,7 @@
     if (FOE_PTS.whale <= FOE_PTS.bear) throw new Error('whale pays more');
     if (LIFE_AT < 8000) throw new Error('1up spacing');
     if (RIDE_UP <= BLIMP_UP) throw new Error('balloon faster than blimp');
+    autoPlayCheck();
   }
 
   selfCheck();
@@ -321,6 +862,9 @@
   var btnChase = document.getElementById('btn-chase');
   var btnMute = document.getElementById('btn-mute');
   var btnRetry = document.getElementById('btn-retry');
+  var btnAuto = document.getElementById('btn-auto');
+  var speedEl = document.getElementById('speed');
+  var speedLab = document.getElementById('speed-lab');
   var btnLeft = document.getElementById('btn-left');
   var btnRight = document.getElementById('btn-right');
   var btnJump = document.getElementById('btn-jump');
@@ -364,6 +908,15 @@
 
   var keys = { l: false, r: false, u: false, d: false, hop: false, hopHeld: false, shot: false };
   var pad = { l: false, r: false, hop: false, hopHeld: false, shot: false };
+  var autoOn = false;
+  var autoSpeed = loadAutoSpeed();
+  var autoOvWait = 0;
+  var autoStuck = 0;
+  var autoLastX = 0;
+  var autoLastY = 0;
+  var autoWalkDir = 1;
+  var autoBackT = 0;
+  var autoHopHeld = false;
 
   var G = {
     mode: 'title',
@@ -808,7 +1361,13 @@
       tagLabel.textContent = STAGES[Math.max(0, G.wave - 1) % STAGES.length].name;
       tagLabel.classList.remove('warn');
     }
-    if (G.mode === 'play') {
+    if (autoOn && G.mode === 'play') {
+      hintEl.textContent = left
+        ? '托管中 · 走跳射箭救人 · A 停下'
+        : '托管中 · 走进出口 · A 停下';
+      hintEl.classList.add('hot');
+      hintEl.classList.remove('warn');
+    } else if (G.mode === 'play') {
       hintEl.textContent = left
         ? '救出笼中同伴 · 还可骑气球飞艇'
         : '笼子已空 · 走进出口';
@@ -1140,11 +1699,19 @@
 
   function thinkPlayer(p, dt) {
     var wantL, wantR, hop, shot, down;
-    wantL = keys.l || pad.l;
-    wantR = keys.r || pad.r;
-    hop = keys.hop || pad.hop;
-    shot = keys.shot || pad.shot;
-    down = keys.d;
+    if (autoOn) {
+      wantL = keys.l;
+      wantR = keys.r;
+      hop = keys.hop;
+      shot = keys.shot;
+      down = keys.d;
+    } else {
+      wantL = keys.l || pad.l;
+      wantR = keys.r || pad.r;
+      hop = keys.hop || pad.hop;
+      shot = keys.shot || pad.shot;
+      down = keys.d;
+    }
     keys.hop = false;
     pad.hop = false;
     keys.shot = false;
@@ -1161,7 +1728,7 @@
     else { p.wantL = false; p.wantR = false; }
 
     if (hop) p.hopBuf = BUFFER;
-    if ((keys.hopHeld || pad.hopHeld) && p.grounded && !p.ride) {
+    if ((autoOn ? keys.hopHeld : (keys.hopHeld || pad.hopHeld)) && p.grounded && !p.ride) {
       p.hopBuf = Math.max(p.hopBuf, 0.04);
     }
     if (p.hopBuf > 0) p.hopBuf -= dt;
@@ -1179,7 +1746,7 @@
       }
     }
 
-    if (!keys.hopHeld && !pad.hopHeld && p.vy < -360 && !p.ride) {
+    if (!(autoOn ? keys.hopHeld : (keys.hopHeld || pad.hopHeld)) && p.vy < -360 && !p.ride) {
       p.vy = -360;
     }
 
@@ -1816,12 +2383,14 @@
     ovKicker.textContent = 'KIWI';
     ovTitle.textContent = '奇异';
     ovLead.textContent = '蹦跳射箭，骑上气球和飞艇，砸开笼子救出同伴。掉进坑或撞到敌人都会丢命。';
-    ovOps.textContent = '← → / A D 走 · ↑ / W 跳 · 空格射箭 · 触屏左 跳 射 右 · R 重开 · M 静音';
+    ovOps.textContent = '← → / D 走 · ↑ / W 跳 · 空格射箭 · A 自动 · 触屏左 跳 射 右 · R 重开 · M 静音';
+    hintEl.textContent = autoOn ? '自动托管 · 即将开局 · A 停下' : '蹦跳射箭 · 骑气球飞艇 · 救出笼中奇异鸟 · A 自动';
+    if (autoOn) hintEl.classList.add('hot');
     ovStart.classList.remove('gone');
     ovEnd.classList.add('gone');
     showOverlay();
-    hintEl.textContent = '蹦跳射箭 · 骑气球飞艇 · 救出笼中奇异鸟';
-    hintEl.classList.remove('warn', 'hot');
+    hintEl.classList.remove('warn');
+    if (!autoOn) hintEl.classList.remove('hot');
     hudPlay();
   }
 
@@ -1842,6 +2411,12 @@
     loadStage(0, false);
     spawnPlayer(0.4);
     hideOverlay();
+    autoOvWait = 0;
+    autoStuck = 0;
+    autoBackT = 0;
+    autoHopHeld = false;
+    autoLastX = G.player ? G.player.x : 0;
+    autoLastY = G.player ? G.player.y : 0;
     audio.start();
     toast(isChase() ? '追赶' : STAGES[0].name, false, true);
     hudPlay();
@@ -1867,9 +2442,10 @@
     ovStart.classList.add('gone');
     ovEnd.classList.remove('gone');
     showOverlay();
-    hintEl.textContent = 'R 立刻重开 · 顶栏重开随时可用';
-    hintEl.classList.add('warn');
-    hintEl.classList.remove('hot');
+    hintEl.textContent = autoOn ? '自动仍开着 · 即将再来 · A 停下' : 'R 立刻重开 · 顶栏重开随时可用';
+    hintEl.classList.add(autoOn ? 'hot' : 'warn');
+    if (autoOn) hintEl.classList.remove('warn');
+    else hintEl.classList.remove('hot');
     audio.over();
     hudPlay();
   }
@@ -1889,16 +2465,164 @@
     ovStart.classList.add('gone');
     ovEnd.classList.remove('gone');
     showOverlay();
-    hintEl.textContent = 'R 立刻重开 · 顶栏重开随时可用';
+    hintEl.textContent = autoOn ? '自动仍开着 · 即将再来 · A 停下' : 'R 立刻重开 · 顶栏重开随时可用';
     hintEl.classList.remove('warn');
     hintEl.classList.add('hot');
     audio.win();
     hudPlay();
   }
 
+  function autoScale() {
+    if (!autoOn || G.mode !== 'play') return 1;
+    return AUTO_SCALE[autoSpeed] || 1;
+  }
+
+  function clearAutoKeys() {
+    keys.l = false;
+    keys.r = false;
+    keys.d = false;
+    keys.hop = false;
+    keys.hopHeld = false;
+    keys.shot = false;
+  }
+
+  function snapshotAuto() {
+    return {
+      player: G.player,
+      plats: G.plats,
+      cages: G.cages,
+      balloons: G.balloons,
+      crafts: G.crafts,
+      foes: G.foes,
+      fruits: G.fruits,
+      exit: G.exit,
+      whale: G.whale,
+      waterY: G.waterY,
+      worldW: G.worldW,
+      worldH: G.worldH,
+      shots: G.shots,
+      walkDir: autoWalkDir,
+      stuck: autoStuck,
+      backT: autoBackT,
+      hopHeld: autoHopHeld,
+      lastX: autoLastX,
+      lastY: autoLastY
+    };
+  }
+
+  function tickAuto(dt) {
+    var st, d, moved, p;
+    clearAutoKeys();
+    if (!autoOn || G.mode !== 'play') return;
+    p = G.player;
+    if (!p || p.dead || G.clearT > 0) return;
+    moved = Math.abs(p.x - autoLastX) + Math.abs(p.y - autoLastY);
+    if (moved < 1.6) autoStuck += dt;
+    else autoStuck = 0;
+    if (autoBackT > 0) autoBackT = Math.max(0, autoBackT - dt);
+    st = snapshotAuto();
+    st.stuck = autoStuck;
+    st.backT = autoBackT;
+    d = autoDecide(st);
+    autoWalkDir = d.walkDir || autoWalkDir;
+    autoStuck = d.stuck;
+    autoBackT = d.backT;
+    autoHopHeld = !!d.hopHeld;
+    autoLastX = p.x;
+    autoLastY = p.y;
+    keys.l = !!d.l;
+    keys.r = !!d.r;
+    keys.hop = !!d.hop;
+    keys.hopHeld = !!d.hopHeld;
+    keys.shot = !!d.shot;
+    keys.d = !!d.down;
+  }
+
+  function tickAutoFlow(dt) {
+    if (!autoOn) return;
+    if (G.mode === 'title') {
+      autoOvWait += dt;
+      if (autoOvWait >= (autoSpeed >= 3 ? 0.25 : 0.5)) {
+        autoOvWait = 0;
+        startRun('save');
+      }
+      return;
+    }
+    if (G.mode === 'over') {
+      autoOvWait += dt;
+      if (autoOvWait >= (autoSpeed >= 3 ? 0.7 : 1.15)) {
+        autoOvWait = 0;
+        startRun(G.kind || 'save');
+      }
+    }
+  }
+
+  function syncAutoUi() {
+    if (!btnAuto) return;
+    btnAuto.classList.toggle('on', autoOn);
+    btnAuto.setAttribute('aria-pressed', autoOn ? 'true' : 'false');
+    btnAuto.textContent = autoOn ? '停下' : '自动';
+    btnAuto.setAttribute('aria-label', autoOn ? '停止自动' : '自动');
+  }
+
+  function syncSpeedUi() {
+    if (speedEl) speedEl.value = String(autoSpeed);
+    if (speedLab) speedLab.textContent = SPEED_LABELS[autoSpeed];
+    if (speedEl) {
+      speedEl.title = SPEED_LABELS[autoSpeed];
+      speedEl.setAttribute('aria-valuetext', SPEED_LABELS[autoSpeed]);
+    }
+  }
+
+  function setAutoSpeed(n) {
+    n = parseInt(n, 10);
+    if (!isFinite(n) || n < 1 || n > 4) n = 3;
+    autoSpeed = n;
+    saveAutoSpeed(autoSpeed);
+    syncSpeedUi();
+  }
+
+  function toggleAuto() {
+    autoOn = !autoOn;
+    autoOvWait = 0;
+    autoStuck = 0;
+    autoBackT = 0;
+    autoHopHeld = false;
+    clearAutoKeys();
+    pad.l = false;
+    pad.r = false;
+    pad.hop = false;
+    pad.hopHeld = false;
+    pad.shot = false;
+    syncAutoUi();
+    if (autoOn) {
+      audio.ensure();
+      if (G.mode === 'title') startRun('save');
+      else if (G.mode === 'over') startRun(G.kind || 'save');
+    }
+    hudPlay();
+    if (autoOn && G.mode === 'play') {
+      hintEl.textContent = '托管中 · 走跳射箭救人 · A 停下';
+      hintEl.classList.add('hot');
+      hintEl.classList.remove('warn');
+    } else if (!autoOn && G.mode === 'title') {
+      hintEl.textContent = '蹦跳射箭 · 骑气球飞艇 · 救出笼中奇异鸟 · A 自动';
+      hintEl.classList.remove('hot', 'warn');
+    }
+  }
+
+  function isAutoKey(e) {
+    return e.code === 'KeyA' || e.key === 'a' || e.key === 'A';
+  }
+
   /* ---- tick ---- */
   function tick(dt) {
     var i, p;
+    if (autoOn) {
+      tickAutoFlow(dt);
+      if (G.mode === 'play') tickAuto(dt);
+      else clearAutoKeys();
+    }
     tickPlats(dt);
     tickBalloons(dt);
     tickCrafts(dt);
@@ -2484,7 +3208,7 @@
   }
 
   function frame(ts) {
-    var dt;
+    var dt, n, turbo, scale, maxSteps;
     if (!lastTs) lastTs = ts;
     dt = (ts - lastTs) / 1000;
     lastTs = ts;
@@ -2492,11 +3216,30 @@
       requestAnimationFrame(frame);
       return;
     }
-    acc += Math.min(0.08, dt);
-    while (acc >= STEP) {
-      if (G.stop > 0) G.stop -= STEP;
-      else tick(STEP);
-      acc -= STEP;
+    if (!autoOn || G.mode !== 'play') {
+      acc += Math.min(0.08, dt);
+      while (acc >= STEP) {
+        if (G.stop > 0) G.stop -= STEP;
+        else tick(STEP);
+        acc -= STEP;
+      }
+    } else {
+      dt = Math.min(0.08, dt);
+      turbo = autoSpeed >= 4;
+      if (G.stop > 0 && !turbo) {
+        G.stop -= dt;
+      } else {
+        if (turbo) G.stop = 0;
+        scale = autoScale();
+        acc += dt * scale;
+        n = 0;
+        maxSteps = turbo ? 16 : 8;
+        while (acc >= STEP && n < maxSteps) {
+          tick(STEP);
+          acc -= STEP;
+          n += 1;
+        }
+      }
     }
     draw();
     requestAnimationFrame(frame);
@@ -2507,6 +3250,7 @@
     var down = false;
     function go(e) {
       if (e.cancelable) e.preventDefault();
+      if (autoOn) return;
       down = true;
       el.classList.add('held');
       on();
@@ -2539,6 +3283,7 @@
   canvas.addEventListener('pointerdown', function (ev) {
     if (ev.button != null && ev.button !== 0) return;
     if (G.mode !== 'play') return;
+    if (autoOn) return;
     keys.shot = true;
     audio.ensure();
     if (ev.cancelable) ev.preventDefault();
@@ -2547,7 +3292,7 @@
 
   function keyOn(e, down) {
     var k = e.code;
-    if (k === 'ArrowLeft' || k === 'KeyA') { keys.l = down; e.preventDefault(); }
+    if (k === 'ArrowLeft') { keys.l = down; e.preventDefault(); }
     else if (k === 'ArrowRight' || k === 'KeyD') { keys.r = down; e.preventDefault(); }
     else if (k === 'ArrowUp' || k === 'KeyW') {
       if (down && !e.repeat) keys.hop = true;
@@ -2563,7 +3308,22 @@
   }
 
   window.addEventListener('keydown', function (e) {
+    if (isAutoKey(e)) {
+      if (e.repeat) {
+        e.preventDefault();
+        return;
+      }
+      audio.ensure();
+      toggleAuto();
+      e.preventDefault();
+      return;
+    }
+    if (e.target === speedEl) return;
     if (e.repeat) {
+      if (autoOn) {
+        e.preventDefault();
+        return;
+      }
       keyOn(e, true);
       return;
     }
@@ -2602,10 +3362,25 @@
         return;
       }
     }
+    if (autoOn) {
+      if (
+        e.code === 'ArrowLeft' || e.code === 'ArrowRight' || e.code === 'ArrowUp' ||
+        e.code === 'ArrowDown' || e.code === 'Space' || e.code === 'KeyD' ||
+        e.code === 'KeyS' || e.code === 'KeyW'
+      ) {
+        e.preventDefault();
+      }
+      return;
+    }
     keyOn(e, true);
   });
 
   window.addEventListener('keyup', function (e) {
+    if (isAutoKey(e)) {
+      e.preventDefault();
+      return;
+    }
+    if (autoOn) return;
     keyOn(e, false);
   });
 
@@ -2613,6 +3388,11 @@
     audio.ensure();
     audio.setMuted(!audio.muted);
   });
+  if (btnAuto) btnAuto.addEventListener('click', function () { toggleAuto(); });
+  if (speedEl) {
+    speedEl.addEventListener('input', function () { setAutoSpeed(parseInt(speedEl.value, 10)); });
+    speedEl.addEventListener('change', function () { setAutoSpeed(parseInt(speedEl.value, 10)); });
+  }
   btnRetry.addEventListener('click', function () {
     audio.ensure();
     retry();
@@ -2662,6 +3442,8 @@
   });
 
   bestEl.textContent = String(G.best);
+  syncSpeedUi();
+  syncAutoUi();
   showTitle();
   resize();
   hudPlay();
