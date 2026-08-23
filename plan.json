@@ -4623,7 +4623,7 @@
     "blurb": "横版复仇，把核心从核里打穿。",
     "hue": 142,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/nemesis/",
     "kind": "remake"
   },
@@ -4635,7 +4635,7 @@
     "blurb": "纵版狱巡，把弹幕从狱里打散。",
     "hue": 8,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/jigoku-meguri/",
     "kind": "remake"
   },
@@ -4647,7 +4647,7 @@
     "blurb": "横版突袭，把据点从夜里打穿。",
     "hue": 118,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/rush-n-attack/",
     "kind": "remake"
   },
@@ -4659,7 +4659,7 @@
     "blurb": "纵版铁坦，把阵地从林里打穿。",
     "hue": 34,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/iron-tank/",
     "kind": "remake"
   },
@@ -4671,8 +4671,68 @@
     "blurb": "对战饿狼，把对手从架上打穿。",
     "hue": 16,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/fatal-fury/",
+    "kind": "remake"
+  },
+  {
+    "n": 399,
+    "id": "king-of-fighters",
+    "title": "拳皇",
+    "subtitle": "KOF",
+    "blurb": "对战拳皇，把对手从架上打穿。",
+    "hue": 12,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/king-of-fighters/",
+    "kind": "remake"
+  },
+  {
+    "n": 400,
+    "id": "terra-force",
+    "title": "陆力",
+    "subtitle": "TFRC",
+    "blurb": "纵版陆力，把机群从陆里打穿。",
+    "hue": 88,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/terra-force/",
+    "kind": "remake"
+  },
+  {
+    "n": 401,
+    "id": "devastators",
+    "title": "毁灭",
+    "subtitle": "DVST",
+    "blurb": "纵版毁灭，把据点从城里打穿。",
+    "hue": 22,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/devastators/",
+    "kind": "remake"
+  },
+  {
+    "n": 402,
+    "id": "n1942",
+    "title": "四二",
+    "subtitle": "N194",
+    "blurb": "纵版四二，把机群从云里打穿。",
+    "hue": 200,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/n1942/",
+    "kind": "remake"
+  },
+  {
+    "n": 403,
+    "id": "rapier",
+    "title": "剑锋",
+    "subtitle": "RAPR",
+    "blurb": "纵版剑锋，把弹幕从核里打散。",
+    "hue": 48,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/rapier/",
     "kind": "remake"
   }
 ]

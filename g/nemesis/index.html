@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#04140c" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>复仇 · NEMS</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2304140c'/%3E%3Cpath d='M0 6h32v3H0zM0 23h32v3H0z' fill='%23082414'/%3E%3Cpath d='M0 9h32M0 23h32' stroke='%2300f06a' stroke-width='1.1'/%3E%3Cpath d='M5 16l10-3.4V19.4z' fill='%2300f06a'/%3E%3Crect x='12' y='14.1' width='7.5' height='3.8' rx='.6' fill='%23e8fff2'/%3E%3Ccircle cx='23' cy='16' r='2.5' fill='%23ffe36b'/%3E%3Ccircle cx='23' cy='16' r='1' fill='%23ff3d88'/%3E%3Ccircle cx='28' cy='16' r='1.7' fill='%2300f06a'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>复仇</b>
+        <span>NEMS</span>
+      </div>
+      <div class="status">
+        <div class="scores" aria-live="polite">
+          <div class="score" id="score-box">
+            <em>分数</em>
+            <b id="score">0</b>
+            <span id="score-add" class="score-add" hidden>+0</span>
+          </div>
+          <div class="score best">
+            <em>最高</em>
+            <b id="best">0</b>
+          </div>
+        </div>
+        <div class="row">
+          <span id="stage-label">第 1 关</span>
+          <span id="tag-label">复仇</span>
+          <span id="combo-label" class="combo" hidden>连击</span>
+          <span class="pips" id="pips" aria-label="剩余生命"></span>
+        </div>
+        <div class="pwr" id="pwr" role="group" aria-label="武装槽">
+          <span class="slot" data-id="speed">速</span>
+          <span class="slot" data-id="missile">导</span>
+          <span class="slot" data-id="double">双</span>
+          <span class="slot" data-id="laser">激</span>
+          <span class="slot" data-id="option">分</span>
+          <span class="slot shield" data-id="shield">?</span>
+        </div>
+      </div>
+      <div class="tools">
+        <button type="button" id="btn-pow" title="Shift / Z" aria-label="点选武装">选</button>
+        <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
+        <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <canvas id="c" tabindex="0" role="application" aria-label="复仇游戏区，横向穿行星廊，空格射击，Shift 点选武装槽，撞壁掉命"></canvas>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden"></div>
+      <div id="pad" class="pad">
+        <button type="button" id="btn-pad" aria-label="点选武装">选</button>
+      </div>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">NEMS</p>
+          <h1 id="ov-title">复仇</h1>
+          <p class="lead" id="ov-lead">横向穿行星廊。吃橙卵推进武装槽，Shift 点选。撞壁、撞体、中弹都掉命。打穿三关后轰核。别当成沙罗、命力、泽泽或攀升——这是复仇，不是巨蛇，不是活体要塞，不是触手，不是燃油投弹。</p>
+          <p class="ops" id="ov-ops">←↑↓→ / WASD 飞 · 空格射击 · Shift / Z 点选 · R 重开 · M 静音</p>
+          <div class="ov-actions" id="ov-start">
+            <button type="button" id="btn-raid">复仇</button>
+            <button type="button" id="btn-core">核腔</button>
+          </div>
+          <div class="ov-actions gone" id="ov-end">
+            <button type="button" id="ov-retry">再穿</button>
+            <button type="button" id="ov-modes">换模式</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">吃橙卵推进武装槽 · Shift 点选 · 分身滞后抄射</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>
