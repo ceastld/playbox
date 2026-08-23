@@ -30,9 +30,13 @@
   const MELEE_DMG = 2;
   const BEST_KEY = 'playbox-gauntlet-best';
   const MUTE_KEY = 'playbox-gauntlet-mute';
+  const AUTO_SPEED_KEY = 'playbox-gauntlet-auto-speed';
+  const AUTO_SPEED_NAME = ['', '慢', '中', '快', '极快'];
+  const AUTO_TIME = [0, 0.7, 1, 1.45, 2.85];
+  const AUTO_OV_WAIT = [0, 0.85, 0.5, 0.22, 0.06];
   const DX = [0, 1, 0, -1];
   const DY = [-1, 0, 1, 0];
-  const OPS = 'WASD / 方向键四向走 · 空格射击 · 贴身斩 · R 重开 · M 静音';
+  const OPS = '方向键 / W S D 走 · 空格射击 · 贴身斩 · A 自动 · R 重开 · M 静音';
 
   const MAG = [255, 61, 138];
   const CYN = [0, 240, 255];
@@ -394,6 +398,9 @@
     if (multOf(0) !== 1 || multOf(2) !== 2 || multOf(8) !== 5) throw new Error('mult');
     if (TYPE.wraith.immune !== true) throw new Error('wraith immune');
     if (MELEE_DMG <= 1) throw new Error('melee stronger than shot');
+    if (AUTO_TIME[3] !== 1.45 || AUTO_TIME[4] <= AUTO_TIME[3]) throw new Error('auto time');
+    if (AUTO_TIME[1] >= AUTO_TIME[2] || AUTO_TIME[2] >= AUTO_TIME[3]) throw new Error('auto time order');
+    if (AUTO_OV_WAIT[4] > AUTO_OV_WAIT[1]) throw new Error('auto ov');
     for (let i = 0; i < 36; i++) {
       const spec = FLOORS[i % FLOORS.length];
       const pack = genMaze(21 * i + 11, spec);
@@ -404,7 +411,69 @@
       if (pack.grid[idx(far.c, far.r)] !== EXIT) throw new Error('exit missing ' + i);
       if (!pack.seen[idx(far.c, far.r)]) throw new Error('exit unreachable ' + i);
       if (far.c === pack.sc && far.r === pack.sr) throw new Error('exit on start ' + i);
+      G.grid = pack.grid;
+      G.gens = [];
+      const pth = autoPathTo(pack.sc, pack.sr, far.c, far.r);
+      if (!pth || pth.length < 2) throw new Error('auto path seed ' + i);
     }
+    G.kind = 'clear';
+    G.stage = 0;
+    G.floorId = 1;
+    G.hp = HP_START;
+    G.score = 0;
+    G.combo = 0;
+    G.comboT = 0;
+    G.mult = 1;
+    G.deadT = 0;
+    G.mode = 'play';
+    G.why = '';
+    G.lowWarned = false;
+    buildFloor();
+    autoOn = true;
+    autoSpeed = 3;
+    autoResetPlan();
+    const seenCells = {};
+    let cellN = 0;
+    let fireN = 0;
+    const x0 = G.player.x;
+    const y0 = G.player.y;
+    const samples = [];
+    for (let i = 0; i < 720; i++) {
+      autoThink(STEP);
+      const id = (G.player.x | 0) + ',' + (G.player.y | 0);
+      if (!seenCells[id]) {
+        seenCells[id] = 1;
+        cellN += 1;
+      }
+      if (fireHold || G.shots.length) fireN += 1;
+      if (process.env && process.env.GAUNTLET_AI_LOG && i % 120 === 40) {
+        const east = G.grid[idx((G.player.x | 0) + 1, G.player.y | 0)];
+        samples.push({
+          i: i,
+          pos: [+G.player.x.toFixed(2), +G.player.y.toFixed(2)],
+          wish: [autoWish.x, autoWish.y],
+          goal: autoGoal && autoGoal.kind,
+          path0: autoGoal && autoGoal.path && autoGoal.path[0],
+          east: east,
+          stuck: +autoStuck.toFixed(2),
+          fire: fireHold
+        });
+      }
+      playSim(STEP);
+      if (G.mode !== 'play') break;
+    }
+    const net = hypot(G.player.x - x0, G.player.y - y0);
+    if (cellN < 2 || net < 0.45) throw new Error('AI should leave spawn');
+    if (fireN < 8 && liveGens() + liveMons() > 0) throw new Error('AI should shoot');
+    if (cellN < 3 && G.score <= 0 && fireN < 20) throw new Error('AI should fight or loot');
+    if (typeof process !== 'undefined' && process.env && process.env.GAUNTLET_AI_LOG) {
+      const gens = G.gens.filter(function (g) { return g.alive; }).map(function (g) {
+        return { x: +g.x.toFixed(2), y: +g.y.toFixed(2), d: +hypot(g.x - G.player.x, g.y - G.player.y).toFixed(2) };
+      });
+      console.log('ai ' + JSON.stringify({ cellN: cellN, net: +net.toFixed(2), score: G.score, fireN: fireN, hp: +G.hp.toFixed(1), gens: liveGens(), mons: liveMons(), pos: [+G.player.x.toFixed(2), +G.player.y.toFixed(2)], goal: autoGoal && autoGoal.kind, wish: [autoWish.x, autoWish.y], genPos: gens, start: [G.startC, G.startR], samples: samples }));
+    }
+    autoOn = false;
+    fireHold = false;
     return true;
   }
 
@@ -576,6 +645,9 @@
   const ovMenu = el('ov-menu');
   const btnMute = el('btn-mute');
   const btnRetry = el('btn-retry');
+  const btnAuto = el('btn-auto');
+  const speedEl = el('speed');
+  const speedLab = el('speed-lab');
   const modeClear = el('mode-clear');
   const modeHorde = el('mode-horde');
   const scoreEl = el('score');
@@ -616,6 +688,20 @@
 
   const keys = { u: false, d: false, l: false, r: false };
   const ptr = { down: false, id: null, sx: 0, sy: 0, x: 0, y: 0, dragging: false, dx: 0, dy: 0 };
+  const autoWish = { x: 0, y: 0 };
+  let autoOn = false;
+  let autoSpeed = 3;
+  let autoOvWait = 0;
+  let autoStuck = 0;
+  let autoLastX = 0;
+  let autoLastY = 0;
+  let autoGoal = null;
+  let autoVisit = new Uint8Array(COLS * ROWS);
+  let autoVisitN = 0;
+  let autoSeen = null;
+  let autoPrev = null;
+  let autoQueue = null;
+  let autoNudgeD = 0;
   const particles = [];
   const pops = [];
   const motes = [];
@@ -727,6 +813,18 @@
     hintEl.textContent = text;
     hintEl.classList.toggle('hot', kind === 'hot');
     hintEl.classList.toggle('warn', kind === 'warn');
+  }
+
+  function playHint() {
+    if (autoOn) return '托管中 · A 停下';
+    if (G.kind === 'horde') return '尸潮层 · 发生器更密 · 生命掉得更快';
+    return '斩发生器 · 抢食物 · 出口随时可进';
+  }
+
+  function playHintKind() {
+    if (autoOn) return 'hot';
+    if (G.kind === 'horde') return 'warn';
+    return '';
   }
 
   function syncModes() {
@@ -846,6 +944,7 @@
 
   function hitStop(sec) {
     if (REDUCE) return;
+    if (autoOn && autoSpeed >= 4) return;
     G.stop = Math.max(G.stop, sec);
   }
 
@@ -1136,6 +1235,7 @@
     G.invuln = 0.46;
     G.hurtCd = 0;
     resetFx();
+    autoResetPlan();
   }
 
   function startGame(kind) {
@@ -1156,7 +1256,7 @@
     audio.start();
     const spec = specNow();
     toast(G.kind === 'horde' ? '尸潮 · 更密更快' : ('清廊 · ' + spec.name), G.kind === 'horde', G.kind !== 'horde');
-    setHint(G.kind === 'horde' ? '尸潮层 · 发生器更密 · 生命掉得更快' : '斩发生器 · 抢食物 · 出口随时可进', G.kind === 'horde' ? 'warn' : '');
+    setHint(playHint(), playHintKind());
     syncHud();
   }
 
@@ -1176,7 +1276,7 @@
     buildFloor();
     G.invuln = 99;
     showOverlay('title');
-    setHint('四向走 · 空格射击 · 贴身斩发生器 · 生命一直掉 · 出口随时可进');
+    setHint(autoOn ? '托管中 · A 停下' : '四向走 · 空格射击 · 贴身斩发生器 · A 自动 · 生命一直掉 · 出口随时可进', autoOn ? 'hot' : '');
     syncHud();
   }
 
@@ -1199,7 +1299,7 @@
     screenFlash(GOLD, 0.45);
     hitStop(0.08);
     showOverlay('win');
-    setHint((G.kind === 'horde' ? '尸潮退了' : '廊清了') + ' · R 再来', 'hot');
+    setHint(autoOn ? '托管中 · A 停下' : ((G.kind === 'horde' ? '尸潮退了' : '廊清了') + ' · R 再来'), 'hot');
     syncHud();
   }
 
@@ -1214,7 +1314,7 @@
     screenFlash(MAG, 0.5);
     hitStop(0.08);
     showOverlay('lose');
-    setHint('R 重开随时可用', 'warn');
+    setHint(autoOn ? '托管中 · R 重开接着打' : 'R 重开随时可用', 'warn');
     syncHud();
   }
 
@@ -1532,7 +1632,623 @@
     return { x: (x - ox) / cell, y: (y - oy) / cell };
   }
 
+  function autoEnsureBuf() {
+    const n = COLS * ROWS;
+    if (!autoSeen || autoSeen.length !== n) {
+      autoSeen = new Int16Array(n);
+      autoPrev = new Int16Array(n);
+      autoQueue = new Int16Array(n);
+    }
+  }
+
+  function autoResetPlan() {
+    autoWish.x = 0;
+    autoWish.y = 0;
+    autoGoal = null;
+    autoStuck = 0;
+    autoLastX = G.player.x;
+    autoLastY = G.player.y;
+    autoVisit = new Uint8Array(COLS * ROWS);
+    autoVisitN = 0;
+    autoNudgeD = (autoNudgeD + 1) & 3;
+    if (autoOn) fireHold = false;
+  }
+
+  function autoWalkable(c, r, allowC, allowR) {
+    if (!inb(c, r)) return false;
+    if (G.grid[idx(c, r)] === WALL) return false;
+    if (allowC === c && allowR === r) return true;
+    if (genAt(c, r)) return false;
+    return true;
+  }
+
+  function autoPathTo(sc, sr, tc, tr) {
+    if (!inb(sc, sr) || !inb(tc, tr)) return null;
+    if (sc === tc && sr === tr) return [];
+    if (!autoWalkable(tc, tr, tc, tr)) return null;
+    autoEnsureBuf();
+    autoSeen.fill(0);
+    autoPrev.fill(-1);
+    let qh = 0;
+    let qt = 0;
+    const sid = idx(sc, sr);
+    autoQueue[qt++] = sid;
+    autoSeen[sid] = 1;
+    let found = -1;
+    while (qh < qt) {
+      const id = autoQueue[qh++];
+      const c = id % COLS;
+      const r = (id / COLS) | 0;
+      if (c === tc && r === tr) {
+        found = id;
+        break;
+      }
+      for (let d = 0; d < 4; d++) {
+        const nc = c + DX[d];
+        const nr = r + DY[d];
+        if (!inb(nc, nr)) continue;
+        const nid = idx(nc, nr);
+        if (autoSeen[nid]) continue;
+        if (!autoWalkable(nc, nr, tc, tr)) continue;
+        autoSeen[nid] = 1;
+        autoPrev[nid] = id;
+        autoQueue[qt++] = nid;
+      }
+    }
+    if (found < 0) return null;
+    const path = [];
+    let cur = found;
+    let guard = 0;
+    while (cur !== sid && cur >= 0 && guard++ < COLS * ROWS) {
+      path.push({ c: cur % COLS, r: (cur / COLS) | 0 });
+      cur = autoPrev[cur];
+    }
+    path.reverse();
+    return path;
+  }
+
+  function autoNearestUnvisited(sc, sr) {
+    autoEnsureBuf();
+    autoSeen.fill(0);
+    autoPrev.fill(-1);
+    let qh = 0;
+    let qt = 0;
+    const sid = idx(sc, sr);
+    autoQueue[qt++] = sid;
+    autoSeen[sid] = 1;
+    while (qh < qt) {
+      const id = autoQueue[qh++];
+      const c = id % COLS;
+      const r = (id / COLS) | 0;
+      if (!(c === sc && r === sr) && !autoVisit[id] && autoWalkable(c, r, c, r)) {
+        const path = [];
+        let cur = id;
+        let guard = 0;
+        while (cur !== sid && cur >= 0 && guard++ < COLS * ROWS) {
+          path.push({ c: cur % COLS, r: (cur / COLS) | 0 });
+          cur = autoPrev[cur];
+        }
+        path.reverse();
+        return { c: c, r: r, path: path, kind: 'explore' };
+      }
+      for (let d = 0; d < 4; d++) {
+        const nc = c + DX[d];
+        const nr = r + DY[d];
+        if (!inb(nc, nr)) continue;
+        const nid = idx(nc, nr);
+        if (autoSeen[nid]) continue;
+        if (!autoWalkable(nc, nr, nc, nr)) continue;
+        autoSeen[nid] = 1;
+        autoPrev[nid] = id;
+        autoQueue[qt++] = nid;
+      }
+    }
+    return null;
+  }
+
+  function autoArrived(c, r) {
+    return Math.abs(G.player.x - (c + 0.5)) < 0.22 && Math.abs(G.player.y - (r + 0.5)) < 0.22;
+  }
+
+  function autoFollow(path) {
+    if (!path || !path.length) {
+      autoWish.x = 0;
+      autoWish.y = 0;
+      return true;
+    }
+    while (path.length) {
+      const w = path[0];
+      const tx = w.c + 0.5;
+      const ty = w.r + 0.5;
+      const dx = G.player.x - tx;
+      const dy = G.player.y - ty;
+      if (dx * dx + dy * dy < 0.18) {
+        path.shift();
+        continue;
+      }
+      if (path.length > 1) {
+        const n = path[1];
+        const nx = n.c + 0.5;
+        const ny = n.r + 0.5;
+        if (hypot(G.player.x - nx, G.player.y - ny) + 0.04 <= hypot(tx - nx, ty - ny)) {
+          path.shift();
+          continue;
+        }
+      }
+      break;
+    }
+    if (!path.length) {
+      autoWish.x = 0;
+      autoWish.y = 0;
+      return true;
+    }
+    const w = path[0];
+    const tx = w.c + 0.5;
+    const ty = w.r + 0.5;
+    const dx = tx - G.player.x;
+    const dy = ty - G.player.y;
+    const pc = G.player.x | 0;
+    const pr = G.player.y | 0;
+    if (Math.abs(dx) > 0.08 && Math.abs(dy) > 0.08) {
+      const cx = pc + 0.5 - G.player.x;
+      const cy = pr + 0.5 - G.player.y;
+      if (Math.abs(cx) > 0.12 && w.c !== pc) {
+        autoWish.x = cx > 0 ? 1 : -1;
+        autoWish.y = 0;
+      } else if (Math.abs(cy) > 0.12 && w.r !== pr) {
+        autoWish.x = 0;
+        autoWish.y = cy > 0 ? 1 : -1;
+      } else if (Math.abs(dx) >= Math.abs(dy)) {
+        autoWish.x = dx > 0 ? 1 : -1;
+        autoWish.y = 0;
+      } else {
+        autoWish.x = 0;
+        autoWish.y = dy > 0 ? 1 : -1;
+      }
+    } else if (Math.abs(dx) >= Math.abs(dy)) {
+      autoWish.x = dx > 0 ? 1 : dx < 0 ? -1 : 0;
+      autoWish.y = 0;
+    } else {
+      autoWish.x = 0;
+      autoWish.y = dy > 0 ? 1 : dy < 0 ? -1 : 0;
+    }
+    return false;
+  }
+
+  function autoRay(px, py, dx, dy) {
+    if (!dx && !dy) return null;
+    let x = px + dx * 0.32;
+    let y = py + dy * 0.32;
+    for (let i = 0; i < 18; i++) {
+      x += dx * 0.45;
+      y += dy * 0.45;
+      const t = cellAt(x, y);
+      if (t === WALL) return { kind: 'wall', dist: i };
+      if (t === FOOD) return { kind: 'food', dist: i, c: x | 0, r: y | 0 };
+      if (t === LOOT) return { kind: 'loot', dist: i, c: x | 0, r: y | 0 };
+      for (let g = 0; g < G.gens.length; g++) {
+        const gen = G.gens[g];
+        if (!gen.alive) continue;
+        if (hypot(x - gen.x, y - gen.y) < G_R + 0.14) return { kind: 'gen', dist: i, gen: gen };
+      }
+      for (let m = 0; m < G.mons.length; m++) {
+        const mon = G.mons[m];
+        if (!mon.alive) continue;
+        if (hypot(x - mon.x, y - mon.y) < mon.r + 0.14) return { kind: 'mon', dist: i, mon: mon };
+      }
+    }
+    return { kind: 'none', dist: 18 };
+  }
+
+  function autoPickShot() {
+    let best = null;
+    for (let d = 0; d < 4; d++) {
+      const dx = DX[d];
+      const dy = DY[d];
+      const ray = autoRay(G.player.x, G.player.y, dx, dy);
+      if (!ray) continue;
+      if (ray.kind === 'food' || ray.kind === 'loot' || ray.kind === 'wall' || ray.kind === 'none') continue;
+      if (ray.kind === 'mon' && ray.mon.kind === 'wraith') continue;
+      const score = (ray.kind === 'gen' ? 22 : 16) - ray.dist;
+      if (!best || score > best.score) {
+        best = { dx: dx, dy: dy, dist: ray.dist, kind: ray.kind, shoot: true, score: score };
+      }
+    }
+    return best;
+  }
+
+  function autoClosestFoe() {
+    let best = null;
+    let bestD = 99;
+    let kind = '';
+    for (let i = 0; i < G.mons.length; i++) {
+      const m = G.mons[i];
+      if (!m.alive) continue;
+      const d = hypot(m.x - G.player.x, m.y - G.player.y);
+      const w = m.kind === 'wraith' ? d - 0.15 : d;
+      if (w < bestD) {
+        bestD = w;
+        best = m;
+        kind = 'mon';
+      }
+    }
+    for (let i = 0; i < G.gens.length; i++) {
+      const g = G.gens[i];
+      if (!g.alive) continue;
+      const d = hypot(g.x - G.player.x, g.y - G.player.y);
+      if (d < bestD) {
+        bestD = d;
+        best = g;
+        kind = 'gen';
+      }
+    }
+    return best ? { ent: best, d: hypot(best.x - G.player.x, best.y - G.player.y), kind: kind } : null;
+  }
+
+  function autoThreatClose() {
+    let n = 0;
+    let near = null;
+    let nd = 99;
+    for (let i = 0; i < G.mons.length; i++) {
+      const m = G.mons[i];
+      if (!m.alive) continue;
+      const d = hypot(m.x - G.player.x, m.y - G.player.y);
+      if (d < 1.65) n += 1;
+      if (d < nd) {
+        nd = d;
+        near = m;
+      }
+    }
+    return { n: n, mon: near, d: nd };
+  }
+
+  function autoGenStand(pc, pr, gen) {
+    const gc = gen.x | 0;
+    const gr = gen.y | 0;
+    let best = null;
+    let bestD = 99;
+    for (let d = 0; d < 4; d++) {
+      const c = gc + DX[d];
+      const r = gr + DY[d];
+      if (!autoWalkable(c, r, c, r)) continue;
+      const path = autoPathTo(pc, pr, c, r);
+      if (!path) continue;
+      if (path.length < bestD) {
+        bestD = path.length;
+        best = { c: c, r: r, path: path, kind: 'gen', gx: gen.x, gy: gen.y };
+      }
+    }
+    return best;
+  }
+
+  function autoCountFood() {
+    let n = 0;
+    for (let i = 0; i < G.grid.length; i++) if (G.grid[i] === FOOD) n += 1;
+    return n;
+  }
+
+  function autoGoalAlive(goal) {
+    if (!goal) return false;
+    if (goal.kind === 'food') return G.grid[idx(goal.c, goal.r)] === FOOD;
+    if (goal.kind === 'loot') return G.grid[idx(goal.c, goal.r)] === LOOT;
+    if (goal.kind === 'exit') return G.grid[idx(goal.c, goal.r)] === EXIT;
+    if (goal.kind === 'gen') {
+      for (let i = 0; i < G.gens.length; i++) {
+        if (G.gens[i].alive && hypot(G.gens[i].x - goal.gx, G.gens[i].y - goal.gy) < 0.4) return true;
+      }
+      return false;
+    }
+    if (goal.kind === 'mon') {
+      for (let i = 0; i < G.mons.length; i++) {
+        if (G.mons[i].alive && hypot(G.mons[i].x - (goal.c + 0.5), G.mons[i].y - (goal.r + 0.5)) < 1.4) return true;
+      }
+      return false;
+    }
+    if (goal.kind === 'explore') return !autoVisit[idx(goal.c, goal.r)];
+    return true;
+  }
+
+  function autoPickGoal(pc, pr) {
+    const hp = G.hp;
+    const foods = autoCountFood();
+    const cands = [];
+    for (let r = 1; r < ROWS - 1; r++) {
+      for (let c = 1; c < COLS - 1; c++) {
+        const t = G.grid[idx(c, r)];
+        if (t === FOOD) {
+          let score = 90;
+          if (hp < HP_LOW) score = 520;
+          else if (hp < 55) score = 360;
+          else if (hp < 85) score = 220;
+          else if (hp < 110) score = 130;
+          cands.push({ c: c, r: r, kind: 'food', score: score, w: hp < 70 ? 4 : 7 });
+        } else if (t === LOOT && hp > 42) {
+          cands.push({ c: c, r: r, kind: 'loot', score: 95, w: 8 });
+        } else if (t === EXIT) {
+          let score = 18;
+          if (G.cleared) score = 260;
+          else if (hp < 32 && foods === 0) score = 480;
+          else if (hp < 40 && foods === 0) score = 300;
+          else if (liveGens() === 0) score = 240;
+          cands.push({ c: c, r: r, kind: 'exit', score: score, w: 5 });
+        }
+      }
+    }
+    for (let i = 0; i < G.gens.length; i++) {
+      const g = G.gens[i];
+      if (!g.alive) continue;
+      const stand = autoGenStand(pc, pr, g);
+      if (stand) {
+        stand.score = (hp < HP_LOW ? 140 : 300) - stand.path.length * 5;
+        stand.w = 0;
+        cands.push(stand);
+      }
+    }
+    const threat = autoThreatClose();
+    if (threat.mon && threat.d < 2.4 && (threat.mon.kind === 'wraith' || hp > 38)) {
+      const tc = threat.mon.x | 0;
+      const tr = threat.mon.y | 0;
+      if (autoWalkable(tc, tr, tc, tr) || (tc === pc && tr === pr)) {
+        const path = autoPathTo(pc, pr, tc, tr) || [];
+        cands.push({
+          c: tc,
+          r: tr,
+          kind: 'mon',
+          path: path,
+          score: threat.mon.kind === 'wraith' ? 340 : 160,
+          w: 0
+        });
+      }
+    }
+
+    let best = null;
+    let bestS = -1e9;
+    for (let i = 0; i < cands.length; i++) {
+      const t = cands[i];
+      const path = t.path || autoPathTo(pc, pr, t.c, t.r);
+      if (!path && !(t.c === pc && t.r === pr)) continue;
+      const usePath = path || [];
+      const s = t.score - usePath.length * (t.w || 6);
+      if (s > bestS) {
+        bestS = s;
+        best = {
+          c: t.c,
+          r: t.r,
+          path: usePath,
+          kind: t.kind,
+          gx: t.gx,
+          gy: t.gy
+        };
+      }
+    }
+    if (best && bestS > 12) return best;
+    const explore = autoNearestUnvisited(pc, pr);
+    if (explore && liveGens() > 0) return explore;
+    if (best) return best;
+    return autoPathTo(pc, pr, G.exitC, G.exitR)
+      ? { c: G.exitC, r: G.exitR, path: autoPathTo(pc, pr, G.exitC, G.exitR), kind: 'exit' }
+      : null;
+  }
+
+  function autoFaceToward(x, y) {
+    const s = snap4(x - G.player.x, y - G.player.y);
+    autoWish.x = s[0];
+    autoWish.y = s[1];
+  }
+
+  function autoCanStep(dx, dy) {
+    if (!dx && !dy) return false;
+    const nx = G.player.x + dx * 0.38;
+    const ny = G.player.y + dy * 0.38;
+    if (dx && !blocked(nx, G.player.y, P_R) && !genBlocked(nx, G.player.y, P_R, null)) return true;
+    if (dy && !blocked(G.player.x, ny, P_R) && !genBlocked(G.player.x, ny, P_R, null)) return true;
+    return false;
+  }
+
+  function autoNudge() {
+    const pc = G.player.x | 0;
+    const pr = G.player.y | 0;
+    for (let k = 0; k < 4; k++) {
+      const d = (autoNudgeD + k) & 3;
+      const nc = pc + DX[d];
+      const nr = pr + DY[d];
+      if (!autoWalkable(nc, nr, nc, nr)) continue;
+      autoWish.x = DX[d];
+      autoWish.y = DY[d];
+      autoNudgeD = (d + 1) & 3;
+      return;
+    }
+    autoWish.x = DX[autoNudgeD];
+    autoWish.y = DY[autoNudgeD];
+    autoNudgeD = (autoNudgeD + 1) & 3;
+  }
+
+  function autoSetFire(dx, dy) {
+    const ray = autoRay(G.player.x, G.player.y, dx, dy);
+    fireHold = !!(ray && (ray.kind === 'gen' || (ray.kind === 'mon' && ray.mon.kind !== 'wraith')));
+  }
+
+  function autoThink(dt) {
+    if (G.deadT > 0 || G.ready > 0) {
+      autoWish.x = 0;
+      autoWish.y = 0;
+      fireHold = false;
+      return;
+    }
+    const p = G.player;
+    const pc = p.x | 0;
+    const pr = p.y | 0;
+    const moved = Math.abs(p.x - autoLastX) + Math.abs(p.y - autoLastY);
+    if (moved < 0.028) autoStuck += dt;
+    else autoStuck = 0;
+    autoLastX = p.x;
+    autoLastY = p.y;
+    const vid = idx(pc, pr);
+    if (!autoVisit[vid]) {
+      autoVisit[vid] = 1;
+      autoVisitN += 1;
+    }
+
+    const foe = autoClosestFoe();
+    if (foe && foe.d < 0.74) {
+      autoFaceToward(foe.ent.x, foe.ent.y);
+      if (foe.kind === 'mon' && foe.ent.kind === 'wraith') fireHold = false;
+      else autoSetFire(autoWish.x, autoWish.y);
+      return;
+    }
+    if (foe && foe.d < 1.18) {
+      autoFaceToward(foe.ent.x, foe.ent.y);
+      if (autoCanStep(autoWish.x, autoWish.y)) {
+        if (foe.kind === 'mon' && foe.ent.kind === 'wraith') fireHold = false;
+        else autoSetFire(autoWish.x, autoWish.y);
+        return;
+      }
+    }
+
+    const foodCrisis = G.hp < 40 && autoCountFood() > 0;
+    const shot = autoPickShot();
+    if (shot && !foodCrisis && shot.dist <= 2.2 && autoCanStep(shot.dx, shot.dy)) {
+      if (!autoGoal || autoGoal.kind === 'gen' || autoGoal.kind === 'mon') {
+        autoWish.x = shot.dx;
+        autoWish.y = shot.dy;
+        fireHold = true;
+        if (shot.dist <= 1.4) return;
+      }
+    }
+
+    if (autoStuck > 0.4) {
+      autoGoal = null;
+      autoStuck = 0;
+      autoNudge();
+      autoSetFire(autoWish.x || p.fx, autoWish.y || p.fy);
+      return;
+    }
+
+    if (!autoGoal || !autoGoalAlive(autoGoal)) autoGoal = autoPickGoal(pc, pr);
+    if (autoGoal && autoGoal.kind === 'gen' && autoGoal.gx != null) {
+      const gd = hypot(autoGoal.gx - p.x, autoGoal.gy - p.y);
+      if (gd < 1.2) {
+        autoFaceToward(autoGoal.gx, autoGoal.gy);
+        fireHold = true;
+        return;
+      }
+    }
+    if (autoGoal && autoGoal.path) {
+      if (autoFollow(autoGoal.path)) autoGoal = null;
+    } else if (autoGoal) {
+      autoFaceToward(autoGoal.c + 0.5, autoGoal.r + 0.5);
+    } else {
+      autoWish.x = 0;
+      autoWish.y = 0;
+    }
+    autoSetFire(autoWish.x || p.fx, autoWish.y || p.fy);
+  }
+
+  function loadAutoSpeed() {
+    try {
+      const n = parseInt(localStorage.getItem(AUTO_SPEED_KEY) || '3', 10);
+      if (n >= 1 && n <= 4) return n;
+    } catch (err) { /* ignore */ }
+    return 3;
+  }
+
+  function saveAutoSpeed(n) {
+    try {
+      localStorage.setItem(AUTO_SPEED_KEY, String(n));
+    } catch (err) { /* ignore */ }
+  }
+
+  function syncAutoUi() {
+    if (!btnAuto) return;
+    btnAuto.classList.toggle('on', autoOn);
+    btnAuto.setAttribute('aria-pressed', autoOn ? 'true' : 'false');
+    btnAuto.textContent = autoOn ? '停下' : '自动';
+    btnAuto.setAttribute('aria-label', autoOn ? '停止自动' : '自动');
+  }
+
+  function syncSpeedUi() {
+    if (!speedEl || !speedLab) return;
+    speedEl.value = String(autoSpeed);
+    speedLab.textContent = AUTO_SPEED_NAME[autoSpeed];
+    speedEl.title = AUTO_SPEED_NAME[autoSpeed];
+    speedEl.setAttribute('aria-valuetext', AUTO_SPEED_NAME[autoSpeed]);
+  }
+
+  function setAutoSpeed(n) {
+    n = parseInt(n, 10);
+    if (!isFinite(n) || n < 1 || n > 4) n = 3;
+    autoSpeed = n;
+    saveAutoSpeed(autoSpeed);
+    syncSpeedUi();
+  }
+
+  function clearAutoInput() {
+    keys.u = keys.d = keys.l = keys.r = false;
+    fireHold = false;
+    ptr.down = false;
+    ptr.dragging = false;
+    ptr.dx = 0;
+    ptr.dy = 0;
+    autoWish.x = 0;
+    autoWish.y = 0;
+  }
+
+  function toggleAuto() {
+    autoOn = !autoOn;
+    autoResetPlan();
+    autoOvWait = 0;
+    clearAutoInput();
+    syncAutoUi();
+    audio.ensure();
+    if (autoOn) {
+      if (G.mode === 'title') startGame(G.kind === 'horde' ? 'horde' : 'clear');
+      else if (G.mode === 'win' || G.mode === 'lose') restart();
+      else if (G.mode === 'play') setHint('托管中 · A 停下', 'hot');
+    } else if (G.mode === 'play') {
+      setHint(playHint(), playHintKind());
+    } else if (G.mode === 'title') {
+      setHint('四向走 · 空格射击 · 贴身斩发生器 · A 自动 · 生命一直掉 · 出口随时可进');
+    }
+  }
+
+  function tickAuto(dt) {
+    if (!autoOn) return;
+    if (G.mode === 'title') {
+      autoOvWait += dt;
+      if (autoOvWait >= (AUTO_OV_WAIT[autoSpeed] || 0.4)) {
+        autoOvWait = 0;
+        startGame(G.kind === 'horde' ? 'horde' : 'clear');
+      }
+      return;
+    }
+    if (G.mode === 'win' || G.mode === 'lose') {
+      autoOvWait += dt;
+      if (autoOvWait >= (AUTO_OV_WAIT[autoSpeed] || 0.4)) {
+        autoOvWait = 0;
+        restart();
+      }
+      return;
+    }
+    autoOvWait = 0;
+    if (G.mode !== 'play' || G.deadT > 0) {
+      autoWish.x = 0;
+      autoWish.y = 0;
+      fireHold = false;
+      return;
+    }
+    if (G.stop > 0) return;
+    autoThink(dt);
+  }
+
+  function autoScale() {
+    if (!autoOn || G.mode !== 'play') return 1;
+    return AUTO_TIME[autoSpeed] || 1;
+  }
+
   function playerDir() {
+    if (autoOn && G.mode === 'play') {
+      return { mx: autoWish.x, my: autoWish.y };
+    }
     let mx = (keys.r ? 1 : 0) - (keys.l ? 1 : 0);
     let my = (keys.d ? 1 : 0) - (keys.u ? 1 : 0);
     if (ptr.dragging) {
@@ -1844,6 +2560,7 @@
   function update(dt) {
     G.t += dt;
     G.clock += dt;
+    if (autoOn) tickAuto(dt);
     if (G.stop > 0) {
       G.stop -= dt;
       updateFx(dt * 0.45);
@@ -2229,6 +2946,7 @@
   function onPointerDown(e) {
     if (e.button != null && e.button !== 0) return;
     audio.ensure();
+    if (autoOn) return;
     if (overlayBlocksPlay()) return;
     e.preventDefault();
     const w = worldFromPtr(e.clientX, e.clientY);
@@ -2263,7 +2981,7 @@
 
   function onPointerUp(e) {
     if (ptr.id != null && e.pointerId !== ptr.id) return;
-    if (ptr.down && !ptr.dragging && !overlayBlocksPlay()) {
+    if (ptr.down && !ptr.dragging && !overlayBlocksPlay() && !autoOn) {
       const dx = ptr.x - G.player.x;
       const dy = ptr.y - G.player.y;
       if (hypot(dx, dy) > 0.05) {
@@ -2309,12 +3027,41 @@
   function onKey(e, down) {
     const k = e.key;
     const code = e.code;
+    if (k === 'm' || k === 'M') {
+      e.preventDefault();
+      if (down && !e.repeat) {
+        audio.ensure();
+        audio.setMuted(!audio.muted);
+      }
+      return;
+    }
+    if (k === 'r' || k === 'R') {
+      e.preventDefault();
+      if (down && !e.repeat) restart();
+      return;
+    }
+    if (k === 'a' || k === 'A' || code === 'KeyA') {
+      e.preventDefault();
+      if (down && !e.repeat) toggleAuto();
+      return;
+    }
+    if (e.target === speedEl || (e.target && e.target.tagName === 'INPUT')) return;
     const isUp = k === 'ArrowUp' || k === 'w' || k === 'W' || code === 'KeyW';
     const isDn = k === 'ArrowDown' || k === 's' || k === 'S' || code === 'KeyS';
-    const isLf = k === 'ArrowLeft' || k === 'a' || k === 'A' || code === 'KeyA';
+    const isLf = k === 'ArrowLeft';
     const isRt = k === 'ArrowRight' || k === 'd' || k === 'D' || code === 'KeyD';
     const isSp = k === ' ' || k === 'Spacebar' || code === 'Space';
     if (isUp || isDn || isLf || isRt || isSp) e.preventDefault();
+    if (autoOn) {
+      if (!down) return;
+      if (e.repeat) return;
+      if ((isSp || k === 'Enter') && overlayOpen()) {
+        if (e.target && e.target.tagName === 'BUTTON') return;
+        audio.ensure();
+        primaryAction();
+      }
+      return;
+    }
     if (overlayBlocksPlay()) {
       if (isUp) keys.u = false;
       if (isDn) keys.d = false;
@@ -2329,15 +3076,6 @@
       if (isSp) fireHold = down;
     }
     if (!down) return;
-    if (k === 'm' || k === 'M') {
-      audio.ensure();
-      audio.setMuted(!audio.muted);
-      return;
-    }
-    if (k === 'r' || k === 'R') {
-      restart();
-      return;
-    }
     if (e.repeat) return;
     if (isSp || k === 'Enter') {
       if (e.target && e.target.tagName === 'BUTTON') return;
@@ -2355,6 +3093,7 @@
       e.preventDefault();
       e.stopPropagation();
       audio.ensure();
+      if (autoOn) return;
       if (dir === 'fire') {
         if (!overlayBlocksPlay()) firePlayer(G.player.fx, G.player.fy);
         fireHold = true;
@@ -2430,6 +3169,11 @@
   if (ovAgain) ovAgain.addEventListener('click', function () { primaryAction(); });
   if (ovMenu) ovMenu.addEventListener('click', function () { audio.ensure(); bootTitle(); });
   if (btnRetry) btnRetry.addEventListener('click', function () { restart(); });
+  if (btnAuto) btnAuto.addEventListener('click', function () { toggleAuto(); });
+  if (speedEl) {
+    speedEl.addEventListener('input', function () { setAutoSpeed(speedEl.value); });
+    speedEl.addEventListener('change', function () { setAutoSpeed(speedEl.value); });
+  }
   if (btnMute) btnMute.addEventListener('click', function () {
     audio.ensure();
     audio.setMuted(!audio.muted);
@@ -2464,12 +3208,15 @@
   } catch (err) { /* ignore */ }
 
   loadBest();
+  autoSpeed = loadAutoSpeed();
+  syncSpeedUi();
+  syncAutoUi();
   resize();
   bootTitle();
   syncHud();
 
   if (padEl && window.matchMedia && window.matchMedia('(pointer: coarse)').matches) {
-    setHint('滑动走 · 点按或射开火 · 贴身斩 · 出口随时可进');
+    setHint(autoOn ? '托管中 · A 停下' : '滑动走 · 点按或射开火 · 贴身斩 · A 自动 · 出口随时可进', autoOn ? 'hot' : '');
   }
 
   let last = performance.now();
@@ -2483,14 +3230,15 @@
     let dt = (now - last) / 1000;
     last = now;
     if (dt > 0.05) dt = 0.05;
-    acc += dt;
+    acc += dt * autoScale();
     let steps = 0;
-    while (acc >= STEP && steps < 5) {
+    const maxSteps = autoOn && autoSpeed >= 4 ? 16 : 5;
+    while (acc >= STEP && steps < maxSteps) {
       update(STEP);
       acc -= STEP;
       steps += 1;
     }
-    if (acc > STEP * 5) acc = 0;
+    if (acc > STEP * maxSteps) acc = 0;
     draw();
   }
   requestAnimationFrame(frame);

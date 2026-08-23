@@ -49,6 +49,12 @@
           <button type="button" id="mode-clear" aria-pressed="true">清廊</button>
           <button type="button" id="mode-horde" aria-pressed="false">尸潮</button>
         </div>
+        <label class="speed-ctl" title="速度 慢 / 中 / 快 / 极快">
+          <span>速度</span>
+          <input type="range" id="speed" min="1" max="4" step="1" value="3" aria-label="速度" />
+          <b id="speed-lab">快</b>
+        </label>
+        <button type="button" id="btn-auto" title="A" aria-label="自动" aria-pressed="false">自动</button>
         <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
         <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
       </div>
@@ -73,7 +79,7 @@
           <p class="kicker" id="ov-kicker">GAUN</p>
           <h1 id="ov-title">地牢</h1>
           <p class="lead" id="ov-lead">四向跑迷宫。空格射弹，贴身挥剑砸发生器。<br />生命一直在掉，食物回血。出口随时可进，别磨太久。</p>
-          <p class="ops" id="ov-ops">WASD / 方向键四向走 · 空格射击 · R 重开 · M 静音</p>
+          <p class="ops" id="ov-ops">方向键 / W S D 走 · 空格射击 · A 自动 · R 重开 · M 静音</p>
           <div class="ov-actions" id="ov-start">
             <button type="button" id="btn-clear">清廊</button>
             <button type="button" id="btn-horde">尸潮</button>
@@ -86,7 +92,7 @@
       </div>
     </div>
 
-    <footer class="hint" id="hint">四向走 · 空格射击 · 贴身斩发生器 · 生命一直掉 · 出口随时可进</footer>
+    <footer class="hint" id="hint">四向走 · 空格射击 · 贴身斩发生器 · A 自动 · 生命一直掉 · 出口随时可进</footer>
   </div>
   <script src="js/game.js"></script>
 </body>
