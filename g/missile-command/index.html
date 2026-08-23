@@ -39,6 +39,12 @@
         </div>
       </div>
       <div class="tools">
+        <label class="speed-ctl" title="速度 慢 / 中 / 快 / 极快">
+          <span>速度</span>
+          <input type="range" id="speed" min="1" max="4" step="1" value="3" aria-label="速度" />
+          <b id="speed-lab">快</b>
+        </label>
+        <button type="button" id="btn-auto" title="A" aria-label="自动" aria-pressed="false">自动</button>
         <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
         <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
       </div>
@@ -53,7 +59,7 @@
           <p class="kicker" id="ov-kicker">MSLC</p>
           <h1 id="ov-title">导弹</h1>
           <p class="lead" id="ov-lead">瞄准拦截来袭弹雨，护住六城。五波之后是智弹雨。</p>
-          <p class="ops" id="ov-ops">点按 / 空格开火 · 方向键移准星 · R 重开 · M 静音</p>
+          <p class="ops" id="ov-ops">点按 / 空格开火 · 方向键移准星 · A 自动 · R 重开 · M 静音</p>
           <div class="ov-actions" id="ov-start">
             <button type="button" id="btn-mslc">导弹</button>
             <button type="button" id="btn-rain">核雨</button>
@@ -66,7 +72,7 @@
       </div>
     </div>
 
-    <footer class="hint" id="hint">点按瞄准开火 · 火球吞弹 · 护住六城 · 智弹雨通关</footer>
+    <footer class="hint" id="hint">点按瞄准开火 · 火球吞弹 · A 自动 · 护住六城 · 智弹雨通关</footer>
   </div>
   <script src="js/game.js"></script>
 </body>
