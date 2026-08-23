@@ -3776,5 +3776,17 @@
     "dir": "g/sonic-wings/",
     "url": "./g/sonic-wings/",
     "kind": "remake"
+  },
+  {
+    "n": 331,
+    "id": "samurai-aki",
+    "title": "侍秋",
+    "subtitle": "SAKI",
+    "blurb": "一刀斩落，把秋叶打成火花。",
+    "hue": 8,
+    "tag": "复刻",
+    "dir": "g/samurai-aki/",
+    "url": "./g/samurai-aki/",
+    "kind": "remake"
   }
 ]

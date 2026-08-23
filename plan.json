@@ -3867,7 +3867,7 @@
     "blurb": "一刀斩落，把秋叶打成火花。",
     "hue": 8,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/samurai-aki/",
     "kind": "remake"
   },
@@ -3965,6 +3965,18 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/bio-metal/",
+    "kind": "remake"
+  },
+  {
+    "n": 340,
+    "id": "dragon-spirit",
+    "title": "龙魂",
+    "subtitle": "DSPT",
+    "blurb": "纵版喷火，把龙息打进岩核。",
+    "hue": 12,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/dragon-spirit/",
     "kind": "remake"
   }
 ]
