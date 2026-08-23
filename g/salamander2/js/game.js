@@ -15,7 +15,10 @@
   const STAGE_END = [3600, 7200, 9800];
   const BEST_KEY = 'playbox-salamander2-best';
   const MUTE_KEY = 'playbox-salamander2-mute';
-  const OPS = '←↑↓→ / WASD 移动 · 空格射击 · R 重开 · M 静音';
+  const AUTO_SPEED_KEY = 'playbox-salamander2-auto-speed';
+  const SPEED_LABELS = ['', '慢', '中', '快', '极快'];
+  const AUTO_SCALE = [1, 0.48, 0.72, 1, 2.55];
+  const OPS = '←↑↓→ / WSD 移动 · 空格射击 · A 自动 · R 重开 · M 静音';
   const STAGE_NAME = ['口咽', '心室', '蛇巢'];
   const ORGANS = ['speed', 'missile', 'laser', 'option'];
   const ORGAN_NAME = { speed: '加速', missile: '爬导', laser: '神经束', option: '光球' };
@@ -56,6 +59,9 @@
   const btnOvModes = document.getElementById('ov-modes');
   const btnMute = document.getElementById('btn-mute');
   const btnRetry = document.getElementById('btn-retry');
+  const btnAuto = document.getElementById('btn-auto');
+  const speedEl = document.getElementById('speed');
+  const speedLab = document.getElementById('speed-lab');
   const scoreEl = document.getElementById('score');
   const bestEl = document.getElementById('best');
   const scoreBox = document.getElementById('score-box');
@@ -140,6 +146,12 @@
   };
 
   let inputSrc = 'key';
+  let autoOn = false;
+  let autoSpeed = 3;
+  let autoTx = 88;
+  let autoTy = VH * 0.5;
+  let autoStickS = -1e9;
+  let autoOvWait = 0;
 
   function clamp(v, a, b) {
     return v < a ? a : v > b ? b : v;
@@ -408,6 +420,22 @@
     } catch (err) { /* ignore */ }
   }
 
+  function loadAutoSpeed() {
+    try {
+      const n = parseInt(localStorage.getItem(AUTO_SPEED_KEY) || '3', 10);
+      if (!isFinite(n) || n < 1 || n > 4) return 3;
+      return n;
+    } catch (err) {
+      return 3;
+    }
+  }
+
+  function saveAutoSpeed(n) {
+    try {
+      localStorage.setItem(AUTO_SPEED_KEY, String(n));
+    } catch (err) { /* ignore */ }
+  }
+
   function addScore(n) {
     if ((G.mode !== 'play' && G.mode !== 'win') || n <= 0) return;
     G.score += n;
@@ -529,7 +557,9 @@
         hpBar.style.transform = 'scaleX(' + p + ')';
       }
     }
-    if (G.mode === 'title') setHint(OPS, '');
+    if (autoOn && (G.mode === 'play' || G.mode === 'title')) setHint('托管中 · A 停下', 'hot');
+    else if (autoOn && (G.mode === 'lose' || G.mode === 'win')) setHint('托管中 · R 重开接着打', 'hot');
+    else if (G.mode === 'title') setHint(OPS, '');
     else if (G.mode === 'lose') setHint('R 重开 · 吃器官立刻武装', 'warn');
     else if (G.mode === 'win') setHint('R 重开 · 巨蛇尽灭', 'hot');
     else if (G.lives === 1) setHint('最后一命 · 撞壁也掉命', 'warn');
@@ -1082,9 +1112,333 @@
     }
   }
 
+  function autoClearInput() {
+    keys.l = false;
+    keys.r = false;
+    keys.u = false;
+    keys.d = false;
+    pointer.down = false;
+    G.fireHold = false;
+  }
+
+  function syncAutoUi() {
+    if (!btnAuto) return;
+    btnAuto.classList.toggle('on', autoOn);
+    btnAuto.setAttribute('aria-pressed', autoOn ? 'true' : 'false');
+    btnAuto.textContent = autoOn ? '停下' : '自动';
+    btnAuto.setAttribute('aria-label', autoOn ? '停止自动' : '自动');
+  }
+
+  function syncSpeedUi() {
+    if (!speedEl) return;
+    speedEl.value = String(autoSpeed);
+    if (speedLab) speedLab.textContent = SPEED_LABELS[autoSpeed];
+    speedEl.title = SPEED_LABELS[autoSpeed];
+    speedEl.setAttribute('aria-valuetext', SPEED_LABELS[autoSpeed]);
+  }
+
+  function setAutoSpeed(n) {
+    n = parseInt(n, 10);
+    if (!isFinite(n) || n < 1 || n > 4) n = 3;
+    autoSpeed = n;
+    saveAutoSpeed(autoSpeed);
+    syncSpeedUi();
+  }
+
+  function toggleAuto() {
+    autoOn = !autoOn;
+    autoOvWait = 0;
+    autoStickS = -1e9;
+    autoClearInput();
+    autoTx = G.px;
+    autoTy = G.py;
+    syncAutoUi();
+    if (autoOn) {
+      audio.ensure();
+      if (G.mode === 'title') startGame('raid');
+    }
+    syncHud();
+  }
+
+  function autoScale() {
+    if (!autoOn || G.mode !== 'play') return 1;
+    return AUTO_SCALE[autoSpeed] || 1;
+  }
+
+  function tickAutoFlow(dt) {
+    if (!autoOn) return;
+    if (G.mode === 'title') {
+      autoOvWait += dt;
+      if (autoOvWait >= (autoSpeed >= 3 ? 0.22 : 0.48)) {
+        autoOvWait = 0;
+        startGame('raid');
+      }
+      return;
+    }
+    if (G.mode === 'lose' || G.mode === 'win') {
+      autoOvWait += dt;
+      if (autoOvWait >= (autoSpeed >= 3 ? 0.65 : 1.1)) {
+        autoOvWait = 0;
+        startGame(G.kind || 'raid');
+      }
+    }
+  }
+
+  function autoDanger(sx, sy, horizon) {
+    let d = 0;
+    const wx = G.cam + sx;
+    const scroll = scrollSpd();
+    for (let k = 0; k < 10; k++) {
+      const ahead = k * 30;
+      const c = caveAt(wx + ahead);
+      const w = 1.15 + (9 - k) * 0.16;
+      const m = 18;
+      if (sy < c.top + m) d += (c.top + m - sy) * 20 * w;
+      if (sy > c.bot - m) d += (sy - (c.bot - m)) * 20 * w;
+      if (sy < c.top + 11 || sy > c.bot - 11) d += 420 * w;
+      const gap = c.bot - c.top;
+      if (gap < 118) d += (118 - gap) * 0.55 * w;
+    }
+    for (let i = 0; i < G.eShots.length; i++) {
+      const s = G.eShots[i];
+      const relx = s.wx - wx;
+      const rely = s.y - sy;
+      const rvx = s.vx - scroll;
+      const rvy = s.vy;
+      const vv = rvx * rvx + rvy * rvy;
+      let t = 0;
+      if (vv > 1) t = clamp(-(relx * rvx + rely * rvy) / vv, 0, horizon);
+      const dist = hypot(relx + rvx * t, rely + rvy * t);
+      const rad = 8.2 + s.r;
+      if (t <= horizon && dist < rad + 34) {
+        const soon = (horizon - t) / Math.max(0.08, horizon);
+        d += Math.max(0.5, rad + 12 - dist) * soon * 26;
+        if (dist < rad) d += 240 * soon;
+      }
+    }
+    for (let i = 0; i < G.ents.length; i++) {
+      const e = G.ents[i];
+      if (!e.alive || e.type === 'organ') continue;
+      let ey = e.y;
+      let eh = e.hh;
+      let ew = e.hw;
+      let evx = e.vx || 0;
+      let evy = e.vy || 0;
+      if (e.type === 'tent') {
+        ew = 7;
+        eh = e.len * 0.5;
+        ey = e.ceil ? e.y + eh : e.y - eh;
+        evx = 0;
+        evy = 0;
+      } else if (e.type === 'shead') {
+        ew = 18;
+        eh = 14;
+      } else if (e.type === 'sbody') {
+        ew = e.hw * 0.85;
+        eh = e.hh * 0.85;
+      } else if (e.type === 'eye' || e.type === 'cyst') {
+        evx = 0;
+        evy = 0;
+      }
+      const relx = e.wx - wx;
+      const rely = ey - sy;
+      const rvx = evx - scroll;
+      const rvy = evy;
+      const vv = rvx * rvx + rvy * rvy;
+      let t = 0;
+      if (vv > 1) t = clamp(-(relx * rvx + rely * rvy) / vv, 0, horizon);
+      const dist = hypot(relx + rvx * t, rely + rvy * t);
+      const hitR = 8.4 + Math.max(ew, eh);
+      if (dist < hitR + 28) {
+        const soon = (horizon - t) / Math.max(0.08, horizon);
+        const w = e.type === 'tent' ? 36
+          : e.type === 'shead' ? 18
+          : e.type === 'sbody' ? 16
+          : e.type === 'spore' ? 22
+          : 15;
+        d += Math.max(0.4, hitR + 14 - dist) * soon * w;
+        if (dist < hitR) d += 260 * soon;
+      }
+      if (Math.abs(e.wx - wx) < ew + 10 && Math.abs(ey - sy) < eh + 8) d += 140;
+    }
+    return d;
+  }
+
+  function autoThink() {
+    if (!autoOn) return;
+    if (G.mode !== 'play' || G.deadT > 0) {
+      G.fireHold = false;
+      return;
+    }
+
+    const cell = isCell();
+    const horizon = cell ? 0.58 : 0.48;
+    let aimY = null;
+    let aimX = null;
+    let aimW = -1e9;
+    let pick = null;
+    let pickW = -1e9;
+    let nearbyShots = 0;
+    let boss = null;
+    let closeBody = false;
+
+    for (let i = 0; i < G.ents.length; i++) {
+      const e = G.ents[i];
+      if (!e.alive) continue;
+      const esx = scrX(e.wx);
+      if (e.type === 'organ') {
+        if (esx < -20 || esx > VW - 8) continue;
+        let w = 88 - hypot(esx - G.px, e.y - G.py) * 0.42;
+        if (e.kind === 'option' && G.options.length < OPT_MAX) w += G.options.length === 0 ? 92 : 64;
+        else if (e.kind === 'laser' && !G.laser) w += 58;
+        else if (e.kind === 'missile' && G.misLvl < 2) w += 50;
+        else if (e.kind === 'speed' && G.speed < 3) w += 44;
+        else w += 12;
+        if (esx < G.px + 70) w += 24;
+        if (w > pickW) {
+          pickW = w;
+          pick = e;
+        }
+        continue;
+      }
+      if (esx < G.px - 24 || esx > VW + 50) continue;
+      let ty = e.y;
+      let tx = esx;
+      let w = 32;
+      if (e.type === 'shead') {
+        boss = e;
+        w = 270 + e.hp * 0.35;
+      } else if (e.type === 'sbody') w = 40;
+      else if (e.type === 'lead' || e.lead) w = 130;
+      else if (e.type === 'cyst') w = 110;
+      else if (e.type === 'eye') w = 96;
+      else if (e.type === 'tent') {
+        const hh = e.len * 0.5;
+        ty = e.ceil ? e.y + hh : e.y - hh;
+        w = 70 + e.len * 0.4;
+      } else if (e.type === 'spore') w = 84;
+      else w = 36 + (e.hp || 1) * 8;
+      w -= Math.abs(ty - G.py) * 0.28;
+      w -= Math.max(0, esx - G.px) * 0.06;
+      if (esx < G.px + 90) w += 14;
+      if (esx < G.px + 52 && Math.abs(ty - G.py) < 22) {
+        closeBody = true;
+        w -= 80;
+      }
+      if (w > aimW) {
+        aimW = w;
+        aimY = ty;
+        aimX = tx;
+      }
+    }
+
+    for (let i = 0; i < G.eShots.length; i++) {
+      const s = G.eShots[i];
+      if (hypot(scrX(s.wx) - G.px, s.y - G.py) < 150) nearbyShots += 1;
+    }
+
+    const hereDang = autoDanger(G.px, G.py, horizon);
+    const pickSx = pick ? scrX(pick.wx) : 0;
+    const grabPick = pick && (
+      G.invuln > 0.18
+      || autoDanger(pickSx, pick.y, 0.28) < 48
+      || pickSx < G.px + 64
+    );
+
+    let desiredX = G.boss ? 78 : 98;
+    let desiredY = aimY != null ? aimY : VH * 0.5;
+    if (hereDang > 80) desiredX = 58;
+    else if (nearbyShots >= (cell ? 5 : 6)) desiredX = 70;
+    else if (boss) desiredX = 86;
+    if (aimX != null && aimX < G.px + 130 && !boss && !closeBody) {
+      desiredX = clamp(aimX - 78, 46, 150);
+    }
+    if (closeBody) desiredX = Math.min(desiredX, 72);
+    if (grabPick && pick) {
+      desiredX = clamp(pickSx, 28, VW * 0.5);
+      desiredY = pick.y;
+    }
+    if (boss && aimY != null && !grabPick) {
+      const dodge = nearbyShots >= 3 || hereDang > 55;
+      desiredY = dodge ? aimY + (G.py < aimY ? -28 : 28) : aimY;
+    }
+
+    const xMin = 28;
+    const xMax = VW * 0.52;
+    const yMin = 12;
+    const yMax = VH - 12;
+    let bestX = clamp(autoTx, xMin, xMax);
+    let bestY = clamp(autoTy, yMin, yMax);
+    let bestS = -1e15;
+
+    function consider(x, y) {
+      x = clamp(x, xMin, xMax);
+      y = clamp(y, yMin, yMax);
+      const c = caveAt(G.cam + x);
+      y = clamp(y, c.top + 14, c.bot - 14);
+      let s = -autoDanger(x, y, horizon) * (cell ? 7.3 : 6.1);
+      s -= Math.abs(x - desiredX) * (grabPick ? 0.28 : 0.48);
+      s -= Math.abs(y - desiredY) * (grabPick ? 1.12 : 0.92);
+      s -= hypot(x - G.px, y - G.py) * 0.11;
+      if (x < 40 || x > VW * 0.46) s -= 14;
+      if (y < c.top + 22 || y > c.bot - 22) s -= 18;
+      if (grabPick && pick) s -= hypot(x - pickSx, y - pick.y) * 0.58;
+      if (boss && aimY != null && Math.abs(y - aimY) < 14) s += 20;
+      if (aimY != null && !closeBody && Math.abs(y - aimY) < 10 && x < aimX) s += 16;
+      if (s > bestS) {
+        bestS = s;
+        bestX = x;
+        bestY = y;
+      }
+    }
+
+    consider(G.px, G.py);
+    consider(autoTx, autoTy);
+    consider(desiredX, desiredY);
+    for (let ix = 0; ix < 6; ix++) {
+      const x = 40 + ix * ((xMax - 48) / 5);
+      for (let iy = 0; iy < 9; iy++) {
+        consider(x, 24 + iy * ((VH - 48) / 8));
+      }
+    }
+    if (aimY != null) {
+      consider(desiredX, aimY);
+      consider(G.px, aimY);
+      consider(72, aimY);
+      consider(desiredX, aimY - 24);
+      consider(desiredX, aimY + 24);
+    }
+    if (grabPick && pick) consider(pickSx, pick.y);
+    consider(G.px, G.py - 48);
+    consider(G.px, G.py + 48);
+    consider(G.px - 40, G.py);
+    consider(G.px + 40, G.py);
+    consider(G.px - 24, G.py - 32);
+    consider(G.px - 24, G.py + 32);
+
+    const switchGap = hereDang > 48 ? 8 : 22;
+    if (bestS > autoStickS + switchGap || hereDang > 55 || hypot(autoTx - G.px, autoTy - G.py) < 4) {
+      autoTx = bestX;
+      autoTy = bestY;
+      autoStickS = bestS;
+    }
+
+    G.fireHold = true;
+  }
+
   function updatePlayer(dt) {
     const spd = moveSpd();
-    if (inputSrc === 'ptr' && (pointer.down || pointer.hover)) {
+    if (autoOn && G.mode === 'play') {
+      const dx = autoTx - G.px;
+      const dy = autoTy - G.py;
+      const d = hypot(dx, dy);
+      const boost = autoSpeed >= 4 ? 1.22 : autoSpeed >= 3 ? 1.06 : autoSpeed <= 1 ? 0.86 : 0.96;
+      if (d > 1.2) {
+        const step = Math.min(d, spd * dt * boost);
+        G.px += dx / d * step;
+        G.py += dy / d * step;
+      }
+    } else if (inputSrc === 'ptr' && (pointer.down || pointer.hover)) {
       const tx = clamp(pointer.x, 28, VW * 0.52);
       const ty = pointer.y;
       G.px += (tx - G.px) * Math.min(1, dt * 11);
@@ -1152,6 +1506,9 @@
     G.trail.length = 0;
     pointer.x = G.px;
     pointer.y = G.py;
+    autoTx = G.px;
+    autoTy = G.py;
+    autoStickS = -1e9;
     toast('重生', true, false);
     syncHud();
   }
@@ -1493,6 +1850,7 @@
         if (aabb(pwx(), G.py, 7, 4.4, s.wx, s.y, s.r, s.r)) {
           G.eShots.splice(i, 1);
           killPlayer();
+          break;
         }
       }
     }
@@ -1562,6 +1920,8 @@
   }
 
   function update(dt) {
+    tickAutoFlow(dt);
+    if (autoOn && autoSpeed >= 4 && G.mode === 'play') G.stop = 0;
     if (G.fireCd > 0) G.fireCd -= dt;
     if (G.misCd > 0) G.misCd -= dt;
     if (G.invuln > 0) G.invuln -= dt;
@@ -1624,6 +1984,7 @@
       screenFlash(CYN, 0.28);
       syncHud();
     }
+    if (autoOn) autoThink();
     updatePlayer(dt);
     if (G.fireHold) fire();
     trySpawn();
@@ -2162,6 +2523,11 @@
   function startGame(kind) {
     resetRun(kind || 'raid');
     G.mode = 'play';
+    G.fireHold = !!autoOn;
+    autoTx = G.px;
+    autoTy = G.py;
+    autoStickS = -1e9;
+    autoOvWait = 0;
     hideOverlay();
     audio.start();
     toast(isCell() ? '细胞' : '血腔', false, true);
@@ -2174,6 +2540,7 @@
     resetRun('raid');
     G.mode = 'title';
     G.laser = true;
+    autoOvWait = 0;
     showOverlay('title', '沙罗', '横向穿行活体洞窟。吃器官立刻武装。光球抄射。撞壁、撞体、中弹都掉命。最后打巨蛇。');
     syncHud();
   }
@@ -2192,28 +2559,40 @@
 
   function onKey(e, down) {
     const k = e.key;
-    if (k === 'ArrowLeft' || k === 'Left' || k === 'a' || k === 'A') {
-      keys.l = down;
+    const code = e.code;
+    if (k === 'a' || k === 'A' || code === 'KeyA') {
+      if (down) {
+        e.preventDefault();
+        if (!e.repeat) toggleAuto();
+      }
+      return;
+    }
+    if (e.target === speedEl) return;
+    const isMove = k === 'ArrowLeft' || k === 'ArrowRight' || k === 'ArrowUp' || k === 'ArrowDown'
+      || k === 'd' || k === 'D' || k === 'w' || k === 'W' || k === 's' || k === 'S';
+    const space = k === ' ' || k === 'Spacebar' || code === 'Space';
+
+    if (k === 'ArrowLeft' || k === 'Left') {
+      keys.l = down && !autoOn;
       if (down) inputSrc = 'key';
     }
-    if (k === 'ArrowRight' || k === 'Right' || k === 'd' || k === 'D') {
-      keys.r = down;
+    if (k === 'ArrowRight' || k === 'd' || k === 'D' || k === 'Right') {
+      keys.r = down && !autoOn;
       if (down) inputSrc = 'key';
     }
-    if (k === 'ArrowUp' || k === 'Up' || k === 'w' || k === 'W') {
-      keys.u = down;
+    if (k === 'ArrowUp' || k === 'w' || k === 'W' || k === 'Up') {
+      keys.u = down && !autoOn;
       if (down) inputSrc = 'key';
     }
-    if (k === 'ArrowDown' || k === 'Down' || k === 's' || k === 'S') {
-      keys.d = down;
+    if (k === 'ArrowDown' || k === 's' || k === 'S' || k === 'Down') {
+      keys.d = down && !autoOn;
       if (down) inputSrc = 'key';
     }
-    const space = k === ' ' || k === 'Spacebar' || e.code === 'Space';
-    if (down && (k === 'ArrowLeft' || k === 'ArrowRight' || k === 'ArrowUp' || k === 'ArrowDown' || space || k === 'Enter')) {
-      e.preventDefault();
-    }
+
+    if (down && (isMove || space || k === 'Enter')) e.preventDefault();
+
     if (!down) {
-      if (space) G.fireHold = false;
+      if (space && !autoOn) G.fireHold = false;
       return;
     }
     if (e.repeat && (k === 'r' || k === 'R')) return;
@@ -2226,6 +2605,9 @@
       restart();
       return;
     }
+    if (autoOn && (isMove || space || k === 'd' || k === 'D' || k === 'w' || k === 'W' || k === 's' || k === 'S')) {
+      return;
+    }
     if (G.mode === 'title' && (k === '1' || k === '2')) {
       startGame(k === '2' ? 'cell' : 'raid');
       return;
@@ -2233,9 +2615,10 @@
     if (space || k === 'Enter') {
       if (overlayOpen()) {
         primaryAction();
+        if (space && G.mode === 'play' && !autoOn) G.fireHold = true;
         return;
       }
-      if (G.mode === 'play') {
+      if (G.mode === 'play' && !autoOn) {
         G.fireHold = true;
         fire();
       }
@@ -2246,6 +2629,7 @@
     if (!canvas) return;
     canvas.addEventListener('pointerdown', function (e) {
       audio.ensure();
+      if (autoOn) return;
       e.preventDefault();
       pointer.down = true;
       pointer.hover = true;
@@ -2260,6 +2644,7 @@
       }
     });
     canvas.addEventListener('pointermove', function (e) {
+      if (autoOn) return;
       pointer.x = clamp(pointerWorldX(e), 10, VW - 10);
       pointer.y = clamp(pointerWorldY(e), 10, VH - 10);
       if (!pointer.down && e.pointerType === 'mouse') pointer.hover = true;
@@ -2269,6 +2654,7 @@
       if (pointer.id != null && e.pointerId !== pointer.id && pointer.down) return;
       pointer.down = false;
       pointer.id = null;
+      if (autoOn) return;
       G.fireHold = false;
     }
     canvas.addEventListener('pointerup', up);
@@ -2293,13 +2679,17 @@
     let dt = t - last;
     last = t;
     if (dt > 0.05) dt = 0.05;
-    acc += dt;
+    const turbo = autoOn && autoSpeed >= 4 && G.mode === 'play';
+    if (turbo) G.stop = 0;
+    acc += dt * autoScale();
     let n = 0;
-    while (acc >= STEP && n < 5) {
+    const maxSteps = turbo ? 16 : 5;
+    while (acc >= STEP && n < maxSteps) {
       update(STEP);
       acc -= STEP;
       n += 1;
     }
+    if (acc > STEP * 4) acc = 0;
     draw();
   }
 
@@ -2312,6 +2702,9 @@
   seedMotes();
   loadBest();
   initMute();
+  autoSpeed = loadAutoSpeed();
+  syncSpeedUi();
+  syncAutoUi();
   goTitle();
   resize();
   bindPointer();
@@ -2347,6 +2740,15 @@
       audio.setMuted(!audio.muted);
     });
   }
+  if (btnAuto) btnAuto.addEventListener('click', function () { toggleAuto(); });
+  if (speedEl) {
+    speedEl.addEventListener('input', function () {
+      setAutoSpeed(parseInt(speedEl.value, 10) || 3);
+    });
+    speedEl.addEventListener('change', function () {
+      setAutoSpeed(parseInt(speedEl.value, 10) || 3);
+    });
+  }
 
   window.addEventListener('keydown', function (e) { onKey(e, true); });
   window.addEventListener('keyup', function (e) { onKey(e, false); });
@@ -2358,7 +2760,8 @@
       keys.r = false;
       keys.u = false;
       keys.d = false;
-      G.fireHold = false;
+      pointer.down = false;
+      if (!autoOn) G.fireHold = false;
     }
   });
 
