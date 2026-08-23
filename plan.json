@@ -5295,7 +5295,7 @@
     "blurb": "横版巡三，把核心从空里打穿。",
     "hue": 198,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/gradius3/",
     "kind": "remake"
   },
@@ -5307,7 +5307,7 @@
     "blurb": "横版双截2，把暴徒从巷里打穿。",
     "hue": 12,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/double-dragon2/",
     "kind": "remake"
   },
@@ -5319,7 +5319,7 @@
     "blurb": "横版功夫2，把打手从楼里打穿。",
     "hue": 32,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/kung-fu2/",
     "kind": "remake"
   },
@@ -5331,7 +5331,7 @@
     "blurb": "横版金弹，把敌军从巷里打穿。",
     "hue": 40,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/metalslug2/",
     "kind": "remake"
   },
@@ -5343,8 +5343,68 @@
     "blurb": "横版终斗，把暴徒从街上打穿。",
     "hue": 18,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/final-fight2/",
+    "kind": "remake"
+  },
+  {
+    "n": 455,
+    "id": "metalslug3",
+    "title": "金弹3",
+    "subtitle": "MSL3",
+    "blurb": "横版金弹3，把敌军从巷里打穿。",
+    "hue": 38,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/metalslug3/",
+    "kind": "remake"
+  },
+  {
+    "n": 456,
+    "id": "streets-of-rage4",
+    "title": "怒四",
+    "subtitle": "SOR4",
+    "blurb": "横版怒四，把暴徒从街上打穿。",
+    "hue": 4,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/streets-of-rage4/",
+    "kind": "remake"
+  },
+  {
+    "n": 457,
+    "id": "castlevania2",
+    "title": "魔城2",
+    "subtitle": "CV2",
+    "blurb": "横版魔城2，把亡灵从厅里斩穿。",
+    "hue": 268,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/castlevania2/",
+    "kind": "remake"
+  },
+  {
+    "n": 458,
+    "id": "shinobi4",
+    "title": "忍四",
+    "subtitle": "SHN4",
+    "blurb": "横版忍四，把忍者从巷里斩穿。",
+    "hue": 50,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/shinobi4/",
+    "kind": "remake"
+  },
+  {
+    "n": 459,
+    "id": "alex-kidd",
+    "title": "阿历",
+    "subtitle": "ALEX",
+    "blurb": "横版阿历，把魔物从岛里砸穿。",
+    "hue": 78,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/alex-kidd/",
     "kind": "remake"
   }
 ]

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#140804" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>双截2 · DD2</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23140804'/%3E%3Crect x='2' y='2' width='28' height='28' rx='4' fill='%231c0a06' stroke='%23ff4a0a' stroke-width='1.4'/%3E%3Cpath d='M4 24h24' stroke='%23ffe36b' stroke-width='1.2' opacity='.5'/%3E%3Ccircle cx='11' cy='12' r='3.2' fill='%23ffe36b'/%3E%3Crect x='8.6' y='15.2' width='5' height='6.4' rx='.8' fill='%23ff4a0a'/%3E%3Crect x='8.4' y='21.2' width='2' height='3.2' fill='%233a62d8'/%3E%3Crect x='11.4' y='21.2' width='2' height='3.2' fill='%233a62d8'/%3E%3Cpath d='M16 10l10 4-8 3z' fill='%2300e8ff'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>双截2</b>
+        <span>DD2</span>
+      </div>
+      <div class="status">
+        <div class="scores" aria-live="polite">
+          <div class="score" id="score-box">
+            <em>分数</em>
+            <b id="score">0</b>
+            <span id="score-add" class="score-add" hidden>+0</span>
+          </div>
+          <div class="score best">
+            <em>最高</em>
+            <b id="best">0</b>
+          </div>
+          <div class="score combo" id="combo-box">
+            <em>连击</em>
+            <b id="combo">×1</b>
+          </div>
+        </div>
+        <div class="row">
+          <span id="stage-label">停机坪</span>
+          <span id="tag-label">双截2</span>
+          <span id="grab-label" class="wep">徒手</span>
+          <span class="pips" id="pips" aria-label="剩余性命"></span>
+        </div>
+      </div>
+      <div class="tools">
+        <div class="modes" role="radiogroup" aria-label="模式">
+          <button type="button" id="mode-stage" aria-pressed="true">双截2</button>
+          <button type="button" id="mode-core" aria-pressed="false">截核</button>
+        </div>
+        <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
+        <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <div class="board-wrap">
+        <canvas id="c" tabindex="0" role="application" aria-label="双截2，侧向清场，出拳飞踢，抓住再甩，撞击丢命"></canvas>
+      </div>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden"></div>
+      <div id="chain-pop" class="chain-pop hidden" aria-hidden="true">×2</div>
+      <div id="pad" class="pad">
+        <button type="button" id="btn-up" aria-label="上">上</button>
+        <button type="button" id="btn-left" aria-label="左">左</button>
+        <button type="button" id="btn-punch" aria-label="出拳">拳</button>
+        <button type="button" id="btn-right" aria-label="右">右</button>
+        <button type="button" id="btn-down" aria-label="下">下</button>
+        <button type="button" id="btn-kick" aria-label="飞踢">踢</button>
+      </div>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">DD2</p>
+          <h1 id="ov-title">双截2</h1>
+          <p class="lead" id="ov-lead">侧向清场。出拳连击，飞踢砸人，贴近抓住再甩出去。<br />被打中或坠坪即撞击丢命。打穿三关，最后是影枭。</p>
+          <p class="ops" id="ov-ops">方向键 / WASD 走 · 空格出拳 · Shift / Z 飞踢 · R 重开 · M 静音</p>
+          <div class="ov-actions" id="ov-start">
+            <button type="button" id="btn-stage">双截2</button>
+            <button type="button" id="btn-core">截核</button>
+          </div>
+          <div class="ov-actions gone" id="ov-end">
+            <button type="button" id="ov-again">再来</button>
+            <button type="button" id="ov-menu">换模式</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">走出拳 · 飞踢砸人 · 抓住甩 · 撞击丢命</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>

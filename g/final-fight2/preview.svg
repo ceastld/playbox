@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" fill="#120704"/>
+  <rect x="4" y="4" width="56" height="56" rx="8" fill="#1a0c08" stroke="#ff6418" stroke-width="1.4"/>
+  <rect x="8" y="8" width="9" height="24" fill="#2a1010"/>
+  <rect x="19" y="7" width="13" height="25" fill="#22100c"/>
+  <rect x="34" y="10" width="12" height="22" fill="#2c140e"/>
+  <rect x="48" y="8" width="8" height="24" fill="#180c08"/>
+  <rect x="10" y="12" width="2" height="6" fill="#ff6418" opacity=".85"/>
+  <rect x="13.4" y="14" width="2" height="5" fill="#ffe36b" opacity=".7"/>
+  <rect x="22" y="11" width="2.2" height="6" fill="#b44ad0" opacity=".9"/>
+  <rect x="26" y="15" width="2" height="5" fill="#00e8ff" opacity=".7"/>
+  <rect x="37" y="14" width="2.2" height="6" fill="#ff6418" opacity=".8"/>
+  <rect x="41" y="17" width="2" height="4" fill="#ffe36b" opacity=".65"/>
+  <path d="M8 34h48" stroke="#ff6418" stroke-width="1.4" opacity=".45"/>
+  <path d="M8 48h48" stroke="#2a1410" stroke-width="6"/>
+  <path d="M8 46h48" stroke="#ff6418" stroke-width=".7" opacity=".35"/>
+  <circle cx="18" cy="30" r="3.3" fill="#e8c090"/>
+  <path d="M16 26.4h4v3.2c0 1.1-4 1.1-4 0z" fill="#1a1014"/>
+  <rect x="15.5" y="33" width="5.2" height="7" rx=".7" fill="#b44ad0"/>
+  <rect x="16.6" y="34.2" width="3" height="5" fill="#00e8ff" opacity=".55"/>
+  <rect x="15.7" y="39.4" width="1.8" height="4.2" fill="#2a1a22"/>
+  <rect x="18.5" y="39.4" width="1.8" height="4.2" fill="#2a1a22"/>
+  <path d="M21 32l8-1.1-4.2 3.5z" fill="#00e8ff"/>
+  <circle cx="40" cy="29" r="3.4" fill="#d8a078"/>
+  <rect x="37.2" y="32" width="5.8" height="7.2" rx=".7" fill="#c48a3a"/>
+  <rect x="37.4" y="38.6" width="2" height="4" fill="#241818"/>
+  <rect x="40.4" y="38.6" width="2" height="4" fill="#241818"/>
+  <rect x="26" y="41.5" width="6.4" height="4.8" rx=".6" fill="#8a5a28"/>
+  <rect x="26.4" y="43.2" width="5.6" height="1.1" fill="#c48a3a"/>
+  <circle cx="52" cy="14" r="5" fill="#ff6418" opacity=".32"/>
+</svg>

@@ -5156,5 +5156,65 @@
     "dir": "g/darius2/",
     "url": "./g/darius2/",
     "kind": "remake"
+  },
+  {
+    "n": 450,
+    "id": "gradius3",
+    "title": "巡三",
+    "subtitle": "GRD3",
+    "blurb": "横版巡三，把核心从空里打穿。",
+    "hue": 198,
+    "tag": "复刻",
+    "dir": "g/gradius3/",
+    "url": "./g/gradius3/",
+    "kind": "remake"
+  },
+  {
+    "n": 451,
+    "id": "double-dragon2",
+    "title": "双截2",
+    "subtitle": "DD2",
+    "blurb": "横版双截2，把暴徒从巷里打穿。",
+    "hue": 12,
+    "tag": "复刻",
+    "dir": "g/double-dragon2/",
+    "url": "./g/double-dragon2/",
+    "kind": "remake"
+  },
+  {
+    "n": 452,
+    "id": "kung-fu2",
+    "title": "功夫2",
+    "subtitle": "KFU2",
+    "blurb": "横版功夫2，把打手从楼里打穿。",
+    "hue": 32,
+    "tag": "复刻",
+    "dir": "g/kung-fu2/",
+    "url": "./g/kung-fu2/",
+    "kind": "remake"
+  },
+  {
+    "n": 453,
+    "id": "metalslug2",
+    "title": "金弹",
+    "subtitle": "MSL2",
+    "blurb": "横版金弹，把敌军从巷里打穿。",
+    "hue": 40,
+    "tag": "复刻",
+    "dir": "g/metalslug2/",
+    "url": "./g/metalslug2/",
+    "kind": "remake"
+  },
+  {
+    "n": 454,
+    "id": "final-fight2",
+    "title": "终斗",
+    "subtitle": "FF2",
+    "blurb": "横版终斗，把暴徒从街上打穿。",
+    "hue": 18,
+    "tag": "复刻",
+    "dir": "g/final-fight2/",
+    "url": "./g/final-fight2/",
+    "kind": "remake"
   }
 ]
