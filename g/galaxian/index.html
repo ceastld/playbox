@@ -39,6 +39,12 @@
         </div>
       </div>
       <div class="tools">
+        <label class="speed-ctl" title="速度 慢 / 中 / 快 / 极快">
+          <span>速度</span>
+          <input type="range" id="speed" min="1" max="4" step="1" value="3" aria-label="速度" />
+          <b id="speed-lab">快</b>
+        </label>
+        <button type="button" id="btn-auto" title="A" aria-label="自动" aria-pressed="false">自动</button>
         <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
         <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
       </div>
@@ -53,7 +59,7 @@
           <p class="kicker" id="ov-kicker">GLXN</p>
           <h1 id="ov-title">加星</h1>
           <p class="lead" id="ov-lead">编队悬停。旗舰俯冲并甩开护卫。击坠带双护卫的旗舰拿高分。四波之后星王俯冲。</p>
-          <p class="ops" id="ov-ops">← → / WASD 移动 · 空格开火 · R 重开 · M 静音</p>
+          <p class="ops" id="ov-ops">← → / D 移动 · 空格开火 · A 自动 · R 重开 · M 静音</p>
           <div class="ov-actions" id="ov-start">
             <button type="button" id="btn-raid">加星</button>
             <button type="button" id="btn-core">星核</button>
@@ -66,7 +72,7 @@
       </div>
     </div>
 
-    <footer class="hint" id="hint">编队悬停 · 旗舰甩开护卫 · 四波见星王</footer>
+    <footer class="hint" id="hint">编队悬停 · 旗舰甩开护卫 · 四波见星王 · A 自动</footer>
   </div>
   <script src="js/game.js"></script>
 </body>
