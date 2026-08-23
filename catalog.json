@@ -5216,5 +5216,65 @@
     "dir": "g/final-fight2/",
     "url": "./g/final-fight2/",
     "kind": "remake"
+  },
+  {
+    "n": 455,
+    "id": "metalslug3",
+    "title": "金弹3",
+    "subtitle": "MSL3",
+    "blurb": "横版金弹3，把敌军从巷里打穿。",
+    "hue": 38,
+    "tag": "复刻",
+    "dir": "g/metalslug3/",
+    "kind": "remake",
+    "url": "./g/metalslug3/"
+  },
+  {
+    "n": 456,
+    "id": "streets-of-rage4",
+    "title": "怒四",
+    "subtitle": "SOR4",
+    "blurb": "横版怒四，把暴徒从街上打穿。",
+    "hue": 4,
+    "tag": "复刻",
+    "dir": "g/streets-of-rage4/",
+    "kind": "remake",
+    "url": "./g/streets-of-rage4/"
+  },
+  {
+    "n": 457,
+    "id": "castlevania2",
+    "title": "魔城2",
+    "subtitle": "CV2",
+    "blurb": "横版魔城2，把亡灵从厅里斩穿。",
+    "hue": 268,
+    "tag": "复刻",
+    "dir": "g/castlevania2/",
+    "kind": "remake",
+    "url": "./g/castlevania2/"
+  },
+  {
+    "n": 458,
+    "id": "shinobi4",
+    "title": "忍四",
+    "subtitle": "SHN4",
+    "blurb": "横版忍四，把忍者从巷里斩穿。",
+    "hue": 50,
+    "tag": "复刻",
+    "dir": "g/shinobi4/",
+    "kind": "remake",
+    "url": "./g/shinobi4/"
+  },
+  {
+    "n": 459,
+    "id": "alex-kidd",
+    "title": "阿历",
+    "subtitle": "ALEX",
+    "blurb": "横版阿历，把魔物从岛里砸穿。",
+    "hue": 78,
+    "tag": "复刻",
+    "dir": "g/alex-kidd/",
+    "kind": "remake",
+    "url": "./g/alex-kidd/"
   }
 ]

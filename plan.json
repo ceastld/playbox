@@ -5352,10 +5352,10 @@
     "id": "metalslug3",
     "title": "金弹3",
     "subtitle": "MSL3",
-    "blurb": "横版金弹3，把敌军从巷里打穿。",
+    "blurb": "横版金弹3，把敌军从航线打穿。",
     "hue": 38,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/metalslug3/",
     "kind": "remake"
   },
@@ -5367,7 +5367,7 @@
     "blurb": "横版怒四，把暴徒从街上打穿。",
     "hue": 4,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/streets-of-rage4/",
     "kind": "remake"
   },
@@ -5379,7 +5379,7 @@
     "blurb": "横版魔城2，把亡灵从厅里斩穿。",
     "hue": 268,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/castlevania2/",
     "kind": "remake"
   },
@@ -5391,7 +5391,7 @@
     "blurb": "横版忍四，把忍者从巷里斩穿。",
     "hue": 50,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/shinobi4/",
     "kind": "remake"
   },
@@ -5403,8 +5403,68 @@
     "blurb": "横版阿历，把魔物从岛里砸穿。",
     "hue": 78,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/alex-kidd/",
+    "kind": "remake"
+  },
+  {
+    "n": 460,
+    "id": "thunder-force3",
+    "title": "雷三",
+    "subtitle": "TF3",
+    "blurb": "横版雷三，把敌舰从航线轰穿。",
+    "hue": 200,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/thunder-force3/",
+    "kind": "remake"
+  },
+  {
+    "n": 461,
+    "id": "ninja-gaiden3",
+    "title": "忍影3",
+    "subtitle": "NG3",
+    "blurb": "横版忍影3，把忍者从巷里斩穿。",
+    "hue": 12,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/ninja-gaiden3/",
+    "kind": "remake"
+  },
+  {
+    "n": 462,
+    "id": "golden-axe3",
+    "title": "斧三",
+    "subtitle": "GA3",
+    "blurb": "横版斧三，把魔物从荒原劈穿。",
+    "hue": 32,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/golden-axe3/",
+    "kind": "remake"
+  },
+  {
+    "n": 463,
+    "id": "double-dragon3",
+    "title": "双截3",
+    "subtitle": "DD3",
+    "blurb": "横版双截3，把暴徒从街上打穿。",
+    "hue": 8,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/double-dragon3/",
+    "kind": "remake"
+  },
+  {
+    "n": 464,
+    "id": "wonder-boy3",
+    "title": "仙童3",
+    "subtitle": "WB3",
+    "blurb": "横版仙童3，把魔物从岛里砸穿。",
+    "hue": 92,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/wonder-boy3/",
     "kind": "remake"
   }
 ]
