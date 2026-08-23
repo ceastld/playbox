@@ -40,6 +40,12 @@
         </div>
       </div>
       <div class="tools">
+        <label class="speed-ctl" title="速度 慢 / 中 / 快 / 极快">
+          <span>速度</span>
+          <input type="range" id="speed" min="1" max="4" step="1" value="3" aria-label="速度" />
+          <b id="speed-lab">快</b>
+        </label>
+        <button type="button" id="btn-auto" title="A" aria-label="自动" aria-pressed="false">自动</button>
         <button type="button" id="btn-bomb" title="Shift / Z" aria-label="投弹">弹</button>
         <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
         <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
@@ -58,7 +64,7 @@
           <p class="kicker" id="ov-kicker">XEVS</p>
           <h1 id="ov-title">泽空</h1>
           <p class="lead" id="ov-lead">空弹打飞，地弹砸核。准星锁住才炸得准。飞过林泽荒原，再轰空核城。</p>
-          <p class="ops" id="ov-ops">方向 / WASD 飞 · 空格打空 · Shift / Z 投弹 · R 重开 · M 静音</p>
+          <p class="ops" id="ov-ops">方向 / WSD 飞 · 空格打空 · Shift / Z 投弹 · A 自动 · R 重开 · M 静音</p>
           <div class="ov-actions" id="ov-start">
             <button type="button" id="btn-marsh">泽空</button>
             <button type="button" id="btn-core">空核</button>
@@ -71,7 +77,7 @@
       </div>
     </div>
 
-    <footer class="hint" id="hint">空格打飞碟 · Shift 投弹砸地核 · 准星变金再丢</footer>
+    <footer class="hint" id="hint">空格打飞碟 · Shift 投弹砸地核 · 准星变金再丢 · A 自动</footer>
   </div>
   <script src="js/game.js"></script>
 </body>
