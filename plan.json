@@ -5175,7 +5175,7 @@
     "blurb": "横版魔城，把亡灵从厅里斩穿。",
     "hue": 272,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/castlevania/",
     "kind": "remake"
   },
@@ -5187,7 +5187,7 @@
     "blurb": "横版忍影，把忍者从巷里斩穿。",
     "hue": 14,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/ninja-gaiden2/",
     "kind": "remake"
   },
@@ -5199,7 +5199,7 @@
     "blurb": "横版魔铠，把亡灵从坟里砸穿。",
     "hue": 22,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/ghosts-n-goblins/",
     "kind": "remake"
   },
@@ -5211,7 +5211,7 @@
     "blurb": "横版斧二，把兽人从路上砍穿。",
     "hue": 36,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/golden-axe2/",
     "kind": "remake"
   },
@@ -5223,8 +5223,68 @@
     "blurb": "纵版泡龙2，把泡泡从房里打穿。",
     "hue": 186,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/bubble-bobble/",
+    "kind": "remake"
+  },
+  {
+    "n": 445,
+    "id": "shinobi3",
+    "title": "忍三",
+    "subtitle": "SHN3",
+    "blurb": "横版忍三，把忍者从巷里斩穿。",
+    "hue": 48,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/shinobi3/",
+    "kind": "remake"
+  },
+  {
+    "n": 446,
+    "id": "streets-of-rage3",
+    "title": "怒三",
+    "subtitle": "SOR3",
+    "blurb": "横版怒三，把暴徒从街上打穿。",
+    "hue": 8,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/streets-of-rage3/",
+    "kind": "remake"
+  },
+  {
+    "n": 447,
+    "id": "contra3",
+    "title": "魂斗3",
+    "subtitle": "CTR3",
+    "blurb": "纵版魂斗3，把机枪从空里打穿。",
+    "hue": 24,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/contra3/",
+    "kind": "remake"
+  },
+  {
+    "n": 448,
+    "id": "r-type3",
+    "title": "武装三",
+    "subtitle": "RT3",
+    "blurb": "横版武装三，把机群从核里打穿。",
+    "hue": 56,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/r-type3/",
+    "kind": "remake"
+  },
+  {
+    "n": 449,
+    "id": "darius2",
+    "title": "大流2",
+    "subtitle": "DAR2",
+    "blurb": "横版大流2，把巨鱼从海里打穿。",
+    "hue": 210,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/darius2/",
     "kind": "remake"
   }
 ]

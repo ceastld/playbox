@@ -5036,5 +5036,65 @@
     "dir": "g/contra2/",
     "url": "./g/contra2/",
     "kind": "remake"
+  },
+  {
+    "n": 440,
+    "id": "castlevania",
+    "title": "魔城",
+    "subtitle": "CVAN",
+    "blurb": "横版魔城，把亡灵从厅里斩穿。",
+    "hue": 272,
+    "tag": "复刻",
+    "dir": "g/castlevania/",
+    "url": "./g/castlevania/",
+    "kind": "remake"
+  },
+  {
+    "n": 441,
+    "id": "ninja-gaiden2",
+    "title": "忍影",
+    "subtitle": "NGD2",
+    "blurb": "横版忍影，把忍者从巷里斩穿。",
+    "hue": 14,
+    "tag": "复刻",
+    "dir": "g/ninja-gaiden2/",
+    "url": "./g/ninja-gaiden2/",
+    "kind": "remake"
+  },
+  {
+    "n": 442,
+    "id": "ghosts-n-goblins",
+    "title": "魔铠",
+    "subtitle": "GNG2",
+    "blurb": "横版魔铠，把亡灵从坟里砸穿。",
+    "hue": 22,
+    "tag": "复刻",
+    "dir": "g/ghosts-n-goblins/",
+    "url": "./g/ghosts-n-goblins/",
+    "kind": "remake"
+  },
+  {
+    "n": 443,
+    "id": "golden-axe2",
+    "title": "斧二",
+    "subtitle": "GAX2",
+    "blurb": "横版斧二，把兽人从路上砍穿。",
+    "hue": 36,
+    "tag": "复刻",
+    "dir": "g/golden-axe2/",
+    "url": "./g/golden-axe2/",
+    "kind": "remake"
+  },
+  {
+    "n": 444,
+    "id": "bubble-bobble",
+    "title": "泡龙2",
+    "subtitle": "BBBL",
+    "blurb": "纵版泡龙2，把泡泡从房里打穿。",
+    "hue": 186,
+    "tag": "复刻",
+    "dir": "g/bubble-bobble/",
+    "url": "./g/bubble-bobble/",
+    "kind": "remake"
   }
 ]

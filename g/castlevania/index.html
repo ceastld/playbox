@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#070412" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>魔城 · CVAN</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23070412'/%3E%3Crect x='2' y='2' width='28' height='28' rx='4' fill='%2310081c' stroke='%23c44cff' stroke-width='1.4'/%3E%3Ccircle cx='24' cy='8' r='4' fill='%23ffe36b' opacity='.7'/%3E%3Cpath d='M4 25h24' stroke='%23ffe36b' stroke-width='1.2' opacity='.45'/%3E%3Cpath d='M8 25 L10 12 h3 L16 25' fill='%23140820' stroke='%23c44cff' stroke-width='.7'/%3E%3Ccircle cx='12' cy='13' r='2.8' fill='%23e8b070'/%3E%3Crect x='10.2' y='15.4' width='4' height='6' rx='.5' fill='%23c44cff'/%3E%3Cpath d='M14.4 17 h10' stroke='%2300f0ff' stroke-width='1.5'/%3E%3Ccircle cx='25' cy='17' r='1.3' fill='%23ffe36b'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>魔城</b>
+        <span>CVAN</span>
+      </div>
+      <div class="status">
+        <div class="scores" aria-live="polite">
+          <div class="score" id="score-box">
+            <em>分数</em>
+            <b id="score">0</b>
+            <span id="score-add" class="score-add" hidden>+0</span>
+          </div>
+          <div class="score best">
+            <em>最高</em>
+            <b id="best">0</b>
+          </div>
+          <div class="score combo" id="combo-box">
+            <em>连击</em>
+            <b id="combo">×1</b>
+          </div>
+        </div>
+        <div class="row">
+          <span id="stage-label">城门</span>
+          <span id="tag-label">魔城</span>
+          <span id="heart-label" class="hearts">心 5</span>
+          <span id="whip-label" class="whip">皮鞭</span>
+          <span id="sub-label" class="subw">副 —</span>
+          <span class="pips" id="pips" aria-label="剩余性命"></span>
+        </div>
+      </div>
+      <div class="tools">
+        <div class="modes" role="radiogroup" aria-label="模式">
+          <button type="button" id="mode-run" aria-pressed="true">魔城</button>
+          <button type="button" id="mode-core" aria-pressed="false">城核</button>
+        </div>
+        <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
+        <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <div class="board-wrap">
+        <canvas id="c" tabindex="0" role="application" aria-label="魔城，侧向走跳，空格挥鞭，Shift 丢副武器，一碰丢命"></canvas>
+      </div>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden"></div>
+      <div id="chain-pop" class="chain-pop hidden" aria-hidden="true">×2</div>
+      <div id="pad" class="pad">
+        <button type="button" id="btn-jump" aria-label="跳跃或上楼">跳</button>
+        <button type="button" id="btn-whip" aria-label="挥鞭">鞭</button>
+        <button type="button" id="btn-sub" aria-label="副武器">副</button>
+        <button type="button" id="btn-left" aria-label="左">左</button>
+        <button type="button" id="btn-down" aria-label="蹲下或下梯">下</button>
+        <button type="button" id="btn-right" aria-label="右">右</button>
+      </div>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">CVAN</p>
+          <h1 id="ov-title">魔城</h1>
+          <p class="lead" id="ov-lead">挥鞭打碎蜡烛，心换副武器。一碰丢命。<br />皮鞭锁链晨星，尽头是伯爵两形态。</p>
+          <p class="ops" id="ov-ops">方向键 / WASD 走跳 · 空格挥鞭 · Shift/Z 副武器 · R 重开 · M 静音</p>
+          <div class="ov-actions" id="ov-start">
+            <button type="button" id="btn-run">魔城</button>
+            <button type="button" id="btn-core">城核</button>
+          </div>
+          <div class="ov-actions gone" id="ov-end">
+            <button type="button" id="ov-again">再来</button>
+            <button type="button" id="ov-menu">换模式</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">空格挥鞭 · Shift 丢副武器 · 蜡烛掉心 · 一碰丢命</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>
