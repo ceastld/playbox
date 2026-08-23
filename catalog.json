@@ -3752,5 +3752,29 @@
     "dir": "g/last-resort/",
     "url": "./g/last-resort/",
     "kind": "remake"
+  },
+  {
+    "n": 336,
+    "id": "striker-1945",
+    "title": "打击",
+    "subtitle": "ST45",
+    "blurb": "纵版空战，把机群从云里打穿。",
+    "hue": 200,
+    "tag": "复刻",
+    "dir": "g/striker-1945/",
+    "url": "./g/striker-1945/",
+    "kind": "remake"
+  },
+  {
+    "n": 337,
+    "id": "sonic-wings",
+    "title": "空牙",
+    "subtitle": "SWNG",
+    "blurb": "双人空战，把弹幕从牙缝打出。",
+    "hue": 48,
+    "tag": "复刻",
+    "dir": "g/sonic-wings/",
+    "url": "./g/sonic-wings/",
+    "kind": "remake"
   }
 ]

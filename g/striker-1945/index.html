@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#030a12" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>打击 · ST45</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23030a12'/%3E%3Cpath d='M8 20l4-8 4 2 4-2 4 8-4 2-4-1-4 1z' fill='%2300b4ff'/%3E%3Crect x='11' y='10' width='2.2' height='8' rx='.6' fill='%235ce1ff'/%3E%3Crect x='19' y='10' width='2.2' height='8' rx='.6' fill='%235ce1ff'/%3E%3Cpath d='M10 14h12' stroke='%23ffe36b' stroke-width='1.4'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <b>打击</b>
+        <span>ST45</span>
+      </div>
+      <div class="status">
+        <div class="scores" aria-live="polite">
+          <div class="score" id="score-box">
+            <em>分数</em>
+            <b id="score">0</b>
+            <span id="score-add" class="score-add" hidden>+0</span>
+          </div>
+          <div class="score best">
+            <em>最高</em>
+            <b id="best">0</b>
+          </div>
+        </div>
+        <div class="row">
+          <span id="stage-label">第 1 关</span>
+          <span id="tag-label">空袭</span>
+          <span id="pwr-label" class="pwr">火</span>
+          <span id="bomb-label" class="bombs">爆 ×3</span>
+          <span id="charge-label" class="charge" hidden>蓄</span>
+          <span id="combo-label" class="combo" hidden>连击</span>
+          <span class="pips" id="pips" aria-label="剩余生命"></span>
+        </div>
+      </div>
+      <div class="tools">
+        <button type="button" id="btn-bomb" title="Shift / Z" aria-label="爆弹">爆</button>
+        <button type="button" id="btn-mute" title="M" aria-label="静音">声</button>
+        <button type="button" id="btn-retry" title="R" aria-label="重开">重开</button>
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      <canvas id="c" tabindex="0" role="application" aria-label="打击游戏区，纵向卷轴，空格射击蓄力超射，Shift 爆弹"></canvas>
+      <div class="scan" aria-hidden="true"></div>
+      <div id="toast" class="toast hidden"></div>
+      <div id="pad" class="pad">
+        <button type="button" id="btn-pad" aria-label="爆弹">爆</button>
+      </div>
+      <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+        <div class="panel" id="panel">
+          <p class="kicker" id="ov-kicker">ST45</p>
+          <h1 id="ov-title">打击</h1>
+          <p class="lead" id="ov-lead">开双叉战机向上打。空格连射并蓄力，松手超射贯穿。每关先中破再巨舰。撞机扣命。</p>
+          <p class="ops" id="ov-ops">方向 / WASD 飞 · 空格射击 · Shift / Z 爆弹 · R 重开 · M 静音</p>
+          <div class="ov-actions" id="ov-start">
+            <button type="button" id="btn-raid">空袭</button>
+            <button type="button" id="btn-swarm">机海</button>
+          </div>
+          <div class="ov-actions gone" id="ov-end">
+            <button type="button" id="ov-retry">再来</button>
+            <button type="button" id="ov-modes">换模式</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="hint" id="hint">空格射击蓄力 · 松手超射 · Shift 爆弹 · 吃 火/爆</footer>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>

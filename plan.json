@@ -3927,7 +3927,7 @@
     "blurb": "纵版空战，把机群从云里打穿。",
     "hue": 200,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/striker-1945/",
     "kind": "remake"
   },
@@ -3939,8 +3939,32 @@
     "blurb": "双人空战，把弹幕从牙缝打出。",
     "hue": 48,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/sonic-wings/",
+    "kind": "remake"
+  },
+  {
+    "n": 338,
+    "id": "parodius",
+    "title": "帕罗",
+    "subtitle": "PARO",
+    "blurb": "恶搞横弹，把企鹅弹幕打散。",
+    "hue": 318,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/parodius/",
+    "kind": "remake"
+  },
+  {
+    "n": 339,
+    "id": "bio-metal",
+    "title": "生金",
+    "subtitle": "BMET",
+    "blurb": "横版变身，把生金从海里打穿。",
+    "hue": 168,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/bio-metal/",
     "kind": "remake"
   }
 ]
