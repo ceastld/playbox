@@ -4047,7 +4047,7 @@
     "blurb": "轨道突袭，把机群从星核打穿。",
     "hue": 22,
     "tag": "复刻",
-    "status": "writing",
+    "status": "shipped",
     "dir": "g/star-fox/",
     "kind": "remake"
   },
@@ -4097,6 +4097,18 @@
     "tag": "复刻",
     "status": "writing",
     "dir": "g/daioh/",
+    "kind": "remake"
+  },
+  {
+    "n": 351,
+    "id": "twinkle-star",
+    "title": "星闪",
+    "subtitle": "TWIN",
+    "blurb": "对战弹幕，把对手从星核打出。",
+    "hue": 310,
+    "tag": "复刻",
+    "status": "writing",
+    "dir": "g/twinkle-star/",
     "kind": "remake"
   }
 ]

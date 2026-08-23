@@ -3908,5 +3908,17 @@
     "dir": "g/macross/",
     "url": "./g/macross/",
     "kind": "remake"
+  },
+  {
+    "n": 346,
+    "id": "star-fox",
+    "title": "星狐",
+    "subtitle": "SFOX",
+    "blurb": "轨道突袭，把机群从星核打穿。",
+    "hue": 22,
+    "tag": "复刻",
+    "dir": "g/star-fox/",
+    "url": "./g/star-fox/",
+    "kind": "remake"
   }
 ]
